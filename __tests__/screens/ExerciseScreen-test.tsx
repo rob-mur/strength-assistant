@@ -1,8 +1,8 @@
-import ExarciseScreen from '@/app/(tabs)/ExerciseScreen';
+import ExarciseScreen from '@/app/(tabs)/exercises';
 import { fireEvent, render, userEvent } from '@testing-library/react-native';
 import { act } from 'react';
 import { CommonTestState } from '../../__test_utils__/utils';
-import ExerciseScreen from '@/app/(tabs)/ExerciseScreen';
+import ExerciseScreen from '@/app/(tabs)/exercises';
 
 
 describe('<ExerciseScreen/>', () => {

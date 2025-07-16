@@ -5,7 +5,7 @@ interface HomeScreenProps {
 
 }
 function prodOnUserReadyToStart(r: Router) {
-	r.navigate("/ExerciseScreen");
+	r.navigate("/exercises");
 }
 
 export default function HomeScreen({ onUserReadyToStart = prodOnUserReadyToStart }: HomeScreenProps) {
