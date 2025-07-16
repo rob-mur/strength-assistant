@@ -6,6 +6,9 @@ url: http://localhost:8081
 - tapOn:
     id: "add-exercise"
 - tapOn:
+    id: "name"
+- inputText: "ExerciseName"
+- tapOn:
     id: "submit-exercise"
 - tapOn:
     id: "add-workout"
