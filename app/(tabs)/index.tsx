@@ -1,9 +1,9 @@
-import { Text } from 'react-native';
+import { Button } from 'react-native';
 interface HomeScreenProps {
 	onUserReadyToStart: () => void;
 }
 
 export default function HomeScreen({ onUserReadyToStart }: HomeScreenProps) {
 
-	return (<Text>{'Are you ready to workout? Pick an exercise to get started'}</Text>);
+	return <Button onPress={onUserReadyToStart} title="Go!" testID='get-started' />;
 }
