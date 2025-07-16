@@ -4,11 +4,8 @@ interface HomeScreenProps {
 	onUserReadyToStart: (r: Router) => void;
 
 }
-function prodOnUserReadyToStart(r: Router) {
-	r.navigate("/exercises");
-}
 
-export default function HomeScreen({ onUserReadyToStart = prodOnUserReadyToStart }: HomeScreenProps) {
+export default function HomeScreen({ onUserReadyToStart = (r: Router) => r.navigate("/exercises") }: HomeScreenProps) {
 
 	const router = useRouter();
 
