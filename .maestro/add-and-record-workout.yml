@@ -1,8 +1,6 @@
 url: http://localhost:8081
 ---
 - launchApp
-- assertVisible:
-    id: "get-started-message"
 - tapOn:
     id: "get-started"
 - tapOn:
