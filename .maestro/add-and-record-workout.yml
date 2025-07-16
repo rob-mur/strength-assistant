@@ -1,0 +1,14 @@
+url: http://localhost:8081
+---
+- launchApp
+- assertVisible:
+    id: "get-started-message"
+- tapOn:
+    id: "get-started"
+- tapOn:
+    id: "add-exercise"
+- tapOn:
+    id: "submit-exercise"
+- tapOn:
+    id: "add-workout"
+- assertVisible: "the workout"
