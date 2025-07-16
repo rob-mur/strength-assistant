@@ -1,14 +1,15 @@
 import HomeScreen from '@/app/(tabs)';
-import { fireEvent, render } from '@testing-library/react-native';
+import { fireEvent, render, userEvent } from '@testing-library/react-native';
 
 
 describe('<HomeScreen />', () => {
-	test('When the user decides to get started their exercise list is shown', () => {
+	test('When the user decides to get started their exercise list is shown', async () => {
 		// Given
 		let gotStarted = false;
 		const { getByTestId } = render(<HomeScreen onUserReadyToStart={() => { gotStarted = true; }} />);
+		const user = userEvent.setup();
 		// When
-		fireEvent.press(getByTestId("get-started"))
+		await user.press(getByTestId("get-started"))
 		// Then
 		expect(gotStarted).toBe(true);
 	});
