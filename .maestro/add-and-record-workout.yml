@@ -10,6 +10,6 @@ url: http://localhost:8081
 - inputText: "ExerciseName"
 - tapOn:
     id: "submit"
+- assertVisible: "ExerciseName"
 - tapOn:
     id: "add-workout"
-- assertVisible: "the workout"

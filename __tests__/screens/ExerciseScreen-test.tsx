@@ -16,7 +16,7 @@ describe('<ExerciseScreen/>', () => {
 		const mockOnAddExercise = jest.fn();
 		const { getByTestId } = render(<ExerciseScreen onAddExercise={mockOnAddExercise} />);
 		// When
-		await state.user.press(getByTestId("add-exercise"))
+		await state.user.press(await getByTestId("add-exercise"))
 		// Then
 		expect(mockOnAddExercise.mock.lastCall).not.toBeNull();
 	});

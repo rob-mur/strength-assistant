@@ -1,12 +1,12 @@
 import { useRouter, Router } from 'expo-router';
-import * as React from 'react';
 import { FAB } from 'react-native-paper';
-
+import { Text } from 'react-native';
 interface WorkoutScreenProps {
 	onAddWorkout: (r: Router) => void;
+	selectedExercise: string;
 }
 
-export default function WorkoutScreen({ onAddWorkout = (r: Router) => r.navigate("./add") }: WorkoutScreenProps) {
+export default function WorkoutScreen({ onAddWorkout = (r: Router) => r.navigate("./add"), selectedExercise }: WorkoutScreenProps) {
 	const router = useRouter();
-	return <FAB icon="plus" testID='add-workout' onPress={(_) => onAddWorkout(router)} />;
+	return <div><Text>{selectedExercise}</Text><FAB icon="plus" testID='add-workout' onPress={(_) => onAddWorkout(router)} /></div>;
 }

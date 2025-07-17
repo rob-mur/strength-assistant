@@ -13,7 +13,7 @@ describe('<HomeScreen />', () => {
 		const mockOnUserReadToStart = jest.fn();
 		const { getByTestId } = render(<HomeScreen onUserReadyToStart={mockOnUserReadToStart} />);
 		// When
-		await state.user.press(getByTestId("get-started"))
+		await state.user.press(await getByTestId("get-started"))
 		// Then
 		expect(mockOnUserReadToStart.mock.lastCall).not.toBeNull();
 	});
