@@ -13,12 +13,12 @@ describe('<ExerciseScreen/>', () => {
 	});
 	test('When the user request to add an exercise their request is accepted', async () => {
 		// Given
-		let gotStarted = false;
-		const { getByTestId } = render(<ExerciseScreen onAddExercise={() => { gotStarted = true; }} />);
+		const mockOnAddExercise = jest.fn();
+		const { getByTestId } = render(<ExerciseScreen onAddExercise={mockOnAddExercise} />);
 		// When
 		await state.user.press(getByTestId("add-exercise"))
 		// Then
-		expect(gotStarted).toBe(true);
+		expect(mockOnAddExercise.mock.lastCall).not.toBeNull();
 	});
 });
 

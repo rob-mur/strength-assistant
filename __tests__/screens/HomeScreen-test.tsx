@@ -10,12 +10,12 @@ describe('<HomeScreen />', () => {
 
 	test('When the user decides to get started their exercise list is shown', async () => {
 		// Given
-		let gotStarted = false;
-		const { getByTestId } = render(<HomeScreen onUserReadyToStart={() => { gotStarted = true; }} />);
+		const mockOnUserReadToStart = jest.fn();
+		const { getByTestId } = render(<HomeScreen onUserReadyToStart={mockOnUserReadToStart} />);
 		// When
 		await state.user.press(getByTestId("get-started"))
 		// Then
-		expect(gotStarted).toBe(true);
+		expect(mockOnUserReadToStart.mock.lastCall).not.toBeNull();
 	});
 });
 
