@@ -1,10 +1,13 @@
 import { useRouter, Router } from "expo-router";
+import React from "react";
 import { Button, TextInput } from "react-native";
 
 interface AddExerciseComponentProps {
-	onExerciseSubmitted: (r: Router) => void;
+	onExerciseSubmitted: (r: Router, exercise: string) => void;
 }
-export default function AddExerciseComponent({ onExerciseSubmitted = (r: Router) => r.navigate("/workout") }: AddExerciseComponentProps) {
+export default function AddExerciseComponent({ onExerciseSubmitted = (r: Router, exercise: string) => r.navigate(`/workout?exercise=${exercise}`) }: AddExerciseComponentProps) {
 	const router = useRouter();
-	return <div><TextInput testID="name"></TextInput><Button title="Submit" testID="submit" onPress={() => onExerciseSubmitted(router)} /></div>;
+	const [exercise, onChangeExercise] = React.useState('')
+
+	return <div><TextInput testID="name" value={exercise} onChangeText={onChangeExercise}></TextInput><Button title="Submit" testID="submit" onPress={() => onExerciseSubmitted(router, exercise)} /></div>;
 }
