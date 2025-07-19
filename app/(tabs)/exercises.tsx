@@ -3,10 +3,9 @@ import * as React from 'react';
 import { FAB } from 'react-native-paper';
 
 interface ExerciseScreenProps {
-	onAddExercise: (r: Router) => void;
+	onAddExercise: () => void;
 }
 
-export default function ExerciseScreen({ onAddExercise = (r: Router) => r.navigate("./add") }: ExerciseScreenProps) {
-	const router = useRouter();
-	return <FAB icon="plus" testID='add-exercise' onPress={(_) => onAddExercise(router)} />;
+export default function ExerciseScreen({ onAddExercise = () => useRouter().navigate("./add") }: ExerciseScreenProps) {
+	return <FAB icon="plus" testID='add-exercise' onPress={(_) => onAddExercise()} />;
 }

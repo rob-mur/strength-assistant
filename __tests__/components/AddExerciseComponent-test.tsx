@@ -14,13 +14,13 @@ describe('<AddExerciseComponent/>', () => {
 	});
 	test('When the user enters a name and pressed submit the callback is executed', async () => {
 		// Given
-		let gotStarted = false;
-		const { getByTestId } = render(<AddExerciseComponent onExerciseSubmitted={() => { gotStarted = true; }} />);
+		let mockOnExerciseSubmitted = jest.fn();
+		const { getByTestId } = render(<AddExerciseComponent onExerciseSubmitted={mockOnExerciseSubmitted} />);
 		// When
 		await state.user.type(getByTestId("name"), "Exercise Name");
 		await state.user.press(getByTestId("submit"))
 		// Then
-		expect(gotStarted).toBe(true);
+		expect(mockOnExerciseSubmitted.mock.lastCall).not.toBeNull();
 	});
 });
 

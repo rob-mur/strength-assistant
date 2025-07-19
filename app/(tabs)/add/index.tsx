@@ -3,11 +3,11 @@ import React from "react";
 import { Button, TextInput } from "react-native";
 
 interface AddExerciseComponentProps {
-	onExerciseSubmitted: (r: Router, exercise: string) => void;
+	onExerciseSubmitted: (exercise: string) => void;
 }
-export default function AddExerciseComponent({ onExerciseSubmitted = (r: Router, exercise: string) => r.navigate(`/workout?exercise=${exercise}`) }: AddExerciseComponentProps) {
-	const router = useRouter();
+export default function AddExerciseComponent({ onExerciseSubmitted = (exercise: string) => useRouter().navigate(`/workout?exercise=${exercise}`) }: AddExerciseComponentProps) {
 	const [exercise, onChangeExercise] = React.useState('')
 
-	return <div><TextInput testID="name" value={exercise} onChangeText={onChangeExercise}></TextInput><Button title="Submit" testID="submit" onPress={() => onExerciseSubmitted(router, exercise)} /></div>;
+
+	return <div><TextInput testID="name" value={exercise} onChangeText={onChangeExercise}></TextInput><Button title="Submit" testID="submit" onPress={() => onExerciseSubmitted(exercise)} /></div>;
 }
