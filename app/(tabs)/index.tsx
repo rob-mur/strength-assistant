@@ -1,10 +1,18 @@
-import { Router, useRouter } from 'expo-router';
-import { Button } from 'react-native';
+import { Router, useRouter } from "expo-router";
+import { Button } from "react-native";
 interface HomeScreenProps {
-	onUserReadyToStart: () => void;
-
+  onUserReadyToStart: (r: Router) => void;
 }
 
-export default function HomeScreen({ onUserReadyToStart = () => useRouter().navigate("/exercises") }: HomeScreenProps) {
-	return <Button onPress={(_) => onUserReadyToStart()} title="Go!" testID='get-started' />;
+export default function HomeScreen({
+  onUserReadyToStart = (r: Router) => r.navigate("/exercises"),
+}: HomeScreenProps) {
+  const router = useRouter();
+  return (
+    <Button
+      onPress={(_) => onUserReadyToStart(router)}
+      title="Go!"
+      testID="get-started"
+    />
+  );
 }

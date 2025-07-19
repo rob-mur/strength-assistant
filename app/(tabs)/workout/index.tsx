@@ -1,11 +1,28 @@
-import { useRouter, Router, useLocalSearchParams } from 'expo-router';
-import { FAB } from 'react-native-paper';
-import { Text } from 'react-native';
+import { useRouter, Router, useLocalSearchParams } from "expo-router";
+import { FAB } from "react-native-paper";
+import { Text } from "react-native";
 interface WorkoutScreenProps {
-	onAddWorkout: () => void;
-	selectedExercise: string;
+  onAddWorkout: (r: Router) => void;
+  selectedExercise: string | null;
 }
 
-export default function WorkoutScreen({ onAddWorkout = () => useRouter().navigate("./add"), selectedExercise = useLocalSearchParams().exercise }: WorkoutScreenProps) {
-	return <div><Text>{selectedExercise}</Text><FAB icon="plus" testID='add-workout' onPress={(_) => onAddWorkout()} /></div>;
+export default function WorkoutScreen({
+  onAddWorkout = (r: Router) => r.navigate("./add"),
+  selectedExercise,
+}: WorkoutScreenProps) {
+  const router = useRouter();
+  const exerciseSearchParam = useLocalSearchParams().exercise;
+
+  const exercise = selectedExercise ?? exerciseSearchParam;
+
+  return (
+    <div>
+      <Text>{exercise}</Text>
+      <FAB
+        icon="plus"
+        testID="add-workout"
+        onPress={(_) => onAddWorkout(router)}
+      />
+    </div>
+  );
 }
