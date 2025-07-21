@@ -2,14 +2,14 @@ url: http://localhost:8081
 ---
 - launchApp
 - tapOn:
-    id: 'get-started'
+    id: "get-started"
 - tapOn:
-    id: 'add-exercise'
+    id: "add-exercise"
 - tapOn:
-    id: 'name'
-- inputText: 'ExerciseName'
+    id: "name"
+- inputText: "ExerciseName"
 - tapOn:
-    id: 'submit'
-- assertVisible: 'ExerciseName'
+    id: "submit"
+- assertVisible: "ExerciseName"
 - tapOn:
-    id: 'add-workout'
+    id: "add-workout"
