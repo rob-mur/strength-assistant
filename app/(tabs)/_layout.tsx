@@ -1,5 +1,7 @@
 import TabBar from "@/lib/components/TabBar";
+import { Locales } from "@/lib/locales";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Tabs, router } from "expo-router";
 import React from "react";
 import { Appbar, Menu, Tooltip } from "react-native-paper";
@@ -16,45 +18,6 @@ const TabLayout = () => {
         name="index"
         options={{
           title: Locales.t("titleHome"),
-          headerRight: () => (
-            <>
-              <Tooltip title={Locales.t("search")}>
-                <Appbar.Action
-                  icon="magnify"
-                  onPress={() => router.push("/search")}
-                />
-              </Tooltip>
-              <Menu
-                statusBarHeight={48}
-                visible={visible}
-                onDismiss={() => setVisible(false)}
-                anchor={
-                  <Tooltip title={Locales.t("options")}>
-                    <Appbar.Action
-                      icon="dots-vertical"
-                      onPress={() => setVisible(true)}
-                    />
-                  </Tooltip>
-                }
-              >
-                <Menu.Item
-                  title={Locales.t("titleSettings")}
-                  leadingIcon="cog"
-                  onPress={() => router.push("/(tabs)/settings")}
-                />
-                <Menu.Item
-                  title={Locales.t("stackNav")}
-                  leadingIcon="card-multiple-outline"
-                  onPress={() => router.push("/modal")}
-                />
-                <Menu.Item
-                  title={Locales.t("drawerNav")}
-                  leadingIcon="gesture-swipe"
-                  onPress={() => router.push("/drawer")}
-                />
-              </Menu>
-            </>
-          ),
           tabBarIcon: (props) => (
             <MaterialCommunityIcons
               {...props}
@@ -65,53 +28,32 @@ const TabLayout = () => {
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="exercises"
         options={{
-          title: Locales.t("profile"),
-          headerRight: () => (
-            <>
-              <Tooltip title={Locales.t("search")}>
-                <Appbar.Action
-                  icon="magnify"
-                  onPress={() => router.push("/search")}
-                />
-              </Tooltip>
-              <Tooltip title={Locales.t("titleSettings")}>
-                <Appbar.Action
-                  icon="cog"
-                  onPress={() => router.push("/(tabs)/settings")}
-                />
-              </Tooltip>
-            </>
-          ),
+          title: Locales.t("titleExercises"),
           tabBarIcon: (props) => (
-            <MaterialCommunityIcons
+            <MaterialIcons
               {...props}
               size={24}
-              name={props.focused ? "account" : "account-outline"}
+              name={props.focused ? "sports-gymnastics" : "sports-martial-arts"}
             />
           ),
         }}
       />
       <Tabs.Screen
-        name="settings"
+        name="workout"
         options={{
-          title: Locales.t("titleSettings"),
-          headerRight: () => (
-            <Tooltip title={Locales.t("drawerNav")}>
-              <Appbar.Action
-                icon="gesture-swipe"
-                onPress={() => router.push("/drawer")}
+          title: Locales.t("titleWorkout"),
+          tabBarIcon: (props) =>
+            props.focused ? (
+              <MaterialCommunityIcons
+                {...props}
+                size={24}
+                name={"weight-lifter"}
               />
-            </Tooltip>
-          ),
-          tabBarIcon: (props) => (
-            <MaterialCommunityIcons
-              {...props}
-              size={24}
-              name={props.focused ? "cog" : "cog-outline"}
-            />
-          ),
+            ) : (
+              <MaterialIcons {...props} size={24} name={"fitness-center"} />
+            ),
         }}
       />
     </Tabs>

@@ -3,7 +3,7 @@ import { fireEvent, render, userEvent } from "@testing-library/react-native";
 import { act } from "react";
 import { CommonTestState } from "../../__test_utils__/utils";
 import ExerciseScreen from "@/app/(tabs)/exercises";
-import AddExerciseComponent from "@/app/(tabs)/add";
+import AddExerciseComponent from "@/app/(tabs)/exercises/add";
 
 describe("<AddExerciseComponent/>", () => {
   let state: CommonTestState;

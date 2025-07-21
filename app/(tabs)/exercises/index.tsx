@@ -7,7 +7,7 @@ interface ExerciseScreenProps {
 }
 
 export default function ExerciseScreen({
-  onAddExercise = (r: Router) => r.navigate("./add"),
+  onAddExercise = (r: Router) => r.navigate("/exercises/add"),
 }: ExerciseScreenProps) {
   const router = useRouter();
   return (

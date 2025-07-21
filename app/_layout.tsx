@@ -1,11 +1,6 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { JetBrainsMono_400Regular } from "@expo-google-fonts/jetbrains-mono";
 import { NotoSans_400Regular } from "@expo-google-fonts/noto-sans";
-import {
-  DarkTheme as NavDarkTheme,
-  DefaultTheme as NavLightTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import * as Localization from "expo-localization";
 import { SplashScreen, Stack } from "expo-router";
@@ -51,40 +46,22 @@ const RootLayout = () => {
     return null;
   }
 
-  return <RootLayoutNav />;
+  const colorScheme = useColorScheme();
+
+  return (
+    <PaperProvider
+      theme={colorScheme === "light" ? MD3LightTheme : MD3DarkTheme}
+    >
+      <RootLayoutNav />
+    </PaperProvider>
+  );
 };
 
 const RootLayoutNav = () => {
-  const colorScheme = useColorScheme();
-
-  // Load settings from the device
-  const { DarkTheme, LightTheme } = adaptNavigationTheme({
-    reactNavigationDark: NavDarkTheme,
-    reactNavigationLight: NavLightTheme,
-    materialDark: MD3DarkTheme,
-    materialLight: MD3LightTheme,
-  });
-
   return (
-    <ThemeProvider
-      value={
-        colorScheme === "light"
-          ? { ...LightTheme, fonts: NavLightTheme.fonts }
-          : { ...DarkTheme, fonts: NavDarkTheme.fonts }
-      }
-    >
-      <PaperProvider theme={colorScheme === "light" ? LightTheme : DarkTheme}>
-        <Stack
-          screenOptions={{
-            animation: "slide_from_bottom",
-          }}
-        >
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        </Stack>
-      </PaperProvider>
-
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <Stack>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+    </Stack>
   );
 };
 
