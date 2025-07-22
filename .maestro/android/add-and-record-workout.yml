@@ -1,0 +1,15 @@
+appId: com.jimmier_solutions.strength_assistant
+---
+- launchApp
+- tapOn:
+    id: "get-started"
+- tapOn:
+    id: "add-exercise"
+- tapOn:
+    id: "name"
+- inputText: "ExerciseName"
+- tapOn:
+    id: "submit"
+- assertVisible: "ExerciseName"
+- tapOn:
+    id: "add-workout"
