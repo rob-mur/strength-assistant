@@ -75,10 +75,10 @@ jobs:
       - name: Setup Gradle Cache
         uses: actions/cache@v3
         with:
-        path: $HOME/.gradle/caches
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/package.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
+          path: $HOME/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/package.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
       - name: 📦 Install dependencies
         run: |
