@@ -75,11 +75,11 @@ jobs:
           node-version: "20"
           cache: "npm"
 
-      - name: 📦 Get yarn cache directory path
+      - name: 📦 Get npm cache directory path
         id: npm-cache-dir-path
         run: echo "dir=$()" >> $GITHUB_OUTPUT
 
-      - name: 📦 Setup yarn cache
+      - name: 📦 Setup npm cache
         uses: actions/cache@v3
         with:
           path: ${{ steps.npm-cache-dir-path.outputs.dir }}
@@ -89,8 +89,8 @@ jobs:
 
       - name: 📦 Install dependencies
         run: |
-          yarn install
-          yarn global add eas-cli@latest
+          npm install
+          npm install -g eas-cli@latest
 
       - name: 📱 Setup EAS build cache
         uses: actions/cache@v3
