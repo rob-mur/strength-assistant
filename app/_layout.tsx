@@ -2,18 +2,10 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { JetBrainsMono_400Regular } from "@expo-google-fonts/jetbrains-mono";
 import { NotoSans_400Regular } from "@expo-google-fonts/noto-sans";
 import { useFonts } from "expo-font";
-import * as Localization from "expo-localization";
 import { SplashScreen, Stack } from "expo-router";
-import * as SecureStore from "expo-secure-store";
-import { StatusBar } from "expo-status-bar";
 import React from "react";
-import { Platform, useColorScheme } from "react-native";
-import {
-  adaptNavigationTheme,
-  MD3DarkTheme,
-  MD3LightTheme,
-  PaperProvider,
-} from "react-native-paper";
+import { MD3DarkTheme, MD3LightTheme, PaperProvider } from "react-native-paper";
+import { useColorScheme } from "react-native";
 
 // Catch any errors thrown by the Layout component.
 export { ErrorBoundary } from "expo-router";
@@ -31,6 +23,8 @@ const RootLayout = () => {
     ...MaterialCommunityIcons.font,
   });
 
+  const colorScheme = useColorScheme();
+
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   React.useEffect(() => {
     if (error) throw error;
@@ -45,8 +39,6 @@ const RootLayout = () => {
   if (!loaded) {
     return null;
   }
-
-  const colorScheme = useColorScheme();
 
   return (
     <PaperProvider
