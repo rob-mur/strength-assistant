@@ -172,5 +172,6 @@ jobs:
             adb install app-release.apk || (adb kill-server && adb start-server && adb devices && adb install app-release.apk)
 
             # Run e2e
-            maestro test .maestro/android/*
+            $HOME/.maestro/bin/maestro test .maestro/android/*
+
 
