@@ -4,6 +4,9 @@
 			"developmentClient": true,
 			"distribution": "internal"
 		},
+		"preview": {
+			"distribution": "internal"
+		},
 		"production": {},
 		"e2e-test": {
 			"withoutCredentials": true,
