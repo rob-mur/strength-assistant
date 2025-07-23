@@ -4,29 +4,13 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      buildType:
-        type: choice
-        description: "Build type to run"
-        options:
-          - dev
-          - prod-apk
-          - all
 
 env:
   EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
   NODE_OPTIONS: --openssl-legacy-provider
 
 jobs:
-  check-skip:
-    runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, '[skip ci]')"
-    steps:
-      - name: Skip CI check
-        run: echo "Proceeding with workflow"
-
   test:
-    needs: check-skip
     runs-on: ubuntu-latest
     steps:
       - name: 🏗 Checkout repository
