@@ -49,8 +49,6 @@ jobs:
   build:
     needs: test
     runs-on: ubuntu-latest
-    env:
-      EAS_LOCAL_BUILD_SKIP_CLEANUP: 1
 
     steps:
       - name: 🏗 Checkout repository
@@ -74,21 +72,18 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-npm-
 
+      - name: Setup Gradle Cache
+        uses: actions/cache@v3
+        with:
+        path: $HOME/.gradle/caches
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/package.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+
       - name: 📦 Install dependencies
         run: |
           npm install
           npm install -g eas-cli@latest
-
-      - name: resolve the build directory (asbolute required)
-        run: echo "EAS_LOCAL_BUILD_WORKINGDIR=$HOME/.eas-build-dir" >> $GITHUB_ENV
-
-      - name: 📱 Setup EAS build cache
-        uses: actions/cache@v3
-        with:
-          path: $EAS_LOCAL_BUILD_DIRECTORY
-          key: ${{ runner.os }}-eas-build-local-${{ hashFiles('**/package.json') }}
-          restore-keys: |
-            ${{ runner.os }}-eas-build-local-
 
       - name: 🔄 Verify EAS CLI installation
         run: |
