@@ -49,6 +49,9 @@ jobs:
   build:
     needs: test
     runs-on: ubuntu-latest
+    env:
+      EAS_LOCAL_BUILD_WORKINGDIR: ~/.eas-build-local
+      EAS_LOCAL_BUILD_SKIP_CLEANUP: 1
     steps:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
@@ -79,7 +82,7 @@ jobs:
       - name: 📱 Setup EAS build cache
         uses: actions/cache@v3
         with:
-          path: ~/.eas-build-local
+          path: $EAS_LOCAL_BUILD_DIRECTORY
           key: ${{ runner.os }}-eas-build-local-${{ hashFiles('**/package.json') }}
           restore-keys: |
             ${{ runner.os }}-eas-build-local-
