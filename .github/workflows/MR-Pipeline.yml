@@ -125,6 +125,9 @@ jobs:
             arch: x86
 
     steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        
       - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
