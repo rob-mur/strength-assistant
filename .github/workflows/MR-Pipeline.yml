@@ -50,9 +50,24 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
 
+    env:
+      EAS_LOCAL_BUILD_PLUGIN_PATH: eas-build-plugin/bin/eas-cli-local-build-plugin
+      EAS_LOCAL_BUILD_WORKINGDIR: build
+      EAS_LOCAL_BUILD_SKIP_CLEANUP: 1
+
     steps:
+
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
+        
+
+      - name: Clone modified eas-build plugin
+        uses: actions/checkout@v4
+        with:
+          repository: rob-mur/eas-build
+          token: ${{ secrets.PAT }}
+          ref: remove-workdir-check
+          path: eas-build-plugin
 
       - name: 🏗 Setup Node.js
         uses: actions/setup-node@v4
@@ -72,6 +87,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-npm-
 
+      - name: Initialize plugin
+        run: npx yarn -y && npx yarn build
+        working-directory: eas-build-plugin
+
       - name: Get gradle cache dir path
         id: gradle-cache-dir-path
         run: echo "dir=$HOME/.gradle" >> $GITHUB_OUTPUT
@@ -83,6 +102,14 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/package.lock') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
+
+      - name: 📦 Setup eas build cache 
+        uses: actions/cache@v3
+        with:
+          path: build
+          key: ${{ runner.os }}-eas-build-${{ hashFiles('**/package.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-eas-build-
 
       - name: 📦 Install dependencies
         run: |
