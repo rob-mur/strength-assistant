@@ -126,6 +126,11 @@ jobs:
           # Build with increased memory limit
           export NODE_OPTIONS="--openssl-legacy-provider --max_old_space_size=4096"
           eas build --platform android --profile preview --local --non-interactive --output=./app-release.apk
+        env:
+          EAS_LOCAL_BUILD_PLUGIN_PATH: "$(pwd)/eas-build-plugin/bin/eas-cli-local-build-plugin"
+          EAS_LOCAL_BUILD_WORKINGDIR: "$(pwd)/build"
+
+
 
       - name: 📦 Upload build artifacts to GitHub
         uses: actions/upload-artifact@v4
