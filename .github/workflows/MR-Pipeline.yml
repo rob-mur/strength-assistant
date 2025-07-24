@@ -103,6 +103,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
+      - name: Get eas paths
+        id: eas-cache-dir-path
+        run: |
+          echo "EAS_LOCAL_BUILD_PLUGIN_PATH=$(pwd)/eas-build-plugin/bin/eas-cli-local-build-plugin" >> $GITHUB_ENV
+          echo "EAS_LOCAL_BUILD_WORKINGDIR=$(pwd)/build" >> $GITHUB_ENV
+
       - name: 📦 Setup eas build cache 
         uses: actions/cache@v3
         with:
@@ -127,8 +133,8 @@ jobs:
           export NODE_OPTIONS="--openssl-legacy-provider --max_old_space_size=4096"
           eas build --platform android --profile preview --local --non-interactive --output=./app-release.apk
         env:
-          EAS_LOCAL_BUILD_PLUGIN_PATH: "$(pwd)/eas-build-plugin/bin/eas-cli-local-build-plugin"
-          EAS_LOCAL_BUILD_WORKINGDIR: "$(pwd)/build"
+          EAS_LOCAL_BUILD_PLUGIN_PATH: ${{ env.EAS_LOCAL_BUILD_PLUGIN_PATH }} 
+          EAS_LOCAL_BUILD_WORKINGDIR: ${{ env.EAS_LOCAL_BUILD_WORKINGDIR }}
 
 
 
