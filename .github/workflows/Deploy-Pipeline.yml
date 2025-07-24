@@ -1,0 +1,59 @@
+name: Deploy Pipeline
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🏗 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🏗 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: 📦 Get npm cache directory path
+        id: npm-cache-dir-path
+        run: echo "dir=$(npm config get cache)" >> $GITHUB_OUTPUT
+
+      - name: 📦 Setup npm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.npm-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      - name: Get gradle cache dir path
+        id: gradle-cache-dir-path
+        run: echo "dir=$HOME/.gradle" >> $GITHUB_OUTPUT
+
+      - name: 📦 Setup gradle cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.gradle-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/package.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: 📦 Install dependencies
+        run: |
+          npm install
+          npm install -g eas-cli@latest
+
+      - name: 🔄 Verify EAS CLI installation
+        run: |
+          echo "EAS CLI version:"
+          eas --version
+
+      - name: 📱 Build Development APK
+        run: |
+          # Build with increased memory limit
+          export NODE_OPTIONS="--openssl-legacy-provider --max_old_space_size=4096"
+          eas build --platform android --profile development --local --non-interactive --output=./app-dev.apk

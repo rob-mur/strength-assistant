@@ -72,8 +72,17 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-npm-
 
-      - uses: burrunan/gradle-cache-action@v3
-        name: Cache .gradle
+      - name: Get gradle cache dir path
+        id: gradle-cache-dir-path
+        run: echo "dir=$HOME/.gradle" >> $GITHUB_OUTPUT
+
+      - name: 📦 Setup gradle cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.gradle-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/package.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
       - name: 📦 Install dependencies
         run: |
@@ -84,12 +93,6 @@ jobs:
         run: |
           echo "EAS CLI version:"
           eas --version
-
-      - name: 📱 Build Development APK
-        run: |
-          # Build with increased memory limit
-          export NODE_OPTIONS="--openssl-legacy-provider --max_old_space_size=4096"
-          eas build --platform android --profile development --local --non-interactive --output=./app-dev.apk
 
       - name: 📱 Build Preview APK (no dev server)
         run: |
