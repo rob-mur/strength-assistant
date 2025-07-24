@@ -72,13 +72,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-npm-
 
-      - name: Setup Gradle Cache
-        uses: actions/cache@v3
-        with:
-          path: $HOME/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/package.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+      - uses: burrunan/gradle-cache-action@v3
+        name: Cache .gradle
 
       - name: 📦 Install dependencies
         run: |
@@ -170,6 +165,6 @@ jobs:
             adb install app-release.apk || (adb kill-server && adb start-server && adb devices && adb install app-release.apk)
 
             # Run e2e
-            $HOME/.maestro/bin/maestro test .maestro/android/*
+            $HOME/.maestro/bin/maestro test .maestro/android
 
 
