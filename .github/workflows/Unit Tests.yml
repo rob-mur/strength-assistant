@@ -17,10 +17,7 @@ jobs:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
 
-      - name: Use CI devbox
-        run: cp devbox-ci.json devbox.json
-
-      - name: Install devbox
+      - name: Install devbo
         uses: jetify-com/devbox-install-action@v0.11.0
         with:
           enable-cache: true
