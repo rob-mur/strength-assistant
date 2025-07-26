@@ -1,6 +1,6 @@
 import { useRouter, Router, useLocalSearchParams } from "expo-router";
 import { FAB } from "react-native-paper";
-import { Text } from "react-native";
+import { Text, View } from "react-native";
 interface WorkoutScreenProps {
   onAddWorkout: (r: Router) => void;
   selectedExercise: string | null;
@@ -16,13 +16,13 @@ export default function WorkoutScreen({
   const exercise = selectedExercise ?? exerciseSearchParam;
 
   return (
-    <div>
+    <View>
       <Text>{exercise}</Text>
       <FAB
         icon="plus"
         testID="add-workout"
         onPress={(_) => onAddWorkout(router)}
       />
-    </div>
+    </View>
   );
 }

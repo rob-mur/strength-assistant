@@ -1,6 +1,6 @@
 import { useRouter, Router } from "expo-router";
 import React from "react";
-import { Button, TextInput } from "react-native";
+import { Button, TextInput, View } from "react-native";
 
 interface AddExerciseComponentProps {
   onExerciseSubmitted: (r: Router, exercise: string) => void;
@@ -12,7 +12,7 @@ export default function AddExerciseComponent({
   const [exercise, onChangeExercise] = React.useState("");
   const router = useRouter();
   return (
-    <div>
+    <View>
       <TextInput
         testID="name"
         value={exercise}
@@ -23,6 +23,6 @@ export default function AddExerciseComponent({
         testID="submit"
         onPress={() => onExerciseSubmitted(router, exercise)}
       />
-    </div>
+    </View>
   );
 }
