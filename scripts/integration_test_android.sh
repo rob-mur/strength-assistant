@@ -2,6 +2,7 @@
 
 # Github actions has a conflicting environment variable
 unset ANDROID_SDK_ROOT
+unset ANDROID_NDK_HOME
 
 echo "no" | avdmanager create avd --force -n test -k "system-images;android-35;google_apis_playstore;x86_64" --device "pixel_xl"
 
