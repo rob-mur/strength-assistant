@@ -9,11 +9,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: false
-
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
 
