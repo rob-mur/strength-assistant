@@ -24,6 +24,8 @@
         systemImageTypes = ["google_apis_playstore"];
         includeNDK = true;
         ndkVersion = "27.1.12297006";
+        includeCmake = true;
+        cmakeVersions = ["3.22.1"];
       };
       androidSdk = androidComposition.androidsdk;
     in {
