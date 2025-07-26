@@ -16,10 +16,8 @@
 
       androidComposition = pkgs.androidenv.composeAndroidPackages {
         buildToolsVersions = ["35.0.0"];
-        platformVersions = ["35"];
+        platformVersions =  ["35"];
         abiVersions = ["x86_64"];
-        includeEmulator = true;
-        emulatorVersion = "35.1.4";
         includeSystemImages = true;
         systemImageTypes = ["google_apis_playstore"];
         includeNDK = true;
