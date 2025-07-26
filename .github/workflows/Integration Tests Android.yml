@@ -32,6 +32,7 @@ jobs:
         uses: jetify-com/devbox-install-action@v0.11.0
         with:
           devbox-version: 0.14.2
+          enable-cache: true
 
       - name: 📦 Get npm cache directory path
         id: npm-cache-dir-path
@@ -81,6 +82,7 @@ jobs:
         uses: jetify-com/devbox-install-action@v0.11.0
         with:
           devbox-version: 0.14.2
+          enable-cache: true
 
       - name: Enable KVM group perms
         run: |
