@@ -17,10 +17,18 @@ jobs:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
 
+
+      - name: 📦 Setup devbox cache
+        uses: actions/cache@v3
+        with:
+          path: .devbox 
+          key: ${{ runner.os }}-devbox-${{ hashFiles('devbox.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-devbox-
+
       - name: Install devbox
         uses: jetify-com/devbox-install-action@v0.11.0
         with:
-          enable-cache: true
           devbox-version: 0.14.2
 
       - name: 📦 Get npm cache directory path
