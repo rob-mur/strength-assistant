@@ -12,9 +12,6 @@ jobs:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
 
-      - name: Use lighter devbox
-        run: cp devbox_lite.json devbox.json && rm devbox.lock
-
       - name: Install devbox
         uses: jetify-com/devbox-install-action@v0.11.0
         with:
