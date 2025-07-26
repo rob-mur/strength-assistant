@@ -3,7 +3,7 @@ name: Rebuild Devbox Cache
 on:
   push:
     paths:
-      - 'devbox.lock
+      - 'devbox.lock'
 
 
 jobs:
