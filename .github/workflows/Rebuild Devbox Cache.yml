@@ -1,0 +1,23 @@
+name: Rebuild Devbox Cache
+
+on:
+  push:
+    paths:
+      - 'devbox.lock
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🏗 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install devbox
+        uses: jetify-com/devbox-install-action@v0.11.0
+        with:
+          enable-cache: true
+          devbox-version: 0.14.2
+
+      - name: recaclulate cache
+        run: devbox cache upload
