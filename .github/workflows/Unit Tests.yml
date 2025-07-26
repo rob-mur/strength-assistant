@@ -9,6 +9,11 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
 
@@ -29,7 +34,7 @@ jobs:
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package.lock') }}
           restore-keys: |
             ${{ runner.os }}-npm-
-      
+
       - name: 📦 Install dependencies
         run: npm install
 
