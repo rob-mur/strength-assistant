@@ -9,6 +9,12 @@
 		"scripts": {
 			"test": [
 				"./scripts/test.sh"
+			],
+			"build_preview": [
+				"./scripts/build_preview.sh"
+			],
+			"integration_test_android": [
+				"./scripts/integration_test_android.sh"
 			]
 		}
 	},
