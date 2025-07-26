@@ -6,9 +6,6 @@
 		"nodejs@latest"
 	],
 	"shell": {
-		"init_hook": [
-			"yes | sdkmanager --licenses &> /dev/null"
-		],
 		"scripts": {
 			"test": [
 				"./scripts/test.sh"
