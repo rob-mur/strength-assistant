@@ -4,6 +4,7 @@
 unset ANDROID_SDK_ROOT
 unset ANDROID_NDK_HOME
 unset ANDROID_AVD_HOME
+export ANDROID_SDK_HOME=$ANDROID_HOME
 
 echo "no" | avdmanager create avd --force -n test -k "system-images;android-35;google_apis_playstore;x86_64" --device "pixel_xl"
 
