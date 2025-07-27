@@ -1,3 +1,4 @@
+import GettingStartedCard from "@/lib/components/Cards/GettingStartedCard";
 import { Router, useRouter } from "expo-router";
 import { Button } from "react-native";
 interface HomeScreenProps {
@@ -7,12 +8,11 @@ interface HomeScreenProps {
 export default function HomeScreen({
   onUserReadyToStart = (r: Router) => r.navigate("/exercises"),
 }: HomeScreenProps) {
-  const router = useRouter();
   return (
-    <Button
-      onPress={(_) => onUserReadyToStart(router)}
-      title="Go!"
-      testID="get-started"
+    <GettingStartedCard
+      content="Select an exercise to get started"
+      call_to_action="Start"
+      on_get_started={onUserReadyToStart}
     />
   );
 }
