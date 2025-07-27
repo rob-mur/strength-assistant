@@ -10,9 +10,13 @@ jobs:
     params:
       platform: android
       profile: preview
+      android: # Add this section for Android specific settings
+        buildType: apk # Specify to build an APK
 
   build_android_development:
     type: build
     params:
       platform: android
       profile: development
+      android: # Add this section for Android specific settings
+        buildType: apk # Specify to build an APK
