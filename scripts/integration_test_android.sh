@@ -8,6 +8,8 @@ unset XDG_CONFIG_HOME
 
 echo "no" | avdmanager create avd --force -n test -k "system-images;android-35;google_apis_playstore;x86_64" --device "pixel_xl"
 
+adb start-server
+
 emulator -avd test -no-snapshot-load -no-window -accel on -gpu off &
 
 echo "launched emulator in background"
@@ -18,9 +20,6 @@ errorhandler () {
     kill $EMULATOR_PID
 }
 trap errorhandler ERR EXIT
-
-which adb
-adb kill-server
 
 echo "Waiting for device to boot"
 adb wait-for-device
