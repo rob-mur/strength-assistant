@@ -1,4 +1,5 @@
 import GettingStartedCard from "@/lib/components/Cards/GettingStartedCard";
+import { Locales } from "@/lib/locales";
 import { Router } from "expo-router";
 import { Surface } from "react-native-paper";
 interface HomeScreenProps {
@@ -11,8 +12,8 @@ export default function HomeScreen({
   return (
     <GettingStartedCard
       style={{ padding: 16 }}
-      content="Select an exercise to get started"
-      call_to_action="Start"
+      content={Locales.t("getStartedMessage")}
+      call_to_action={Locales.t("getStartedCallToAction")}
       on_get_started={onUserReadyToStart}
     />
   );
