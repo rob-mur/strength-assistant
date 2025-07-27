@@ -10,6 +10,8 @@ echo "no" | avdmanager create avd --force -n test -k "system-images;android-35;g
 
 emulator -avd test -no-snapshot-load -no-window -accel on -gpu off &
 
+echo "launched emulator in background"
+
 EMULATOR_PID=$!
 
 errorhandler () {
@@ -18,6 +20,7 @@ errorhandler () {
 trap errorhandler ERR EXIT
 
 which adb
+adb kill-server
 
 echo "Waiting for device to boot"
 adb wait-for-device
