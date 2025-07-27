@@ -21,6 +21,9 @@ jobs:
           devbox-version: 0.14.2
           enable-cache: true
 
+      - name: Run tests
+        run: devbox run integration_test_android
+      
       - name: 📦 Get npm cache directory path
         id: npm-cache-dir-path
         run: echo "dir=$(devbox run -- npm config get cache)" >> $GITHUB_OUTPUT
