@@ -8,7 +8,7 @@ unset XDG_CONFIG_HOME
 
 echo "no" | avdmanager create avd --force -n test -k "system-images;android-35;google_apis_playstore;x86_64" --device "pixel_xl"
 
-emulator -avd test -no-snapshot-load -no-window -accel on -gpu host&
+emulator -avd test -no-snapshot-load -no-window -accel on -gpu swiftshader_indirect&
 
 EMULATOR_PID=$!
 
