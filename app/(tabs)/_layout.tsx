@@ -2,9 +2,8 @@ import TabBar from "@/lib/components/TabBar";
 import { Locales } from "@/lib/locales";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { Tabs, router } from "expo-router";
+import { Tabs } from "expo-router";
 import React from "react";
-import { Appbar, Menu, Tooltip } from "react-native-paper";
 
 const TabLayout = () => {
   return (

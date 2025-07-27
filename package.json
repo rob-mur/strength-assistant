@@ -10,13 +10,13 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "test": "jest --watchAll",
-    "format": "npx prettier . --write"
+    "format": "npx prettier . --write",
+    "format:check": "npx prettier ."
   },
   "dependencies": {
     "@expo-google-fonts/jetbrains-mono": "^0.4.0",
     "@expo-google-fonts/noto-sans": "^0.4.0",
     "@expo/vector-icons": "^14.1.0",
-    "@react-native/gradle-plugin": "^0.80.1",
     "@react-navigation/bottom-tabs": "^7.3.10",
     "@react-navigation/elements": "^2.3.8",
     "@react-navigation/native": "^7.1.6",
