@@ -47,7 +47,7 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    needs: build
+    # needs: build
     steps:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
@@ -64,10 +64,10 @@ jobs:
             sudo udevadm control --reload-rules
             sudo udevadm trigger --name-match=kvm
 
-      - name: Download APK
-        uses: actions/download-artifact@v4
-        with:
-          name: preview_build
+      # - name: Download APK
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: preview_build
 
       - name: Run tests
         run: devbox run integration_test_android

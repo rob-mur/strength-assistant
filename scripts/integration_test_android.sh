@@ -17,6 +17,9 @@ errorhandler () {
 }
 trap errorhandler ERR EXIT
 
+which adb
+
+echo "Waiting for device to boot"
 adb wait-for-device
 
 BOOT_COMPLETED=""
