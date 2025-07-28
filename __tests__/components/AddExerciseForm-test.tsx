@@ -1,11 +1,8 @@
-import ExarciseScreen from "@/app/(tabs)/exercises";
-import { fireEvent, render, userEvent } from "@testing-library/react-native";
-import { act } from "react";
+import { render } from "@testing-library/react-native";
 import { CommonTestState } from "../../__test_utils__/utils";
-import ExerciseScreen from "@/app/(tabs)/exercises";
-import AddExerciseComponent from "@/app/(tabs)/exercises/add";
+import AddExerciseForm from "@/lib/components/Forms/AddExerciseForm";
 
-describe("<AddExerciseComponent/>", () => {
+describe("<AddExerciseForm/>", () => {
   let state: CommonTestState;
   beforeEach(() => {
     state = new CommonTestState();
@@ -14,7 +11,7 @@ describe("<AddExerciseComponent/>", () => {
     // Given
     let mockOnExerciseSubmitted = jest.fn();
     const { getByTestId } = render(
-      <AddExerciseComponent onExerciseSubmitted={mockOnExerciseSubmitted} />,
+      <AddExerciseForm onExerciseSubmitted={mockOnExerciseSubmitted} />,
     );
     // When
     await state.user.type(getByTestId("name"), "Exercise Name");
