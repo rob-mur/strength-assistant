@@ -19,7 +19,7 @@ const GettingStartedCard = ({
   const router = useRouter();
   return (
     <View style={style}>
-      <Card style={{ alignSelf: "flex-start", maxWidth: "90%" }}>
+      <Card style={{ alignSelf: "flex-start" }}>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Card.Content>
             <Text variant="bodyMedium">{content}</Text>
