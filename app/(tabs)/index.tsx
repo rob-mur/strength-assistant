@@ -1,7 +1,6 @@
 import GettingStartedCard from "@/lib/components/Cards/GettingStartedCard";
 import { Locales } from "@/lib/locales";
 import { Router } from "expo-router";
-import { Surface } from "react-native-paper";
 interface HomeScreenProps {
   onUserReadyToStart: (r: Router) => void;
 }

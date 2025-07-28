@@ -1,7 +1,6 @@
 import { useRouter, Router, useLocalSearchParams } from "expo-router";
 import { Card, FAB, Surface } from "react-native-paper";
 import { View } from "react-native";
-import { Text } from "react-native-paper";
 interface WorkoutScreenProps {
   onAddWorkout: (r: Router) => void;
   selectedExercise: string | null;

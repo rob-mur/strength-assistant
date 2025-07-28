@@ -2,7 +2,7 @@ name: Create Production Builds
 
 on:
   push:
-    branches: ['main']
+    branches: ["main"]
 
 jobs:
   build_android_preview:
@@ -10,7 +10,7 @@ jobs:
     params:
       platform: android
       profile: preview
-      android: 
+      android:
         buildType: apk
         WITH_STORYBOOK: true
 
@@ -19,7 +19,7 @@ jobs:
     params:
       platform: android
       profile: development
-      android: 
-        buildType: apk 
+      android:
+        buildType: apk
       env:
         WITH_STORYBOOK: true
