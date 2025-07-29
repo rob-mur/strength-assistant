@@ -32,6 +32,7 @@ const TabLayout = () => {
           title: Locales.t("titleExercises"),
           tabBarIcon: (props) => (
             <MaterialIcons
+              testID="exercisesTab"
               {...props}
               size={24}
               name={props.focused ? "sports-gymnastics" : "sports-martial-arts"}

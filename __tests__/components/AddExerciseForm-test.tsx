@@ -11,7 +11,7 @@ describe("<AddExerciseForm/>", () => {
     // Given
     let mockOnExerciseSubmitted = jest.fn();
     const { getByTestId } = render(
-      <AddExerciseForm onExerciseSubmitted={mockOnExerciseSubmitted} />,
+      <AddExerciseForm handleSubmit={mockOnExerciseSubmitted} />,
     );
     // When
     await state.user.type(getByTestId("name"), "Exercise Name");
