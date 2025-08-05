@@ -1,0 +1,19 @@
+{
+	"$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.14.2/.schema/devbox.schema.json",
+	"packages": [
+		"maestro@latest",
+		"nodejs@latest",
+		"chromium@latest",
+		"chromedriver@latest"
+	],
+	"shell": {
+		"scripts": {
+			"test": [
+				"./scripts/test.sh"
+			]
+		}
+	},
+	"env": {
+		"ANDROID_HOME": "$PWD/.devbox/nix/profile/default/libexec/android-sdk/"
+	}
+}
