@@ -4,7 +4,10 @@
 		"maestro@latest",
 		"nodejs@latest",
 		"chromium@latest",
-		"chromedriver@latest"
+		"chromedriver@latest",
+		"gemini-cli@latest",
+		"firebase-tools@latest",
+		"jdk17@latest"
 	],
 	"shell": {
 		"scripts": {
