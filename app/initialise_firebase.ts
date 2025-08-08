@@ -1,40 +1,68 @@
 import { Platform } from 'react-native';
 
-// Mobile SDK
-import firestoreMobile from '@react-native-firebase/firestore';
+// ===== Native RN Firebase =====
+import firestoreNative, {
+	FirebaseFirestoreTypes as NativeTypes
+} from '@react-native-firebase/firestore';
 
-// Web SDK
+// ===== Web Firebase =====
 import {
-	initializeApp as initializeWebApp
+	initializeApp as initializeWebApp,
+	FirebaseApp as WebApp
 } from 'firebase/app';
 import {
 	getFirestore as getFirestoreWeb,
-	connectFirestoreEmulator as connectFirestoreEmulatorWeb
+	connectFirestoreEmulator as connectFirestoreEmulatorWeb,
+	Firestore as WebFirestore
 } from 'firebase/firestore';
 
-let db: any;
+// ===== Types =====
+type NativeDb = NativeTypes.Module;
+type WebDb = WebFirestore;
 
-if (Platform.OS === 'web') {
-	const firebaseConfig = {
-		apiKey: "AIzaSyALhajWDEhiAhJl0F_R5aB98fwUSgiHoos",
-		authDomain: "strengthassistantdev.firebaseapp.com",
-		projectId: "strengthassistantdev",
-		storageBucket: "strengthassistantdev.firebasestorage.app",
-		messagingSenderId: "969424335861",
-		appId: "1:969424335861:web:395e0b79cf332b2e8b66bc",
-		measurementId: "G-1DN9PL58HD",
-		databaseURL: "dummy"
-	};
-	const app = initializeWebApp(firebaseConfig);
-	db = getFirestoreWeb(app);
-	if (__DEV__) {
-		connectFirestoreEmulatorWeb(db, 'localhost', 8080);
+let db: NativeDb | WebDb | undefined;
+let initialized = false;
+
+const firebaseConfig = {
+	apiKey: "AIzaSyALhajWDEhiAhJl0F_R5aB98fwUSgiHoos",
+	authDomain: "strengthassistantdev.firebaseapp.com",
+	projectId: "strengthassistantdev",
+	storageBucket: "strengthassistantdev.firebasestorage.app",
+	messagingSenderId: "969424335861",
+	appId: "1:969424335861:web:395e0b79cf332b2e8b66bc",
+	measurementId: "G-1DN9PL58HD",
+	databaseURL: "dummy"
+};
+
+// ===== Init =====
+export function initFirebase(): void {
+	if (initialized) return;
+
+	if (Platform.OS === 'web') {
+		const app: WebApp = initializeWebApp(firebaseConfig);
+		const firestore: WebDb = getFirestoreWeb(app);
+		if (__DEV__) {
+			connectFirestoreEmulatorWeb(firestore, 'localhost', 8080);
+		}
+		db = firestore;
+	} else {
+		const firestore: NativeDb = firestoreNative();
+		if (__DEV__) {
+			firestore.useEmulator('localhost', 8080);
+		}
+		db = firestore;
 	}
-} else {
-	db = firestoreMobile();
-	if (__DEV__) {
-		db.useEmulator('localhost', 8080); // RNFB native way
-	}
+
+	initialized = true;
 }
 
-export { db };
+// ===== Getters with overloads =====
+export function getDb(): WebDb;
+export function getDb(): NativeDb;
+export function getDb(): WebDb | NativeDb {
+	if (!initialized || !db) {
+		throw new Error('Firebase not initialized. Call initFirebase() first.');
+	}
+	return db!;
+}
+

@@ -14,12 +14,10 @@ export default function WorkoutScreen({
   const exerciseSearchParam = useLocalSearchParams().exercise;
 
   const exercise = selectedExercise ?? exerciseSearchParam;
-
   return (
     <View style={{ flex: 1, position: "relative" }}>
       <Surface elevation={0} style={{ padding: 16 }}>
         <Card>
-          {" "}
           <Card.Title title={exercise} />
         </Card>
       </Surface>

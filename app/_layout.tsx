@@ -7,6 +7,7 @@ import React from "react";
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from "react-native-paper";
 import { useColorScheme } from "react-native";
 import handleErrors from "./error";
+import { initFirebase } from "./initialise_firebase";
 
 // Catch any errors thrown by the Layout component.
 export { ErrorBoundary } from "expo-router";
@@ -19,6 +20,9 @@ SplashScreen.preventAutoHideAsync();
 
 // Catch any errors in test mode so maestro properly crashes
 handleErrors();
+
+// Init firebase
+initFirebase();
 
 const RootLayout = () => {
   const [loaded, error] = useFonts({
