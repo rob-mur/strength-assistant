@@ -6,6 +6,7 @@ import { SplashScreen, Stack } from "expo-router";
 import React from "react";
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from "react-native-paper";
 import { useColorScheme } from "react-native";
+import handleErrors from "./error";
 
 // Catch any errors thrown by the Layout component.
 export { ErrorBoundary } from "expo-router";
@@ -15,6 +16,9 @@ export const unstable_settings = { initialRouteName: "(tabs)" };
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+
+// Catch any errors in test mode so maestro properly crashes
+handleErrors();
 
 const RootLayout = () => {
   const [loaded, error] = useFonts({
