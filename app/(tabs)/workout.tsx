@@ -1,14 +1,13 @@
 import { useRouter, Router, useLocalSearchParams } from "expo-router";
 import { Card, FAB, Surface } from "react-native-paper";
 import { View } from "react-native";
+
 interface WorkoutScreenProps {
-  onAddWorkout: (r: Router) => void;
-  selectedExercise: string | null;
+  selectedExercise?: string | null;
 }
 
 export default function WorkoutScreen({
-  onAddWorkout = (r: Router) => r.navigate("./add"),
-  selectedExercise,
+  selectedExercise = null,
 }: WorkoutScreenProps) {
   const router = useRouter();
   const exerciseSearchParam = useLocalSearchParams().exercise;
@@ -25,7 +24,7 @@ export default function WorkoutScreen({
         style={{ position: "absolute", margin: 16, right: 0, bottom: 0 }}
         icon="plus"
         testID="add-workout"
-        onPress={(_) => onAddWorkout(router)}
+        onPress={(_) => router.navigate("./add")}
       />
     </View>
   );
