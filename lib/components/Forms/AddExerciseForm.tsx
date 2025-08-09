@@ -1,8 +1,8 @@
-import { Locales } from "@/lib/locales";
 import { useRouter } from "expo-router";
 import React from "react";
 import { Button, Card, TextInput } from "react-native-paper";
 import { useAddExercise } from "@/lib/hooks/useAddExercise";
+import { Locales } from "@/lib/locales";
 
 export default function AddExerciseForm() {
   const [exercise, onChangeExercise] = React.useState("");
