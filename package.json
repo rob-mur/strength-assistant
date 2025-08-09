@@ -9,8 +9,9 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "test": "jest",
-    "test:watch": "jest --watchAll",
+    "test": "jest --config jest.config.js",
+    "test:watch": "jest --watchAll --config jest.config.js",
+    "test:integration": "jest --config jest.integration.config.js",
     "format": "npx prettier . --write",
     "format:check": "npx prettier .",
     "storybook-generate": "sb-rn-get-stories",
@@ -81,8 +82,6 @@
     "typescript": "~5.8.3",
     "vite": "^7.1.1"
   },
-  "jest": {
-    "preset": "jest-expo"
-  },
+  
   "private": true
 }

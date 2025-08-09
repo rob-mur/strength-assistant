@@ -4,6 +4,17 @@ import WorkoutScreen from "@/app/(tabs)/workout";
 import ExerciseScreen from "@/app/(tabs)/exercises";
 import { renderRouter, screen } from "expo-router/testing-library";
 import RootLayout from "@/app/_layout";
+import { preventAutoHideAsync } from "expo-router/build/utils/splash";
+
+jest.mock("expo-router", () => {
+  const originalModule = jest.requireActual("expo-router");
+  return {
+    ...originalModule,
+    SplashScreen: {
+      preventAutoHideAsync: jest.fn(),
+    },
+  };
+});
 
 describe("navigation", () => {
   let state: CommonTestState;
