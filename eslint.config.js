@@ -1,18 +1,25 @@
-const { defineConfig } = require("eslint/config");
-const expoConfig = require("eslint-config-expo/flat");
-const eslintConfigPrettier = require("eslint-config-prettier/flat");
-const unusedImports = require("eslint-plugin-unused-imports");
+// eslint.config.js
+import expoConfig from "eslint-config-expo/flat.js";
+import eslintConfigPrettier from "eslint-config-prettier/flat";
+import storybookPlugin from "eslint-plugin-storybook";
+import jestPlugin from "eslint-plugin-jest";
+import unusedImports from "eslint-plugin-unused-imports";
+import testingLibraryPlugin from "eslint-plugin-testing-library";
 
-module.exports = defineConfig([
-  expoConfig,
+export default [
+  ...expoConfig,
+
   {
-    ignores: ["dist/*", "!.storybook"],
+    files: ["**/*.{js,jsx,ts,tsx}"],
+    ignores: ["dist/*"],
     plugins: {
-      extends: ["plugin:storybook/recommended"],
       "unused-imports": unusedImports,
+      storybook: storybookPlugin,
     },
     rules: {
-      "no-unused-vars": "error",
+      ...storybookPlugin.configs.recommended.rules,
+
+      "no-unused-vars": "off", // Turn off base rule to avoid conflicts with unused-imports plugin
       "unused-imports/no-unused-imports": "error",
       "unused-imports/no-unused-vars": [
         "warn",
@@ -25,5 +32,19 @@ module.exports = defineConfig([
       ],
     },
   },
+  {
+    files: [
+      "**/*.{spec,test}.{js,jsx,ts,tsx}",
+      "**/__tests__/**/*.{js,jsx,ts,tsx}",
+    ],
+    plugins: {
+      jest: jestPlugin,
+      "testing-library": testingLibraryPlugin,
+    },
+    rules: {
+      ...jestPlugin.configs.recommended.rules,
+      ...testingLibraryPlugin.configs.react.rules,
+    },
+  },
   eslintConfigPrettier,
-]);
+];

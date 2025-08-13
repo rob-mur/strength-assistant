@@ -11,9 +11,18 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: Dev
     steps:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
+
+      - name: Populate config for build
+        env:
+          FIREBASE_CONFIG: ${{ secrets.FIREBASE_WEB_CONFIG }}
+          GOOGLE_CONFIG: "${{ secrets.GOOGLE_SERVICES }}"
+        run: |
+          echo  "$GOOGLE_CONFIG" > google-services.json
+          echo "$FIREBASE_CONFIG" > firebase.web.config.json
 
       - name: Install devbox
         uses: jetify-com/devbox-install-action@v0.11.0

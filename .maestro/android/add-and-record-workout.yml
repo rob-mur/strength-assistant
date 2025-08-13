@@ -1,5 +1,6 @@
-appId: com.jimmier_solutions.strength_assistant
+url: com.jimmy_solutions.strength_assistant.test
 ---
+- runScript: ../../scripts/clear_emulator.js
 - launchApp
 - tapOn:
     id: "get-started"

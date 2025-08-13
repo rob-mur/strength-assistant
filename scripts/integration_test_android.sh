@@ -10,6 +10,7 @@ echo "no" | avdmanager create avd --force -n test -k "system-images;android-35;g
 
 adb start-server
 
+firebase emulators:start &
 emulator -avd test -no-snapshot-load -no-window -accel on -gpu off &
 
 echo "launched emulator in background"
@@ -18,6 +19,7 @@ EMULATOR_PID=$!
 
 errorhandler () {
     kill $EMULATOR_PID
+    npx kill-port 8080
 }
 trap errorhandler ERR EXIT
 

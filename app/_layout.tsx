@@ -1,11 +1,9 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { JetBrainsMono_400Regular } from "@expo-google-fonts/jetbrains-mono";
-import { NotoSans_400Regular } from "@expo-google-fonts/noto-sans";
-import { useFonts } from "expo-font";
 import { SplashScreen, Stack } from "expo-router";
 import React from "react";
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from "react-native-paper";
 import { useColorScheme } from "react-native";
+import handleErrors from "./error";
+import { useAppInit } from "@/lib/hooks/useAppInit";
 
 // Catch any errors thrown by the Layout component.
 export { ErrorBoundary } from "expo-router";
@@ -16,27 +14,14 @@ export const unstable_settings = { initialRouteName: "(tabs)" };
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-const RootLayout = () => {
-  const [loaded, error] = useFonts({
-    NotoSans_400Regular,
-    JetBrainsMono_400Regular,
-    ...MaterialCommunityIcons.font,
-  });
+// Catch any errors in test mode so maestro properly crashes
+handleErrors();
 
+const RootLayout = () => {
+  const isReady = useAppInit();
   const colorScheme = useColorScheme();
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
-  React.useEffect(() => {
-    if (error) throw error;
-  }, [error]);
-
-  React.useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
-
-  if (!loaded) {
+  if (!isReady) {
     return null;
   }
 
