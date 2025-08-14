@@ -1,7 +1,5 @@
 import AddExerciseScreen from "@/app/(tabs)/exercises/add";
 import type { Meta, StoryObj } from "@storybook/react-native";
-import { Router } from "expo-router";
-import { fn } from "storybook/test";
 
 const meta: Meta<typeof AddExerciseScreen> = {
   title: "Screens/AddExercisesScreen",
@@ -9,7 +7,6 @@ const meta: Meta<typeof AddExerciseScreen> = {
   parameters: {
     layout: "padded",
   },
-  argTypes: { onExerciseSubmitted: fn() },
 };
 
 export default meta;
@@ -17,9 +14,5 @@ export default meta;
 type Story = StoryObj<typeof AddExerciseScreen>;
 
 export const Default: Story = {
-  args: {
-    onExerciseSubmitted: fn((_: Router, exercise: String) =>
-      console.log(`Submitting exercise ${exercise}`),
-    ),
-  },
+  args: {},
 };

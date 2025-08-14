@@ -18,11 +18,13 @@ describe("<AddExerciseForm/>", () => {
 
   test("When the user enters a name and pressed submit the callback is executed", async () => {
     // Given
-    const { getByTestId } = render(<AddExerciseForm />);
+    const mockOnSubmit = jest.fn();
+    const { getByTestId } = render(<AddExerciseForm onSubmit={mockOnSubmit} />);
     // When
     await state.user.type(getByTestId("name"), "Exercise Name");
     await state.user.press(getByTestId("submit"));
     // Then
     expect(mockUseAddExercise.mock.lastCall).not.toBeNull();
+    expect(mockOnSubmit).toHaveBeenCalledWith("Exercise Name");
   });
 });
