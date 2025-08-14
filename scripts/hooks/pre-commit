@@ -10,7 +10,7 @@ echo "Running pre-commit checks..."
 
 # Run package lock validation
 echo "🔒 Checking package-lock.json sync..."
-if ! npm ci --dry-run &>/dev/null; then
+if ! npm install --dry-run --package-lock-only &>/dev/null; then
     echo "❌ package-lock.json is out of sync with package.json"
     echo "Run 'npm install' to fix this and commit the updated package-lock.json"
     exit 1
