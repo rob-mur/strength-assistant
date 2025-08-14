@@ -8,9 +8,15 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    environment: Dev
     steps:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
+
+      - name: Populate web config for test
+        env:
+          FIREBASE_CONFIG: ${{ secrets.FIREBASE_WEB_CONFIG }}
+        run: echo "$FIREBASE_CONFIG" > firebase.web.config.json
 
       - name: Install devbo
         uses: jetify-com/devbox-install-action@v0.11.0

@@ -1,0 +1,19 @@
+url: com.jimmy_solutions.strength_assistant.test
+---
+- runScript: ../../scripts/clear_emulator.js
+- launchApp
+- tapOn:
+    id: "get-started"
+- tapOn:
+    id: "add-exercise"
+- tapOn:
+    id: "name"
+- inputText: "ExerciseName"
+- tapOn:
+    id: "submit"
+- tapOn:
+    id: "exercisesTab"
+- assertVisible:
+    id: "exercise-screen"
+- assertVisible:
+    id: "ExerciseName"

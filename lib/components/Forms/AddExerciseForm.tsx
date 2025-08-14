@@ -1,17 +1,14 @@
-import { Locales } from "@/lib/locales";
-import { useRouter, Router } from "expo-router";
+import { useRouter } from "expo-router";
 import React from "react";
-import { View } from "react-native";
 import { Button, Card, TextInput } from "react-native-paper";
+import { useAddExercise } from "@/lib/hooks/useAddExercise";
+import { Locales } from "@/lib/locales";
 
-interface AddExerciseFormProps {
-  onExerciseSubmitted: (r: Router, exercise: string) => void;
-}
-export default function AddExerciseForm({
-  onExerciseSubmitted: onExerciseSubmitted,
-}: AddExerciseFormProps) {
+export default function AddExerciseForm() {
   const [exercise, onChangeExercise] = React.useState("");
   const router = useRouter();
+  const addExercise = useAddExercise();
+
   return (
     <Card>
       <Card.Title title={Locales.t("addExerciseTitle")}></Card.Title>
@@ -27,7 +24,11 @@ export default function AddExerciseForm({
         <Button
           testID="submit"
           mode="contained"
-          onPress={() => onExerciseSubmitted(router, exercise)}
+          onPress={async () => {
+            await addExercise(exercise);
+            router.back();
+            router.navigate(`/workout?exercise=${exercise}`);
+          }}
         >
           {Locales.t("submit")}
         </Button>

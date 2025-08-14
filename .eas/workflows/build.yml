@@ -9,17 +9,10 @@ jobs:
     type: build
     params:
       platform: android
-      profile: preview
+      profile: production
       android:
         buildType: apk
-        WITH_STORYBOOK: true
-
-  build_android_development:
-    type: build
-    params:
-      platform: android
-      profile: development
-      android:
-        buildType: apk
-      env:
-        WITH_STORYBOOK: true
+      hooks:
+        postInstall:
+          file: "scripts/write_env.sh"
+          cache: false

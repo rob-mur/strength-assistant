@@ -1,10 +1,21 @@
 {
-  "extends": "expo/tsconfig.base",
-  "compilerOptions": {
-    "strict": true,
-    "paths": {
-      "@/*": ["./*"]
-    }
-  },
-  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"]
+	"extends": "expo/tsconfig.base",
+	"compilerOptions": {
+		"strict": true,
+		"paths": {
+			"@/*": [
+				"./*"
+			],
+			"@/lib/data/firebase": [
+				"./lib/data/firebase/firebase.web.ts"
+			]
+		},
+		"jsx": "react-native"
+	},
+	"include": [
+		"**/*.ts",
+		"**/*.tsx",
+		".expo/types/**/*.ts",
+		"expo-env.d.ts"
+	]
 }
