@@ -42,14 +42,25 @@ describe("<AddExerciseForm/>", () => {
     expect(getByTestId("submit")).toBeDisabled();
   });
 
-  test("Submit button is disabled when exercise name exceeds 100 characters", async () => {
+  test("Submit button is enabled when exercise name is exactly 100 characters", async () => {
     // Given
     const { getByTestId } = render(<AddExerciseForm />);
-    const longName = "a".repeat(101);
+    const exactName = "a".repeat(100); // Exactly 100 chars should be valid
+    // When
+    await state.user.type(getByTestId("name"), exactName);
+    // Then
+    expect(getByTestId("submit")).toBeEnabled();
+  });
+
+  test("Input field prevents typing more than 100 characters", async () => {
+    // Given
+    const { getByTestId } = render(<AddExerciseForm />);
+    const longName = "a".repeat(105); // Try to type 105 chars
     // When
     await state.user.type(getByTestId("name"), longName);
-    // Then
-    expect(getByTestId("submit")).toBeDisabled();
+    // Then - input should only contain 100 chars due to maxLength
+    expect(getByTestId("name")).toHaveProp("value", "a".repeat(100));
+    expect(getByTestId("submit")).toBeEnabled(); // 100 chars is still valid
   });
 
   test("Submit button is enabled when exercise name is valid", async () => {
@@ -69,16 +80,6 @@ describe("<AddExerciseForm/>", () => {
     await state.user.clear(getByTestId("name"));
     // Then
     expect(getByText("Exercise name cannot be empty")).toBeTruthy();
-  });
-
-  test("Error message is shown when input exceeds character limit", async () => {
-    // Given
-    const { getByTestId, getByText } = render(<AddExerciseForm />);
-    const longName = "a".repeat(101);
-    // When
-    await state.user.type(getByTestId("name"), longName);
-    // Then
-    expect(getByText("Exercise name must be 100 characters or less")).toBeTruthy();
   });
 
   test("Exercise name is trimmed before submission", async () => {

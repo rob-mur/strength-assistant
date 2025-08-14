@@ -49,7 +49,7 @@ export default function AddExerciseForm() {
           value={exercise}
           onChangeText={handleExerciseChange}
           error={hasError && exercise.length > 0}
-          maxLength={101}
+          maxLength={100}
         />
         <HelperText type="error" visible={hasError && exercise.length > 0}>
           {getErrorMessage()}
@@ -64,7 +64,7 @@ export default function AddExerciseForm() {
             const trimmedExercise = exercise.trim();
             await addExercise(trimmedExercise);
             router.back();
-            router.navigate(`/workout?exercise=${trimmedExercise}`);
+            router.navigate(`/workout?exercise=${encodeURIComponent(trimmedExercise)}`);
           }}
         >
           {Locales.t("submit")}
