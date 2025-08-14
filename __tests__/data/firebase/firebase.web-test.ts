@@ -26,8 +26,12 @@ jest.mock("react-native", () => ({
   },
 }));
 
-// Mock the Firebase config
-jest.mock("../../../firebase.web.config.json", () => ({
+// Mock both Firebase config files
+jest.mock("../../../firebase.web.config.json", () => {
+  throw new Error("Config not found");
+}, { virtual: true });
+
+jest.mock("../../../firebase.web.config.demo.json", () => ({
   apiKey: "test-api-key",
   authDomain: "test-domain",
   projectId: "test-project",
@@ -123,7 +127,8 @@ describe("Firebase Web Configuration", () => {
 
       (global as any).__DEV__ = true;
       
-      // Mock Platform.OS as android
+      // Temporarily mock Platform.OS as android by modifying the module mock
+      jest.resetModules();
       jest.doMock("react-native", () => ({
         Platform: { OS: "android" },
       }));

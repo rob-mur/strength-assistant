@@ -9,7 +9,7 @@ import {
   addDoc,
   onSnapshot,
 } from "@/lib/data/firebase";
-import { mock, mockReset } from "jest-mock-extended";
+// Removed unused import from jest-mock-extended
 
 // Mock Firebase functions
 jest.mock("@/lib/data/firebase", () => ({
@@ -37,7 +37,6 @@ describe("ExerciseRepo", () => {
   beforeEach(() => {
     // Reset all mocks
     jest.clearAllMocks();
-    mockReset(mockDb);
 
     // Setup common mock returns
     mockGetDb.mockReturnValue(mockDb);

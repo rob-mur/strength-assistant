@@ -8,7 +8,14 @@ import {
 
 let initialized = false;
 
-import firebaseConfig from "../../../firebase.web.config.json";
+// Import config with fallback to demo config for development
+let firebaseConfig;
+try {
+  firebaseConfig = require("../../../firebase.web.config.json");
+} catch {
+  // Fallback to demo config if main config doesn't exist
+  firebaseConfig = require("../../../firebase.web.config.demo.json");
+}
 
 let db: Firestore;
 
@@ -16,8 +23,8 @@ export function initFirebase(): void {
 	if (initialized) return;
 	const app = initializeApp(firebaseConfig);
 	db = getFirestore(app);
-	if (__DEV__ || process.env.EAS_BUILD_PROFILE == "preview") {
-		const host = Platform["OS"] == "web" ? "localhost" : "10.0.2.2";
+	if (__DEV__ || process.env.EAS_BUILD_PROFILE === "preview") {
+		const host = Platform.OS === "web" ? "localhost" : "10.0.2.2";
 		connectFirestoreEmulator(db, host, 8080);
 	}
 	initialized = true;
