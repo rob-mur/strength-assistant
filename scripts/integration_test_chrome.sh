@@ -19,6 +19,9 @@ errorhandler () {
     npx kill-port 8080 2>/dev/null
     npx kill-port 8081 2>/dev/null
     pkill -f "expo start --web" 2>/dev/null
+    # Clean up Chrome user data directories
+    rm -rf /tmp/maestro-chrome-* 2>/dev/null || true
+    pkill -f "chrome.*--user-data-dir" 2>/dev/null || true
 }
 trap errorhandler ERR EXIT
 
@@ -41,6 +44,12 @@ done
 # Wait a bit more for Firebase emulator
 echo "Waiting for Firebase emulator to be ready..."
 sleep 5
+
+# Clean up any existing Chrome processes and user data directories before starting tests
+echo "Cleaning up existing Chrome sessions..."
+rm -rf /tmp/maestro-chrome-* 2>/dev/null || true
+pkill -f "chrome.*--user-data-dir" 2>/dev/null || true
+sleep 2
 
 # Run Maestro web tests
 echo "Running Maestro web tests..."

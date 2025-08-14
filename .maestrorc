@@ -1,0 +1,22 @@
+web:
+  browser: chrome
+  chromeOptions:
+    args:
+      - --user-data-dir=/tmp/maestro-chrome-$(date +%s)-$$
+      - --no-first-run
+      - --no-default-browser-check
+      - --disable-extensions
+      - --disable-default-apps
+      - --disable-background-timer-throttling
+      - --disable-backgrounding-occluded-windows
+      - --disable-renderer-backgrounding
+      - --disable-features=TranslateUI
+      - --disable-ipc-flooding-protection
+      - --no-sandbox
+      - --disable-dev-shm-usage
+      - --remote-debugging-port=0
+    headless: false
+    windowSize: "1920,1080"
+    detach: true
+  timeout: 30000
+  retries: 0
