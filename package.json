@@ -17,7 +17,8 @@
 		"format:check": "npx prettier .",
 		"storybook-generate": "sb-rn-get-stories",
 		"storybook": "storybook dev -p 6006",
-		"build-storybook": "storybook build"
+		"build-storybook": "storybook build",
+		"setup-hooks": "bash ./scripts/setup-hooks.sh"
 	},
 	"dependencies": {
 		"@expo-google-fonts/jetbrains-mono": "^0.4.0",

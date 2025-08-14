@@ -1,0 +1,2 @@
+# This directory contains additional pre-commit hooks
+# Add executable .sh files here to extend the pre-commit validation

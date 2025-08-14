@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+# Git pre-commit hook - runs extensible checks before commits
+
+set -e
+
+HOOKS_DIR="$(dirname "$0")"
+
+echo "Running pre-commit checks..."
+
+# Run package lock validation
+echo "🔒 Checking package-lock.json sync..."
+if ! npm ci --dry-run &>/dev/null; then
+    echo "❌ package-lock.json is out of sync with package.json"
+    echo "Run 'npm install' to fix this and commit the updated package-lock.json"
+    exit 1
+fi
+echo "✅ Package lock is in sync"
+
+# Run additional hooks if they exist
+for hook in "$HOOKS_DIR/pre-commit.d"/*.sh; do
+    if [ -f "$hook" ] && [ -x "$hook" ]; then
+        echo "Running $(basename "$hook")..."
+        if ! "$hook"; then
+            echo "❌ Hook $(basename "$hook") failed"
+            exit 1
+        fi
+    fi
+done
+
+echo "✅ All pre-commit checks passed"
