@@ -44,6 +44,39 @@ sleep 5
 
 # Run Maestro web tests
 echo "Running Maestro web tests..."
-maestro test .maestro/web
+
+# Find all .yml files in .maestro/web directory
+TEST_FILES=$(find .maestro/web -name "*.yml" -type f)
+
+if [ -z "$TEST_FILES" ]; then
+    echo "ERROR: No test files found in .maestro/web directory"
+    exit 1
+fi
+
+echo "Found test files:"
+echo "$TEST_FILES"
+
+# Run each test file individually
+TEST_COUNT=0
+FAILED_TESTS=0
+
+for test_file in $TEST_FILES; do
+    echo "Running test: $test_file"
+    TEST_COUNT=$((TEST_COUNT + 1))
+    
+    if ! maestro test "$test_file"; then
+        echo "FAILED: $test_file"
+        FAILED_TESTS=$((FAILED_TESTS + 1))
+    else
+        echo "PASSED: $test_file"
+    fi
+done
+
+echo "Test summary: $TEST_COUNT total tests, $FAILED_TESTS failed"
+
+if [ $FAILED_TESTS -gt 0 ]; then
+    echo "ERROR: $FAILED_TESTS test(s) failed"
+    exit 1
+fi
 
 echo "Chrome integration tests completed successfully!"
