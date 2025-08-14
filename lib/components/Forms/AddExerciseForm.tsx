@@ -1,6 +1,5 @@
 import React from "react";
 import { Button, Card, TextInput } from "react-native-paper";
-import { useAddExercise } from "@/lib/hooks/useAddExercise";
 import { Locales } from "@/lib/locales";
 
 interface AddExerciseFormProps {
@@ -9,7 +8,6 @@ interface AddExerciseFormProps {
 
 export default function AddExerciseForm({ onSubmit }: AddExerciseFormProps) {
   const [exercise, onChangeExercise] = React.useState("");
-  const addExercise = useAddExercise();
 
   return (
     <Card>
@@ -26,8 +24,7 @@ export default function AddExerciseForm({ onSubmit }: AddExerciseFormProps) {
         <Button
           testID="submit"
           mode="contained"
-          onPress={async () => {
-            await addExercise(exercise);
+          onPress={() => {
             if (onSubmit) {
               onSubmit(exercise);
             }
