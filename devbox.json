@@ -22,6 +22,9 @@
 			],
 			"integration_test_android": [
 				"./scripts/integration_test_android.sh"
+			],
+			"integration_test_chrome": [
+				"./scripts/integration_test_chrome.sh"
 			]
 		}
 	},
