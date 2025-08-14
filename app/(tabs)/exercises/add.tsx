@@ -3,13 +3,17 @@ import { useRouter } from "expo-router";
 import React from "react";
 import { Surface } from "react-native-paper";
 
-export default function AddExerciseScreen() {
+interface AddExerciseScreenProps {
+  onSubmit?: (exerciseName: string) => void;
+}
+
+export default function AddExerciseScreen({ onSubmit }: AddExerciseScreenProps = {}) {
   const router = useRouter();
 
-  const handleSubmit = (exerciseName: string) => {
+  const handleSubmit = onSubmit || ((exerciseName: string) => {
     router.back();
     router.navigate(`/workout?exercise=${exerciseName}`);
-  };
+  });
 
   return (
     <Surface elevation={0} style={{ padding: 16 }}>

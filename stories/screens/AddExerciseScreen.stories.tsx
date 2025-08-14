@@ -1,5 +1,6 @@
 import AddExerciseScreen from "@/app/(tabs)/exercises/add";
 import type { Meta, StoryObj } from "@storybook/react-native";
+import { action } from "@storybook/addon-actions";
 
 const meta: Meta<typeof AddExerciseScreen> = {
   title: "Screens/AddExercisesScreen",
@@ -14,5 +15,7 @@ export default meta;
 type Story = StoryObj<typeof AddExerciseScreen>;
 
 export const Default: Story = {
-  args: {},
+  args: {
+    onSubmit: action("onSubmit"),
+  },
 };
