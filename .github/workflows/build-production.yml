@@ -40,13 +40,13 @@ jobs:
             ${{ runner.os }}-npm-
 
       - name: 📦 Install dependencies
-        run: npm install
+        run: devbox run npm install
 
       - name: Build production APK
         run: devbox run build_production
 
       - name: Create Release
-        uses: softprobs/action-gh-release@v1
+        uses: softprobs/action-gh-release@v2
         with:
           tag_name: v${{ github.run_number }}
           name: Release v${{ github.run_number }}
@@ -56,12 +56,3 @@ jobs:
             Changes: ${{ github.event.head_commit.message }}
           files: ./build_production.apk
 
-      - name: Upload APK to Release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./build_production.apk
-          asset_name: strength-assistant-v${{ github.run_number }}.apk
-          asset_content_type: application/vnd.android.package-archive
