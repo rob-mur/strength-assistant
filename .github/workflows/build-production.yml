@@ -8,6 +8,9 @@ on:
 env:
   EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
