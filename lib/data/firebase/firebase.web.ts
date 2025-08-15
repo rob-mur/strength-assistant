@@ -16,7 +16,7 @@ export function initFirebase(): void {
 	if (initialized) return;
 	const app = initializeApp(firebaseConfig);
 	db = getFirestore(app);
-	if (__DEV__ || process.env.EAS_BUILD_PROFILE == "preview") {
+	if (__DEV__ || process.env.EAS_PUBLIC_USE_EMULATOR === "true") {
 		const host = Platform["OS"] == "web" ? "localhost" : "10.0.2.2";
 		connectFirestoreEmulator(db, host, 8080);
 	}
