@@ -7,8 +7,7 @@
 		"chromium@latest",
 		"chromedriver@latest",
 		"firebase-tools@latest",
-		"jdk17@latest",
-		"claude-code@latest"
+		"jdk17@latest"
 	],
 	"shell": {
 		"scripts": {
