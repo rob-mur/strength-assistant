@@ -18,7 +18,8 @@
 		"storybook-generate": "sb-rn-get-stories",
 		"storybook": "storybook dev -p 6006",
 		"build-storybook": "storybook build",
-		"setup-hooks": "bash ./scripts/setup-hooks.sh"
+		"setup-hooks": "./scripts/setup-hooks.sh",
+		"eas-build-pre-install": "./scripts/write_env.sh"
 	},
 	"dependencies": {
 		"@expo-google-fonts/jetbrains-mono": "^0.4.0",
