@@ -7,8 +7,6 @@
 		"preview": {
 			"distribution": "internal"
 		},
-		"production": {
-			"distribution": "internal"
-		}
+		"production": {}
 	}
 }

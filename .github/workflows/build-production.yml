@@ -1,28 +1,31 @@
-name: Unit Tests
+name: Build Production APK
 
 on:
-  pull_request:
-    branches: [main]
-  workflow_dispatch:
+  push:
+    branches: ["main"]
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
     environment: Dev
+    
     steps:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
 
-      - name: Populate web config for test
+      - name: Populate config for build
         env:
           FIREBASE_CONFIG: ${{ secrets.FIREBASE_WEB_CONFIG }}
-        run: echo "$FIREBASE_CONFIG" > firebase.web.config.json
+          GOOGLE_CONFIG: "${{ secrets.GOOGLE_SERVICES }}"
+        run: |
+          echo  "$GOOGLE_CONFIG" > google-services.json
+          echo "$FIREBASE_CONFIG" > firebase.web.config.json
 
-      - name: Install devbo
+      - name: Install devbox
         uses: jetify-com/devbox-install-action@v0.11.0
         with:
-          enable-cache: true
           devbox-version: 0.14.2
+          enable-cache: true
 
       - name: 📦 Get npm cache directory path
         id: npm-cache-dir-path
@@ -39,5 +42,17 @@ jobs:
       - name: 📦 Install dependencies
         run: devbox run npm install
 
-      - name: Test
-        run: devbox run test
+      - name: Build production APK
+        run: devbox run build_production
+
+      - name: Create Release
+        uses: softprobs/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: Release v${{ github.run_number }}
+          body: |
+            Production build from commit ${{ github.sha }}
+            
+            Changes: ${{ github.event.head_commit.message }}
+          files: ./build_production.apk
+
