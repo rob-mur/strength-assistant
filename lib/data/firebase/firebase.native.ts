@@ -1,6 +1,7 @@
 import {
 	FirebaseFirestoreTypes,
 	getFirestore,
+	connectFirestoreEmulator,
 } from "@react-native-firebase/firestore";
 
 let initialized = false;
@@ -13,7 +14,7 @@ export function initFirebase(): void {
 
 	db = getFirestore();
 	if (__DEV__ || process.env.EXPO_PUBLIC_USE_EMULATOR) {
-		db.useEmulator("10.0.2.2", 8080);
+		connectFirestoreEmulator(db, "10.0.2.2", 8080);
 	}
 	initialized = true;
 }
