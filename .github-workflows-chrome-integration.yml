@@ -1,0 +1,49 @@
+name: Integration Tests Chrome
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    environment: Dev
+    steps:
+      - name: 🏗 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Populate config for tests
+        env:
+          FIREBASE_CONFIG: ${{ secrets.FIREBASE_WEB_CONFIG }}
+        run: echo "$FIREBASE_CONFIG" > firebase.web.config.json
+
+      - name: Install devbox
+        uses: jetify-com/devbox-install-action@v0.11.0
+        with:
+          devbox-version: 0.14.2
+          enable-cache: true
+
+      - name: 📦 Get npm cache directory path
+        id: npm-cache-dir-path
+        run: echo "dir=$(devbox run -- npm config get cache)" >> $GITHUB_OUTPUT
+
+      - name: 📦 Setup npm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.npm-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      - name: 📦 Install dependencies
+        run: npm install
+
+      - name: Make script executable
+        run: chmod +x scripts/integration_test_chrome.sh
+
+      - name: Run Chrome integration tests
+        run: devbox run integration_test_chrome
