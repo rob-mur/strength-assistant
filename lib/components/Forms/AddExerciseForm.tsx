@@ -6,6 +6,7 @@ import { Locales } from "@/lib/locales";
 
 export default function AddExerciseForm() {
   const [exercise, onChangeExercise] = React.useState("");
+  const [isLoading, setIsLoading] = React.useState(false);
   const router = useRouter();
   const addExercise = useAddExercise();
 
@@ -24,13 +25,20 @@ export default function AddExerciseForm() {
         <Button
           testID="submit"
           mode="contained"
+          loading={isLoading}
+          disabled={isLoading}
           onPress={async () => {
-            await addExercise(exercise);
-            router.back();
-            router.navigate(`/workout?exercise=${exercise}`);
+            setIsLoading(true);
+            try {
+              await addExercise(exercise);
+              router.back();
+              router.navigate(`/workout?exercise=${exercise}`);
+            } finally {
+              setIsLoading(false);
+            }
           }}
         >
-          {Locales.t("submit")}
+          {isLoading ? Locales.t("submitting") : Locales.t("submit")}
         </Button>
       </Card.Actions>
     </Card>
