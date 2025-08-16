@@ -39,7 +39,15 @@
 				}
 			],
 			"@react-native-firebase/app",
-			"@react-native-firebase/auth"
+			"@react-native-firebase/auth",
+			[
+				"expo-build-properties",
+				{
+					"android": {
+						"architectures": ["arm64-v8a"]
+					}
+				}
+			]
 		],
 		"experiments": {
 			"typedRoutes": true
