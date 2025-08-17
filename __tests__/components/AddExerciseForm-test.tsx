@@ -1,5 +1,5 @@
 import { useAddExercise } from "@/lib/hooks/useAddExercise";
-import { render } from "@testing-library/react-native";
+import { render, waitFor } from "@testing-library/react-native";
 import { CommonTestState } from "../../__test_utils__/utils";
 import AddExerciseForm from "@/lib/components/Forms/AddExerciseForm";
 
@@ -24,5 +24,34 @@ describe("<AddExerciseForm/>", () => {
     await state.user.press(getByTestId("submit"));
     // Then
     expect(mockUseAddExercise.mock.lastCall).not.toBeNull();
+  });
+
+  test("Button is disabled and shows loading state during submission", async () => {
+    // Given
+    let resolveAddExercise: () => void;
+    const addExercisePromise = new Promise<void>((resolve) => {
+      resolveAddExercise = resolve;
+    });
+    mockUseAddExercise.mockReturnValue(jest.fn(async (_) => {
+      await addExercisePromise;
+    }));
+    
+    const { getByTestId } = render(<AddExerciseForm />);
+    const submitButton = getByTestId("submit");
+    
+    // When
+    await state.user.type(getByTestId("name"), "Exercise Name");
+    await state.user.press(submitButton);
+    
+    // Then - button should be disabled during loading
+    expect(submitButton.props.accessibilityState?.disabled).toBe(true);
+    
+    // Resolve the promise to complete the operation
+    resolveAddExercise!();
+    
+    // Wait for the loading state to clear
+    await waitFor(() => {
+      expect(submitButton.props.accessibilityState?.disabled).toBe(false);
+    });
   });
 });
