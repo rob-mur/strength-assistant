@@ -2,11 +2,28 @@ import { useAddExercise } from "@/lib/hooks/useAddExercise";
 import { render, waitFor } from "@testing-library/react-native";
 import { CommonTestState } from "../../__test_utils__/utils";
 import AddExerciseForm from "@/lib/components/Forms/AddExerciseForm";
+import React from "react";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { PaperProvider } from "react-native-paper";
 
 jest.mock("expo-router");
 jest.mock("@/lib/data/firebase");
 jest.mock("@/lib/hooks/useAddExercise");
+jest.mock("@/lib/locales", () => ({
+  Locales: {
+    t: (key: string) => key, // Return the key itself for testing
+  },
+}));
 const mockUseAddExercise = jest.mocked(useAddExercise);
+
+// Test wrapper component to provide required context
+const TestWrapper = ({ children }: { children: React.ReactNode }) => (
+  <SafeAreaProvider>
+    <PaperProvider>
+      {children}
+    </PaperProvider>
+  </SafeAreaProvider>
+);
 
 describe("<AddExerciseForm/>", () => {
   let state: CommonTestState;
@@ -18,7 +35,11 @@ describe("<AddExerciseForm/>", () => {
 
   test("When the user enters a name and pressed submit the callback is executed", async () => {
     // Given
-    const { getByTestId } = render(<AddExerciseForm />);
+    const { getByTestId } = render(
+      <TestWrapper>
+        <AddExerciseForm />
+      </TestWrapper>
+    );
     // When
     await state.user.type(getByTestId("name"), "Exercise Name");
     await state.user.press(getByTestId("submit"));
@@ -32,7 +53,11 @@ describe("<AddExerciseForm/>", () => {
     const mockAddExercise = jest.fn().mockRejectedValue(new Error(errorMessage));
     mockUseAddExercise.mockReturnValue(mockAddExercise);
 
-    const { getByTestId, getByText } = render(<AddExerciseForm />);
+    const { getByTestId, getByText } = render(
+      <TestWrapper>
+        <AddExerciseForm />
+      </TestWrapper>
+    );
     
     // When
     await state.user.type(getByTestId("name"), "Exercise Name");
@@ -54,7 +79,11 @@ describe("<AddExerciseForm/>", () => {
     const mockAddExercise = jest.fn().mockRejectedValue("Unknown error");
     mockUseAddExercise.mockReturnValue(mockAddExercise);
 
-    const { getByTestId, getByText } = render(<AddExerciseForm />);
+    const { getByTestId, getByText } = render(
+      <TestWrapper>
+        <AddExerciseForm />
+      </TestWrapper>
+    );
     
     // When
     await state.user.type(getByTestId("name"), "Exercise Name");
