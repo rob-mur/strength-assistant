@@ -3,38 +3,24 @@ import React from "react";
 import { Button, Card, TextInput, HelperText } from "react-native-paper";
 import { useAddExercise } from "@/lib/hooks/useAddExercise";
 import { Locales } from "@/lib/locales";
-
-interface ValidationError {
-  isEmpty: boolean;
-  tooLong: boolean;
-}
-
-function validateExerciseName(name: string): ValidationError {
-  const trimmedName = name.trim();
-  return {
-    isEmpty: trimmedName.length === 0,
-    tooLong: trimmedName.length > 100
-  };
-}
+import { parseExercise, ParseExerciseError } from "@/lib/models/Exercise";
 
 export default function AddExerciseForm() {
   const [exercise, onChangeExercise] = React.useState("");
-  const [validationError, setValidationError] = React.useState<ValidationError>({ isEmpty: true, tooLong: false });
+  const [parseError, setParseError] = React.useState<ParseExerciseError | null>("EMPTY_NAME");
   const router = useRouter();
   const addExercise = useAddExercise();
 
   const handleExerciseChange = (text: string) => {
     onChangeExercise(text);
-    setValidationError(validateExerciseName(text));
+    const result = parseExercise(text);
+    setParseError(result.success ? null : result.error);
   };
 
-  const hasError = validationError.isEmpty || validationError.tooLong;
+  const hasError = parseError !== null;
   const getErrorMessage = (): string => {
-    if (validationError.isEmpty) {
+    if (parseError === "EMPTY_NAME") {
       return "Exercise name cannot be empty";
-    }
-    if (validationError.tooLong) {
-      return "Exercise name must be 100 characters or less";
     }
     return "";
   };
@@ -49,7 +35,6 @@ export default function AddExerciseForm() {
           value={exercise}
           onChangeText={handleExerciseChange}
           error={hasError && exercise.length > 0}
-          maxLength={100}
         />
         <HelperText type="error" visible={hasError && exercise.length > 0}>
           {getErrorMessage()}
@@ -61,10 +46,12 @@ export default function AddExerciseForm() {
           mode="contained"
           disabled={hasError}
           onPress={async () => {
-            const trimmedExercise = exercise.trim();
-            await addExercise(trimmedExercise);
-            router.back();
-            router.navigate(`/workout?exercise=${encodeURIComponent(trimmedExercise)}`);
+            const result = parseExercise(exercise);
+            if (result.success) {
+              await addExercise(result.exercise.name);
+              router.back();
+              router.navigate(`/workout?exercise=${encodeURIComponent(result.exercise.name)}`);
+            }
           }}
         >
           {Locales.t("submit")}
