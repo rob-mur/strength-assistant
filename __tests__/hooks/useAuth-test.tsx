@@ -1,15 +1,24 @@
 import { useAuth } from "@/lib/hooks/useAuth";
-import * as auth from "@/lib/data/firebase/auth";
 import { act, renderHook, waitFor } from "@testing-library/react-native";
 import { mock, mockReset } from "jest-mock-extended";
+import {
+  auth,
+  createUserWithEmailAndPassword,
+  signInAnonymously,
+  signInWithEmailAndPassword,
+  signOut,
+} from "@/lib/data/firebase";
 
-jest.mock("@/lib/data/firebase/auth");
 jest.mock("@/lib/utils/devLog");
+jest.mock("@/lib/data/firebase");
 
 const mockAuth = mock<typeof auth>();
 
 describe("useAuth", () => {
-  const mockUser = { uid: "test-user-123", email: "test@example.com" } as auth.User;
+  const mockUser = {
+    uid: "test-user-123",
+    email: "test@example.com",
+  } as auth.User;
   let mockUnsubscribe: jest.Mock;
 
   beforeEach(() => {
@@ -17,12 +26,13 @@ describe("useAuth", () => {
     mockUnsubscribe = jest.fn();
 
     // Mock auth functions
-    jest.mocked(auth.getCurrentUser).mockReturnValue(null);
+    jest.mocked(auth);
+    jest.mocked(auth.currentUser).mockReturnValue(null);
     jest.mocked(auth.onAuthStateChanged).mockReturnValue(mockUnsubscribe);
-    jest.mocked(auth.signInWithEmailAndPassword).mockResolvedValue({} as any);
-    jest.mocked(auth.createUserWithEmailAndPassword).mockResolvedValue({} as any);
-    jest.mocked(auth.signInAnonymously).mockResolvedValue({} as any);
-    jest.mocked(auth.signOut).mockResolvedValue();
+    jest.mocked(signInWithEmailAndPassword).mockResolvedValue({} as any);
+    jest.mocked(createUserWithEmailAndPassword).mockResolvedValue({} as any);
+    jest.mocked(signInAnonymously).mockResolvedValue({} as any);
+    jest.mocked(signOut).mockResolvedValue();
   });
 
   afterEach(() => {
@@ -42,7 +52,9 @@ describe("useAuth", () => {
       renderHook(() => useAuth());
 
       expect(auth.onAuthStateChanged).toHaveBeenCalledTimes(1);
-      expect(auth.onAuthStateChanged).toHaveBeenCalledWith(expect.any(Function));
+      expect(auth.onAuthStateChanged).toHaveBeenCalledWith(
+        expect.any(Function),
+      );
     });
 
     it("should clean up auth state listener on unmount", () => {
@@ -59,7 +71,8 @@ describe("useAuth", () => {
       const { result } = renderHook(() => useAuth());
 
       // Get the callback passed to onAuthStateChanged
-      const authStateCallback = jest.mocked(auth.onAuthStateChanged).mock.calls[0][0];
+      const authStateCallback = jest.mocked(auth.onAuthStateChanged).mock
+        .calls[0][0];
 
       // Simulate user sign in
       act(() => {
@@ -77,7 +90,8 @@ describe("useAuth", () => {
       const { result } = renderHook(() => useAuth());
 
       // Get the callback passed to onAuthStateChanged
-      const authStateCallback = jest.mocked(auth.onAuthStateChanged).mock.calls[0][0];
+      const authStateCallback = jest.mocked(auth.onAuthStateChanged).mock
+        .calls[0][0];
 
       // Simulate user sign out
       act(() => {
@@ -100,7 +114,10 @@ describe("useAuth", () => {
         await result.current.signInWithEmail("test@example.com", "password123");
       });
 
-      expect(auth.signInWithEmailAndPassword).toHaveBeenCalledWith("test@example.com", "password123");
+      expect(auth.signInWithEmailAndPassword).toHaveBeenCalledWith(
+        "test@example.com",
+        "password123",
+      );
     });
 
     it("should handle sign in errors", async () => {
@@ -111,7 +128,10 @@ describe("useAuth", () => {
 
       await act(async () => {
         try {
-          await result.current.signInWithEmail("test@example.com", "wrongpassword");
+          await result.current.signInWithEmail(
+            "test@example.com",
+            "wrongpassword",
+          );
         } catch (e) {
           // Expected to throw
         }
@@ -128,7 +148,9 @@ describe("useAuth", () => {
       const signInPromise = new Promise<any>((resolve) => {
         resolveSignIn = resolve;
       });
-      jest.mocked(auth.signInWithEmailAndPassword).mockReturnValue(signInPromise);
+      jest
+        .mocked(auth.signInWithEmailAndPassword)
+        .mockReturnValue(signInPromise);
 
       const { result } = renderHook(() => useAuth());
 
@@ -155,7 +177,10 @@ describe("useAuth", () => {
         await result.current.createAccount("test@example.com", "password123");
       });
 
-      expect(auth.createUserWithEmailAndPassword).toHaveBeenCalledWith("test@example.com", "password123");
+      expect(auth.createUserWithEmailAndPassword).toHaveBeenCalledWith(
+        "test@example.com",
+        "password123",
+      );
     });
 
     it("should handle create account errors", async () => {
@@ -246,22 +271,36 @@ describe("useAuth", () => {
   describe("error handling", () => {
     it("should map Firebase error codes to user-friendly messages", async () => {
       const errorCodes = [
-        { code: "auth/user-not-found", message: "No account found with this email" },
+        {
+          code: "auth/user-not-found",
+          message: "No account found with this email",
+        },
         { code: "auth/wrong-password", message: "Incorrect password" },
-        { code: "auth/email-already-in-use", message: "Email is already registered" },
+        {
+          code: "auth/email-already-in-use",
+          message: "Email is already registered",
+        },
         { code: "auth/weak-password", message: "Password is too weak" },
         { code: "auth/invalid-email", message: "Invalid email address" },
-        { code: "auth/too-many-requests", message: "Too many attempts. Please try again later" },
+        {
+          code: "auth/too-many-requests",
+          message: "Too many attempts. Please try again later",
+        },
       ];
 
       for (const { code, message } of errorCodes) {
-        jest.mocked(auth.signInWithEmailAndPassword).mockRejectedValue({ code });
-        
+        jest
+          .mocked(auth.signInWithEmailAndPassword)
+          .mockRejectedValue({ code });
+
         const { result } = renderHook(() => useAuth());
 
         await act(async () => {
           try {
-            await result.current.signInWithEmail("test@example.com", "password");
+            await result.current.signInWithEmail(
+              "test@example.com",
+              "password",
+            );
           } catch (e) {
             // Expected to throw
           }
@@ -288,14 +327,19 @@ describe("useAuth", () => {
   describe("error clearing", () => {
     it("should clear error when starting new auth action", async () => {
       // Set up an initial error
-      jest.mocked(auth.signInWithEmailAndPassword).mockRejectedValue({ code: "auth/user-not-found" });
-      
+      jest
+        .mocked(auth.signInWithEmailAndPassword)
+        .mockRejectedValue({ code: "auth/user-not-found" });
+
       const { result } = renderHook(() => useAuth());
 
       // Create an error
       await act(async () => {
         try {
-          await result.current.signInWithEmail("test@example.com", "wrongpassword");
+          await result.current.signInWithEmail(
+            "test@example.com",
+            "wrongpassword",
+          );
         } catch (e) {
           // Expected to throw
         }
@@ -311,7 +355,10 @@ describe("useAuth", () => {
 
       // Start a new auth action - should clear the error
       await act(async () => {
-        await result.current.signInWithEmail("test@example.com", "correctpassword");
+        await result.current.signInWithEmail(
+          "test@example.com",
+          "correctpassword",
+        );
       });
 
       // Error should be cleared
@@ -319,3 +366,4 @@ describe("useAuth", () => {
     });
   });
 });
+
