@@ -2,6 +2,21 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Claude Code Setup
+
+This project automatically installs Claude Code locally when you enter the development environment via devbox. This happens through the `init_hook` in `devbox.json` which runs `scripts/setup-claude-code.sh`.
+
+### Local Installation
+- Claude Code is installed to `~/.local/bin/` automatically when you run `devbox shell`
+- The installation is skipped in CI environments to avoid bloating the build
+- If Claude Code is already installed, the script exits early
+
+### Manual Installation
+If you need to install or update Claude Code manually:
+```bash
+./scripts/setup-claude-code.sh
+```
+
 ## Development Commands
 
 ### Core Development

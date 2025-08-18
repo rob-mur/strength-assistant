@@ -10,6 +10,9 @@
 		"jdk17@latest"
 	],
 	"shell": {
+		"init_hook": [
+			"chmod +x ./scripts/setup-claude-code.sh && ./scripts/setup-claude-code.sh"
+		],
 		"scripts": {
 			"test": [
 				"./scripts/test.sh"
