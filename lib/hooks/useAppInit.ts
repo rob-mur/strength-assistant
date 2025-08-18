@@ -20,17 +20,30 @@ export const useAppInit = () => {
 
 	useEffect(() => {
 		// Throw any font loading errors
-		if (fontError) throw fontError;
+		if (fontError) {
+			console.error("[useAppInit] Font loading error:", fontError);
+			throw fontError;
+		}
 	}, [fontError]);
 
 	useEffect(() => {
 		const prepare = async () => {
+			const startTime = Date.now();
+			console.log("[useAppInit] Starting app initialization");
+			
 			try {
+				console.log("[useAppInit] Initializing Firebase...");
 				initFirebase();
+				const duration = Date.now() - startTime;
+				console.log(`[useAppInit] Firebase initialization completed successfully (${duration}ms)`);
 			} catch (e) {
-				console.error("App initialization error:", e);
+				const duration = Date.now() - startTime;
+				console.error(`[useAppInit] App initialization error after ${duration}ms:`, e);
+				console.error("[useAppInit] App will continue with limited functionality");
 			} finally {
 				setAppReady(true);
+				const totalDuration = Date.now() - startTime;
+				console.log(`[useAppInit] App initialization complete (${totalDuration}ms total)`);
 			}
 		};
 
@@ -39,6 +52,7 @@ export const useAppInit = () => {
 
 	useEffect(() => {
 		if (fontsLoaded && isAppReady) {
+			console.log("[useAppInit] Fonts loaded and app ready, hiding splash screen");
 			SplashScreen.hideAsync();
 		}
 	}, [fontsLoaded, isAppReady]);
