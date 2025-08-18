@@ -17,6 +17,7 @@ export default function AuthScreen() {
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
   
   const {
     loading,
@@ -27,8 +28,37 @@ export default function AuthScreen() {
     clearError,
   } = useAuth();
 
+  const validateForm = (): boolean => {
+    setValidationError(null);
+    
+    if (!email.trim()) {
+      setValidationError("Email is required");
+      return false;
+    }
+    
+    if (!password.trim()) {
+      setValidationError("Password is required");
+      return false;
+    }
+    
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setValidationError("Please enter a valid email address");
+      return false;
+    }
+    
+    // Password length validation for sign up
+    if (isSignUp && password.length < 6) {
+      setValidationError("Password must be at least 6 characters long");
+      return false;
+    }
+    
+    return true;
+  };
+
   const handleEmailAuth = async () => {
-    if (!email.trim() || !password.trim()) {
+    if (!validateForm()) {
       return;
     }
 
@@ -49,6 +79,25 @@ export default function AuthScreen() {
     } catch (error) {
       // Error is handled by useAuth hook
     }
+  };
+
+  const clearValidationError = () => {
+    setValidationError(null);
+  };
+
+  const handleEmailChange = (text: string) => {
+    setEmail(text);
+    clearValidationError();
+  };
+
+  const handlePasswordChange = (text: string) => {
+    setPassword(text);
+    clearValidationError();
+  };
+
+  const handleModeSwitch = () => {
+    setIsSignUp(!isSignUp);
+    clearValidationError();
   };
 
   return (
@@ -74,19 +123,20 @@ export default function AuthScreen() {
               <TextInput
                 label="Email"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={handleEmailChange}
                 mode="outlined"
                 style={styles.input}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
                 disabled={loading}
+                error={!!validationError}
               />
 
               <TextInput
                 label="Password"
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={handlePasswordChange}
                 mode="outlined"
                 style={styles.input}
                 secureTextEntry={!showPassword}
@@ -97,7 +147,14 @@ export default function AuthScreen() {
                   />
                 }
                 disabled={loading}
+                error={!!validationError}
               />
+
+              {validationError && (
+                <Text variant="bodySmall" style={styles.errorText}>
+                  {validationError}
+                </Text>
+              )}
 
               <Button
                 mode="contained"
@@ -111,7 +168,7 @@ export default function AuthScreen() {
 
               <Button
                 mode="outlined"
-                onPress={() => setIsSignUp(!isSignUp)}
+                onPress={handleModeSwitch}
                 style={styles.switchButton}
                 disabled={loading}
               >
@@ -201,5 +258,10 @@ const styles = StyleSheet.create({
   },
   anonymousButton: {
     marginTop: 8,
+  },
+  errorText: {
+    color: 'red',
+    marginBottom: 16,
+    marginLeft: 8,
   },
 });

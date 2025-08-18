@@ -10,3 +10,6 @@ if (Platform.OS === "web") {
 
 export const { initFirebase, getDb } = firebaseModule;
 export * from Platform.OS === "web" ? "firebase/firestore" : "@react-native-firebase/firestore";
+
+// Export auth functions following the same pattern
+export * from "./auth";

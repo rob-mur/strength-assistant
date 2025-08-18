@@ -8,6 +8,7 @@ import {
   getCurrentUser,
   User,
 } from "@/lib/data/firebase/auth";
+import { devLog, devError } from "@/lib/utils/devLog";
 
 export interface AuthState {
   user: User | null;
@@ -31,10 +32,10 @@ export const useAuth = (): AuthState & AuthActions => {
   });
 
   useEffect(() => {
-    console.log("[useAuth] Setting up auth state listener");
+    devLog("[useAuth] Setting up auth state listener");
     
     const unsubscribe = onAuthStateChanged((user) => {
-      console.log("[useAuth] Auth state changed:", user?.uid || "signed out");
+      devLog("[useAuth] Auth state changed:", user?.uid || "signed out");
       setState((prev) => ({
         ...prev,
         user,
@@ -44,7 +45,7 @@ export const useAuth = (): AuthState & AuthActions => {
     });
 
     return () => {
-      console.log("[useAuth] Cleaning up auth state listener");
+      devLog("[useAuth] Cleaning up auth state listener");
       unsubscribe();
     };
   }, []);
@@ -55,13 +56,13 @@ export const useAuth = (): AuthState & AuthActions => {
   ): Promise<void> => {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }));
-      console.log(`[useAuth] Starting ${actionName}`);
+      devLog(`[useAuth] Starting ${actionName}`);
       
       await action();
       
-      console.log(`[useAuth] ${actionName} successful`);
+      devLog(`[useAuth] ${actionName} successful`);
     } catch (error: any) {
-      console.error(`[useAuth] ${actionName} error:`, error);
+      devError(`[useAuth] ${actionName} error:`, error);
       
       let errorMessage = "An unexpected error occurred";
       

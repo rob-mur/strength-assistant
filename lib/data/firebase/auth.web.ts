@@ -8,6 +8,7 @@ import {
   User as FirebaseUser,
   UserCredential,
 } from "firebase/auth";
+import { devLog, devError } from "@/lib/utils/devLog";
 
 export type User = FirebaseUser;
 
@@ -20,10 +21,10 @@ export const signInWithEmailAndPassword = async (
 ): Promise<UserCredential> => {
   try {
     const userCredential = await firebaseSignInWithEmailAndPassword(auth, email, password);
-    console.log("[Auth Web] User signed in successfully:", userCredential.user.uid);
+    devLog("[Auth Web] User signed in successfully:", userCredential.user.uid);
     return userCredential;
   } catch (error) {
-    console.error("[Auth Web] Sign in error:", error);
+    devError("[Auth Web] Sign in error:", error);
     throw error;
   }
 };
@@ -35,10 +36,10 @@ export const createUserWithEmailAndPassword = async (
 ): Promise<UserCredential> => {
   try {
     const userCredential = await firebaseCreateUserWithEmailAndPassword(auth, email, password);
-    console.log("[Auth Web] User created successfully:", userCredential.user.uid);
+    devLog("[Auth Web] User created successfully:", userCredential.user.uid);
     return userCredential;
   } catch (error) {
-    console.error("[Auth Web] Create user error:", error);
+    devError("[Auth Web] Create user error:", error);
     throw error;
   }
 };
@@ -47,10 +48,10 @@ export const createUserWithEmailAndPassword = async (
 export const signInAnonymously = async (): Promise<UserCredential> => {
   try {
     const userCredential = await firebaseSignInAnonymously(auth);
-    console.log("[Auth Web] Anonymous sign in successful:", userCredential.user.uid);
+    devLog("[Auth Web] Anonymous sign in successful:", userCredential.user.uid);
     return userCredential;
   } catch (error) {
-    console.error("[Auth Web] Anonymous sign in error:", error);
+    devError("[Auth Web] Anonymous sign in error:", error);
     throw error;
   }
 };
@@ -59,9 +60,9 @@ export const signInAnonymously = async (): Promise<UserCredential> => {
 export const signOut = async (): Promise<void> => {
   try {
     await firebaseSignOut(auth);
-    console.log("[Auth Web] User signed out successfully");
+    devLog("[Auth Web] User signed out successfully");
   } catch (error) {
-    console.error("[Auth Web] Sign out error:", error);
+    devError("[Auth Web] Sign out error:", error);
     throw error;
   }
 };

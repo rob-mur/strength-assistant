@@ -1,6 +1,7 @@
 import auth, {
   FirebaseAuthTypes,
 } from "@react-native-firebase/auth";
+import { devLog, devError } from "@/lib/utils/devLog";
 
 export type User = FirebaseAuthTypes.User;
 
@@ -11,10 +12,10 @@ export const signInWithEmailAndPassword = async (
 ): Promise<FirebaseAuthTypes.UserCredential> => {
   try {
     const userCredential = await auth().signInWithEmailAndPassword(email, password);
-    console.log("[Auth Native] User signed in successfully:", userCredential.user.uid);
+    devLog("[Auth Native] User signed in successfully:", userCredential.user.uid);
     return userCredential;
   } catch (error) {
-    console.error("[Auth Native] Sign in error:", error);
+    devError("[Auth Native] Sign in error:", error);
     throw error;
   }
 };
@@ -26,10 +27,10 @@ export const createUserWithEmailAndPassword = async (
 ): Promise<FirebaseAuthTypes.UserCredential> => {
   try {
     const userCredential = await auth().createUserWithEmailAndPassword(email, password);
-    console.log("[Auth Native] User created successfully:", userCredential.user.uid);
+    devLog("[Auth Native] User created successfully:", userCredential.user.uid);
     return userCredential;
   } catch (error) {
-    console.error("[Auth Native] Create user error:", error);
+    devError("[Auth Native] Create user error:", error);
     throw error;
   }
 };
@@ -38,10 +39,10 @@ export const createUserWithEmailAndPassword = async (
 export const signInAnonymously = async (): Promise<FirebaseAuthTypes.UserCredential> => {
   try {
     const userCredential = await auth().signInAnonymously();
-    console.log("[Auth Native] Anonymous sign in successful:", userCredential.user.uid);
+    devLog("[Auth Native] Anonymous sign in successful:", userCredential.user.uid);
     return userCredential;
   } catch (error) {
-    console.error("[Auth Native] Anonymous sign in error:", error);
+    devError("[Auth Native] Anonymous sign in error:", error);
     throw error;
   }
 };
@@ -50,9 +51,9 @@ export const signInAnonymously = async (): Promise<FirebaseAuthTypes.UserCredent
 export const signOut = async (): Promise<void> => {
   try {
     await auth().signOut();
-    console.log("[Auth Native] User signed out successfully");
+    devLog("[Auth Native] User signed out successfully");
   } catch (error) {
-    console.error("[Auth Native] Sign out error:", error);
+    devError("[Auth Native] Sign out error:", error);
     throw error;
   }
 };

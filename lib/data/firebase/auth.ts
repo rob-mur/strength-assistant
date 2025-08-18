@@ -17,4 +17,5 @@ export const {
   onAuthStateChanged,
 } = authModule;
 
-export type { User } from Platform.OS === "web" ? "./auth.web" : "./auth.native";
+// Export User type from web implementation as default since both platforms expose the same interface
+export type { User } from "./auth.web";
