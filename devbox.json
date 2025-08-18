@@ -28,6 +28,6 @@
 	"env": {
 		"ANDROID_HOME": "$PWD/.devbox/nix/profile/default/libexec/android-sdk/",
 		"GRADLE_OPTS": "-Dorg.gradle.project.android.aapt2FromMavenOverride=$PWD/.devbox/nix/profile/default/bin/aapt2",
-		"EAS_PUBLIC_USE_EMULATOR": "true"
+		"EXPO_PUBLIC_USE_EMULATOR": "true"
 	}
 }
