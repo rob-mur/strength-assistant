@@ -51,8 +51,6 @@ jobs:
 
       - name: Build production APK
         run: devbox run build_production
-        env:
-          EXPO_PUBLIC_USE_EMULATOR: false
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
