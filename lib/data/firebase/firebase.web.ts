@@ -24,7 +24,7 @@ export function initFirebase(): void {
 		db = getFirestore(app);
 		console.log("[Firebase Web] Firebase app and Firestore initialized successfully");
 
-		if (__DEV__ || process.env.EAS_PUBLIC_USE_EMULATOR === "true") {
+		if (__DEV__ || process.env.EXPO_PUBLIC_USE_EMULATOR === "true") {
 			const host = Platform["OS"] == "web" ? "localhost" : "10.0.2.2";
 			console.log(`[Firebase Web] Development mode detected, connecting to emulator at ${host}:8080`);
 			try {

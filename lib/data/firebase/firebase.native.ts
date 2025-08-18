@@ -20,7 +20,7 @@ export function initFirebase(): void {
 		db = getFirestore();
 		console.log("[Firebase Native] Firestore initialized successfully");
 
-		if (__DEV__ || process.env.EXPO_PUBLIC_USE_EMULATOR) {
+		if (__DEV__ || process.env.EXPO_PUBLIC_USE_EMULATOR === "true") {
 			console.log("[Firebase Native] Development mode detected, connecting to emulator at 10.0.2.2:8080");
 			try {
 				connectFirestoreEmulator(db, "10.0.2.2", 8080);
