@@ -5,12 +5,14 @@ import {
 	Firestore,
 	getFirestore,
 } from "firebase/firestore";
+import { getAuth, connectAuthEmulator } from "firebase/auth";
 
 let initialized = false;
 
 import firebaseConfig from "../../../firebase.web.config.json";
 
 let db: Firestore;
+let auth: any;
 
 export function initFirebase(): void {
 	if (initialized) {
@@ -19,23 +21,25 @@ export function initFirebase(): void {
 	}
 
 	try {
-		console.log("[Firebase Web] Initializing Firebase app and Firestore...");
+		console.log("[Firebase Web] Initializing Firebase app, Auth, and Firestore...");
 		const app = initializeApp(firebaseConfig);
 		db = getFirestore(app);
-		console.log("[Firebase Web] Firebase app and Firestore initialized successfully");
+		auth = getAuth(app);
+		console.log("[Firebase Web] Firebase app, Auth, and Firestore initialized successfully");
 
 		if (__DEV__ || process.env.EXPO_PUBLIC_USE_EMULATOR === "true") {
 			const host = Platform["OS"] == "web" ? "localhost" : "10.0.2.2";
-			console.log(`[Firebase Web] Development mode detected, connecting to emulator at ${host}:8080`);
+			console.log(`[Firebase Web] Development mode detected, connecting to emulators at ${host}`);
 			try {
 				connectFirestoreEmulator(db, host, 8080);
-				console.log("[Firebase Web] Successfully connected to Firestore emulator");
+				connectAuthEmulator(auth, `http://${host}:9099`);
+				console.log("[Firebase Web] Successfully connected to Firebase emulators");
 			} catch (emulatorError) {
-				console.error("[Firebase Web] Failed to connect to emulator:", emulatorError);
-				console.warn("[Firebase Web] Continuing with production Firestore");
+				console.error("[Firebase Web] Failed to connect to emulators:", emulatorError);
+				console.warn("[Firebase Web] Continuing with production Firebase");
 			}
 		} else {
-			console.log("[Firebase Web] Production mode, using production Firestore");
+			console.log("[Firebase Web] Production mode, using production Firebase");
 		}
 
 		initialized = true;
