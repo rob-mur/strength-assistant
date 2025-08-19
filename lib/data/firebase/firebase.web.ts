@@ -125,13 +125,3 @@ export const signOut = async (): Promise<void> => {
 		throw error;
 	}
 };
-
-// Get current user
-export const getCurrentUser = (): FirebaseUser | null => {
-	return auth.currentUser;
-};
-
-// Auth state listener
-export const onAuthStateChanged = (callback: (user: FirebaseUser | null) => void) => {
-	return firebaseOnAuthStateChanged(auth, callback);
-};
