@@ -8,7 +8,7 @@ import {
 	signOut,
 	onAuthStateChanged,
 	User,
-} from "@firebase/auth-compat/node_modules/@firebase/auth";
+} from "firebase/auth";
 import { getFirebaseApp } from "./firebase.web";
 import { FirebaseService } from "./firebase-core";
 

@@ -4,6 +4,7 @@ import { logger } from "./logger";
 interface FirebaseInitializer {
 	initFirebase(): void;
 	initAuth(): void;
+	getDb(): any;
 }
 
 // Use dynamic imports to avoid ESLint require() warnings
