@@ -20,13 +20,15 @@ export interface AuthState {
 }
 
 // Platform-specific imports
-let authFunctions: any;
-
-if (Platform.OS === "web") {
-	authFunctions = require("../data/firebase/auth.web");
-} else {
-	authFunctions = require("../data/firebase/auth.native");
-}
+const getAuthFunctions = (): any => {
+	if (Platform.OS === "web") {
+		// eslint-disable-next-line @typescript-eslint/no-require-imports
+		return require("../data/firebase/auth.web");
+	} else {
+		// eslint-disable-next-line @typescript-eslint/no-require-imports
+		return require("../data/firebase/auth.native");
+	}
+};
 
 export function useAuth() {
 	const [authState, setAuthState] = useState<AuthState>({
@@ -36,6 +38,8 @@ export function useAuth() {
 	});
 
 	useEffect(() => {
+		const authFunctions = getAuthFunctions();
+		
 		// Initialize auth
 		authFunctions.initAuth();
 
@@ -69,6 +73,7 @@ export function useAuth() {
 
 	const signInAnonymously = async (): Promise<void> => {
 		try {
+			const authFunctions = getAuthFunctions();
 			setAuthState(prev => ({ ...prev, loading: true, error: null }));
 			if (Platform.OS === "web") {
 				await authFunctions.signInAnonymouslyWeb();
@@ -86,6 +91,7 @@ export function useAuth() {
 
 	const createAccount = async (email: string, password: string): Promise<void> => {
 		try {
+			const authFunctions = getAuthFunctions();
 			setAuthState(prev => ({ ...prev, loading: true, error: null }));
 			if (Platform.OS === "web") {
 				await authFunctions.createAccountWeb(email, password);
@@ -103,6 +109,7 @@ export function useAuth() {
 
 	const signIn = async (email: string, password: string): Promise<void> => {
 		try {
+			const authFunctions = getAuthFunctions();
 			setAuthState(prev => ({ ...prev, loading: true, error: null }));
 			if (Platform.OS === "web") {
 				await authFunctions.signInWeb(email, password);
@@ -120,6 +127,7 @@ export function useAuth() {
 
 	const signOut = async (): Promise<void> => {
 		try {
+			const authFunctions = getAuthFunctions();
 			setAuthState(prev => ({ ...prev, loading: true, error: null }));
 			if (Platform.OS === "web") {
 				await authFunctions.signOutWeb();

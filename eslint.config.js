@@ -11,7 +11,7 @@ export default [
 
   {
     files: ["**/*.{js,jsx,ts,tsx}"],
-    ignores: ["dist/*"],
+    ignores: ["dist/*", "**/*.json"],
     plugins: {
       "unused-imports": unusedImports,
       storybook: storybookPlugin,

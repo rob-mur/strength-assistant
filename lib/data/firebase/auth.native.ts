@@ -1,44 +1,101 @@
 import auth, { FirebaseAuthTypes } from "@react-native-firebase/auth";
+import { FirebaseService } from "./firebase-core";
 
-let initialized = false;
+class AuthNativeService extends FirebaseService {
+	private authInstance: FirebaseAuthTypes.Module | undefined;
 
-export function initAuth(): void {
-	if (initialized) {
-		console.log("[Firebase Auth Native] Already initialized, skipping");
-		return;
+	constructor() {
+		super("Firebase Auth");
 	}
 
-	try {
-		console.log("[Firebase Auth Native] Initializing Firebase Auth...");
-		
-		if (__DEV__ || process.env.EXPO_PUBLIC_USE_EMULATOR === "true") {
-			console.log("[Firebase Auth Native] Development mode detected, connecting to auth emulator at 10.0.2.2:9099");
-			try {
-				auth().useEmulator("http://10.0.2.2:9099");
-				console.log("[Firebase Auth Native] Successfully connected to Auth emulator");
-			} catch (emulatorError) {
-				console.error("[Firebase Auth Native] Failed to connect to emulator:", emulatorError);
-				console.warn("[Firebase Auth Native] Continuing with production Auth");
-			}
-		} else {
-			console.log("[Firebase Auth Native] Production mode, using production Auth");
+	init(): void {
+		if (this.initialized) {
+			this.logInfo("Already initialized, skipping");
+			return;
 		}
 
-		initialized = true;
-		console.log("[Firebase Auth Native] Auth initialization complete");
-	} catch (error) {
-		console.error("[Firebase Auth Native] Failed to initialize Firebase Auth:", error);
-		throw error;
+		const startTime = Date.now();
+		this.logInfo("Initializing Firebase Auth...", { operation: "init" });
+
+		try {
+			this.authInstance = auth();
+			this.setupEmulator();
+			this.initialized = true;
+			
+			this.logInfo("Auth initialization complete", { 
+				operation: "init",
+				duration: Date.now() - startTime 
+			});
+		} catch (error: any) {
+			this.logError("Failed to initialize Firebase Auth", {
+				operation: "init",
+				duration: Date.now() - startTime,
+				error: {
+					message: error.message,
+					stack: error.stack
+				}
+			});
+			throw error;
+		}
+	}
+
+	private setupEmulator(): void {
+		if (!this.authInstance) return;
+
+		if (this.isEmulatorEnabled()) {
+			const host = this.getEmulatorHost();
+			const port = 9099;
+			const emulatorUrl = `http://${host}:${port}`;
+			
+			this.logInfo("Development mode detected, connecting to auth emulator", {
+				operation: "emulator_setup",
+				emulator: { host, port }
+			});
+
+			try {
+				this.authInstance.useEmulator(emulatorUrl);
+				this.logInfo("Successfully connected to Auth emulator", {
+					operation: "emulator_setup",
+					emulator: { host, port }
+				});
+			} catch (error: any) {
+				this.logError("Failed to connect to emulator", {
+					operation: "emulator_setup",
+					emulator: { host, port },
+					error: {
+						message: error.message
+					}
+				});
+				this.logWarn("Continuing with production Auth");
+			}
+		} else {
+			this.logInfo("Production mode, using production Auth", {
+				operation: "emulator_setup"
+			});
+		}
+	}
+
+	getAuthInstance(): FirebaseAuthTypes.Module {
+		this.assertInitialized("getAuthInstance()");
+		if (!this.authInstance) {
+			throw new Error("Auth instance not available");
+		}
+		return this.authInstance;
+	}
+
+	isReady(): boolean {
+		return this.initialized && !!this.authInstance;
 	}
 }
 
-// Auth instance getter
+const authService = new AuthNativeService();
+
+export function initAuth(): void {
+	authService.init();
+}
+
 export function getAuthInstance(): FirebaseAuthTypes.Module {
-	if (!initialized) {
-		console.error("[Firebase Auth Native] getAuthInstance() called but Auth not initialized");
-		throw new Error("Firebase Auth not initialized. Call initAuth() first.");
-	}
-	return auth();
+	return authService.getAuthInstance();
 }
 
 // Auth methods

@@ -3,51 +3,107 @@ import {
 	getFirestore,
 	connectFirestoreEmulator,
 } from "@react-native-firebase/firestore";
+import { FirebaseService } from "./firebase-core";
 
-let initialized = false;
+class FirestoreNativeService extends FirebaseService {
+	private db: FirebaseFirestoreTypes.Module | undefined;
 
-
-let db: FirebaseFirestoreTypes.Module | undefined;
-
-export function initFirebase(): void {
-	if (initialized) {
-		console.log("[Firebase Native] Already initialized, skipping");
-		return;
+	constructor() {
+		super("Firestore");
 	}
 
-	try {
-		console.log("[Firebase Native] Initializing Firestore...");
-		db = getFirestore();
-		console.log("[Firebase Native] Firestore initialized successfully");
-
-		if (__DEV__ || process.env.EXPO_PUBLIC_USE_EMULATOR === "true") {
-			console.log("[Firebase Native] Development mode detected, connecting to emulator at 10.0.2.2:8080");
-			try {
-				connectFirestoreEmulator(db, "10.0.2.2", 8080);
-				console.log("[Firebase Native] Successfully connected to Firestore emulator");
-			} catch (emulatorError) {
-				console.error("[Firebase Native] Failed to connect to emulator:", emulatorError);
-				console.warn("[Firebase Native] Continuing with production Firestore");
-			}
-		} else {
-			console.log("[Firebase Native] Production mode, using production Firestore");
+	init(): void {
+		if (this.initialized) {
+			this.logInfo("Already initialized, skipping");
+			return;
 		}
 
-		initialized = true;
-		console.log("[Firebase Native] Initialization complete");
-	} catch (error) {
-		console.error("[Firebase Native] Failed to initialize Firebase:", error);
-		throw error;
+		const startTime = Date.now();
+		this.logInfo("Initializing Firestore...", { operation: "init" });
+
+		try {
+			this.db = getFirestore();
+			this.logInfo("Firestore initialized successfully", { 
+				operation: "init",
+				duration: Date.now() - startTime 
+			});
+
+			this.setupEmulator();
+			this.initialized = true;
+			
+			this.logInfo("Initialization complete", { 
+				operation: "init",
+				duration: Date.now() - startTime 
+			});
+		} catch (error: any) {
+			this.logError("Failed to initialize Firebase", {
+				operation: "init",
+				duration: Date.now() - startTime,
+				error: {
+					message: error.message,
+					stack: error.stack
+				}
+			});
+			throw error;
+		}
+	}
+
+	private setupEmulator(): void {
+		if (!this.db) return;
+
+		if (this.isEmulatorEnabled()) {
+			const host = this.getEmulatorHost();
+			const port = 8080;
+			
+			this.logInfo("Development mode detected, connecting to emulator", {
+				operation: "emulator_setup",
+				emulator: { host, port }
+			});
+
+			try {
+				connectFirestoreEmulator(this.db, host, port);
+				this.logInfo("Successfully connected to Firestore emulator", {
+					operation: "emulator_setup",
+					emulator: { host, port }
+				});
+			} catch (error: any) {
+				this.logError("Failed to connect to emulator", {
+					operation: "emulator_setup",
+					emulator: { host, port },
+					error: {
+						message: error.message
+					}
+				});
+				this.logWarn("Continuing with production Firestore");
+			}
+		} else {
+			this.logInfo("Production mode, using production Firestore", {
+				operation: "emulator_setup"
+			});
+		}
+	}
+
+	getDb(): FirebaseFirestoreTypes.Module {
+		this.assertInitialized("getDb()");
+		if (!this.db) {
+			throw new Error("Firestore instance not available");
+		}
+		return this.db;
+	}
+
+	isReady(): boolean {
+		return this.initialized && !!this.db;
 	}
 }
 
-// ===== Getters with overloads =====
+const firestoreService = new FirestoreNativeService();
+
+export function initFirebase(): void {
+	firestoreService.init();
+}
+
 export function getDb(): FirebaseFirestoreTypes.Module {
-	if (!initialized || !db) {
-		console.error("[Firebase Native] getDb() called but Firebase not initialized");
-		throw new Error("Firebase not initialized. Call initFirebase() first.");
-	}
-	return db!;
+	return firestoreService.getDb();
 }
 
 export * from "@react-native-firebase/firestore";

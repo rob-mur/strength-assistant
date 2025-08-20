@@ -18,7 +18,7 @@ type Story = StoryObj<typeof AddExerciseScreen>;
 
 export const Default: Story = {
   args: {
-    onExerciseSubmitted: fn((_: Router, exercise: String) =>
+    onExerciseSubmitted: fn((_: Router, exercise: string) =>
       console.log(`Submitting exercise ${exercise}`),
     ),
   },
