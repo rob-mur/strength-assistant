@@ -1,5 +1,4 @@
 import { Platform } from "react-native";
-import { initializeApp } from "firebase/app";
 import {
 	Auth,
 	getAuth,
@@ -10,10 +9,10 @@ import {
 	signOut,
 	onAuthStateChanged,
 	User,
-} from "firebase/auth";
+} from "@firebase/auth-compat/node_modules/@firebase/auth";
+import { getFirebaseApp } from "./firebase.web";
 
 let initialized = false;
-import firebaseConfig from "../../../firebase.web.config.json";
 
 let auth: Auth;
 
@@ -25,7 +24,8 @@ export function initAuth(): void {
 
 	try {
 		console.log("[Firebase Auth Web] Initializing Firebase Auth...");
-		const app = initializeApp(firebaseConfig);
+		const app = getFirebaseApp();
+		console.log("[Firebase Auth Web] Got firebase app with name: ", app.name);
 		auth = getAuth(app);
 		console.log("[Firebase Auth Web] Firebase Auth initialized successfully");
 

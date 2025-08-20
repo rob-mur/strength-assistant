@@ -1,15 +1,16 @@
 import { Platform } from "react-native";
-import { initializeApp } from "firebase/app";
+import { initializeApp, FirebaseApp } from "@firebase/app";
 import {
 	connectFirestoreEmulator,
 	Firestore,
 	getFirestore,
-} from "firebase/firestore";
+} from "@firebase/firestore";
 
 let initialized = false;
 
 import firebaseConfig from "../../../firebase.web.config.json";
 
+let app: FirebaseApp;
 let db: Firestore;
 
 export function initFirebase(): void {
@@ -20,7 +21,9 @@ export function initFirebase(): void {
 
 	try {
 		console.log("[Firebase Web] Initializing Firebase app and Firestore...");
-		const app = initializeApp(firebaseConfig);
+		console.log("[Firebase Web] Config is: ", firebaseConfig);
+		app = initializeApp(firebaseConfig);
+		console.log("[Firebase Web] Initializing Firestore");
 		db = getFirestore(app);
 		console.log("[Firebase Web] Firebase app and Firestore initialized successfully");
 
@@ -53,6 +56,14 @@ export function getDb(): Firestore {
 		throw new Error("Firebase not initialized. Call initFirebase() first.");
 	}
 	return db!;
+}
+
+export function getFirebaseApp(): FirebaseApp {
+	if (!initialized || !app) {
+		console.error("[Firebase Web] getFirebaseApp() called but Firebase not initialized");
+		throw new Error("Firebase not initialized. Call initFirebase() first.");
+	}
+	return app;
 }
 
 export * from "firebase/firestore";
