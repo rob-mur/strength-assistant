@@ -13,7 +13,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Testing
 - `npm test` - Run unit tests with Jest
 - `npm run test:watch` - Run tests in watch mode
-- `npm run test:integration` - Run integration tests (config referenced but not found)
 
 ### Code Quality
 - `npm run lint` - Run ESLint
