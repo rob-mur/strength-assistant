@@ -11,7 +11,7 @@ export default [
 
   {
     files: ["**/*.{js,jsx,ts,tsx}"],
-    ignores: ["dist/*"],
+    ignores: ["dist/*", "**/*.json"],
     plugins: {
       "unused-imports": unusedImports,
       storybook: storybookPlugin,
@@ -44,6 +44,12 @@ export default [
     rules: {
       ...jestPlugin.configs.recommended.rules,
       ...testingLibraryPlugin.configs.react.rules,
+    },
+  },
+  {
+    files: ["lib/data/firebase/auth.web.ts"],
+    rules: {
+      "import/no-unresolved": "off", // Allow compat imports for Firebase auth
     },
   },
   eslintConfigPrettier,

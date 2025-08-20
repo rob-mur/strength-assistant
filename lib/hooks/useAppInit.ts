@@ -8,6 +8,7 @@ import { SplashScreen } from "expo-router";
 import { useEffect, useState } from "react";
 
 import { initFirebase } from "@/lib/data/firebase";
+import { logger } from "@/lib/data/firebase/logger";
 
 export const useAppInit = () => {
 	const [isAppReady, setAppReady] = useState(false);
@@ -19,9 +20,16 @@ export const useAppInit = () => {
 	});
 
 	useEffect(() => {
-		// Throw any font loading errors
 		if (fontError) {
-			console.error("[useAppInit] Font loading error:", fontError);
+			logger.error("Font loading error", {
+				service: "App Init",
+				platform: "React Native",
+				operation: "font_loading",
+				error: {
+					message: fontError.message,
+					stack: fontError.stack
+				}
+			});
 			throw fontError;
 		}
 	}, [fontError]);
@@ -29,21 +37,52 @@ export const useAppInit = () => {
 	useEffect(() => {
 		const prepare = async () => {
 			const startTime = Date.now();
-			console.log("[useAppInit] Starting app initialization");
+			
+			logger.info("Starting app initialization", {
+				service: "App Init",
+				platform: "React Native",
+				operation: "init"
+			});
 			
 			try {
-				console.log("[useAppInit] Initializing Firebase...");
+				logger.info("Initializing Firebase...", {
+					service: "App Init",
+					platform: "React Native",
+					operation: "firebase_init"
+				});
+				
 				initFirebase();
-				const duration = Date.now() - startTime;
-				console.log(`[useAppInit] Firebase initialization completed successfully (${duration}ms)`);
-			} catch (e) {
-				const duration = Date.now() - startTime;
-				console.error(`[useAppInit] App initialization error after ${duration}ms:`, e);
-				console.error("[useAppInit] App will continue with limited functionality");
+				
+				logger.info("Firebase initialization completed successfully", {
+					service: "App Init",
+					platform: "React Native",
+					operation: "firebase_init",
+					duration: Date.now() - startTime
+				});
+			} catch (error: any) {
+				logger.error("App initialization error", {
+					service: "App Init",
+					platform: "React Native",
+					operation: "init",
+					duration: Date.now() - startTime,
+					error: {
+						message: error.message,
+						stack: error.stack
+					}
+				});
+				logger.warn("App will continue with limited functionality", {
+					service: "App Init",
+					platform: "React Native",
+					operation: "init"
+				});
 			} finally {
 				setAppReady(true);
-				const totalDuration = Date.now() - startTime;
-				console.log(`[useAppInit] App initialization complete (${totalDuration}ms total)`);
+				logger.info("App initialization complete", {
+					service: "App Init",
+					platform: "React Native",
+					operation: "init",
+					duration: Date.now() - startTime
+				});
 			}
 		};
 
@@ -52,7 +91,11 @@ export const useAppInit = () => {
 
 	useEffect(() => {
 		if (fontsLoaded && isAppReady) {
-			console.log("[useAppInit] Fonts loaded and app ready, hiding splash screen");
+			logger.info("Fonts loaded and app ready, hiding splash screen", {
+				service: "App Init",
+				platform: "React Native",
+				operation: "splash_screen"
+			});
 			SplashScreen.hideAsync();
 		}
 	}, [fontsLoaded, isAppReady]);

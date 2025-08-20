@@ -4,6 +4,7 @@ const English = {
   titleWorkout: "Workout",
   getStartedMessage: "Select an exercise to get started",
   getStartedCallToAction: "Start",
+  submitting: "Submitting...",
   submit: "Submit",
   addExerciseTitle: "Add Exercise",
   name: "Name",

@@ -1,58 +1,137 @@
-import { Platform } from "react-native";
-import { initializeApp } from "firebase/app";
+import { initializeApp, FirebaseApp } from "@firebase/app";
 import {
 	connectFirestoreEmulator,
 	Firestore,
 	getFirestore,
-} from "firebase/firestore";
-
-let initialized = false;
-
+} from "@firebase/firestore";
+import { FirebaseService } from "./firebase-core";
 import firebaseConfig from "../../../firebase.web.config.json";
 
-let db: Firestore;
+class FirebaseWebService extends FirebaseService {
+	private app: FirebaseApp | undefined;
+	private db: Firestore | undefined;
 
-export function initFirebase(): void {
-	if (initialized) {
-		console.log("[Firebase Web] Already initialized, skipping");
-		return;
+	constructor() {
+		super("Firebase");
 	}
 
-	try {
-		console.log("[Firebase Web] Initializing Firebase app and Firestore...");
-		const app = initializeApp(firebaseConfig);
-		db = getFirestore(app);
-		console.log("[Firebase Web] Firebase app and Firestore initialized successfully");
-
-		if (__DEV__ || process.env.EXPO_PUBLIC_USE_EMULATOR === "true") {
-			const host = Platform["OS"] == "web" ? "localhost" : "10.0.2.2";
-			console.log(`[Firebase Web] Development mode detected, connecting to emulator at ${host}:8080`);
-			try {
-				connectFirestoreEmulator(db, host, 8080);
-				console.log("[Firebase Web] Successfully connected to Firestore emulator");
-			} catch (emulatorError) {
-				console.error("[Firebase Web] Failed to connect to emulator:", emulatorError);
-				console.warn("[Firebase Web] Continuing with production Firestore");
-			}
-		} else {
-			console.log("[Firebase Web] Production mode, using production Firestore");
+	init(): void {
+		if (this.initialized) {
+			this.logInfo("Already initialized, skipping");
+			return;
 		}
 
-		initialized = true;
-		console.log("[Firebase Web] Initialization complete");
-	} catch (error) {
-		console.error("[Firebase Web] Failed to initialize Firebase:", error);
-		throw error;
+		const startTime = Date.now();
+		this.logInfo("Initializing Firebase app and Firestore...", { 
+			operation: "init",
+			config: this.sanitizeConfig(firebaseConfig)
+		});
+
+		try {
+			this.app = initializeApp(firebaseConfig);
+			this.db = getFirestore(this.app);
+			
+			this.logInfo("Firebase app and Firestore initialized successfully", { 
+				operation: "init",
+				duration: Date.now() - startTime 
+			});
+
+			this.setupEmulator();
+			this.initialized = true;
+			
+			this.logInfo("Initialization complete", { 
+				operation: "init",
+				duration: Date.now() - startTime 
+			});
+		} catch (error: any) {
+			this.logError("Failed to initialize Firebase", {
+				operation: "init",
+				duration: Date.now() - startTime,
+				error: {
+					message: error.message,
+					stack: error.stack
+				}
+			});
+			throw error;
+		}
+	}
+
+	private sanitizeConfig(config: any): Record<string, unknown> {
+		const { apiKey, ...safeConfig } = config;
+		return {
+			...safeConfig,
+			apiKey: apiKey ? `${apiKey.slice(0, 8)}...` : 'not-set'
+		};
+	}
+
+	private setupEmulator(): void {
+		if (!this.db) return;
+
+		if (this.isEmulatorEnabled()) {
+			const host = this.getEmulatorHost();
+			const port = 8080;
+			
+			this.logInfo("Development mode detected, connecting to emulator", {
+				operation: "emulator_setup",
+				emulator: { host, port }
+			});
+
+			try {
+				connectFirestoreEmulator(this.db, host, port);
+				this.logInfo("Successfully connected to Firestore emulator", {
+					operation: "emulator_setup",
+					emulator: { host, port }
+				});
+			} catch (error: any) {
+				this.logError("Failed to connect to emulator", {
+					operation: "emulator_setup",
+					emulator: { host, port },
+					error: {
+						message: error.message
+					}
+				});
+				this.logWarn("Continuing with production Firestore");
+			}
+		} else {
+			this.logInfo("Production mode, using production Firestore", {
+				operation: "emulator_setup"
+			});
+		}
+	}
+
+	getDb(): Firestore {
+		this.assertInitialized("getDb()");
+		if (!this.db) {
+			throw new Error("Firestore instance not available");
+		}
+		return this.db;
+	}
+
+	getFirebaseApp(): FirebaseApp {
+		this.assertInitialized("getFirebaseApp()");
+		if (!this.app) {
+			throw new Error("Firebase app instance not available");
+		}
+		return this.app;
+	}
+
+	isReady(): boolean {
+		return this.initialized && !!this.app && !!this.db;
 	}
 }
 
-// ===== Getters with overloads =====
+const firebaseService = new FirebaseWebService();
+
+export function initFirebase(): void {
+	firebaseService.init();
+}
+
 export function getDb(): Firestore {
-	if (!initialized || !db) {
-		console.error("[Firebase Web] getDb() called but Firebase not initialized");
-		throw new Error("Firebase not initialized. Call initFirebase() first.");
-	}
-	return db!;
+	return firebaseService.getDb();
+}
+
+export function getFirebaseApp(): FirebaseApp {
+	return firebaseService.getFirebaseApp();
 }
 
 export * from "firebase/firestore";

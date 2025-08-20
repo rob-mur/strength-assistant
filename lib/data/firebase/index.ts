@@ -1,0 +1,1 @@
+export { initFirebase, getDb, initializeFirebaseServices } from "./initializer";

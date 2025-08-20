@@ -1,5 +1,5 @@
 import HomeScreen from "@/app/(tabs)";
-import { fireEvent, render, userEvent } from "@testing-library/react-native";
+import { render, screen } from "@testing-library/react-native";
 import { CommonTestState } from "@/__test_utils__/utils";
 
 jest.mock("expo-router");
@@ -13,9 +13,9 @@ describe("<HomeScreen />", () => {
   test("When the user decides to get started their exercise list is shown", async () => {
     // Given
     const mockOnUserReadToStart = jest.fn();
-    const { getByTestId } = render(<HomeScreen />);
+    render(<HomeScreen />);
     // When
-    await state.user.press(await getByTestId("get-started"));
+    await state.user.press(screen.getByTestId("get-started"));
     // Then
     expect(mockOnUserReadToStart.mock.lastCall).not.toBeNull();
   });

@@ -56,6 +56,19 @@ const TabLayout = () => {
             ),
         }}
       />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
+          tabBarIcon: (props) => (
+            <MaterialCommunityIcons
+              {...props}
+              size={24}
+              name={props.focused ? "account" : "account-outline"}
+            />
+          ),
+        }}
+      />
     </Tabs>
   );
 };

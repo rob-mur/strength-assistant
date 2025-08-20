@@ -1,5 +1,5 @@
 import { useAddExercise } from "@/lib/hooks/useAddExercise";
-import { render, waitFor } from "@testing-library/react-native";
+import { render, screen, waitFor } from "@testing-library/react-native";
 import { CommonTestState } from "../../__test_utils__/utils";
 import AddExerciseForm from "@/lib/components/Forms/AddExerciseForm";
 
@@ -18,10 +18,10 @@ describe("<AddExerciseForm/>", () => {
 
   test("When the user enters a name and pressed submit the callback is executed", async () => {
     // Given
-    const { getByTestId } = render(<AddExerciseForm />);
+    render(<AddExerciseForm />);
     // When
-    await state.user.type(getByTestId("name"), "Exercise Name");
-    await state.user.press(getByTestId("submit"));
+    await state.user.type(screen.getByTestId("name"), "Exercise Name");
+    await state.user.press(screen.getByTestId("submit"));
     // Then
     expect(mockUseAddExercise.mock.lastCall).not.toBeNull();
   });
@@ -36,11 +36,11 @@ describe("<AddExerciseForm/>", () => {
       await addExercisePromise;
     }));
     
-    const { getByTestId } = render(<AddExerciseForm />);
-    const submitButton = getByTestId("submit");
+    render(<AddExerciseForm />);
+    const submitButton = screen.getByTestId("submit");
     
     // When
-    await state.user.type(getByTestId("name"), "Exercise Name");
+    await state.user.type(screen.getByTestId("name"), "Exercise Name");
     await state.user.press(submitButton);
     
     // Then - button should be disabled during loading
