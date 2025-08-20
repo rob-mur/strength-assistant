@@ -3,6 +3,8 @@ url: http://localhost:8081
 - runScript: ../../scripts/clear_emulator.js
 - launchApp
 - tapOn:
+    id: "continue-as-guest"
+- tapOn:
     id: "get-started"
 - tapOn:
     id: "add-exercise"

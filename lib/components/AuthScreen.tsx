@@ -178,6 +178,7 @@ export function AuthScreen() {
 								loading={loading}
 								disabled={loading}
 								style={styles.anonymousButton}
+								testID="continue-as-guest"
 							>
 								Continue as Guest
 							</Button>
