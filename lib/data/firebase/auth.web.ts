@@ -8,7 +8,8 @@ import {
 	signOut,
 	onAuthStateChanged,
 	User,
-} from "firebase/auth";
+	// @ts-ignore - Using compat import path to work around Firebase auth initialization bug
+} from "@firebase/auth-compat/node_modules/@firebase/auth";
 import { getFirebaseApp } from "./firebase.web";
 import { FirebaseService } from "./firebase-core";
 
@@ -30,23 +31,23 @@ class AuthWebService extends FirebaseService {
 
 		try {
 			const app = getFirebaseApp();
-			this.logInfo("Got firebase app", { 
+			this.logInfo("Got firebase app", {
 				operation: "init",
 				config: { appName: app.name }
 			});
-			
+
 			this.authInstance = getAuth(app);
-			this.logInfo("Firebase Auth initialized successfully", { 
+			this.logInfo("Firebase Auth initialized successfully", {
 				operation: "init",
-				duration: Date.now() - startTime 
+				duration: Date.now() - startTime
 			});
 
 			this.setupEmulator();
 			this.initialized = true;
-			
-			this.logInfo("Auth initialization complete", { 
+
+			this.logInfo("Auth initialization complete", {
 				operation: "init",
-				duration: Date.now() - startTime 
+				duration: Date.now() - startTime
 			});
 		} catch (error: any) {
 			this.logError("Failed to initialize Firebase Auth", {
@@ -68,7 +69,7 @@ class AuthWebService extends FirebaseService {
 			const host = this.getEmulatorHost();
 			const port = 9099;
 			const emulatorUrl = `http://${host}:${port}`;
-			
+
 			this.logInfo("Development mode detected, connecting to auth emulator", {
 				operation: "emulator_setup",
 				emulator: { host, port }

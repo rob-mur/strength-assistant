@@ -46,5 +46,11 @@ export default [
       ...testingLibraryPlugin.configs.react.rules,
     },
   },
+  {
+    files: ["lib/data/firebase/auth.web.ts"],
+    rules: {
+      "import/no-unresolved": "off", // Allow compat imports for Firebase auth
+    },
+  },
   eslintConfigPrettier,
 ];
