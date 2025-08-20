@@ -15,6 +15,7 @@ url: com.jimmy_solutions.strength_assistant.test
 - tapOn:
     id: "name"
 - inputText: "ExerciseName"
+- hideKeyboard
 - tapOn:
     id: "submit"
 - assertVisible: "ExerciseName"
