@@ -2,14 +2,18 @@ url: com.jimmy_solutions.strength_assistant.test
 ---
 - runScript: ../../scripts/clear_emulator.js
 - launchApp
+
 # Handle optional auth step (only if not already authenticated)
 - tapOn:
     id: "continue-as-guest"
     optional: true
-# Handle optional onboarding step (only if not already seen)
+
+- extendedWaitUntil:
+    visible:
+      id: "get-started"
+    timeout: 15000
 - tapOn:
     id: "get-started"
-    optional: true
 - tapOn:
     id: "add-exercise"
 - tapOn:

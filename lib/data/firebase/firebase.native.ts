@@ -23,17 +23,17 @@ class FirestoreNativeService extends FirebaseService {
 
 		try {
 			this.db = getFirestore();
-			this.logInfo("Firestore initialized successfully", { 
+			this.logInfo("Firestore initialized successfully", {
 				operation: "init",
-				duration: Date.now() - startTime 
+				duration: Date.now() - startTime
 			});
 
 			this.setupEmulator();
 			this.initialized = true;
-			
-			this.logInfo("Initialization complete", { 
+
+			this.logInfo("Initialization complete", {
 				operation: "init",
-				duration: Date.now() - startTime 
+				duration: Date.now() - startTime
 			});
 		} catch (error: any) {
 			this.logError("Failed to initialize Firebase", {
@@ -54,7 +54,7 @@ class FirestoreNativeService extends FirebaseService {
 		if (this.isEmulatorEnabled()) {
 			const host = this.getEmulatorHost();
 			const port = 8080;
-			
+
 			this.logInfo("Development mode detected, connecting to emulator", {
 				operation: "emulator_setup",
 				emulator: { host, port }

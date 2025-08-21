@@ -17,7 +17,12 @@ export abstract class FirebaseService {
 	}
 
 	protected isEmulatorEnabled(): boolean {
-		return __DEV__ || process.env.EXPO_PUBLIC_USE_EMULATOR === "true";
+		const useEmulator = __DEV__ || process.env.EXPO_PUBLIC_USE_EMULATOR === "true";
+		this.logInfo(`Firebase emulator enabled: ${useEmulator}`, {
+			__DEV__,
+			EXPO_PUBLIC_USE_EMULATOR: process.env.EXPO_PUBLIC_USE_EMULATOR
+		});
+		return useEmulator;
 	}
 
 	protected getEmulatorHost(): string {

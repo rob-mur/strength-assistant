@@ -22,7 +22,7 @@ class FirebaseWebService extends FirebaseService {
 		}
 
 		const startTime = Date.now();
-		this.logInfo("Initializing Firebase app and Firestore...", { 
+		this.logInfo("Initializing Firebase app and Firestore...", {
 			operation: "init",
 			config: this.sanitizeConfig(firebaseConfig)
 		});
@@ -30,18 +30,18 @@ class FirebaseWebService extends FirebaseService {
 		try {
 			this.app = initializeApp(firebaseConfig);
 			this.db = getFirestore(this.app);
-			
-			this.logInfo("Firebase app and Firestore initialized successfully", { 
+
+			this.logInfo("Firebase app and Firestore initialized successfully", {
 				operation: "init",
-				duration: Date.now() - startTime 
+				duration: Date.now() - startTime
 			});
 
 			this.setupEmulator();
 			this.initialized = true;
-			
-			this.logInfo("Initialization complete", { 
+
+			this.logInfo("Initialization complete", {
 				operation: "init",
-				duration: Date.now() - startTime 
+				duration: Date.now() - startTime
 			});
 		} catch (error: any) {
 			this.logError("Failed to initialize Firebase", {
@@ -70,7 +70,7 @@ class FirebaseWebService extends FirebaseService {
 		if (this.isEmulatorEnabled()) {
 			const host = this.getEmulatorHost();
 			const port = 8080;
-			
+
 			this.logInfo("Development mode detected, connecting to emulator", {
 				operation: "emulator_setup",
 				emulator: { host, port }
