@@ -3,46 +3,22 @@ url: com.jimmy_solutions.strength_assistant.test
 - runScript: ../../scripts/clear_emulator.js
 - launchApp
 
-# Debug: Log device info and take initial screenshot
-- evalScript: |
-    output.log("=== DEBUG INFO ===");
-    output.log("Test: add-exercise-and-see-it-in-list");
-    output.log("Device info: " + maestro.deviceInfo.platform + " " + maestro.deviceInfo.platformVersion);
-    output.log("Screen size: " + maestro.deviceInfo.screenWidth + "x" + maestro.deviceInfo.screenHeight);
-- takeScreenshot: step_1_auth_check.png
-
 # Handle optional auth step (only if not already authenticated)
 - tapOn:
     id: "continue-as-guest"
     optional: true
 
-# Debug: Screenshot before looking for get-started button
-- takeScreenshot: step_2_before_get_started.png
-- evalScript: |
-    output.log("Looking for get-started button...");
-
-# Handle onboarding step (required on fresh app open) with enhanced debugging
+- extendedWaitUntil:
+    visible:
+      id: "get-started"
+    timeout: 15000
 - tapOn:
     id: "get-started"
-    waitUntil: visible
-    timeout: 15s
-    onFail:
-      - evalScript: |
-          output.log("ERROR: get-started button not found!");
-          output.log("Visible elements count: " + maestro.query().length);
-          output.log("First 10 elements:");
-          var elements = maestro.query().slice(0, 10);
-          for (var i = 0; i < elements.length; i++) {
-            var elem = elements[i];
-            output.log("Element " + i + ": id=" + (elem.id || "none") + ", text=" + (elem.text || "none") + ", visible=" + elem.visible);
-          }
-      - takeScreenshot: get_started_missing.png
 - tapOn:
     id: "add-exercise"
 - tapOn:
     id: "name"
 - inputText: "ExerciseName"
-- hideKeyboard
 - tapOn:
     id: "submit"
 - tapOn:
