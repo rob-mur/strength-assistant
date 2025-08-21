@@ -6,10 +6,9 @@ url: com.jimmy_solutions.strength_assistant.test
 - tapOn:
     id: "continue-as-guest"
     optional: true
-# Handle optional onboarding step (only if not already seen)
+# Handle onboarding step (required on fresh app open)
 - tapOn:
     id: "get-started"
-    optional: true
 - tapOn:
     id: "add-exercise"
 - tapOn:
