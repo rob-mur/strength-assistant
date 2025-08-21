@@ -46,8 +46,8 @@ echo "Debug output will be saved to maestro-debug-output/"
 # Run Maestro with debug output and capture console output
 maestro test .maestro/android --debug-output maestro-debug-output 2>&1 | tee maestro-debug-output/maestro-console.log
 
-# Capture final status
-MAESTRO_EXIT_CODE=$?
+# Capture final status (using PIPESTATUS to get maestro's exit code, not tee's)
+MAESTRO_EXIT_CODE=${PIPESTATUS[0]}
 
 echo "Maestro tests completed with exit code: $MAESTRO_EXIT_CODE"
 echo "Debug artifacts saved in maestro-debug-output/"
@@ -63,4 +63,11 @@ if [ -f "*.png" ]; then
     ls -la *.png
 fi
 
-exit $MAESTRO_EXIT_CODE
+# Explicitly fail if any tests failed
+if [ $MAESTRO_EXIT_CODE -ne 0 ]; then
+    echo "❌ Tests failed with exit code $MAESTRO_EXIT_CODE"
+    exit $MAESTRO_EXIT_CODE
+else
+    echo "✅ All tests passed"
+    exit 0
+fi

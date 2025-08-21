@@ -24,7 +24,8 @@ url: com.jimmy_solutions.strength_assistant.test
 # Handle onboarding step (required on fresh app open) with enhanced debugging
 - tapOn:
     id: "get-started"
-    timeout: 15000
+    waitUntil: visible
+    timeout: 15s
     onFail:
       - evalScript: |
           output.log("ERROR: get-started button not found!");
