@@ -37,4 +37,30 @@ echo "Emulator is ready!"
 
 adb install build_preview.apk
 
-maestro test .maestro/android
+# Create debug output directory
+mkdir -p maestro-debug-output
+
+echo "Starting Maestro tests with enhanced debugging..."
+echo "Debug output will be saved to maestro-debug-output/"
+
+# Run Maestro with debug flags and capture output
+maestro test .maestro/android --debug --verbose --screenshot-on-failure 2>&1 | tee maestro-debug-output/maestro-console.log
+
+# Capture final status
+MAESTRO_EXIT_CODE=$?
+
+echo "Maestro tests completed with exit code: $MAESTRO_EXIT_CODE"
+echo "Debug artifacts saved in maestro-debug-output/"
+
+# List any screenshots or debug files created
+if [ -d "maestro-debug-output" ]; then
+    echo "Debug artifacts created:"
+    ls -la maestro-debug-output/
+fi
+
+if [ -f "*.png" ]; then
+    echo "Screenshots created:"
+    ls -la *.png
+fi
+
+exit $MAESTRO_EXIT_CODE
