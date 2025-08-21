@@ -43,8 +43,8 @@ mkdir -p maestro-debug-output
 echo "Starting Maestro tests with enhanced debugging..."
 echo "Debug output will be saved to maestro-debug-output/"
 
-# Run Maestro with debug flags and capture output
-maestro test .maestro/android --debug --verbose --screenshot-on-failure 2>&1 | tee maestro-debug-output/maestro-console.log
+# Run Maestro with debug output and capture console output
+maestro test .maestro/android --debug-output maestro-debug-output 2>&1 | tee maestro-debug-output/maestro-console.log
 
 # Capture final status
 MAESTRO_EXIT_CODE=$?
