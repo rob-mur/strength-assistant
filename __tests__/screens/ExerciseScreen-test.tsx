@@ -1,10 +1,15 @@
 import ExerciseScreen from "@/app/(tabs)/exercises";
 import { useExercises } from "@/lib/hooks/useExercises";
+import { useAuth } from "@/lib/hooks/useAuth";
 import { render, screen } from "@testing-library/react-native";
 import { CommonTestState } from "../../__test_utils__/utils";
 
 jest.mock("@/lib/hooks/useExercises", () => ({
   useExercises: jest.fn(),
+}));
+
+jest.mock("@/lib/hooks/useAuth", () => ({
+  useAuth: jest.fn(),
 }));
 
 jest.mock("expo-router");
@@ -14,6 +19,16 @@ describe("<ExerciseScreen/>", () => {
 
   beforeEach(() => {
     state = new CommonTestState();
+    (useAuth as jest.Mock).mockReturnValue({
+      user: { uid: 'test-uid', email: 'test@example.com', isAnonymous: false },
+      loading: false,
+      error: null,
+      signInAnonymously: jest.fn(),
+      createAccount: jest.fn(),
+      signIn: jest.fn(),
+      signOut: jest.fn(),
+      clearError: jest.fn(),
+    });
   });
 
   test("When the user request to add an exercise their request is accepted", async () => {
