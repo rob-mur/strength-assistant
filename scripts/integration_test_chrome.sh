@@ -109,10 +109,8 @@ export MAESTRO_DRIVER_STARTUP_TIMEOUT=30000
 export MAESTRO_DRIVER_IMPLICIT_TIMEOUT=10000
 
 
-# Test: Run only ONE Maestro test file to isolate Chrome session issues
-MAESTRO_EXIT_CODE=0
-TEST_COUNT=0
-FAILED_TESTS=""
+# DIAGNOSTIC MODE: Test ChromeDriver launch directly (bypassing Maestro)
+echo "🔧 DIAGNOSTIC MODE: Testing ChromeDriver launch directly..."
 
 # Perform initial targeted cleanup before starting any tests  
 echo "🧹 Initial Chrome browser cleanup before tests..."
@@ -121,45 +119,124 @@ cleanup_chrome_browsers
 # Wait briefly for cleanup to complete
 sleep 2
 
-# Run only the first test file explicitly to test single Chrome process
-test_file=".maestro/web/add-exercise-and-see-it-in-list.yml"
-echo "🧪 SINGLE TEST MODE: Running only $test_file"
-
-if [ -f "$test_file" ]; then
-    TEST_COUNT=1
-    test_name=$(basename "$test_file")
-    echo "🧪 Running test: $test_name"
-    
-    # Create unique Chrome user data directory for this test
-    CHROME_USER_DATA_DIR=$(mktemp -d -t maestro-chrome-XXXXXX)
-    echo "📁 Chrome user data directory: $CHROME_USER_DATA_DIR"
-    
-    # Set Chrome user data directory for Maestro
-    export MAESTRO_CHROME_USER_DATA_DIR="$CHROME_USER_DATA_DIR"
-    
-    # Run test
-    echo "▶️ Executing test: $test_name"
-    if maestro test "$test_file" --debug-output maestro-debug-output 2>&1 | tee -a maestro-debug-output/maestro-console.log; then
-        INDIVIDUAL_EXIT_CODE=0
-    else
-        INDIVIDUAL_EXIT_CODE=$?
-    fi
-    
-    if [ $INDIVIDUAL_EXIT_CODE -eq 0 ]; then
-        echo "✅ $test_name passed"
-    else
-        echo "❌ $test_name failed with exit code $INDIVIDUAL_EXIT_CODE"
-        MAESTRO_EXIT_CODE=$INDIVIDUAL_EXIT_CODE
-        FAILED_TESTS="$FAILED_TESTS $test_name"
-    fi
-    
-    # Cleanup Chrome user data directory
-    echo "🧹 Cleaning up Chrome data: $CHROME_USER_DATA_DIR"
-    rm -rf "$CHROME_USER_DATA_DIR" 2>/dev/null || true
-    unset MAESTRO_CHROME_USER_DATA_DIR
+# Test 1: Check if chromedriver is available and can be executed
+echo "📋 Test 1: Checking ChromeDriver availability..."
+if command -v chromedriver >/dev/null 2>&1; then
+    echo "✅ chromedriver command found in PATH"
+    chromedriver --version
 else
-    echo "⚠️ Test file not found: $test_file"
+    echo "❌ chromedriver command not found in PATH"
+    echo "Available commands containing 'chrome':"
+    compgen -c | grep -i chrome || echo "No chrome-related commands found"
+fi
+
+# Test 2: Check if chromium/chrome browser is available
+echo ""
+echo "📋 Test 2: Checking Chrome/Chromium browser availability..."
+for browser in chromium chromium-browser google-chrome chrome; do
+    if command -v "$browser" >/dev/null 2>&1; then
+        echo "✅ $browser found in PATH"
+        "$browser" --version 2>/dev/null || echo "Could not get version for $browser"
+    else
+        echo "❌ $browser not found in PATH"
+    fi
+done
+
+# Test 3: Try to start ChromeDriver directly
+echo ""
+echo "📋 Test 3: Attempting to start ChromeDriver directly..."
+CHROME_USER_DATA_DIR=$(mktemp -d -t diagnostic-chrome-XXXXXX)
+echo "📁 Using Chrome user data directory: $CHROME_USER_DATA_DIR"
+
+# Start ChromeDriver in background
+CHROMEDRIVER_PORT=9515
+echo "🚀 Starting ChromeDriver on port $CHROMEDRIVER_PORT..."
+
+if chromedriver --port=$CHROMEDRIVER_PORT --whitelisted-ips= --user-data-dir="$CHROME_USER_DATA_DIR" 2>&1 &
+then
+    CHROMEDRIVER_PID=$!
+    echo "🎯 ChromeDriver started with PID: $CHROMEDRIVER_PID"
+    
+    # Wait a moment for ChromeDriver to fully start
+    sleep 3
+    
+    # Test if ChromeDriver is responding
+    echo "📡 Testing ChromeDriver connectivity..."
+    if curl -s http://localhost:$CHROMEDRIVER_PORT/status >/dev/null 2>&1; then
+        echo "✅ ChromeDriver is responding on port $CHROMEDRIVER_PORT"
+        echo "ChromeDriver status response:"
+        curl -s http://localhost:$CHROMEDRIVER_PORT/status | head -5
+        CHROMEDRIVER_TEST_RESULT=0
+    else
+        echo "❌ ChromeDriver is not responding on port $CHROMEDRIVER_PORT"
+        CHROMEDRIVER_TEST_RESULT=1
+    fi
+    
+    # Kill ChromeDriver
+    echo "🛑 Stopping ChromeDriver (PID: $CHROMEDRIVER_PID)..."
+    kill $CHROMEDRIVER_PID 2>/dev/null || true
+    sleep 1
+    # Force kill if needed
+    kill -9 $CHROMEDRIVER_PID 2>/dev/null || true
+else
+    echo "❌ Failed to start ChromeDriver"
+    CHROMEDRIVER_TEST_RESULT=1
+fi
+
+# Test 4: Try to start Chrome/Chromium directly in headless mode
+echo ""
+echo "📋 Test 4: Testing Chrome/Chromium direct launch..."
+for browser in chromium chromium-browser google-chrome chrome; do
+    if command -v "$browser" >/dev/null 2>&1; then
+        echo "🚀 Testing $browser in headless mode..."
+        
+        if "$browser" --headless --disable-gpu --no-sandbox --disable-dev-shm-usage --remote-debugging-port=9222 --user-data-dir="$CHROME_USER_DATA_DIR" --disable-extensions --disable-plugins about:blank &
+        then
+            CHROME_PID=$!
+            echo "🎯 $browser started with PID: $CHROME_PID"
+            
+            # Wait for Chrome to start
+            sleep 3
+            
+            # Test if Chrome is responding
+            if curl -s http://localhost:9222/json/version >/dev/null 2>&1; then
+                echo "✅ $browser is responding on debugging port 9222"
+                echo "$browser version info:"
+                curl -s http://localhost:9222/json/version | head -3
+                BROWSER_TEST_RESULT=0
+            else
+                echo "❌ $browser is not responding on debugging port 9222"
+                BROWSER_TEST_RESULT=1
+            fi
+            
+            # Kill Chrome
+            echo "🛑 Stopping $browser (PID: $CHROME_PID)..."
+            kill $CHROME_PID 2>/dev/null || true
+            sleep 1
+            kill -9 $CHROME_PID 2>/dev/null || true
+        else
+            echo "❌ Failed to start $browser"
+            BROWSER_TEST_RESULT=1
+        fi
+        break  # Only test the first available browser
+    fi
+done
+
+# Cleanup temp directory
+rm -rf "$CHROME_USER_DATA_DIR" 2>/dev/null || true
+
+echo ""
+echo "🏁 DIAGNOSTIC SUMMARY:"
+echo "ChromeDriver test result: $CHROMEDRIVER_TEST_RESULT (0=success, 1=failure)"
+echo "Browser test result: $BROWSER_TEST_RESULT (0=success, 1=failure)"
+
+# Exit with failure if any tests failed
+MAESTRO_EXIT_CODE=0
+if [ "$CHROMEDRIVER_TEST_RESULT" -ne 0 ] || [ "$BROWSER_TEST_RESULT" -ne 0 ]; then
+    echo "❌ Chrome/ChromeDriver diagnostic tests failed"
     MAESTRO_EXIT_CODE=1
+else
+    echo "✅ Chrome/ChromeDriver diagnostic tests passed"
 fi
 
 echo "Maestro tests completed with exit code: $MAESTRO_EXIT_CODE"
