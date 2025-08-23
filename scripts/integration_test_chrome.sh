@@ -4,39 +4,45 @@ set -e
 
 echo "🌐 Starting Chrome Integration Tests"
 
-# Function to perform deep Chrome cleanup
+# Function to perform comprehensive Chrome cleanup
 deep_chrome_cleanup() {
-    echo "🧹 Performing deep Chrome cleanup..."
+    echo "🧹 Performing comprehensive Chrome cleanup..."
     
-    # Kill only Chrome and chromedriver processes, avoiding firebase/expo/node
+    # Kill Chrome and related processes more comprehensively
     for sig in TERM KILL; do
-        # Be more specific with Chrome process patterns to avoid killing other processes
-        pkill -$sig -f "google-chrome.*--remote-debugging" 2>/dev/null || true
-        pkill -$sig -f "chromium.*--remote-debugging" 2>/dev/null || true  
-        pkill -$sig -f "chrome.*--headless" 2>/dev/null || true
+        # Kill Chrome processes with different patterns
+        pkill -$sig -f "google-chrome" 2>/dev/null || true
+        pkill -$sig -f "chromium" 2>/dev/null || true  
+        pkill -$sig -f "chrome" 2>/dev/null || true
         pkill -$sig -f "chromedriver" 2>/dev/null || true
         pkill -$sig -f "ChromeDriver" 2>/dev/null || true
         
-        # Wait between signals
+        # Wait between TERM and KILL
         if [ "$sig" = "TERM" ]; then
-            sleep 2
+            sleep 3
         fi
     done
     
-    # Clean up Chrome sockets and locks
+    # Clean up Chrome's state files and directories
     rm -rf /tmp/.org.chromium.Chromium.* 2>/dev/null || true
     rm -rf /tmp/.com.google.Chrome.* 2>/dev/null || true
     rm -rf /tmp/chrome_* 2>/dev/null || true
     rm -rf /tmp/scoped_dir* 2>/dev/null || true
+    rm -rf /tmp/maestro-chrome-test-* 2>/dev/null || true
     
-    # Clean up any Chrome debugging ports
-    ss -tulpn | grep ':909[0-9]' | awk '{print $7}' | cut -d'/' -f1 | xargs -I {} kill -9 {} 2>/dev/null || true
+    # Kill processes using Chrome debugging ports
+    lsof -ti:9222 2>/dev/null | xargs -r kill -9 2>/dev/null || true
+    lsof -ti:9223 2>/dev/null | xargs -r kill -9 2>/dev/null || true
+    lsof -ti:9224 2>/dev/null | xargs -r kill -9 2>/dev/null || true
     
-    # Clean up all maestro Chrome temp directories
-    find /tmp -maxdepth 1 -name "maestro-chrome-test-*" -type d -exec rm -rf {} + 2>/dev/null || true
-    find /tmp -maxdepth 1 -name ".org.chromium.Chromium.*" -type d -exec rm -rf {} + 2>/dev/null || true
+    # Clean up any orphaned Chrome processes using more patterns
+    ps aux | grep -i chrome | grep -v grep | awk '{print $2}' | xargs -r kill -9 2>/dev/null || true
     
-    echo "✅ Deep Chrome cleanup completed"
+    # Clean up Chrome's shared memory
+    find /dev/shm -name ".org.chromium.*" -exec rm -rf {} + 2>/dev/null || true
+    find /dev/shm -name "*chrome*" -exec rm -rf {} + 2>/dev/null || true
+    
+    echo "✅ Comprehensive Chrome cleanup completed"
 }
 
 # Function to cleanup background processes
@@ -105,35 +111,18 @@ echo "Debug output will be saved to maestro-debug-output/"
 export MAESTRO_DRIVER_STARTUP_TIMEOUT=30000
 export MAESTRO_DRIVER_IMPLICIT_TIMEOUT=10000
 
-# Function to cleanup Chrome processes and user data directory
-cleanup_chrome_test() {
-    local user_data_dir=$1
-    echo "🧹 Cleaning up Chrome for current test: $user_data_dir"
-    
-    # Stop environment variable first to prevent new sessions
-    unset MAESTRO_CHROME_USER_DATA_DIR 2>/dev/null || true
-    
-    # Perform deep cleanup
-    deep_chrome_cleanup
-    
-    # Clean up specific user data directory
-    if [ ! -z "$user_data_dir" ] && [ -d "$user_data_dir" ]; then
-        rm -rf "$user_data_dir" 2>/dev/null || true
-        echo "🗑️ Cleaned up user data directory: $user_data_dir"
-    fi
-    
-    # Additional wait to ensure complete cleanup
-    sleep 3
-}
 
-# Run each Maestro test file individually (required for web tests)
+# Run each Maestro test file individually with complete isolation
 MAESTRO_EXIT_CODE=0
 TEST_COUNT=0
 FAILED_TESTS=""
 
-# Perform initial deep cleanup before starting any tests
-echo "🧹 Initial Chrome cleanup before tests..."
+# Perform initial comprehensive cleanup before starting any tests
+echo "🧹 Initial comprehensive Chrome cleanup before tests..."
 deep_chrome_cleanup
+
+# Wait for system to stabilize after cleanup
+sleep 5
 
 for test_file in .maestro/web/*.yml; do
     if [ -f "$test_file" ]; then
@@ -141,22 +130,51 @@ for test_file in .maestro/web/*.yml; do
         test_name=$(basename "$test_file")
         echo "🧪 Running test: $test_name"
         
-        # Ensure clean state before each test
+        # Complete Chrome cleanup and system reset before each test
+        echo "🧹 Pre-test cleanup for $test_name..."
         deep_chrome_cleanup
         
-        # Create unique user data directory for this specific test with more entropy
-        CHROME_USER_DATA_DIR=$(mktemp -d -t maestro-chrome-test-$(date +%s%N)-XXXXXX)
-        export MAESTRO_CHROME_USER_DATA_DIR="$CHROME_USER_DATA_DIR"
+        # Wait for complete system cleanup
+        sleep 5
         
-        # Set additional Chrome options to prevent session conflicts
-        export MAESTRO_CHROME_OPTIONS="--user-data-dir=$CHROME_USER_DATA_DIR --no-first-run --disable-default-apps --disable-popup-blocking --disable-translate --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows --disable-features=TranslateUI --disable-ipc-flooding-protection --remote-debugging-port=0 --disable-dev-shm-usage --no-sandbox"
+        # Create completely isolated test workspace
+        TEST_WORKSPACE=$(mktemp -d -t maestro-test-workspace-XXXXXX)
+        CHROME_USER_DATA_DIR="$TEST_WORKSPACE/chrome-data"
+        mkdir -p "$CHROME_USER_DATA_DIR"
         
-        echo "📁 Using Chrome user data directory: $CHROME_USER_DATA_DIR"
-        echo "🔧 Chrome options: $MAESTRO_CHROME_OPTIONS"
+        echo "📁 Test workspace: $TEST_WORKSPACE"
+        echo "📁 Chrome user data directory: $CHROME_USER_DATA_DIR"
         
-        # Run individual test with debug output and capture exit code properly
-        maestro test "$test_file" --debug-output maestro-debug-output 2>&1 | tee -a maestro-debug-output/maestro-console.log
-        INDIVIDUAL_EXIT_CODE=${PIPESTATUS[0]}
+        # Create a wrapper script that runs in complete isolation
+        WRAPPER_SCRIPT="$TEST_WORKSPACE/run-test.sh"
+        cat > "$WRAPPER_SCRIPT" << 'EOF'
+#!/bin/bash
+set -e
+
+# Set Chrome to use our isolated directory
+export CHROME_USER_DATA_DIR="$1"
+export MAESTRO_DRIVER_STARTUP_TIMEOUT=60000
+export MAESTRO_DRIVER_IMPLICIT_TIMEOUT=30000
+
+# Force Chrome isolation with system environment
+export DISPLAY=${DISPLAY:-:0}
+export XDG_CONFIG_HOME="$CHROME_USER_DATA_DIR/.config"
+export XDG_CACHE_HOME="$CHROME_USER_DATA_DIR/.cache"
+export XDG_DATA_HOME="$CHROME_USER_DATA_DIR/.local/share"
+mkdir -p "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME" "$XDG_DATA_HOME"
+
+# Run the actual test
+maestro test "$2" --debug-output "$3"
+EOF
+        chmod +x "$WRAPPER_SCRIPT"
+        
+        # Run test in complete isolation
+        echo "▶️ Executing isolated test: $test_name"
+        if "$WRAPPER_SCRIPT" "$CHROME_USER_DATA_DIR" "$test_file" "maestro-debug-output" 2>&1 | tee -a maestro-debug-output/maestro-console.log; then
+            INDIVIDUAL_EXIT_CODE=0
+        else
+            INDIVIDUAL_EXIT_CODE=$?
+        fi
         
         if [ $INDIVIDUAL_EXIT_CODE -eq 0 ]; then
             echo "✅ $test_name passed"
@@ -166,10 +184,15 @@ for test_file in .maestro/web/*.yml; do
             FAILED_TESTS="$FAILED_TESTS $test_name"
         fi
         
-        # Clean up Chrome processes and user data directory immediately after each test
-        cleanup_chrome_test "$CHROME_USER_DATA_DIR"
-        unset MAESTRO_CHROME_USER_DATA_DIR
-        unset MAESTRO_CHROME_OPTIONS
+        # Immediate cleanup of test workspace
+        echo "🧹 Cleaning up test workspace: $TEST_WORKSPACE"
+        rm -rf "$TEST_WORKSPACE" 2>/dev/null || true
+        
+        # Full Chrome cleanup after each test
+        deep_chrome_cleanup
+        
+        # Wait for complete cleanup before next test
+        sleep 3
         
         echo "---"
     fi
