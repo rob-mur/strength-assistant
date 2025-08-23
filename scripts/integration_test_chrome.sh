@@ -71,11 +71,34 @@ echo "Debug output will be saved to maestro-debug-output/"
 export MAESTRO_DRIVER_STARTUP_TIMEOUT=30000
 export MAESTRO_DRIVER_IMPLICIT_TIMEOUT=10000
 
-# Run Maestro with debug output and capture console output
-maestro test .maestro/web --debug-output maestro-debug-output 2>&1 | tee maestro-debug-output/maestro-console.log
+# Run each Maestro test file individually (required for web tests)
+MAESTRO_EXIT_CODE=0
+TEST_COUNT=0
+FAILED_TESTS=""
 
-# Capture final status (using PIPESTATUS to get maestro's exit code, not tee's)
-MAESTRO_EXIT_CODE=${PIPESTATUS[0]}
+for test_file in .maestro/web/*.yml; do
+    if [ -f "$test_file" ]; then
+        TEST_COUNT=$((TEST_COUNT + 1))
+        test_name=$(basename "$test_file")
+        echo "🧪 Running test: $test_name"
+        
+        # Run individual test with debug output
+        if maestro test "$test_file" --debug-output maestro-debug-output 2>&1 | tee -a maestro-debug-output/maestro-console.log; then
+            echo "✅ $test_name passed"
+        else
+            INDIVIDUAL_EXIT_CODE=${PIPESTATUS[0]}
+            echo "❌ $test_name failed with exit code $INDIVIDUAL_EXIT_CODE"
+            MAESTRO_EXIT_CODE=$INDIVIDUAL_EXIT_CODE
+            FAILED_TESTS="$FAILED_TESTS $test_name"
+        fi
+        echo "---"
+    fi
+done
+
+if [ $TEST_COUNT -eq 0 ]; then
+    echo "⚠️ No test files found in .maestro/web/"
+    MAESTRO_EXIT_CODE=1
+fi
 
 echo "Maestro tests completed with exit code: $MAESTRO_EXIT_CODE"
 echo "Debug artifacts saved in maestro-debug-output/"
@@ -93,9 +116,12 @@ fi
 
 # Explicitly fail if any tests failed
 if [ $MAESTRO_EXIT_CODE -ne 0 ]; then
-    echo "❌ Tests failed with exit code $MAESTRO_EXIT_CODE"
+    echo "❌ Some tests failed with exit code $MAESTRO_EXIT_CODE"
+    if [ ! -z "$FAILED_TESTS" ]; then
+        echo "Failed tests:$FAILED_TESTS"
+    fi
     exit $MAESTRO_EXIT_CODE
 else
-    echo "✅ All Chrome integration tests passed"
+    echo "✅ All Chrome integration tests passed ($TEST_COUNT tests)"
     exit 0
 fi
