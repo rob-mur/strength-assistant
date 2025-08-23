@@ -19,12 +19,14 @@ cleanup() {
     
     # Kill any lingering Chrome processes
     pkill -f "chromium.*headless" 2>/dev/null || true
+    pkill -f "chrome.*--remote-debugging-port" 2>/dev/null || true
     pkill -f "chromedriver" 2>/dev/null || true
     
-    # Clean up Chrome user data directory
-    if [ ! -z "$CHROME_USER_DATA_DIR" ] && [ -d "$CHROME_USER_DATA_DIR" ]; then
-        rm -rf "$CHROME_USER_DATA_DIR" 2>/dev/null || true
-    fi
+    # Force kill any remaining Chrome processes
+    pkill -9 -f "chrome\|chromium\|chromedriver" 2>/dev/null || true
+    
+    # Clean up any remaining Chrome user data directories
+    find /tmp -maxdepth 1 -name "maestro-chrome-test-*" -type d -exec rm -rf {} + 2>/dev/null || true
 }
 
 # Set up cleanup trap
@@ -76,9 +78,31 @@ echo "Debug output will be saved to maestro-debug-output/"
 export MAESTRO_DRIVER_STARTUP_TIMEOUT=30000
 export MAESTRO_DRIVER_IMPLICIT_TIMEOUT=10000
 
-# Set unique user data directory for Chrome to avoid conflicts
-CHROME_USER_DATA_DIR=$(mktemp -d)
-export MAESTRO_CHROME_USER_DATA_DIR="$CHROME_USER_DATA_DIR"
+# Function to cleanup Chrome processes and user data directory
+cleanup_chrome_test() {
+    local user_data_dir=$1
+    echo "🧹 Cleaning up Chrome processes and data for current test..."
+    
+    # Kill Chrome processes more aggressively 
+    pkill -f "chromium.*headless" 2>/dev/null || true
+    pkill -f "chrome.*--remote-debugging-port" 2>/dev/null || true
+    pkill -f "chromedriver" 2>/dev/null || true
+    
+    # Wait for processes to terminate gracefully
+    sleep 2
+    
+    # Force kill any remaining Chrome processes
+    pkill -9 -f "chrome\|chromium\|chromedriver" 2>/dev/null || true
+    
+    # Clean up user data directory immediately
+    if [ ! -z "$user_data_dir" ] && [ -d "$user_data_dir" ]; then
+        rm -rf "$user_data_dir" 2>/dev/null || true
+        echo "🗑️ Cleaned up user data directory: $user_data_dir"
+    fi
+    
+    # Small delay to ensure complete cleanup
+    sleep 1
+}
 
 # Run each Maestro test file individually (required for web tests)
 MAESTRO_EXIT_CODE=0
@@ -91,6 +115,11 @@ for test_file in .maestro/web/*.yml; do
         test_name=$(basename "$test_file")
         echo "🧪 Running test: $test_name"
         
+        # Create unique user data directory for this specific test
+        CHROME_USER_DATA_DIR=$(mktemp -d -t maestro-chrome-test-XXXXXX)
+        export MAESTRO_CHROME_USER_DATA_DIR="$CHROME_USER_DATA_DIR"
+        echo "📁 Using Chrome user data directory: $CHROME_USER_DATA_DIR"
+        
         # Run individual test with debug output and capture exit code properly
         maestro test "$test_file" --debug-output maestro-debug-output 2>&1 | tee -a maestro-debug-output/maestro-console.log
         INDIVIDUAL_EXIT_CODE=${PIPESTATUS[0]}
@@ -102,6 +131,11 @@ for test_file in .maestro/web/*.yml; do
             MAESTRO_EXIT_CODE=$INDIVIDUAL_EXIT_CODE
             FAILED_TESTS="$FAILED_TESTS $test_name"
         fi
+        
+        # Clean up Chrome processes and user data directory immediately after each test
+        cleanup_chrome_test "$CHROME_USER_DATA_DIR"
+        unset MAESTRO_CHROME_USER_DATA_DIR
+        
         echo "---"
     fi
 done
