@@ -7,4 +7,5 @@ module.exports = {
     "^.+\\.mjs$": "babel-jest",
   },
   testPathIgnorePatterns: ["/node_modules/"],
+  setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
 };
