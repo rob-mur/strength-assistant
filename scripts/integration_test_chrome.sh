@@ -20,6 +20,11 @@ cleanup() {
     # Kill any lingering Chrome processes
     pkill -f "chromium.*headless" 2>/dev/null || true
     pkill -f "chromedriver" 2>/dev/null || true
+    
+    # Clean up Chrome user data directory
+    if [ ! -z "$CHROME_USER_DATA_DIR" ] && [ -d "$CHROME_USER_DATA_DIR" ]; then
+        rm -rf "$CHROME_USER_DATA_DIR" 2>/dev/null || true
+    fi
 }
 
 # Set up cleanup trap
@@ -71,6 +76,10 @@ echo "Debug output will be saved to maestro-debug-output/"
 export MAESTRO_DRIVER_STARTUP_TIMEOUT=30000
 export MAESTRO_DRIVER_IMPLICIT_TIMEOUT=10000
 
+# Set unique user data directory for Chrome to avoid conflicts
+CHROME_USER_DATA_DIR=$(mktemp -d)
+export MAESTRO_CHROME_USER_DATA_DIR="$CHROME_USER_DATA_DIR"
+
 # Run each Maestro test file individually (required for web tests)
 MAESTRO_EXIT_CODE=0
 TEST_COUNT=0
@@ -82,11 +91,13 @@ for test_file in .maestro/web/*.yml; do
         test_name=$(basename "$test_file")
         echo "🧪 Running test: $test_name"
         
-        # Run individual test with debug output
-        if maestro test "$test_file" --debug-output maestro-debug-output 2>&1 | tee -a maestro-debug-output/maestro-console.log; then
+        # Run individual test with debug output and capture exit code properly
+        maestro test "$test_file" --debug-output maestro-debug-output 2>&1 | tee -a maestro-debug-output/maestro-console.log
+        INDIVIDUAL_EXIT_CODE=${PIPESTATUS[0]}
+        
+        if [ $INDIVIDUAL_EXIT_CODE -eq 0 ]; then
             echo "✅ $test_name passed"
         else
-            INDIVIDUAL_EXIT_CODE=${PIPESTATUS[0]}
             echo "❌ $test_name failed with exit code $INDIVIDUAL_EXIT_CODE"
             MAESTRO_EXIT_CODE=$INDIVIDUAL_EXIT_CODE
             FAILED_TESTS="$FAILED_TESTS $test_name"
