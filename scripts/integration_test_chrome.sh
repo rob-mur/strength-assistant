@@ -109,7 +109,7 @@ export MAESTRO_DRIVER_STARTUP_TIMEOUT=30000
 export MAESTRO_DRIVER_IMPLICIT_TIMEOUT=10000
 
 
-# Run each Maestro test file individually with complete isolation
+# Test: Run only ONE Maestro test file to isolate Chrome session issues
 MAESTRO_EXIT_CODE=0
 TEST_COUNT=0
 FAILED_TESTS=""
@@ -121,59 +121,44 @@ cleanup_chrome_browsers
 # Wait briefly for cleanup to complete
 sleep 2
 
-for test_file in .maestro/web/*.yml; do
-    if [ -f "$test_file" ]; then
-        TEST_COUNT=$((TEST_COUNT + 1))
-        test_name=$(basename "$test_file")
-        echo "🧪 Running test: $test_name"
-        
-        # Chrome browser cleanup before each test
-        echo "🧹 Pre-test Chrome cleanup for $test_name..."
-        cleanup_chrome_browsers
-        
-        # Wait for cleanup to complete
-        sleep 2
-        
-        # Create unique Chrome user data directory for this test
-        CHROME_USER_DATA_DIR=$(mktemp -d -t maestro-chrome-XXXXXX)
-        echo "📁 Chrome user data directory: $CHROME_USER_DATA_DIR"
-        
-        # Set Chrome user data directory for Maestro
-        export MAESTRO_CHROME_USER_DATA_DIR="$CHROME_USER_DATA_DIR"
-        
-        # Run test with individual isolation
-        echo "▶️ Executing test: $test_name"
-        if maestro test "$test_file" --debug-output maestro-debug-output 2>&1 | tee -a maestro-debug-output/maestro-console.log; then
-            INDIVIDUAL_EXIT_CODE=0
-        else
-            INDIVIDUAL_EXIT_CODE=$?
-        fi
-        
-        if [ $INDIVIDUAL_EXIT_CODE -eq 0 ]; then
-            echo "✅ $test_name passed"
-        else
-            echo "❌ $test_name failed with exit code $INDIVIDUAL_EXIT_CODE"
-            MAESTRO_EXIT_CODE=$INDIVIDUAL_EXIT_CODE
-            FAILED_TESTS="$FAILED_TESTS $test_name"
-        fi
-        
-        # Cleanup Chrome user data directory
-        echo "🧹 Cleaning up Chrome data: $CHROME_USER_DATA_DIR"
-        rm -rf "$CHROME_USER_DATA_DIR" 2>/dev/null || true
-        unset MAESTRO_CHROME_USER_DATA_DIR
-        
-        # Chrome browser cleanup after each test
-        cleanup_chrome_browsers
-        
-        # Wait for cleanup before next test
-        sleep 2
-        
-        echo "---"
-    fi
-done
+# Run only the first test file explicitly to test single Chrome process
+test_file=".maestro/web/add-exercise-and-see-it-in-list.yml"
+echo "🧪 SINGLE TEST MODE: Running only $test_file"
 
-if [ $TEST_COUNT -eq 0 ]; then
-    echo "⚠️ No test files found in .maestro/web/"
+if [ -f "$test_file" ]; then
+    TEST_COUNT=1
+    test_name=$(basename "$test_file")
+    echo "🧪 Running test: $test_name"
+    
+    # Create unique Chrome user data directory for this test
+    CHROME_USER_DATA_DIR=$(mktemp -d -t maestro-chrome-XXXXXX)
+    echo "📁 Chrome user data directory: $CHROME_USER_DATA_DIR"
+    
+    # Set Chrome user data directory for Maestro
+    export MAESTRO_CHROME_USER_DATA_DIR="$CHROME_USER_DATA_DIR"
+    
+    # Run test
+    echo "▶️ Executing test: $test_name"
+    if maestro test "$test_file" --debug-output maestro-debug-output 2>&1 | tee -a maestro-debug-output/maestro-console.log; then
+        INDIVIDUAL_EXIT_CODE=0
+    else
+        INDIVIDUAL_EXIT_CODE=$?
+    fi
+    
+    if [ $INDIVIDUAL_EXIT_CODE -eq 0 ]; then
+        echo "✅ $test_name passed"
+    else
+        echo "❌ $test_name failed with exit code $INDIVIDUAL_EXIT_CODE"
+        MAESTRO_EXIT_CODE=$INDIVIDUAL_EXIT_CODE
+        FAILED_TESTS="$FAILED_TESTS $test_name"
+    fi
+    
+    # Cleanup Chrome user data directory
+    echo "🧹 Cleaning up Chrome data: $CHROME_USER_DATA_DIR"
+    rm -rf "$CHROME_USER_DATA_DIR" 2>/dev/null || true
+    unset MAESTRO_CHROME_USER_DATA_DIR
+else
+    echo "⚠️ Test file not found: $test_file"
     MAESTRO_EXIT_CODE=1
 fi
 
@@ -193,12 +178,12 @@ fi
 
 # Explicitly fail if any tests failed
 if [ $MAESTRO_EXIT_CODE -ne 0 ]; then
-    echo "❌ Some tests failed with exit code $MAESTRO_EXIT_CODE"
+    echo "❌ Test failed with exit code $MAESTRO_EXIT_CODE"
     if [ ! -z "$FAILED_TESTS" ]; then
         echo "Failed tests:$FAILED_TESTS"
     fi
     exit $MAESTRO_EXIT_CODE
 else
-    echo "✅ All Chrome integration tests passed ($TEST_COUNT tests)"
+    echo "✅ Single Chrome integration test passed ($TEST_COUNT test)"
     exit 0
 fi
