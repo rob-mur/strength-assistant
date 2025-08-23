@@ -8,18 +8,18 @@ echo "🌐 Starting Chrome Integration Tests"
 deep_chrome_cleanup() {
     echo "🧹 Performing deep Chrome cleanup..."
     
-    # Kill all Chrome and related processes with different signals
+    # Kill only Chrome and chromedriver processes, avoiding firebase/expo/node
     for sig in TERM KILL; do
-        pkill -$sig -f "google-chrome" 2>/dev/null || true
-        pkill -$sig -f "chromium" 2>/dev/null || true  
-        pkill -$sig -f "chrome" 2>/dev/null || true
+        # Be more specific with Chrome process patterns to avoid killing other processes
+        pkill -$sig -f "google-chrome.*--remote-debugging" 2>/dev/null || true
+        pkill -$sig -f "chromium.*--remote-debugging" 2>/dev/null || true  
+        pkill -$sig -f "chrome.*--headless" 2>/dev/null || true
         pkill -$sig -f "chromedriver" 2>/dev/null || true
         pkill -$sig -f "ChromeDriver" 2>/dev/null || true
-        pkill -$sig -f "selenium" 2>/dev/null || true
         
         # Wait between signals
         if [ "$sig" = "TERM" ]; then
-            sleep 3
+            sleep 2
         fi
     done
     
