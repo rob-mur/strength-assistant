@@ -4,8 +4,8 @@
 		"path:flakes/androidsdk",
 		"maestro@latest",
 		"nodejs@latest",
-		"chromium@latest",
-		"chromedriver@latest",
+		"chromium@138",
+		"chromedriver@138",
 		"firebase-tools@latest",
 		"jdk17@latest"
 	],

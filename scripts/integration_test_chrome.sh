@@ -108,6 +108,40 @@ echo "Debug output will be saved to maestro-debug-output/"
 export MAESTRO_DRIVER_STARTUP_TIMEOUT=30000
 export MAESTRO_DRIVER_IMPLICIT_TIMEOUT=10000
 
+# Ensure we use devbox Chrome binaries for version consistency
+DEVBOX_CHROME_PATH="$PWD/.devbox/nix/profile/default/bin/chromium"
+DEVBOX_CHROMEDRIVER_PATH="$PWD/.devbox/nix/profile/default/bin/chromedriver"
+
+# Set Maestro to use specific Chrome and ChromeDriver paths
+if [ -f "$DEVBOX_CHROME_PATH" ]; then
+    export MAESTRO_CHROME_PATH="$DEVBOX_CHROME_PATH"
+    echo "📍 Using devbox Chrome: $DEVBOX_CHROME_PATH"
+else
+    echo "⚠️  Devbox Chrome not found at $DEVBOX_CHROME_PATH, using system Chrome"
+fi
+
+if [ -f "$DEVBOX_CHROMEDRIVER_PATH" ]; then
+    export PATH="$(dirname "$DEVBOX_CHROMEDRIVER_PATH"):$PATH"
+    echo "📍 Using devbox ChromeDriver: $DEVBOX_CHROMEDRIVER_PATH"
+else
+    echo "⚠️  Devbox ChromeDriver not found at $DEVBOX_CHROMEDRIVER_PATH, using system ChromeDriver"
+fi
+
+# Show version information for debugging
+echo "🔍 Chrome version check:"
+if [ -f "$DEVBOX_CHROME_PATH" ]; then
+    "$DEVBOX_CHROME_PATH" --version 2>/dev/null || echo "Could not get Chrome version"
+else
+    chromium --version 2>/dev/null || google-chrome --version 2>/dev/null || echo "Could not get Chrome version"
+fi
+
+echo "🔍 ChromeDriver version check:"
+if [ -f "$DEVBOX_CHROMEDRIVER_PATH" ]; then
+    "$DEVBOX_CHROMEDRIVER_PATH" --version 2>/dev/null || echo "Could not get ChromeDriver version"
+else
+    chromedriver --version 2>/dev/null || echo "Could not get ChromeDriver version"
+fi
+
 
 # Run actual Maestro web tests with Chrome isolation
 echo "🧪 Running Maestro web tests with Chrome isolation..."
