@@ -55,6 +55,11 @@ cleanup() {
     npx kill-port 8080 2>/dev/null || true  # Firebase emulator
     npx kill-port 8081 2>/dev/null || true  # Expo web server
     
+    # Cleanup Chrome wrapper script
+    if [ ! -z "$CHROME_WRAPPER_SCRIPT" ]; then
+        rm -f "$CHROME_WRAPPER_SCRIPT" "$CHROME_WRAPPER_SCRIPT.real" 2>/dev/null || true
+    fi
+    
     # Perform targeted Chrome browser cleanup
     cleanup_chrome_browsers
 }
@@ -159,6 +164,38 @@ FAILED_TESTS=""
 TEST_COUNT=0
 PASSED_COUNT=0
 
+# Create Chrome wrapper script with --no-sandbox
+CHROME_WRAPPER_SCRIPT="/tmp/chrome-wrapper-$$"
+cat > "$CHROME_WRAPPER_SCRIPT" << 'EOF'
+#!/bin/bash
+# Chrome wrapper script to add --no-sandbox and --headless flags
+exec "$0.real" --no-sandbox --headless --disable-dev-shm-usage --disable-gpu --remote-debugging-port=0 "$@"
+EOF
+chmod +x "$CHROME_WRAPPER_SCRIPT"
+
+# Set up Chrome wrapper if using devbox Chrome
+if [ -f "$DEVBOX_CHROME_PATH" ]; then
+    cp "$DEVBOX_CHROME_PATH" "$CHROME_WRAPPER_SCRIPT.real"
+    export MAESTRO_CHROME_PATH="$CHROME_WRAPPER_SCRIPT"
+    echo "📍 Created Chrome wrapper script: $CHROME_WRAPPER_SCRIPT"
+else
+    # For system Chrome, create a wrapper that calls the system binary
+    cat > "$CHROME_WRAPPER_SCRIPT" << 'EOF'
+#!/bin/bash
+# Chrome wrapper script to add --no-sandbox and --headless flags
+if command -v chromium >/dev/null 2>&1; then
+    exec chromium --no-sandbox --headless --disable-dev-shm-usage --disable-gpu --remote-debugging-port=0 "$@"
+elif command -v google-chrome >/dev/null 2>&1; then
+    exec google-chrome --no-sandbox --headless --disable-dev-shm-usage --disable-gpu --remote-debugging-port=0 "$@"
+else
+    echo "No Chrome binary found"
+    exit 1
+fi
+EOF
+    export MAESTRO_CHROME_PATH="$CHROME_WRAPPER_SCRIPT"
+    echo "📍 Created system Chrome wrapper script: $CHROME_WRAPPER_SCRIPT"
+fi
+
 # Run each Maestro test file individually with Chrome isolation
 for test_file in .maestro/web/*.yml; do
     if [ -f "$test_file" ]; then
@@ -170,9 +207,10 @@ for test_file in .maestro/web/*.yml; do
         CHROME_USER_DATA_DIR=$(mktemp -d -t maestro-chrome-test-XXXXXX)
         export MAESTRO_CHROME_USER_DATA_DIR="$CHROME_USER_DATA_DIR"
         echo "📁 Using Chrome user data directory: $CHROME_USER_DATA_DIR"
+        echo "🤖 Using Chrome wrapper: $MAESTRO_CHROME_PATH"
         
-        # Run the test and capture output
-        maestro test "$test_file" --debug-output maestro-debug-output 2>&1 | tee -a maestro-debug-output/maestro-console.log
+        # Run the test with headless flag and capture output
+        maestro test "$test_file" --headless --debug-output maestro-debug-output 2>&1 | tee -a maestro-debug-output/maestro-console.log
         INDIVIDUAL_EXIT_CODE=${PIPESTATUS[0]}
         
         if [ $INDIVIDUAL_EXIT_CODE -eq 0 ]; then
