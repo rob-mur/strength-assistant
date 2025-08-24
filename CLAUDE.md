@@ -80,3 +80,76 @@ This is a React Native Expo app built with TypeScript, using file-based routing 
 - **ESLint**: Expo config with additional plugins for unused imports, Storybook, Jest, and Testing Library
 - **Prettier**: Code formatting
 - **Storybook**: Component development and documentation
+- **Devbox**: Nix-based reproducible development environment for consistent tooling
+
+## Claude Code Integration
+
+### Environment Setup
+Claude Code uses devbox for consistent dependency management across CI and local development:
+
+```bash
+# Initialize environment (equivalent to devbox shell)
+devbox install
+
+# Run development commands through devbox
+devbox run test                    # Run Jest tests
+devbox run build_preview          # Build preview version
+devbox run build_production       # Build production version
+devbox run integration_test_android  # Run Android integration tests
+devbox run integration_test_chrome   # Run Chrome integration tests
+```
+
+### Approved Command Whitelist
+Claude Code is configured with the following approved commands for secure operation:
+
+#### Core Development Commands
+- `npm install` - Install dependencies
+- `npm start` / `npx expo start` - Start development server
+- `npm run android` - Run on Android
+- `npm run ios` - Run on iOS simulator
+- `npm run web` - Run in web browser
+
+#### Testing & Quality Assurance
+- `npm test` - Run unit tests
+- `npm run test:watch` - Run tests in watch mode
+- `npm run lint` - Check code style
+- `npm run lint:fix` - Fix code style issues
+- `npm run format` - Format code
+- `npm run format:check` - Check code formatting
+- `npx tsc --noEmit` - TypeScript type checking
+
+#### Devbox Commands
+- `devbox shell` - Enter devbox environment
+- `devbox install` - Install devbox dependencies
+- `devbox run *` - Run any devbox script
+- `devbox generate` - Generate devbox configuration
+
+#### Storybook
+- `npm run storybook` - Start Storybook development server
+- `npm run build-storybook` - Build Storybook for production
+- `npm run storybook-generate` - Generate Storybook stories
+
+#### Expo Commands
+- `npx expo install` - Install Expo dependencies
+- `npx expo doctor` - Check Expo configuration
+- `npx expo prebuild` - Generate native code
+
+#### Git Operations
+- `git status` - Check repository status
+- `git diff` - View changes
+- `git log` - View commit history
+- `git add` - Stage changes
+- `git commit` - Commit changes
+- `git push` - Push to remote
+- `git rm` - Remove files from git
+- `gh` - GitHub CLI operations
+
+### Security Considerations
+The whitelist excludes:
+- System-level operations (sudo, chmod, etc.)
+- File manipulation outside git/npm context
+- Network operations beyond package management
+- Environment variable access or secret manipulation
+- Arbitrary shell command execution
+
+This ensures Claude can assist with development tasks while maintaining security boundaries.
