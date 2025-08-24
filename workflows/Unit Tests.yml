@@ -1,0 +1,19 @@
+name: Unit Tests
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    environment: Dev
+    steps:
+      - name: Setup Development Environment
+        uses: ./.github/actions/setup-dev-env
+        with:
+          firebase-config: ${{ secrets.FIREBASE_WEB_CONFIG }}
+
+      - name: Test
+        run: devbox run test

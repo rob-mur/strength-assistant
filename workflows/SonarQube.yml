@@ -1,0 +1,31 @@
+name: SonarQube
+on:
+ push:
+   branches:
+     - main
+
+ pull_request:
+   types: [opened, synchronize, reopened]
+jobs:
+  sonarqube:
+    name: sonarqube
+    runs-on: ubuntu-latest
+    environment: Dev
+    steps:
+      - name: Setup Development Environment
+        uses: ./.github/actions/setup-dev-env
+        with:
+          firebase-config: ${{ secrets.FIREBASE_WEB_CONFIG }}
+
+      - name: 🏗 Checkout repository (with full depth for SonarQube)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Test and coverage
+        run: devbox run npm test
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

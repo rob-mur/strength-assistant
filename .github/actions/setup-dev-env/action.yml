@@ -1,0 +1,58 @@
+name: 'Setup Development Environment'
+description: 'Sets up Node.js environment with devbox, caching, and dependencies'
+
+inputs:
+  firebase-config:
+    description: 'Firebase web configuration JSON'
+    required: false
+  google-config:
+    description: 'Google services configuration JSON'
+    required: false
+  devbox-version:
+    description: 'Version of devbox to install'
+    required: false
+    default: '0.14.2'
+  cache-version:
+    description: 'Cache version for cache busting'
+    required: false
+    default: 'v1'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 🏗 Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Populate config for build
+      if: inputs.firebase-config != '' || inputs.google-config != ''
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.google-config }}" ]; then
+          echo '${{ inputs.google-config }}' > google-services.json
+        fi
+        if [ -n "${{ inputs.firebase-config }}" ]; then
+          echo '${{ inputs.firebase-config }}' > firebase.web.config.json
+        fi
+
+    - name: Install devbox
+      uses: jetify-com/devbox-install-action@v0.11.0
+      with:
+        devbox-version: ${{ inputs.devbox-version }}
+        enable-cache: true
+
+    - name: 📦 Get npm cache directory path
+      id: npm-cache-dir-path
+      shell: bash
+      run: echo "dir=$(devbox run -- npm config get cache)" >> $GITHUB_OUTPUT
+
+    - name: 📦 Setup npm cache
+      uses: actions/cache@v3
+      with:
+        path: ${{ steps.npm-cache-dir-path.outputs.dir }}
+        key: ${{ inputs.cache-version }}-${{ runner.os }}-npm-${{ hashFiles('**/package.json') }}
+        restore-keys: |
+          ${{ inputs.cache-version }}-${{ runner.os }}-npm-
+
+    - name: 📦 Install dependencies
+      shell: bash
+      run: devbox run npm install

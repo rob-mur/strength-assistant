@@ -1,0 +1,33 @@
+name: Integration Tests Chrome
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+jobs:
+  integration-tests-chrome:
+    runs-on: ubuntu-latest
+    environment: Dev
+    steps:
+      - name: Setup Development Environment
+        uses: ./.github/actions/setup-dev-env
+        with:
+          firebase-config: ${{ secrets.FIREBASE_WEB_CONFIG }}
+          google-config: ${{ secrets.GOOGLE_SERVICES }}
+
+      - name: 🧪 Run Chrome integration tests
+        run: devbox run integration_test_chrome
+
+      - name: Upload debug artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-chrome-debug-artifacts
+          path: |
+            maestro-debug-output/
+            *.png
+          retention-days: 7

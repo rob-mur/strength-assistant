@@ -1,0 +1,38 @@
+name: Build Production APK
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+env:
+  EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: Dev
+    
+    steps:
+      - name: Setup Development Environment
+        uses: ./.github/actions/setup-dev-env
+        with:
+          firebase-config: ${{ secrets.FIREBASE_WEB_CONFIG }}
+          google-config: ${{ secrets.GOOGLE_SERVICES }}
+
+      - name: Build production APK
+        run: devbox run build_production
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: Release v${{ github.run_number }}
+          body: |
+            Production build from commit ${{ github.sha }}
+            
+            Changes: ${{ github.event.head_commit.message }}
+          files: ./build_production.apk
