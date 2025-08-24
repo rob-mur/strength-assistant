@@ -67,4 +67,75 @@ describe("<AddExerciseForm/>", () => {
       expect(submitButton.props.accessibilityState?.disabled).toBe(false);
     });
   });
+
+  test("Shows error message when addExercise fails", async () => {
+    // Given
+    const errorMessage = "Network error occurred";
+    mockUseAddExercise.mockReturnValue(jest.fn(async (_) => {
+      throw new Error(errorMessage);
+    }));
+    
+    render(<AddExerciseForm />);
+    
+    // When
+    await state.user.type(screen.getByTestId("name"), "Exercise Name");
+    await state.user.press(screen.getByTestId("submit"));
+    
+    // Then - error snackbar should be visible with error message
+    await waitFor(() => {
+      const errorSnackbar = screen.getByTestId("error-snackbar");
+      expect(errorSnackbar.props.visible).toBe(true);
+      expect(errorSnackbar.props.children).toBe(errorMessage);
+    });
+  });
+
+  test("Shows generic error message for unknown error types", async () => {
+    // Given
+    mockUseAddExercise.mockReturnValue(jest.fn(async (_) => {
+      throw "Unknown error";
+    }));
+    
+    render(<AddExerciseForm />);
+    
+    // When
+    await state.user.type(screen.getByTestId("name"), "Exercise Name");
+    await state.user.press(screen.getByTestId("submit"));
+    
+    // Then - error snackbar should show generic message
+    await waitFor(() => {
+      const errorSnackbar = screen.getByTestId("error-snackbar");
+      expect(errorSnackbar.props.visible).toBe(true);
+      expect(errorSnackbar.props.children).toBe("Failed to add exercise. Please try again.");
+    });
+  });
+
+  test("Clears error state when retrying submission", async () => {
+    // Given
+    let shouldFail = true;
+    mockUseAddExercise.mockReturnValue(jest.fn(async (_) => {
+      if (shouldFail) {
+        throw new Error("First attempt failed");
+      }
+    }));
+    
+    render(<AddExerciseForm />);
+    
+    // When - first submission fails
+    await state.user.type(screen.getByTestId("name"), "Exercise Name");
+    await state.user.press(screen.getByTestId("submit"));
+    
+    // Then - error should be visible
+    await waitFor(() => {
+      expect(screen.getByTestId("error-snackbar").props.visible).toBe(true);
+    });
+    
+    // When - retry submission (should succeed)
+    shouldFail = false;
+    await state.user.press(screen.getByTestId("submit"));
+    
+    // Then - error should be cleared
+    await waitFor(() => {
+      expect(screen.getByTestId("error-snackbar").props.visible).toBe(false);
+    });
+  });
 });
