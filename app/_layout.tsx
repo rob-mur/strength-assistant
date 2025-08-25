@@ -7,6 +7,15 @@ import { useAppInit } from "@/lib/hooks/useAppInit";
 import { AuthProvider } from "@/lib/components/AuthProvider";
 import { AuthAwareLayout } from "@/lib/components/AuthAwareLayout";
 
+// Web-specific font loading for vector icons
+if (typeof window !== 'undefined') {
+  // Load Material Icons font for web
+  const link = document.createElement('link');
+  link.href = 'https://fonts.googleapis.com/css2?family=Material+Icons&family=Material+Icons+Outlined&family=Material+Symbols+Outlined';
+  link.rel = 'stylesheet';
+  document.head.appendChild(link);
+}
+
 // Catch any errors thrown by the Layout component.
 export { ErrorBoundary } from "expo-router";
 
