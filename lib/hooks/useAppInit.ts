@@ -2,7 +2,7 @@ import {
 	JetBrainsMono_400Regular,
 } from "@expo-google-fonts/jetbrains-mono";
 import { NotoSans_400Regular } from "@expo-google-fonts/noto-sans";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+// MaterialCommunityIcons removed - vector icons loaded via CDN for web compatibility
 import { useFonts } from "expo-font";
 import { SplashScreen } from "expo-router";
 import { useEffect, useState } from "react";
@@ -16,7 +16,8 @@ export const useAppInit = () => {
 	const [fontsLoaded, fontError] = useFonts({
 		NotoSans_400Regular,
 		JetBrainsMono_400Regular,
-		...MaterialCommunityIcons.font,
+		// Remove MaterialCommunityIcons.font spread - causes web font sanitizer issues
+		// Vector icons are loaded via CDN in _layout.tsx for web compatibility
 	});
 
 	useEffect(() => {
