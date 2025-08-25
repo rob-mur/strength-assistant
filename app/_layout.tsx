@@ -9,11 +9,21 @@ import { AuthAwareLayout } from "@/lib/components/AuthAwareLayout";
 
 // Web-specific font loading for vector icons
 if (typeof window !== 'undefined') {
-  // Load Material Icons font for web
-  const link = document.createElement('link');
-  link.href = 'https://fonts.googleapis.com/css2?family=Material+Icons&family=Material+Icons+Outlined&family=Material+Symbols+Outlined';
-  link.rel = 'stylesheet';
-  document.head.appendChild(link);
+  // Load Material Community Icons and other icon fonts for web
+  const iconFonts = [
+    'https://fonts.googleapis.com/css2?family=Material+Icons',
+    'https://fonts.googleapis.com/css2?family=Material+Icons+Outlined', 
+    'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined',
+    'https://cdn.jsdelivr.net/npm/@mdi/font@latest/css/materialdesignicons.min.css'
+  ];
+  
+  iconFonts.forEach(fontUrl => {
+    const link = document.createElement('link');
+    link.href = fontUrl;
+    link.rel = 'stylesheet';
+    link.crossOrigin = 'anonymous';
+    document.head.appendChild(link);
+  });
 }
 
 // Catch any errors thrown by the Layout component.

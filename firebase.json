@@ -12,6 +12,60 @@
 				"destination": "/index.html"
 			}
 		],
+		"headers": [
+			{
+				"source": "**/*.ttf",
+				"headers": [
+					{
+						"key": "Content-Type",
+						"value": "font/ttf"
+					},
+					{
+						"key": "Access-Control-Allow-Origin",
+						"value": "*"
+					}
+				]
+			},
+			{
+				"source": "**/*.woff",
+				"headers": [
+					{
+						"key": "Content-Type",
+						"value": "font/woff"
+					},
+					{
+						"key": "Access-Control-Allow-Origin",
+						"value": "*"
+					}
+				]
+			},
+			{
+				"source": "**/*.woff2",
+				"headers": [
+					{
+						"key": "Content-Type",
+						"value": "font/woff2"
+					},
+					{
+						"key": "Access-Control-Allow-Origin",
+						"value": "*"
+					}
+				]
+			},
+			{
+				"source": "**/*.eot",
+				"headers": [
+					{
+						"key": "Content-Type",
+						"value": "application/vnd.ms-fontobject"
+					},
+					{
+						"key": "Access-Control-Allow-Origin",
+						"value": "*"
+					}
+				]
+			}
+		],
 		"frameworksBackend": {
 			"region": "europe-west1"
 		}
