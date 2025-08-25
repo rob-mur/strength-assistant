@@ -1,7 +1,7 @@
 {
   "lockfile_version": "1",
   "packages": {
-    "chromedriver@latest": {
+    "chromedriver@138": {
       "last_modified": "2025-07-31T04:07:16Z",
       "resolved": "github:NixOS/nixpkgs/8679b16e11becd487b45d568358ddf9d5640d860#chromedriver",
       "source": "devbox-search",
@@ -29,7 +29,7 @@
         }
       }
     },
-    "chromium@latest": {
+    "chromium@138": {
       "last_modified": "2025-07-31T04:07:16Z",
       "resolved": "github:NixOS/nixpkgs/8679b16e11becd487b45d568358ddf9d5640d860#chromium",
       "source": "devbox-search",
