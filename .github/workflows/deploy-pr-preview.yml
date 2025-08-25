@@ -24,7 +24,7 @@ jobs:
           FIREBASE_CONFIG: ${{ secrets.FIREBASE_WEB_CONFIG }}
         run: echo "$FIREBASE_CONFIG" > firebase.web.config.json
 
-      - name: Install devbo
+      - name: Install devbox
         uses: jetify-com/devbox-install-action@v0.11.0
         with:
           enable-cache: true
@@ -55,5 +55,3 @@ jobs:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           projectId: strengthassistantdev
-        env:
-          FIREBASE_CLI_EXPERIMENTS: webframeworks
