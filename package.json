@@ -6,8 +6,6 @@
 		"start": "expo start",
 		"reset-project": "node ./scripts/reset-project.js",
 		"android": "expo run:android",
-		"ios": "expo run:ios",
-		"web": "expo start --web",
 		"lint": "expo lint",
 		"lint:fix": "expo lint --fix",
 		"test": "jest --config jest.config.js --coverage",
@@ -18,7 +16,8 @@
 		"storybook": "storybook dev -p 6006",
 		"build-storybook": "storybook build",
 		"setup-hooks": "./scripts/setup-hooks.sh",
-		"eas-build-pre-install": "./scripts/write_env.sh"
+		"eas-build-pre-install": "./scripts/write_env.sh",
+		"build_web": "npx expo export -p web"
 	},
 	"dependencies": {
 		"@expo-google-fonts/jetbrains-mono": "^0.4.0",
