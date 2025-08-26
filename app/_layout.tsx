@@ -7,22 +7,29 @@ import { useAppInit } from "@/lib/hooks/useAppInit";
 import { AuthProvider } from "@/lib/components/AuthProvider";
 import { AuthAwareLayout } from "@/lib/components/AuthAwareLayout";
 
-// Web-specific font loading for vector icons
+// Web-specific icon loading - CSS-based Material Design Icons
 if (typeof window !== 'undefined') {
-  // Load Material Community Icons and other icon fonts for web
-  const iconFonts = [
-    'https://fonts.googleapis.com/css2?family=Material+Icons',
-    'https://fonts.googleapis.com/css2?family=Material+Icons+Outlined', 
-    'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined',
+  // Load Material Design Icons CSS for web platform
+  // This replaces problematic TTF font loading with CSS-based icons
+  const iconCSS = [
+    'https://fonts.googleapis.com/css2?family=Material+Icons&display=swap',
+    'https://fonts.googleapis.com/css2?family=Material+Icons+Outlined&display=swap',
     'https://cdn.jsdelivr.net/npm/@mdi/font@latest/css/materialdesignicons.min.css'
   ];
   
-  iconFonts.forEach(fontUrl => {
-    const link = document.createElement('link');
-    link.href = fontUrl;
-    link.rel = 'stylesheet';
-    link.crossOrigin = 'anonymous';
-    document.head.appendChild(link);
+  iconCSS.forEach(cssUrl => {
+    // Check if already loaded to prevent duplicates
+    if (!document.querySelector(`link[href="${cssUrl}"]`)) {
+      const link = document.createElement('link');
+      link.href = cssUrl;
+      link.rel = 'stylesheet';
+      link.crossOrigin = 'anonymous';
+      // Add display=swap for better performance
+      if (cssUrl.includes('fonts.googleapis.com') && !cssUrl.includes('display=swap')) {
+        link.href += cssUrl.includes('?') ? '&display=swap' : '?display=swap';
+      }
+      document.head.appendChild(link);
+    }
   });
 }
 
