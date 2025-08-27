@@ -49,3 +49,4 @@ google-services.json
 firebase.web.config.json
 
 coverage/
+.firebase/
