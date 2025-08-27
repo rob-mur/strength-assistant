@@ -37,22 +37,22 @@ export const useAppInit = () => {
 	useEffect(() => {
 		const prepare = async () => {
 			const startTime = Date.now();
-			
+
 			logger.info("Starting app initialization", {
 				service: "App Init",
 				platform: "React Native",
 				operation: "init"
 			});
-			
+
 			try {
 				logger.info("Initializing Firebase...", {
 					service: "App Init",
 					platform: "React Native",
 					operation: "firebase_init"
 				});
-				
+
 				initFirebase();
-				
+
 				logger.info("Firebase initialization completed successfully", {
 					service: "App Init",
 					platform: "React Native",
