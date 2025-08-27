@@ -24,31 +24,10 @@ jobs:
       - name: 🏗 Setup repo
         uses: actions/checkout@v4
 
-      - name: Populate web config for test
-        env:
-          FIREBASE_CONFIG: ${{ secrets.FIREBASE_WEB_CONFIG }}
-        run: echo "$FIREBASE_CONFIG" > firebase.web.config.json
-
-      - name: Install devbox
-        uses: jetify-com/devbox-install-action@v0.11.0
+      - name: 🛠 Setup development environment
+        uses: ./.github/actions/setup-dev-environment
         with:
-          enable-cache: true
-          devbox-version: 0.14.2
-
-      - name: 📦 Get npm cache directory path
-        id: npm-cache-dir-path
-        run: echo "dir=$(devbox run -- npm config get cache)" >> $GITHUB_OUTPUT
-
-      - name: 📦 Setup npm cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.npm-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-npm-${{ hashFiles('**/package.json') }}
-          restore-keys: |
-            ${{ runner.os }}-npm-
-
-      - name: 📦 Install dependencies
-        run: devbox run npm install
+          firebase-config: ${{ secrets.FIREBASE_WEB_CONFIG }}
 
       - name: 🚀 Build web app
         run: |
