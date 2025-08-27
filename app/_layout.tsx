@@ -7,32 +7,6 @@ import { useAppInit } from "@/lib/hooks/useAppInit";
 import { AuthProvider } from "@/lib/components/AuthProvider";
 import { AuthAwareLayout } from "@/lib/components/AuthAwareLayout";
 
-// Web-specific icon loading - CSS-based Material Design Icons
-if (typeof window !== 'undefined') {
-  // Load Material Design Icons CSS for web platform
-  // This replaces problematic TTF font loading with CSS-based icons
-  const iconCSS = [
-    'https://fonts.googleapis.com/css2?family=Material+Icons&display=swap',
-    'https://fonts.googleapis.com/css2?family=Material+Icons+Outlined&display=swap',
-    'https://cdn.jsdelivr.net/npm/@mdi/font@latest/css/materialdesignicons.min.css'
-  ];
-  
-  iconCSS.forEach(cssUrl => {
-    // Check if already loaded to prevent duplicates
-    if (!document.querySelector(`link[href="${cssUrl}"]`)) {
-      const link = document.createElement('link');
-      link.href = cssUrl;
-      link.rel = 'stylesheet';
-      link.crossOrigin = 'anonymous';
-      // Add display=swap for better performance
-      if (cssUrl.includes('fonts.googleapis.com') && !cssUrl.includes('display=swap')) {
-        link.href += cssUrl.includes('?') ? '&display=swap' : '?display=swap';
-      }
-      document.head.appendChild(link);
-    }
-  });
-}
-
 // Catch any errors thrown by the Layout component.
 export { ErrorBoundary } from "expo-router";
 

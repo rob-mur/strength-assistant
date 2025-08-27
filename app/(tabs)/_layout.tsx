@@ -1,6 +1,7 @@
 import TabBar from "@/lib/components/TabBar";
 import { Locales } from "@/lib/locales";
-import { PlatformIcon } from "@/lib/components/Icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Tabs } from "expo-router";
 import React from "react";
 
@@ -17,12 +18,10 @@ const TabLayout = () => {
         options={{
           title: Locales.t("titleHome"),
           tabBarIcon: (props) => (
-            <PlatformIcon
-              library="MaterialCommunityIcons"
-              name={props.focused ? "home" : "home-outline"}
+            <MaterialCommunityIcons
+              {...props}
               size={24}
-              color={props.color}
-              focused={props.focused}
+              name={props.focused ? "home" : "home-outline"}
             />
           ),
         }}
@@ -32,13 +31,11 @@ const TabLayout = () => {
         options={{
           title: Locales.t("titleExercises"),
           tabBarIcon: (props) => (
-            <PlatformIcon
-              library="MaterialIcons"
-              name={props.focused ? "sports-gymnastics" : "sports-martial-arts"}
-              size={24}
-              color={props.color}
-              focused={props.focused}
+            <MaterialIcons
               testID="exercisesTab"
+              {...props}
+              size={24}
+              name={props.focused ? "sports-gymnastics" : "sports-martial-arts"}
             />
           ),
         }}
@@ -47,15 +44,16 @@ const TabLayout = () => {
         name="workout"
         options={{
           title: Locales.t("titleWorkout"),
-          tabBarIcon: (props) => (
-            <PlatformIcon
-              library={props.focused ? "MaterialCommunityIcons" : "MaterialIcons"}
-              name={props.focused ? "weight-lifter" : "fitness-center"}
-              size={24}
-              color={props.color}
-              focused={props.focused}
-            />
-          ),
+          tabBarIcon: (props) =>
+            props.focused ? (
+              <MaterialCommunityIcons
+                {...props}
+                size={24}
+                name={"weight-lifter"}
+              />
+            ) : (
+              <MaterialIcons {...props} size={24} name={"fitness-center"} />
+            ),
         }}
       />
       <Tabs.Screen
@@ -63,12 +61,10 @@ const TabLayout = () => {
         options={{
           title: "Profile",
           tabBarIcon: (props) => (
-            <PlatformIcon
-              library="MaterialCommunityIcons"
-              name={props.focused ? "account" : "account-outline"}
+            <MaterialCommunityIcons
+              {...props}
               size={24}
-              color={props.color}
-              focused={props.focused}
+              name={props.focused ? "account" : "account-outline"}
             />
           ),
         }}

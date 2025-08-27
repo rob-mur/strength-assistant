@@ -4,9 +4,6 @@ const { getDefaultConfig } = require("expo/metro-config");
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
 
-// Add support for vector icon fonts in web builds
-config.resolver.assetExts.push('ttf');
-
 const withStorybook = require("@storybook/react-native/metro/withStorybook");
 
 const fs = require("fs");
