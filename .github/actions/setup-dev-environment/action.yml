@@ -22,12 +22,18 @@ runs:
     - name: Populate Firebase web config
       if: inputs.firebase-config != ''
       shell: bash
-      run: echo "${{ inputs.firebase-config }}" > firebase.web.config.json
+      run: |
+        cat << 'EOF' > firebase.web.config.json
+        ${{ inputs.firebase-config }}
+        EOF
 
     - name: Populate Google services config
       if: inputs.google-services-config != ''
       shell: bash
-      run: echo "${{ inputs.google-services-config }}" > google-services.json
+      run: |
+        cat << 'EOF' > google-services.json
+        ${{ inputs.google-services-config }}
+        EOF
 
     - name: Install devbox
       uses: jetify-com/devbox-install-action@v0.11.0
