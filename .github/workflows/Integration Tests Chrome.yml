@@ -16,34 +16,11 @@ jobs:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
 
-      - name: Populate config for build
-        env:
-          FIREBASE_CONFIG: ${{ secrets.FIREBASE_WEB_CONFIG }}
-          GOOGLE_CONFIG: "${{ secrets.GOOGLE_SERVICES }}"
-        run: |
-          echo  "$GOOGLE_CONFIG" > google-services.json
-          echo "$FIREBASE_CONFIG" > firebase.web.config.json
-
-      - name: Install devbox
-        uses: jetify-com/devbox-install-action@v0.11.0
+      - name: 🛠 Setup development environment
+        uses: ./.github/actions/setup-dev-environment
         with:
-          devbox-version: 0.14.2
-          enable-cache: true
-
-      - name: 📦 Get npm cache directory path
-        id: npm-cache-dir-path
-        run: echo "dir=$(devbox run -- npm config get cache)" >> $GITHUB_OUTPUT
-
-      - name: 📦 Setup npm cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.npm-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-npm-${{ hashFiles('**/package.json') }}
-          restore-keys: |
-            ${{ runner.os }}-npm-
-
-      - name: 📦 Install dependencies
-        run: npm install
+          firebase-config: ${{ secrets.FIREBASE_WEB_CONFIG }}
+          google-services-config: ${{ secrets.GOOGLE_SERVICES }}
 
       - name: 🧪 Run Chrome integration tests
         run: devbox run integration_test_chrome
