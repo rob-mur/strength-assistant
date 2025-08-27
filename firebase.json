@@ -8,7 +8,7 @@
 		],
 		"rewrites": [
 			{
-				"source": "**",
+				"source": "**!(*.ttf|*.woff|*.woff2|*.eot|*.otf)",
 				"destination": "/index.html"
 			}
 		],
