@@ -2,7 +2,7 @@ import {
 	JetBrainsMono_400Regular,
 } from "@expo-google-fonts/jetbrains-mono";
 import { NotoSans_400Regular } from "@expo-google-fonts/noto-sans";
-// MaterialCommunityIcons removed - vector icons loaded via CDN for web compatibility
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useFonts } from "expo-font";
 import { SplashScreen } from "expo-router";
 import { useEffect, useState } from "react";
@@ -16,8 +16,7 @@ export const useAppInit = () => {
 	const [fontsLoaded, fontError] = useFonts({
 		NotoSans_400Regular,
 		JetBrainsMono_400Regular,
-		// Remove MaterialCommunityIcons.font spread - causes web font sanitizer issues
-		// Vector icons are loaded via CDN in _layout.tsx for web compatibility
+		...MaterialCommunityIcons.font,
 	});
 
 	useEffect(() => {
@@ -38,22 +37,22 @@ export const useAppInit = () => {
 	useEffect(() => {
 		const prepare = async () => {
 			const startTime = Date.now();
-			
+
 			logger.info("Starting app initialization", {
 				service: "App Init",
 				platform: "React Native",
 				operation: "init"
 			});
-			
+
 			try {
 				logger.info("Initializing Firebase...", {
 					service: "App Init",
 					platform: "React Native",
 					operation: "firebase_init"
 				});
-				
+
 				initFirebase();
-				
+
 				logger.info("Firebase initialization completed successfully", {
 					service: "App Init",
 					platform: "React Native",
