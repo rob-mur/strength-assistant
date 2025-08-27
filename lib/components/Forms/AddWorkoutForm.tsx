@@ -8,7 +8,6 @@ import {
   Text,
   RadioButton,
   Menu,
-  Divider,
 } from "react-native-paper";
 import Slider from "@react-native-community/slider";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -29,7 +28,7 @@ export default function AddWorkoutForm() {
   
   const router = useRouter();
   const { user } = useAuth();
-  const exercises = useExercises(user?.uid || "");
+  const { exercises } = useExercises(user?.uid || "");
 
   const isFormValid = selectedExercise && weight && reps;
 
@@ -143,7 +142,7 @@ export default function AddWorkoutForm() {
               onValueChange={setRpe}
               minimumTrackTintColor="#6750A4"
               maximumTrackTintColor="#E7E0EC"
-              thumbStyle={{ backgroundColor: "#6750A4" }}
+              thumbTintColor="#6750A4"
             />
             <View style={{ 
               flexDirection: "row", 
