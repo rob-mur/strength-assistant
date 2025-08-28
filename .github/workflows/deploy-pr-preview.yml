@@ -33,6 +33,26 @@ jobs:
         run: |
           npm run build_web
 
+
+      - name: ✅ Verify build output
+        run: |
+          if [ ! -d "dist" ]; then
+            echo "❌ Error: dist directory was not created by build"
+            echo "Build may have failed silently"
+            exit 1
+          fi
+    
+          if [ -z "$(ls -A dist)" ]; then
+            echo "❌ Error: dist directory is empty"  
+            echo "Build completed but produced no output files"
+            exit 1
+          fi
+    
+          echo "✅ Build verification passed"
+          echo "Contents of dist directory:"
+          ls -la dist/
+
+
       - name: 🔥 Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
