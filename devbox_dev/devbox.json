@@ -9,7 +9,8 @@
     "firebase-tools@latest",
     "jdk17@latest",
     "claude-code@latest",
-    "gh@latest"
+    "gh@latest",
+    "git@latest"
   ],
   "shell": {
     "scripts": {
