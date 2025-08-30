@@ -1,0 +1,11 @@
+# Supabase Terraform Configuration
+# Copy this file to terraform.tfvars and fill in your values
+
+# Get this from your Supabase dashboard > Settings > API
+supabase_project_ref = "your-project-ref-here"
+
+# Generate this from your Supabase dashboard > Settings > Access Tokens
+supabase_access_token = "your-access-token-here"
+
+# Environment (dev, staging, production)
+environment = "dev"
