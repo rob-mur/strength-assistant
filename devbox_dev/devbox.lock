@@ -449,6 +449,54 @@
           "store_path": "/nix/store/357id3rjy9417k4dkvxxmpgd9bxrwc7l-nodejs-24.5.0"
         }
       }
+    },
+    "supabase-cli@latest": {
+      "last_modified": "2025-07-28T17:09:23Z",
+      "resolved": "github:NixOS/nixpkgs/648f70160c03151bc2121d179291337ad6bc564b#supabase-cli",
+      "source": "devbox-search",
+      "version": "2.23.7",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/5hc0dbbvv6mbbrymm3ilv85g4v7dywxp-supabase-cli-2.23.7",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/5hc0dbbvv6mbbrymm3ilv85g4v7dywxp-supabase-cli-2.23.7"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/3q5bmw911k0afd76fq166g0yjwwycd88-supabase-cli-2.23.7",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/3q5bmw911k0afd76fq166g0yjwwycd88-supabase-cli-2.23.7"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/nymfcbmvx35y1qd0kj35h5fpxm23q3jn-supabase-cli-2.23.7",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/nymfcbmvx35y1qd0kj35h5fpxm23q3jn-supabase-cli-2.23.7"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/72v4hjsxmq9nfs87vrik3vivqwh5nlv8-supabase-cli-2.23.7",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/72v4hjsxmq9nfs87vrik3vivqwh5nlv8-supabase-cli-2.23.7"
+        }
+      }
     }
   }
 }

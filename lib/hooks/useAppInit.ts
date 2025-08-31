@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 
 import { initFirebase } from "@/lib/data/firebase";
 import { logger } from "@/lib/data/firebase/logger";
+import { initializeSupabaseServices } from "@/lib/data/supabase";
 
 export const useAppInit = () => {
 	const [isAppReady, setAppReady] = useState(false);
@@ -45,13 +46,65 @@ export const useAppInit = () => {
 			});
 
 			try {
+				logger.info("Starting service initialization...", {
+					service: "App Init",
+					platform: "React Native",
+					operation: "services_init"
+				});
+
 				logger.info("Initializing Firebase...", {
 					service: "App Init",
 					platform: "React Native",
 					operation: "firebase_init"
 				});
 
-				initFirebase();
+				try {
+					initFirebase();
+					logger.info("Firebase initialization completed successfully", {
+						service: "App Init",
+						platform: "React Native",
+						operation: "firebase_init"
+					});
+				} catch (firebaseError: any) {
+					logger.error("Firebase initialization failed", {
+						service: "App Init",
+						platform: "React Native", 
+						operation: "firebase_init",
+						error: {
+							message: firebaseError.message,
+							stack: firebaseError.stack,
+							name: firebaseError.name
+						}
+					});
+					logger.warn("Continuing without Firebase");
+				}
+
+				logger.info("Initializing Supabase...", {
+					service: "App Init",
+					platform: "React Native",
+					operation: "supabase_init"
+				});
+
+				try {
+					initializeSupabaseServices();
+					logger.info("Supabase initialization completed successfully", {
+						service: "App Init",
+						platform: "React Native",
+						operation: "supabase_init"
+					});
+				} catch (supabaseError: any) {
+					logger.error("Supabase initialization failed", {
+						service: "App Init",
+						platform: "React Native",
+						operation: "supabase_init",
+						error: {
+							message: supabaseError.message,
+							stack: supabaseError.stack,
+							name: supabaseError.name
+						}
+					});
+					logger.warn("Continuing without Supabase");
+				}
 
 				logger.info("Firebase initialization completed successfully", {
 					service: "App Init",

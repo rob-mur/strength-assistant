@@ -15,7 +15,7 @@ ALTER TABLE exercises ENABLE ROW LEVEL SECURITY;
 -- Create policy: Users can only access their own exercises
 CREATE POLICY "Users can manage their own exercises" ON exercises
   FOR ALL 
-  USING (auth.uid() = user_id);
+  USING ((SELECT auth.uid()) = user_id);
 
 -- Create index for performance on user queries
 CREATE INDEX exercises_user_id_idx ON exercises(user_id);
