@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { initSupabase, getSupabaseClient } from "@/lib/data/supabase/supabase/supabase.web";
+import { initSupabase, getSupabaseClient, resetSupabaseService } from "@/lib/data/supabase/supabase/supabase.web";
 
 // Mock the Supabase client
 jest.mock("@supabase/supabase-js");
@@ -19,6 +19,7 @@ describe("SupabaseWebService", () => {
     jest.clearAllMocks();
     process.env = { ...originalEnv };
     mockCreateClient.mockReturnValue(mockClient as any);
+    resetSupabaseService(); // Reset service state for each test
   });
 
   afterAll(() => {
@@ -92,6 +93,7 @@ describe("SupabaseWebService", () => {
     });
 
     test("throws error when missing production URL", () => {
+      process.env.NODE_ENV = "production"; // Force production mode
       process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "test-key";
       // No URL set
       
@@ -101,6 +103,7 @@ describe("SupabaseWebService", () => {
     });
 
     test("throws error when missing production anon key", () => {
+      process.env.NODE_ENV = "production"; // Force production mode
       process.env.EXPO_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
       // No anon key set
       
@@ -132,6 +135,7 @@ describe("SupabaseWebService", () => {
     });
 
     test("throws error when not initialized", () => {
+      // Service is already reset in beforeEach
       expect(() => getSupabaseClient()).toThrow(
         "Supabase service not initialized. Call init() before getSupabaseClient()"
       );
@@ -140,6 +144,7 @@ describe("SupabaseWebService", () => {
 
   describe("error handling", () => {
     test("handles createClient errors", () => {
+      process.env.NODE_ENV = "production"; // Ensure production mode
       process.env.EXPO_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
       process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
       
