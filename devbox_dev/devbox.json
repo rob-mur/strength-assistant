@@ -34,6 +34,6 @@
     "GRADLE_OPTS":                   "-Dorg.gradle.project.android.aapt2FromMavenOverride=$PWD/.devbox/nix/profile/default/bin/aapt2",
     "EXPO_PUBLIC_USE_EMULATOR":      "true",
     "EXPO_PUBLIC_SUPABASE_URL":      "https://oddphoddejomqiyctctq.supabase.co",
-    "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kZHBob2RkZWpvbXFpeWN0Y3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1ODExNjIsImV4cCI6MjA3MjE1NzE2Mn0.MKheiiDO2VCknBaD2QRw4Kf_GeHpQW15qUMMAtK7BDk"
+    "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kZHBob2RkZWpvbXFpeWN0Y3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1ODExNjIsImV4cCI6MjA3MjE1NzE2Mn0.MKheiiDO2VCknBaD2QRw4Kf_GeHpQW15qUMMAtK7BDk"  // NOSONAR - Supabase anonymous key is designed to be public
   }
 }
