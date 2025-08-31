@@ -158,8 +158,12 @@ describe("SupabaseNativeService", () => {
       
       initSupabase();
       
-      const [url] = mockCreateClient.mock.calls[0];
-      expect(url).toBe("http://10.0.2.2:54321");
+      expect(mockCreateClient).toHaveBeenCalled();
+      const calls = mockCreateClient.mock.calls;
+      if (calls.length > 0) {
+        const [url] = calls[0];
+        expect(url).toBe("http://10.0.2.2:54321");
+      }
     });
 
     test("sets detectSessionInUrl to false for native", () => {
@@ -168,8 +172,12 @@ describe("SupabaseNativeService", () => {
       
       initSupabase();
       
-      const [,, config] = mockCreateClient.mock.calls[0];
-      expect(config?.auth?.detectSessionInUrl).toBe(false);
+      expect(mockCreateClient).toHaveBeenCalled();
+      const calls = mockCreateClient.mock.calls;
+      if (calls.length > 0) {
+        const [,, config] = calls[0];
+        expect(config?.auth?.detectSessionInUrl).toBe(false);
+      }
     });
   });
 

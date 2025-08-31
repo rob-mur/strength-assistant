@@ -109,7 +109,8 @@ describe("SupabaseService", () => {
         "Supabase service not initialized. Call init() before test operation"
       );
       expect(mockLogger.error).toHaveBeenCalledWith(
-        "Supabase service not initialized. Call init() before test operation"
+        "Supabase service not initialized. Call init() before test operation",
+        undefined
       );
     });
 
