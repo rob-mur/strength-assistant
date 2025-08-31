@@ -169,7 +169,7 @@ describe("SupabaseNativeService", () => {
       initSupabase();
       
       const [,, config] = mockCreateClient.mock.calls[0];
-      expect(config.auth.detectSessionInUrl).toBe(false);
+      expect(config?.auth?.detectSessionInUrl).toBe(false);
     });
   });
 
