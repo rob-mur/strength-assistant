@@ -22,10 +22,32 @@ class SupabaseWebService extends SupabaseService {
 		try {
 			const supabaseUrl = this.getSupabaseUrl();
 			const supabaseAnonKey = this.getSupabaseAnonKey();
+			
+			this.logInfo("Supabase configuration check", {
+				operation: "config_check",
+				hasUrl: !!supabaseUrl,
+				hasKey: !!supabaseAnonKey,
+				emulatorEnabled: this.isEmulatorEnabled(),
+				url: this.sanitizeUrl(supabaseUrl),
+				emulatorHost: this.getEmulatorHost(),
+				emulatorPort: this.getEmulatorPort()
+			});
 
 			if (!supabaseUrl || !supabaseAnonKey) {
-				throw new Error("Missing Supabase configuration. Please ensure EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY are set.");
+				const error = `Missing Supabase configuration. URL: ${!!supabaseUrl}, Key: ${!!supabaseAnonKey}`;
+				this.logError(error, {
+					operation: "config_validation",
+					supabaseUrl,
+					hasAnonKey: !!supabaseAnonKey,
+					emulatorEnabled: this.isEmulatorEnabled()
+				});
+				throw new Error(error);
 			}
+
+			this.logInfo("Creating Supabase client", {
+				operation: "create_client",
+				url: this.sanitizeUrl(supabaseUrl)
+			});
 
 			this.client = createClient(supabaseUrl, supabaseAnonKey, {
 				auth: {
@@ -33,6 +55,10 @@ class SupabaseWebService extends SupabaseService {
 					persistSession: true,
 					detectSessionInUrl: true,
 				},
+			});
+
+			this.logInfo("Supabase client created successfully", {
+				operation: "client_created"
 			});
 
 			this.logInfo("Supabase client initialized successfully", {

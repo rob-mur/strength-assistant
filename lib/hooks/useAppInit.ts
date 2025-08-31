@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 
 import { initFirebase } from "@/lib/data/firebase";
 import { logger } from "@/lib/data/firebase/logger";
-import { initializeSupabaseServices } from "@/lib/data/supabase";
+import { initSupabase } from "@/lib/data/supabase/supabase";
 
 export const useAppInit = () => {
 	const [isAppReady, setAppReady] = useState(false);
@@ -86,13 +86,17 @@ export const useAppInit = () => {
 				});
 
 				try {
-					initializeSupabaseServices();
+					console.log("SUPABASE DEBUG: About to call initSupabase");
+					initSupabase();
+					console.log("SUPABASE DEBUG: Supabase initialization completed successfully");
 					logger.info("Supabase initialization completed successfully", {
 						service: "App Init",
 						platform: "React Native",
 						operation: "supabase_init"
 					});
 				} catch (supabaseError: any) {
+					console.error("SUPABASE DEBUG: An error occurred - not attempting to inspect it");
+					// Don't try to access the error object at all since it's toxic
 					logger.error("Supabase initialization failed", {
 						service: "App Init",
 						platform: "React Native",
