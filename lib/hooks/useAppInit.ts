@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 
 import { initFirebase } from "@/lib/data/firebase";
 import { logger } from "@/lib/data/firebase/logger";
-import { initSupabase } from "@/lib/data/supabase/supabase";
+import { initSupabase } from "@/lib/data/supabase";
 
 export const useAppInit = () => {
 	const [isAppReady, setAppReady] = useState(false);
@@ -72,11 +72,14 @@ export const useAppInit = () => {
 						operation: "firebase_init",
 						error: {
 							message: firebaseError.message,
-							stack: firebaseError.stack,
-							name: firebaseError.name
+							stack: firebaseError.stack
 						}
 					});
-					logger.warn("Continuing without Firebase");
+					logger.warn("Continuing without Firebase", {
+						service: "App Init",
+						platform: "React Native",
+						operation: "firebase_init"
+					});
 				}
 
 				logger.info("Initializing Supabase...", {
@@ -103,11 +106,14 @@ export const useAppInit = () => {
 						operation: "supabase_init",
 						error: {
 							message: supabaseError.message,
-							stack: supabaseError.stack,
-							name: supabaseError.name
+							stack: supabaseError.stack
 						}
 					});
-					logger.warn("Continuing without Supabase");
+					logger.warn("Continuing without Supabase", {
+						service: "App Init",
+						platform: "React Native",
+						operation: "supabase_init"
+					});
 				}
 
 				logger.info("Firebase initialization completed successfully", {
