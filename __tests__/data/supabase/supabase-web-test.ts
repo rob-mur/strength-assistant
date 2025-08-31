@@ -28,6 +28,8 @@ describe("SupabaseWebService", () => {
 
   describe("initialization", () => {
     test("initializes with production configuration", () => {
+      // Set development mode to enable emulator defaults
+      process.env.NODE_ENV = "development";
       process.env.EXPO_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
       process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
       
@@ -113,6 +115,8 @@ describe("SupabaseWebService", () => {
     });
 
     test("skips initialization when already initialized", () => {
+      // Set development mode to enable emulator defaults
+      process.env.NODE_ENV = "development";
       process.env.EXPO_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
       process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
       
@@ -125,6 +129,8 @@ describe("SupabaseWebService", () => {
 
   describe("getSupabaseClient", () => {
     test("returns client after initialization", () => {
+      // Set development mode to enable emulator defaults
+      process.env.NODE_ENV = "development";
       process.env.EXPO_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
       process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
       
@@ -159,18 +165,19 @@ describe("SupabaseWebService", () => {
   describe("emulator detection", () => {
     test("detects emulator mode with EXPO_PUBLIC_USE_SUPABASE_EMULATOR", () => {
       process.env.EXPO_PUBLIC_USE_SUPABASE_EMULATOR = "true";
-      process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "dev-key";
+      // When in emulator mode, service provides default anon key
       
       initSupabase();
       
       expect(mockCreateClient).toHaveBeenCalledWith(
         "http://127.0.0.1:54321",
-        "dev-key",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0",
         expect.any(Object)
       );
     });
 
     test("uses production mode when emulator flag is false", () => {
+      process.env.NODE_ENV = "production"; // Explicitly set production mode
       process.env.EXPO_PUBLIC_USE_SUPABASE_EMULATOR = "false";
       process.env.EXPO_PUBLIC_SUPABASE_URL = "https://prod.supabase.co";
       process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "prod-key";
