@@ -1,8 +1,14 @@
 import { setJSExceptionHandler } from "react-native-exception-handler";
 
+import { logger } from "@/lib/data/firebase/logger";
+
 const errorHandler = (e: Error, _: boolean) => {
   if (__DEV__) {
-    console.log(`Fatal error: ${e}`);
+    logger.debug(`Fatal error: ${e}`, {
+      service: "Error Handler",
+      platform: "React Native",
+      operation: "fatal_error"
+    });
     throw e;
   }
 };

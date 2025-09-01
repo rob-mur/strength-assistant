@@ -89,9 +89,17 @@ export const useAppInit = () => {
 				});
 
 				try {
-					console.log("SUPABASE DEBUG: About to call initSupabase");
+					logger.debug("SUPABASE DEBUG: About to call initSupabase", {
+					service: "App Init",
+					platform: "React Native",
+					operation: "supabase_init"
+				});
 					initSupabase();
-					console.log("SUPABASE DEBUG: Supabase initialization completed successfully");
+					logger.debug("SUPABASE DEBUG: Supabase initialization completed successfully", {
+					service: "App Init",
+					platform: "React Native",
+					operation: "supabase_init"
+				});
 					logger.info("Supabase initialization completed successfully", {
 						service: "App Init",
 						platform: "React Native",

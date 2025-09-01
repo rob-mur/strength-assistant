@@ -8,6 +8,7 @@ import {
 	addDoc,
 	onSnapshot,
 } from "@/lib/data/firebase";
+import { logger } from "@/lib/data/firebase/logger";
 
 type Unsubscribe = () => void;
 
@@ -38,13 +39,21 @@ export class ExerciseRepo {
 
 	async addExercise(exercise: string, uid: string): Promise<string> {
 		const startTime = Date.now();
-		console.log(`[ExerciseRepo] Adding exercise: "${exercise}" for user: ${uid}`);
+		logger.debug(`[ExerciseRepo] Adding exercise: "${exercise}" for user: ${uid}`, {
+			service: "ExerciseRepo",
+			platform: "React Native",
+			operation: "add_exercise"
+		});
 		
 		try {
 			const exerciseCollection = collection(getDb(), this.getExercisesCollectionPath(uid));
 			const doc = await addDoc(exerciseCollection, { name: exercise });
 			const duration = Date.now() - startTime;
-			console.log(`[ExerciseRepo] Successfully added exercise "${exercise}" with ID: ${doc.id} for user: ${uid} (${duration}ms)`);
+			logger.debug(`[ExerciseRepo] Successfully added exercise "${exercise}" with ID: ${doc.id} for user: ${uid} (${duration}ms)`, {
+				service: "ExerciseRepo",
+				platform: "React Native",
+				operation: "add_exercise"
+			});
 			return doc.id;
 		} catch (error) {
 			const duration = Date.now() - startTime;
@@ -55,7 +64,11 @@ export class ExerciseRepo {
 
 	async getExerciseById(id: string, uid: string): Promise<Exercise | undefined> {
 		const startTime = Date.now();
-		console.log(`[ExerciseRepo] Getting exercise by ID: ${id} for user: ${uid}`);
+		logger.debug(`[ExerciseRepo] Getting exercise by ID: ${id} for user: ${uid}`, {
+			service: "ExerciseRepo",
+			platform: "React Native",
+			operation: "get_exercise_by_id"
+		});
 		
 		try {
 			const docRef = doc(getDb(), this.getExercisesCollectionPath(uid), id);
@@ -63,7 +76,11 @@ export class ExerciseRepo {
 			const data = await getDoc(docRef).then((snap) => {
 				const data = snap.data();
 				if (data === undefined) {
-					console.log(`[ExerciseRepo] Exercise with ID ${id} not found for user: ${uid}`);
+					logger.debug(`[ExerciseRepo] Exercise with ID ${id} not found for user: ${uid}`, {
+						service: "ExerciseRepo",
+						platform: "React Native",
+						operation: "get_exercise_by_id"
+					});
 					return undefined;
 				}
 				if (!this.validateExerciseData(data)) {
@@ -75,9 +92,17 @@ export class ExerciseRepo {
 			
 			const duration = Date.now() - startTime;
 			if (data) {
-				console.log(`[ExerciseRepo] Successfully retrieved exercise "${data.name}" (ID: ${id}) for user: ${uid} (${duration}ms)`);
+				logger.debug(`[ExerciseRepo] Successfully retrieved exercise "${data.name}" (ID: ${id}) for user: ${uid} (${duration}ms)`, {
+				service: "ExerciseRepo",
+				platform: "React Native",
+				operation: "get_exercise_by_id"
+			});
 			} else {
-				console.log(`[ExerciseRepo] Exercise with ID ${id} not found for user: ${uid} (${duration}ms)`);
+				logger.debug(`[ExerciseRepo] Exercise with ID ${id} not found for user: ${uid} (${duration}ms)`, {
+				service: "ExerciseRepo",
+				platform: "React Native",
+				operation: "get_exercise_by_id"
+			});
 			}
 			return data;
 		} catch (error) {
@@ -89,7 +114,11 @@ export class ExerciseRepo {
 
 	async getExercises(uid: string): Promise<Exercise[]> {
 		const startTime = Date.now();
-		console.log(`[ExerciseRepo] Getting all exercises for user: ${uid}`);
+		logger.debug(`[ExerciseRepo] Getting all exercises for user: ${uid}`, {
+			service: "ExerciseRepo",
+			platform: "React Native",
+			operation: "get_all_exercises"
+		});
 		
 		try {
 			const querySnapshot = await getDocs(collection(getDb(), this.getExercisesCollectionPath(uid)));
@@ -103,7 +132,11 @@ export class ExerciseRepo {
 			});
 			
 			const duration = Date.now() - startTime;
-			console.log(`[ExerciseRepo] Successfully retrieved ${exercises.length} exercises for user: ${uid} (${duration}ms)`);
+			logger.debug(`[ExerciseRepo] Successfully retrieved ${exercises.length} exercises for user: ${uid} (${duration}ms)`, {
+				service: "ExerciseRepo",
+				platform: "React Native",
+				operation: "get_all_exercises"
+			});
 			return exercises;
 		} catch (error) {
 			const duration = Date.now() - startTime;
@@ -113,14 +146,22 @@ export class ExerciseRepo {
 	}
 
 	subscribeToExercises(uid: string, callback: (exercises: Exercise[]) => void): Unsubscribe {
-		console.log(`[ExerciseRepo] Setting up real-time subscription to exercises for user: ${uid}`);
+		logger.debug(`[ExerciseRepo] Setting up real-time subscription to exercises for user: ${uid}`, {
+			service: "ExerciseRepo",
+			platform: "React Native",
+			operation: "subscribe_exercises"
+		});
 		
 		const exerciseCollection = collection(getDb(), this.getExercisesCollectionPath(uid));
 		const unsubscribe = onSnapshot(
 			exerciseCollection, 
 			(querySnapshot) => {
 				const startTime = Date.now();
-				console.log(`[ExerciseRepo] Real-time update received for user: ${uid}`);
+				logger.debug(`[ExerciseRepo] Real-time update received for user: ${uid}`, {
+					service: "ExerciseRepo",
+					platform: "React Native",
+					operation: "subscribe_exercises"
+				});
 				
 				try {
 					const exercises = querySnapshot.docs.map((doc) => {
@@ -133,7 +174,11 @@ export class ExerciseRepo {
 					});
 					
 					const duration = Date.now() - startTime;
-					console.log(`[ExerciseRepo] Processed ${exercises.length} exercises from real-time update for user: ${uid} (${duration}ms)`);
+					logger.debug(`[ExerciseRepo] Processed ${exercises.length} exercises from real-time update for user: ${uid} (${duration}ms)`, {
+						service: "ExerciseRepo",
+						platform: "React Native",
+						operation: "subscribe_exercises"
+					});
 					callback(exercises);
 				} catch (error) {
 					const duration = Date.now() - startTime;
@@ -147,9 +192,17 @@ export class ExerciseRepo {
 			}
 		);
 		
-		console.log(`[ExerciseRepo] Real-time subscription established for user: ${uid}`);
+		logger.debug(`[ExerciseRepo] Real-time subscription established for user: ${uid}`, {
+			service: "ExerciseRepo",
+			platform: "React Native",
+			operation: "subscribe_exercises"
+		});
 		return () => {
-			console.log(`[ExerciseRepo] Unsubscribing from real-time updates for user: ${uid}`);
+			logger.debug(`[ExerciseRepo] Unsubscribing from real-time updates for user: ${uid}`, {
+				service: "ExerciseRepo",
+				platform: "React Native",
+				operation: "subscribe_exercises"
+			});
 			unsubscribe();
 		};
 	}
