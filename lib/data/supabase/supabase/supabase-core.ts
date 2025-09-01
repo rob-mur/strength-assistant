@@ -8,7 +8,7 @@ import { Logger } from "./logger";
 export abstract class SupabaseService {
 	protected initialized: boolean = false;
 	protected client: SupabaseClient | undefined;
-	private logger: Logger;
+	private readonly logger: Logger;
 
 	constructor(serviceName: string) {
 		this.logger = new Logger(serviceName);
@@ -58,7 +58,7 @@ export abstract class SupabaseService {
 			const port = this.getEmulatorPort();
 			return `http://${host}:${port}`;
 		}
-		
+
 		return process.env.EXPO_PUBLIC_SUPABASE_URL || "";
 	}
 
@@ -67,7 +67,7 @@ export abstract class SupabaseService {
 			// Local Supabase has a default anon key for development
 			return process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0";
 		}
-		
+
 		return process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || "";
 	}
 
@@ -84,7 +84,7 @@ export abstract class SupabaseService {
 	protected createSupabaseClient(config: { detectSessionInUrl: boolean }): void {
 		const supabaseUrl = this.getSupabaseUrl();
 		const supabaseAnonKey = this.getSupabaseAnonKey();
-		
+
 		this.logInfo("Supabase configuration check", {
 			operation: "config_check",
 			hasUrl: !!supabaseUrl,

@@ -16,7 +16,7 @@ export interface LogContext {
 }
 
 export class Logger {
-	private serviceName: string;
+	private readonly serviceName: string;
 
 	constructor(serviceName: string) {
 		this.serviceName = serviceName;
@@ -29,7 +29,7 @@ export class Logger {
 
 	private logWithContext(level: 'log' | 'warn' | 'error', message: string, context?: Record<string, unknown>): void {
 		const formattedMessage = this.createMessage(level, message, context);
-		
+
 		if (level === 'error') {
 			console.error(formattedMessage, context);
 		} else if (level === 'warn') {
