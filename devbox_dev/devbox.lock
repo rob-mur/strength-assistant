@@ -161,6 +161,126 @@
         }
       }
     },
+    "gh@latest": {
+      "last_modified": "2025-08-01T06:30:45Z",
+      "resolved": "github:NixOS/nixpkgs/a7822a17050fedda63794775b9090880c8214290#gh",
+      "source": "devbox-search",
+      "version": "2.76.2",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/03sfs0afrm8j3gwrdnj324zw7yg959bd-gh-2.76.2",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/03sfs0afrm8j3gwrdnj324zw7yg959bd-gh-2.76.2"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/pc1gkqbg0di68fpxqg5dxz0dvdvldf1a-gh-2.76.2",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/pc1gkqbg0di68fpxqg5dxz0dvdvldf1a-gh-2.76.2"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/6sxip9nc0v8hsdyzjdhmj1qsxr3m4p6i-gh-2.76.2",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/6sxip9nc0v8hsdyzjdhmj1qsxr3m4p6i-gh-2.76.2"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/72ihgykz0r9a5s3iqzrcm9x2rnp3sjap-gh-2.76.2",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/72ihgykz0r9a5s3iqzrcm9x2rnp3sjap-gh-2.76.2"
+        }
+      }
+    },
+    "git@latest": {
+      "last_modified": "2025-08-12T09:17:37Z",
+      "resolved": "github:NixOS/nixpkgs/372d9eeeafa5b15913201e2b92e8e539ac7c64d1#git",
+      "source": "devbox-search",
+      "version": "2.50.1",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/jn9byxgdjndngf0d2by0djg8gcdll7xc-git-2.50.1",
+              "default": true
+            },
+            {
+              "name": "doc",
+              "path": "/nix/store/j8djmq64ckbah7bl6jv1y6arrjr0shmv-git-2.50.1-doc"
+            }
+          ],
+          "store_path": "/nix/store/jn9byxgdjndngf0d2by0djg8gcdll7xc-git-2.50.1"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/h4pvvix6pvnvys9a6y1xj2442r1ajdhl-git-2.50.1",
+              "default": true
+            },
+            {
+              "name": "doc",
+              "path": "/nix/store/q8sicpx16gyzxnp3345a46lj4cz9wd09-git-2.50.1-doc"
+            },
+            {
+              "name": "debug",
+              "path": "/nix/store/rpxnrnsn4nbx8wm9d2vrgj0fr5xzz5lg-git-2.50.1-debug"
+            }
+          ],
+          "store_path": "/nix/store/h4pvvix6pvnvys9a6y1xj2442r1ajdhl-git-2.50.1"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/8d1n8cvi5x1j0v61459lvhqs26vmcqbl-git-2.50.1",
+              "default": true
+            },
+            {
+              "name": "doc",
+              "path": "/nix/store/yn9cvbs7jz4dfdb17qralgr0ybi5rmjf-git-2.50.1-doc"
+            }
+          ],
+          "store_path": "/nix/store/8d1n8cvi5x1j0v61459lvhqs26vmcqbl-git-2.50.1"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/5i8zvall945kypmwgqd0y47f02pldwp4-git-2.50.1",
+              "default": true
+            },
+            {
+              "name": "debug",
+              "path": "/nix/store/l46kpjpcwwp8l7kzzr1s2dlk646r73z2-git-2.50.1-debug"
+            },
+            {
+              "name": "doc",
+              "path": "/nix/store/d2lhlzkdziwmijik8nszfwp8srbkskb9-git-2.50.1-doc"
+            }
+          ],
+          "store_path": "/nix/store/5i8zvall945kypmwgqd0y47f02pldwp4-git-2.50.1"
+        }
+      }
+    },
     "github:NixOS/nixpkgs/nixpkgs-unstable": {
       "last_modified": "2025-08-15T14:26:43Z",
       "resolved": "github:NixOS/nixpkgs/32f313e49e42f715491e1ea7b306a87c16fe0388?lastModified=1755268003&narHash=sha256-nNaeJjo861wFR0tjHDyCnHs1rbRtrMgxAKMoig9Sj%2Fw%3D"
@@ -327,6 +447,54 @@
             }
           ],
           "store_path": "/nix/store/357id3rjy9417k4dkvxxmpgd9bxrwc7l-nodejs-24.5.0"
+        }
+      }
+    },
+    "supabase-cli@latest": {
+      "last_modified": "2025-07-28T17:09:23Z",
+      "resolved": "github:NixOS/nixpkgs/648f70160c03151bc2121d179291337ad6bc564b#supabase-cli",
+      "source": "devbox-search",
+      "version": "2.23.7",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/5hc0dbbvv6mbbrymm3ilv85g4v7dywxp-supabase-cli-2.23.7",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/5hc0dbbvv6mbbrymm3ilv85g4v7dywxp-supabase-cli-2.23.7"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/3q5bmw911k0afd76fq166g0yjwwycd88-supabase-cli-2.23.7",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/3q5bmw911k0afd76fq166g0yjwwycd88-supabase-cli-2.23.7"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/nymfcbmvx35y1qd0kj35h5fpxm23q3jn-supabase-cli-2.23.7",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/nymfcbmvx35y1qd0kj35h5fpxm23q3jn-supabase-cli-2.23.7"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/72v4hjsxmq9nfs87vrik3vivqwh5nlv8-supabase-cli-2.23.7",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/72v4hjsxmq9nfs87vrik3vivqwh5nlv8-supabase-cli-2.23.7"
         }
       }
     }

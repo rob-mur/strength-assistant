@@ -1,9 +1,9 @@
 export interface LogContext {
 	service: string;
-	platform: string;
+	platform?: string;
 	operation?: string;
 	duration?: number;
-	config?: Record<string, unknown>;
+	url?: string;
 	emulator?: {
 		host: string;
 		port: number;
@@ -15,15 +15,21 @@ export interface LogContext {
 	};
 }
 
-export class FirebaseLogger {
-	private createMessage(level: string, message: string, context: LogContext): string {
-		const prefix = `[${context.service}${context.platform ? ` ${context.platform}` : ''}]`;
+export class Logger {
+	private readonly serviceName: string;
+
+	constructor(serviceName: string) {
+		this.serviceName = serviceName;
+	}
+
+	private createMessage(level: string, message: string, context?: Record<string, unknown>): string {
+		const prefix = `[${this.serviceName}]`;
 		return `${prefix} ${message}`;
 	}
 
-	private logWithContext(level: 'log' | 'warn' | 'error', message: string, context: LogContext): void {
+	private logWithContext(level: 'log' | 'warn' | 'error', message: string, context?: Record<string, unknown>): void {
 		const formattedMessage = this.createMessage(level, message, context);
-		
+
 		if (level === 'error') {
 			console.error(formattedMessage, context);
 		} else if (level === 'warn') {
@@ -33,21 +39,15 @@ export class FirebaseLogger {
 		}
 	}
 
-	debug(message: string, context: LogContext): void {
+	info(message: string, context?: Record<string, unknown>): void {
 		this.logWithContext('log', message, context);
 	}
 
-	info(message: string, context: LogContext): void {
-		this.logWithContext('log', message, context);
-	}
-
-	warn(message: string, context: LogContext): void {
+	warn(message: string, context?: Record<string, unknown>): void {
 		this.logWithContext('warn', message, context);
 	}
 
-	error(message: string, context: LogContext): void {
+	error(message: string, context?: Record<string, unknown>): void {
 		this.logWithContext('error', message, context);
 	}
 }
-
-export const logger = new FirebaseLogger();

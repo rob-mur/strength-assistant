@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 
 import { initFirebase } from "@/lib/data/firebase";
 import { logger } from "@/lib/data/firebase/logger";
+import { initSupabase } from "@/lib/data/supabase";
 
 export const useAppInit = () => {
 	const [isAppReady, setAppReady] = useState(false);
@@ -45,13 +46,87 @@ export const useAppInit = () => {
 			});
 
 			try {
+				logger.info("Starting service initialization...", {
+					service: "App Init",
+					platform: "React Native",
+					operation: "services_init"
+				});
+
 				logger.info("Initializing Firebase...", {
 					service: "App Init",
 					platform: "React Native",
 					operation: "firebase_init"
 				});
 
-				initFirebase();
+				try {
+					initFirebase();
+					logger.info("Firebase initialization completed successfully", {
+						service: "App Init",
+						platform: "React Native",
+						operation: "firebase_init"
+					});
+				} catch (firebaseError: any) {
+					logger.error("Firebase initialization failed", {
+						service: "App Init",
+						platform: "React Native", 
+						operation: "firebase_init",
+						error: {
+							message: firebaseError.message,
+							stack: firebaseError.stack
+						}
+					});
+					logger.warn("Continuing without Firebase", {
+						service: "App Init",
+						platform: "React Native",
+						operation: "firebase_init"
+					});
+				}
+
+				logger.info("Initializing Supabase...", {
+					service: "App Init",
+					platform: "React Native",
+					operation: "supabase_init"
+				});
+
+				try {
+					logger.debug("SUPABASE DEBUG: About to call initSupabase", {
+					service: "App Init",
+					platform: "React Native",
+					operation: "supabase_init"
+				});
+					initSupabase();
+					logger.debug("SUPABASE DEBUG: Supabase initialization completed successfully", {
+					service: "App Init",
+					platform: "React Native",
+					operation: "supabase_init"
+				});
+					logger.info("Supabase initialization completed successfully", {
+						service: "App Init",
+						platform: "React Native",
+						operation: "supabase_init"
+					});
+				} catch (supabaseError: any) {
+					logger.debug("SUPABASE DEBUG: An error occurred - not attempting to inspect it", {
+						service: "App Init",
+						platform: "React Native",
+						operation: "supabase_init"
+					});
+					// Don't try to access the error object at all since it's toxic
+					logger.error("Supabase initialization failed", {
+						service: "App Init",
+						platform: "React Native",
+						operation: "supabase_init",
+						error: {
+							message: supabaseError.message,
+							stack: supabaseError.stack
+						}
+					});
+					logger.warn("Continuing without Supabase", {
+						service: "App Init",
+						platform: "React Native",
+						operation: "supabase_init"
+					});
+				}
 
 				logger.info("Firebase initialization completed successfully", {
 					service: "App Init",

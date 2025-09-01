@@ -8,4 +8,10 @@ module.exports = {
   },
   testPathIgnorePatterns: ["/node_modules/"],
   setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
+  collectCoverageFrom: [
+    "app/**/*.{ts,tsx}",
+    "lib/**/*.{ts,tsx}",
+    "!**/*.d.ts",
+    "!**/*.stories.{ts,tsx}",
+  ],
 };
