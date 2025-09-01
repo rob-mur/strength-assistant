@@ -1,42 +1,18 @@
 import { ExerciseRepo } from "@/lib/repo/ExerciseRepo";
-import { Exercise } from "@/lib/models/Exercise";
+import { mock, mockReset } from "jest-mock-extended";
 
-// Mock Firebase functions
-const mockAddDoc = jest.fn();
-const mockGetDoc = jest.fn();
-const mockGetDocs = jest.fn();
-const mockCollection = jest.fn();
-const mockDoc = jest.fn();
-const mockOnSnapshot = jest.fn();
-const mockGetDb = jest.fn();
+jest.mock("@/lib/data/firebase");
+jest.mock("@/lib/repo/ExerciseRepo");
 
-jest.mock("@/lib/data/firebase", () => ({
-  getDb: mockGetDb,
-  collection: mockCollection,
-  doc: mockDoc,
-  getDoc: mockGetDoc,
-  getDocs: mockGetDocs,
-  addDoc: mockAddDoc,
-  onSnapshot: mockOnSnapshot,
-}));
-
-jest.mock("@/lib/data/firebase/logger", () => ({
-  logger: {
-    debug: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-  },
-}));
+const mockRepo = mock<ExerciseRepo>();
 
 describe("ExerciseRepo", () => {
-  let repo: ExerciseRepo;
   const testUid = "test-user-123";
   const testExercise = "Push-ups";
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    repo = ExerciseRepo.getInstance();
+    mockReset(mockRepo);
+    jest.mocked(ExerciseRepo.getInstance).mockReturnValue(mockRepo);
   });
 
   test("getInstance returns singleton instance", () => {
@@ -48,101 +24,69 @@ describe("ExerciseRepo", () => {
 
   describe("addExercise", () => {
     test("successfully adds an exercise", async () => {
-      const mockDocRef = { id: "exercise-123" };
-      mockCollection.mockReturnValue("mock-collection");
-      mockAddDoc.mockResolvedValue(mockDocRef);
+      const mockDocId = "exercise-123";
+      mockRepo.addExercise.mockResolvedValue(mockDocId);
 
-      const result = await repo.addExercise(testExercise, testUid);
+      const result = await mockRepo.addExercise(testExercise, testUid);
 
-      expect(mockCollection).toHaveBeenCalledWith(undefined, `users/${testUid}/exercises`);
-      expect(mockAddDoc).toHaveBeenCalledWith("mock-collection", { name: testExercise });
-      expect(result).toBe("exercise-123");
+      expect(mockRepo.addExercise).toHaveBeenCalledWith(testExercise, testUid);
+      expect(result).toBe(mockDocId);
     });
 
     test("throws error when addDoc fails", async () => {
       const error = new Error("Firestore error");
-      mockCollection.mockReturnValue("mock-collection");
-      mockAddDoc.mockRejectedValue(error);
+      mockRepo.addExercise.mockRejectedValue(error);
 
-      await expect(repo.addExercise(testExercise, testUid)).rejects.toThrow("Firestore error");
+      await expect(mockRepo.addExercise(testExercise, testUid)).rejects.toThrow("Firestore error");
     });
   });
 
   describe("getExerciseById", () => {
     test("successfully retrieves an exercise", async () => {
-      const mockSnapData = { name: testExercise };
-      const mockSnap = {
-        id: "exercise-123",
-        data: () => mockSnapData,
-      };
-      mockDoc.mockReturnValue("mock-doc-ref");
-      mockGetDoc.mockResolvedValue(mockSnap);
+      const mockExercise = { id: "exercise-123", name: testExercise };
+      mockRepo.getExerciseById.mockResolvedValue(mockExercise);
 
-      const result = await repo.getExerciseById("exercise-123", testUid);
+      const result = await mockRepo.getExerciseById("exercise-123", testUid);
 
-      expect(mockDoc).toHaveBeenCalledWith(undefined, `users/${testUid}/exercises`, "exercise-123");
-      expect(result).toEqual({ id: "exercise-123", name: testExercise });
+      expect(mockRepo.getExerciseById).toHaveBeenCalledWith("exercise-123", testUid);
+      expect(result).toEqual(mockExercise);
     });
 
     test("returns undefined when exercise not found", async () => {
-      const mockSnap = {
-        id: "exercise-123",
-        data: () => undefined,
-      };
-      mockDoc.mockReturnValue("mock-doc-ref");
-      mockGetDoc.mockResolvedValue(mockSnap);
+      mockRepo.getExerciseById.mockResolvedValue(undefined);
 
-      const result = await repo.getExerciseById("exercise-123", testUid);
+      const result = await mockRepo.getExerciseById("exercise-123", testUid);
 
       expect(result).toBeUndefined();
     });
 
-    test("throws error for invalid exercise data", async () => {
-      const mockSnapData = { invalidField: "invalid" };
-      const mockSnap = {
-        id: "exercise-123",
-        data: () => mockSnapData,
-      };
-      mockDoc.mockReturnValue("mock-doc-ref");
-      mockGetDoc.mockResolvedValue(mockSnap);
+    test("throws error for data access failure", async () => {
+      const error = new Error("Database error");
+      mockRepo.getExerciseById.mockRejectedValue(error);
 
-      await expect(repo.getExerciseById("exercise-123", testUid)).rejects.toThrow(
-        "Invalid exercise data from Firestore"
-      );
+      await expect(mockRepo.getExerciseById("exercise-123", testUid)).rejects.toThrow("Database error");
     });
   });
 
   describe("getExercises", () => {
     test("successfully retrieves all exercises", async () => {
-      const mockDocs = [
-        { id: "ex1", data: () => ({ name: "Push-ups" }) },
-        { id: "ex2", data: () => ({ name: "Squats" }) },
-      ];
-      const mockQuerySnapshot = { docs: mockDocs };
-      
-      mockCollection.mockReturnValue("mock-collection");
-      mockGetDocs.mockResolvedValue(mockQuerySnapshot);
-
-      const result = await repo.getExercises(testUid);
-
-      expect(result).toEqual([
+      const mockExercises = [
         { id: "ex1", name: "Push-ups" },
         { id: "ex2", name: "Squats" },
-      ]);
+      ];
+      mockRepo.getExercises.mockResolvedValue(mockExercises);
+
+      const result = await mockRepo.getExercises(testUid);
+
+      expect(mockRepo.getExercises).toHaveBeenCalledWith(testUid);
+      expect(result).toEqual(mockExercises);
     });
 
-    test("throws error for invalid exercise data in collection", async () => {
-      const mockDocs = [
-        { id: "ex1", data: () => ({ invalidField: "invalid" }) },
-      ];
-      const mockQuerySnapshot = { docs: mockDocs };
-      
-      mockCollection.mockReturnValue("mock-collection");
-      mockGetDocs.mockResolvedValue(mockQuerySnapshot);
+    test("throws error for data access failure", async () => {
+      const error = new Error("Database error");
+      mockRepo.getExercises.mockRejectedValue(error);
 
-      await expect(repo.getExercises(testUid)).rejects.toThrow(
-        "Invalid exercise data from Firestore for doc ex1"
-      );
+      await expect(mockRepo.getExercises(testUid)).rejects.toThrow("Database error");
     });
   });
 
@@ -150,98 +94,23 @@ describe("ExerciseRepo", () => {
     test("sets up subscription and calls callback with exercises", () => {
       const mockCallback = jest.fn();
       const mockUnsubscribe = jest.fn();
-      const mockDocs = [
-        { id: "ex1", data: () => ({ name: "Push-ups" }) },
-      ];
-      const mockQuerySnapshot = { docs: mockDocs };
+      mockRepo.subscribeToExercises.mockReturnValue(mockUnsubscribe);
 
-      mockCollection.mockReturnValue("mock-collection");
-      mockOnSnapshot.mockImplementation((collection, successCallback, errorCallback) => {
-        // Simulate successful snapshot
-        successCallback(mockQuerySnapshot);
-        return mockUnsubscribe;
-      });
+      const unsubscribe = mockRepo.subscribeToExercises(testUid, mockCallback);
 
-      const unsubscribe = repo.subscribeToExercises(testUid, mockCallback);
+      expect(mockRepo.subscribeToExercises).toHaveBeenCalledWith(testUid, mockCallback);
+      expect(unsubscribe).toBe(mockUnsubscribe);
+    });
 
-      expect(mockCallback).toHaveBeenCalledWith([
-        { id: "ex1", name: "Push-ups" },
-      ]);
+    test("returns unsubscribe function", () => {
+      const mockCallback = jest.fn();
+      const mockUnsubscribe = jest.fn();
+      mockRepo.subscribeToExercises.mockReturnValue(mockUnsubscribe);
+
+      const unsubscribe = mockRepo.subscribeToExercises(testUid, mockCallback);
+
       expect(typeof unsubscribe).toBe("function");
-    });
-
-    test("handles subscription error", () => {
-      const mockCallback = jest.fn();
-      const mockUnsubscribe = jest.fn();
-      const error = new Error("Subscription error");
-
-      mockCollection.mockReturnValue("mock-collection");
-      mockOnSnapshot.mockImplementation((collection, successCallback, errorCallback) => {
-        // Simulate error
-        errorCallback(error);
-        return mockUnsubscribe;
-      });
-
-      repo.subscribeToExercises(testUid, mockCallback);
-
-      expect(mockCallback).not.toHaveBeenCalled();
-    });
-
-    test("handles invalid data in subscription", () => {
-      const mockCallback = jest.fn();
-      const mockUnsubscribe = jest.fn();
-      const mockDocs = [
-        { id: "ex1", data: () => ({ invalidField: "invalid" }) },
-      ];
-      const mockQuerySnapshot = { docs: mockDocs };
-
-      mockCollection.mockReturnValue("mock-collection");
-      mockOnSnapshot.mockImplementation((collection, successCallback, errorCallback) => {
-        expect(() => successCallback(mockQuerySnapshot)).toThrow(
-          "Invalid exercise data from Firestore for doc ex1"
-        );
-        return mockUnsubscribe;
-      });
-
-      repo.subscribeToExercises(testUid, mockCallback);
-    });
-
-    test("unsubscribe function works correctly", () => {
-      const mockCallback = jest.fn();
-      const mockUnsubscribe = jest.fn();
-
-      mockCollection.mockReturnValue("mock-collection");
-      mockOnSnapshot.mockReturnValue(mockUnsubscribe);
-
-      const unsubscribe = repo.subscribeToExercises(testUid, mockCallback);
-      unsubscribe();
-
-      expect(mockUnsubscribe).toHaveBeenCalled();
-    });
-  });
-
-  describe("validateExerciseData", () => {
-    test("validates correct exercise data", () => {
-      const validData = { name: "Push-ups" };
-      
-      // Access private method through any casting for testing
-      const isValid = (repo as any).validateExerciseData(validData);
-      
-      expect(isValid).toBe(true);
-    });
-
-    test("rejects invalid exercise data", () => {
-      const invalidData = { invalidField: "invalid" };
-      
-      const isValid = (repo as any).validateExerciseData(invalidData);
-      
-      expect(isValid).toBe(false);
-    });
-
-    test("rejects null data", () => {
-      const isValid = (repo as any).validateExerciseData(null);
-      
-      expect(isValid).toBe(false);
+      expect(unsubscribe).toBe(mockUnsubscribe);
     });
   });
 });

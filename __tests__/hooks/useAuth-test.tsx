@@ -17,8 +17,8 @@ const mockAuthFunctions = {
   signOutNative: jest.fn(),
 };
 
-jest.mock("../data/firebase/auth.web", () => mockAuthFunctions, { virtual: true });
-jest.mock("../data/firebase/auth.native", () => mockAuthFunctions, { virtual: true });
+jest.mock("@/lib/data/firebase/auth.web", () => mockAuthFunctions);
+jest.mock("@/lib/data/firebase/auth.native", () => mockAuthFunctions);
 
 describe("useAuth", () => {
   beforeEach(() => {
