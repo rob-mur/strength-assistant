@@ -57,7 +57,11 @@ export class ExerciseRepo {
 			return doc.id;
 		} catch (error) {
 			const duration = Date.now() - startTime;
-			console.error(`[ExerciseRepo] Failed to add exercise "${exercise}" for user: ${uid} after ${duration}ms:`, error);
+			logger.error(`[ExerciseRepo] Failed to add exercise "${exercise}" for user: ${uid} after ${duration}ms`, {
+				service: "ExerciseRepo",
+				platform: "React Native",
+				operation: "add_exercise"
+			});
 			throw error;
 		}
 	}
@@ -84,7 +88,11 @@ export class ExerciseRepo {
 					return undefined;
 				}
 				if (!this.validateExerciseData(data)) {
-					console.error(`[ExerciseRepo] Invalid exercise data for ID ${id} for user: ${uid}:`, data);
+					logger.error(`[ExerciseRepo] Invalid exercise data for ID ${id} for user: ${uid}`, {
+						service: "ExerciseRepo",
+						platform: "React Native",
+						operation: "get_exercise_by_id"
+					});
 					throw new Error("Invalid exercise data from Firestore");
 				}
 				return { id: snap.id, ...data } as Exercise;
@@ -107,7 +115,11 @@ export class ExerciseRepo {
 			return data;
 		} catch (error) {
 			const duration = Date.now() - startTime;
-			console.error(`[ExerciseRepo] Failed to get exercise by ID ${id} for user: ${uid} after ${duration}ms:`, error);
+			logger.error(`[ExerciseRepo] Failed to get exercise by ID ${id} for user: ${uid} after ${duration}ms`, {
+				service: "ExerciseRepo",
+				platform: "React Native",
+				operation: "get_exercise_by_id"
+			});
 			throw error;
 		}
 	}
@@ -125,7 +137,11 @@ export class ExerciseRepo {
 			const exercises = querySnapshot.docs.map((doc) => {
 				const data = doc.data();
 				if (!this.validateExerciseData(data)) {
-					console.error(`[ExerciseRepo] Invalid exercise data for doc ${doc.id} for user: ${uid}:`, data);
+					logger.error(`[ExerciseRepo] Invalid exercise data for doc ${doc.id} for user: ${uid}`, {
+						service: "ExerciseRepo",
+						platform: "React Native", 
+						operation: "get_all_exercises"
+					});
 					throw new Error(`Invalid exercise data from Firestore for doc ${doc.id}`);
 				}
 				return { id: doc.id, ...data } as Exercise;
@@ -140,7 +156,11 @@ export class ExerciseRepo {
 			return exercises;
 		} catch (error) {
 			const duration = Date.now() - startTime;
-			console.error(`[ExerciseRepo] Failed to get exercises for user: ${uid} after ${duration}ms:`, error);
+			logger.error(`[ExerciseRepo] Failed to get exercises for user: ${uid} after ${duration}ms`, {
+				service: "ExerciseRepo",
+				platform: "React Native",
+				operation: "get_all_exercises"
+			});
 			throw error;
 		}
 	}
@@ -167,7 +187,11 @@ export class ExerciseRepo {
 					const exercises = querySnapshot.docs.map((doc) => {
 						const data = doc.data();
 						if (!this.validateExerciseData(data)) {
-							console.error(`[ExerciseRepo] Invalid exercise data in subscription for doc ${doc.id} for user: ${uid}:`, data);
+							logger.error(`[ExerciseRepo] Invalid exercise data in subscription for doc ${doc.id} for user: ${uid}`, {
+								service: "ExerciseRepo",
+								platform: "React Native",
+								operation: "subscribe_exercises"
+							});
 							throw new Error(`Invalid exercise data from Firestore for doc ${doc.id}`);
 						}
 						return { id: doc.id, ...data } as Exercise;
@@ -182,13 +206,25 @@ export class ExerciseRepo {
 					callback(exercises);
 				} catch (error) {
 					const duration = Date.now() - startTime;
-					console.error(`[ExerciseRepo] Error processing real-time update for user: ${uid} after ${duration}ms:`, error);
+					logger.error(`[ExerciseRepo] Error processing real-time update for user: ${uid} after ${duration}ms`, {
+						service: "ExerciseRepo",
+						platform: "React Native",
+						operation: "subscribe_exercises"
+					});
 					throw error;
 				}
 			},
 			(error) => {
-				console.error(`[ExerciseRepo] Real-time subscription error for user: ${uid}:`, error);
-				console.warn(`[ExerciseRepo] Real-time subscription failed for user: ${uid}, data may not be current`);
+				logger.error(`[ExerciseRepo] Real-time subscription error for user: ${uid}`, {
+					service: "ExerciseRepo",
+					platform: "React Native",
+					operation: "subscribe_exercises"
+				});
+				logger.warn(`[ExerciseRepo] Real-time subscription failed for user: ${uid}, data may not be current`, {
+					service: "ExerciseRepo",
+					platform: "React Native",
+					operation: "subscribe_exercises"
+				});
 			}
 		);
 		

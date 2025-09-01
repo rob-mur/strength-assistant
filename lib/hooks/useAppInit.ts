@@ -106,7 +106,11 @@ export const useAppInit = () => {
 						operation: "supabase_init"
 					});
 				} catch (supabaseError: any) {
-					console.error("SUPABASE DEBUG: An error occurred - not attempting to inspect it");
+					logger.debug("SUPABASE DEBUG: An error occurred - not attempting to inspect it", {
+						service: "App Init",
+						platform: "React Native",
+						operation: "supabase_init"
+					});
 					// Don't try to access the error object at all since it's toxic
 					logger.error("Supabase initialization failed", {
 						service: "App Init",
