@@ -4,9 +4,16 @@ import { Logger } from "@/lib/data/supabase/supabase/logger";
 // Mock the Logger
 jest.mock("@/lib/data/supabase/supabase/logger");
 
+// Store original environment
+const originalEnv = process.env;
+
 // Create a concrete test implementation of the abstract class
 class TestSupabaseService extends SupabaseService {
   private client: any = null;
+  private mockNodeEnv?: string;
+  private mockEmulatorFlag?: string;
+  private mockEmulatorHost?: string;
+  private mockEmulatorPort?: string;
 
   constructor() {
     super("TestService");
@@ -23,6 +30,39 @@ class TestSupabaseService extends SupabaseService {
 
   isReady(): boolean {
     return this.initialized && this.client !== null;
+  }
+
+  // Override for testing
+  protected isEmulatorEnabled(): boolean {
+    const nodeEnv = this.mockNodeEnv ?? process.env.NODE_ENV;
+    const emulatorFlag = this.mockEmulatorFlag ?? process.env.EXPO_PUBLIC_USE_SUPABASE_EMULATOR;
+    return nodeEnv === "development" || emulatorFlag === "true";
+  }
+
+  protected getEmulatorHost(): string {
+    return this.mockEmulatorHost ?? process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_HOST ?? "127.0.0.1";
+  }
+
+  protected getEmulatorPort(): number {
+    const port = this.mockEmulatorPort ?? process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_PORT ?? "54321";
+    return parseInt(port, 10);
+  }
+
+  // Test helper methods
+  public setMockNodeEnv(value?: string): void {
+    this.mockNodeEnv = value;
+  }
+
+  public setMockEmulatorFlag(value?: string): void {
+    this.mockEmulatorFlag = value;
+  }
+
+  public setMockEmulatorHost(value?: string): void {
+    this.mockEmulatorHost = value;
+  }
+
+  public setMockEmulatorPort(value?: string): void {
+    this.mockEmulatorPort = value;
   }
 
   // Expose protected methods for testing
@@ -62,6 +102,14 @@ describe("SupabaseService", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     
+    // Reset environment variables to clean state - remove Supabase vars
+    process.env = { ...originalEnv };
+    delete process.env.EXPO_PUBLIC_SUPABASE_URL;
+    delete process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+    delete process.env.EXPO_PUBLIC_USE_SUPABASE_EMULATOR;
+    delete process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_HOST;
+    delete process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_PORT;
+    
     // Create a mock logger instance
     mockLogger = {
       info: jest.fn(),
@@ -77,10 +125,7 @@ describe("SupabaseService", () => {
 
   afterEach(() => {
     // Reset environment variables
-    delete process.env.NODE_ENV;
-    delete process.env.EXPO_PUBLIC_USE_SUPABASE_EMULATOR;
-    delete process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_HOST;
-    delete process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_PORT;
+    process.env = { ...originalEnv };
   });
 
   describe("initialization", () => {
@@ -151,17 +196,19 @@ describe("SupabaseService", () => {
 
   describe("emulator configuration", () => {
     test("detects development environment", () => {
-      process.env.NODE_ENV = "development";
+      service.setMockNodeEnv("development");
       expect(service.testIsEmulatorEnabled()).toBe(true);
     });
 
     test("detects emulator flag", () => {
-      process.env.EXPO_PUBLIC_USE_SUPABASE_EMULATOR = "true";
+      service.setMockNodeEnv("production"); // Ensure not development
+      service.setMockEmulatorFlag("true");
       expect(service.testIsEmulatorEnabled()).toBe(true);
     });
 
     test("returns false for production", () => {
-      process.env.NODE_ENV = "production";
+      service.setMockNodeEnv("production");
+      service.setMockEmulatorFlag("false");
       expect(service.testIsEmulatorEnabled()).toBe(false);
     });
 
@@ -170,7 +217,7 @@ describe("SupabaseService", () => {
     });
 
     test("uses custom emulator host", () => {
-      process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_HOST = "10.0.2.2";
+      service.setMockEmulatorHost("10.0.2.2");
       expect(service.testGetEmulatorHost()).toBe("10.0.2.2");
     });
 
@@ -179,12 +226,12 @@ describe("SupabaseService", () => {
     });
 
     test("uses custom emulator port", () => {
-      process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_PORT = "8000";
+      service.setMockEmulatorPort("8000");
       expect(service.testGetEmulatorPort()).toBe(8000);
     });
 
     test("handles invalid port gracefully", () => {
-      process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_PORT = "invalid";
+      service.setMockEmulatorPort("invalid");
       expect(service.testGetEmulatorPort()).toBe(NaN);
     });
   });

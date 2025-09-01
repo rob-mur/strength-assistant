@@ -8,6 +8,16 @@ const mockCreateClient = createClient as jest.MockedFunction<typeof createClient
 // Mock environment variables
 const originalEnv = process.env;
 
+// Helper function to set NODE_ENV in Jest environment
+function setNodeEnv(value: string) {
+  Object.defineProperty(process.env, 'NODE_ENV', {
+    value,
+    writable: true,
+    enumerable: true,
+    configurable: true
+  });
+}
+
 describe("SupabaseWebService", () => {
   const mockClient = {
     auth: {},
@@ -17,9 +27,23 @@ describe("SupabaseWebService", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    process.env = { ...originalEnv };
+    // Clear Supabase environment variables that might interfere with tests
+    delete process.env.EXPO_PUBLIC_SUPABASE_URL;
+    delete process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+    delete process.env.EXPO_PUBLIC_USE_SUPABASE_EMULATOR;
+    delete process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_HOST;
+    delete process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_PORT;
     mockCreateClient.mockReturnValue(mockClient as any);
     resetSupabaseService(); // Reset service state for each test
+  });
+
+  afterEach(() => {
+    // Clean up any test-specific environment variables
+    delete process.env.EXPO_PUBLIC_SUPABASE_URL;
+    delete process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+    delete process.env.EXPO_PUBLIC_USE_SUPABASE_EMULATOR;
+    delete process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_HOST;
+    delete process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_PORT;
   });
 
   afterAll(() => {
@@ -28,8 +52,8 @@ describe("SupabaseWebService", () => {
 
   describe("initialization", () => {
     test("initializes with production configuration", () => {
-      // Set development mode to enable emulator defaults
-      process.env.NODE_ENV = "development";
+      // Set production mode to use explicit URL/key
+      setNodeEnv("production");
       process.env.EXPO_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
       process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
       
@@ -49,7 +73,7 @@ describe("SupabaseWebService", () => {
     });
 
     test("initializes with emulator configuration in development", () => {
-      process.env.NODE_ENV = "development";
+      setNodeEnv("development");
       process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "dev-anon-key";
       
       initSupabase();
@@ -68,7 +92,7 @@ describe("SupabaseWebService", () => {
     });
 
     test("uses custom emulator host and port", () => {
-      process.env.NODE_ENV = "development";
+      setNodeEnv("development");
       process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_HOST = "localhost";
       process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_PORT = "8000";
       process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "dev-anon-key";
@@ -83,7 +107,7 @@ describe("SupabaseWebService", () => {
     });
 
     test("uses default development key when no key provided in emulator mode", () => {
-      process.env.NODE_ENV = "development";
+      setNodeEnv("development");
       
       initSupabase();
       
@@ -95,7 +119,7 @@ describe("SupabaseWebService", () => {
     });
 
     test("throws error when missing production URL", () => {
-      process.env.NODE_ENV = "production"; // Force production mode
+      setNodeEnv("production"); // Force production mode
       process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "test-key";
       // No URL set
       
@@ -105,7 +129,7 @@ describe("SupabaseWebService", () => {
     });
 
     test("throws error when missing production anon key", () => {
-      process.env.NODE_ENV = "production"; // Force production mode
+      setNodeEnv("production"); // Force production mode
       process.env.EXPO_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
       // No anon key set
       
@@ -116,7 +140,7 @@ describe("SupabaseWebService", () => {
 
     test("skips initialization when already initialized", () => {
       // Set development mode to enable emulator defaults
-      process.env.NODE_ENV = "development";
+      setNodeEnv("development");
       process.env.EXPO_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
       process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
       
@@ -130,7 +154,7 @@ describe("SupabaseWebService", () => {
   describe("getSupabaseClient", () => {
     test("returns client after initialization", () => {
       // Set development mode to enable emulator defaults
-      process.env.NODE_ENV = "development";
+      setNodeEnv("development");
       process.env.EXPO_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
       process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
       
@@ -150,7 +174,7 @@ describe("SupabaseWebService", () => {
 
   describe("error handling", () => {
     test("handles createClient errors", () => {
-      process.env.NODE_ENV = "production"; // Ensure production mode
+      setNodeEnv("production"); // Ensure production mode
       process.env.EXPO_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
       process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
       
@@ -164,7 +188,13 @@ describe("SupabaseWebService", () => {
 
   describe("emulator detection", () => {
     test("detects emulator mode with EXPO_PUBLIC_USE_SUPABASE_EMULATOR", () => {
-      process.env.EXPO_PUBLIC_USE_SUPABASE_EMULATOR = "true";
+      // Use Object.defineProperty to ensure the property is set correctly in Jest
+      Object.defineProperty(process.env, 'EXPO_PUBLIC_USE_SUPABASE_EMULATOR', {
+        value: 'true',
+        writable: true,
+        enumerable: true,
+        configurable: true
+      });
       // When in emulator mode, service provides default anon key
       
       initSupabase();
@@ -177,7 +207,7 @@ describe("SupabaseWebService", () => {
     });
 
     test("uses production mode when emulator flag is false", () => {
-      process.env.NODE_ENV = "production"; // Explicitly set production mode
+      setNodeEnv("production"); // Explicitly set production mode
       process.env.EXPO_PUBLIC_USE_SUPABASE_EMULATOR = "false";
       process.env.EXPO_PUBLIC_SUPABASE_URL = "https://prod.supabase.co";
       process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "prod-key";
