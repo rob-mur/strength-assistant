@@ -7,31 +7,34 @@ import { getSupabaseClient } from "./supabase";
  * Provides a strongly typed interface to the Supabase database
  */
 export class SupabaseClient {
-  private client: BaseSupabaseClient<Database>;
+  private client: BaseSupabaseClient<Database> | null = null;
 
-  constructor() {
-    this.client = getSupabaseClient() as BaseSupabaseClient<Database>;
+  private getClient(): BaseSupabaseClient<Database> {
+    if (!this.client) {
+      this.client = getSupabaseClient() as BaseSupabaseClient<Database>;
+    }
+    return this.client;
   }
 
   /**
    * Get the underlying Supabase client with full type safety
    */
-  getClient(): BaseSupabaseClient<Database> {
-    return this.client;
+  getSupabaseClient(): BaseSupabaseClient<Database> {
+    return this.getClient();
   }
 
   /**
    * Get a reference to the exercises table with type safety
    */
   get exercises() {
-    return this.client.from('exercises');
+    return this.getClient().from('exercises');
   }
 
   /**
    * Get the current authenticated user
    */
   async getCurrentUser() {
-    const { data: { user }, error } = await this.client.auth.getUser();
+    const { data: { user }, error } = await this.getClient().auth.getUser();
     if (error) {
       throw error;
     }
@@ -42,7 +45,7 @@ export class SupabaseClient {
    * Subscribe to auth state changes
    */
   onAuthStateChange(callback: (event: string, session: any) => void) {
-    return this.client.auth.onAuthStateChange(callback);
+    return this.getClient().auth.onAuthStateChange(callback);
   }
 }
 
