@@ -33,6 +33,10 @@ export class FirebaseLogger {
 		}
 	}
 
+	debug(message: string, context: LogContext): void {
+		this.logWithContext('log', message, context);
+	}
+
 	info(message: string, context: LogContext): void {
 		this.logWithContext('log', message, context);
 	}

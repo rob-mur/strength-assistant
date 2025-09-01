@@ -1,3 +1,4 @@
+import { SupabaseClient } from "@supabase/supabase-js";
 import { Logger } from "./logger";
 
 /**
@@ -58,7 +59,7 @@ export abstract class SupabaseService {
 	/**
 	 * Get the Supabase client instance
 	 */
-	abstract getSupabaseClient(): any;
+	abstract getSupabaseClient(): SupabaseClient;
 
 	/**
 	 * Check if the service is ready for use
