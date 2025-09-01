@@ -1,11 +1,13 @@
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { SupabaseClient } from "@supabase/supabase-js";
 import { SupabaseService } from "./supabase-core";
 
 class SupabaseWebService extends SupabaseService {
-	private client: SupabaseClient | undefined;
-
 	constructor() {
 		super("Supabase");
+	}
+
+	protected getInitMessage(): string {
+		return "Initializing Supabase client...";
 	}
 
 	init(): void {
@@ -15,56 +17,17 @@ class SupabaseWebService extends SupabaseService {
 		}
 
 		const startTime = Date.now();
-		this.logInfo("Initializing Supabase client...", {
+		this.logInfo(this.getInitMessage(), {
 			operation: "init",
 		});
 
 		try {
-			const supabaseUrl = this.getSupabaseUrl();
-			const supabaseAnonKey = this.getSupabaseAnonKey();
-			
-			this.logInfo("Supabase configuration check", {
-				operation: "config_check",
-				hasUrl: !!supabaseUrl,
-				hasKey: !!supabaseAnonKey,
-				emulatorEnabled: this.isEmulatorEnabled(),
-				url: this.sanitizeUrl(supabaseUrl),
-				emulatorHost: this.getEmulatorHost(),
-				emulatorPort: this.getEmulatorPort()
-			});
-
-			if (!supabaseUrl || !supabaseAnonKey) {
-				const error = `Missing Supabase configuration. URL: ${!!supabaseUrl}, Key: ${!!supabaseAnonKey}`;
-				this.logError(error, {
-					operation: "config_validation",
-					supabaseUrl,
-					hasAnonKey: !!supabaseAnonKey,
-					emulatorEnabled: this.isEmulatorEnabled()
-				});
-				throw new Error(error);
-			}
-
-			this.logInfo("Creating Supabase client", {
-				operation: "create_client",
-				url: this.sanitizeUrl(supabaseUrl)
-			});
-
-			this.client = createClient(supabaseUrl, supabaseAnonKey, {
-				auth: {
-					autoRefreshToken: true,
-					persistSession: true,
-					detectSessionInUrl: true,
-				},
-			});
-
-			this.logInfo("Supabase client created successfully", {
-				operation: "client_created"
-			});
+			this.createSupabaseClient({ detectSessionInUrl: true });
 
 			this.logInfo("Supabase client initialized successfully", {
 				operation: "init",
 				duration: Date.now() - startTime,
-				url: this.sanitizeUrl(supabaseUrl),
+				url: this.sanitizeUrl(this.getSupabaseUrl()),
 			});
 
 			this.initialized = true;
@@ -84,47 +47,6 @@ class SupabaseWebService extends SupabaseService {
 			});
 			throw error;
 		}
-	}
-
-	private getSupabaseUrl(): string {
-		if (this.isEmulatorEnabled()) {
-			const host = this.getEmulatorHost();
-			const port = this.getEmulatorPort();
-			return `http://${host}:${port}`;
-		}
-		
-		return process.env.EXPO_PUBLIC_SUPABASE_URL || "";
-	}
-
-	private getSupabaseAnonKey(): string {
-		if (this.isEmulatorEnabled()) {
-			// Local Supabase has a default anon key for development
-			return process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0";
-		}
-		
-		return process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || "";
-	}
-
-	private sanitizeUrl(url: string): string {
-		// Remove sensitive information from URLs for logging
-		try {
-			const urlObj = new URL(url);
-			return `${urlObj.protocol}//${urlObj.host}`;
-		} catch {
-			return "invalid-url";
-		}
-	}
-
-	getSupabaseClient(): SupabaseClient {
-		this.assertInitialized("getSupabaseClient()");
-		if (!this.client) {
-			throw new Error("Supabase client not available");
-		}
-		return this.client;
-	}
-
-	isReady(): boolean {
-		return this.initialized && !!this.client;
 	}
 }
 

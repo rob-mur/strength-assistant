@@ -9,7 +9,6 @@ const originalEnv = process.env;
 
 // Create a concrete test implementation of the abstract class
 class TestSupabaseService extends SupabaseService {
-  private client: any = null;
   private mockNodeEnv?: string;
   private mockEmulatorFlag?: string;
   private mockEmulatorHost?: string;
@@ -19,13 +18,13 @@ class TestSupabaseService extends SupabaseService {
     super("TestService");
   }
 
-  init(): void {
-    this.initialized = true;
-    this.client = { mock: "client" };
+  protected getInitMessage(): string {
+    return "Initializing test service...";
   }
 
-  getSupabaseClient(): any {
-    return this.client;
+  init(): void {
+    this.initialized = true;
+    this.client = { mock: "client" } as any;
   }
 
   isReady(): boolean {
