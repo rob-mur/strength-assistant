@@ -22,9 +22,8 @@ class TestSupabaseService extends SupabaseService {
     return "Initializing test service...";
   }
 
-  init(): void {
-    this.initialized = true;
-    this.client = { mock: "client" } as any;
+  protected getClientConfig(): { detectSessionInUrl: boolean } {
+    return { detectSessionInUrl: false };
   }
 
   isReady(): boolean {
@@ -137,11 +136,29 @@ describe("SupabaseService", () => {
     });
 
     test("becomes ready after initialization", () => {
+      // Set up required environment variables
+      process.env.EXPO_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
+      process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "test-key";
+      
+      // Mock createSupabaseClient to set client
+      (service as any).createSupabaseClient = jest.fn().mockImplementation(() => {
+        (service as any).client = { mock: "client" };
+      });
+      
       service.init();
       expect(service.isReady()).toBe(true);
     });
 
     test("returns client after initialization", () => {
+      // Set up required environment variables
+      process.env.EXPO_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
+      process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "test-key";
+      
+      // Mock createSupabaseClient to set client
+      (service as any).createSupabaseClient = jest.fn().mockImplementation(() => {
+        (service as any).client = { mock: "client" };
+      });
+      
       service.init();
       expect(service.getSupabaseClient()).toEqual({ mock: "client" });
     });

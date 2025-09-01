@@ -10,43 +10,8 @@ class SupabaseWebService extends SupabaseService {
 		return "Initializing Supabase client...";
 	}
 
-	init(): void {
-		if (this.initialized) {
-			this.logInfo("Already initialized, skipping");
-			return;
-		}
-
-		const startTime = Date.now();
-		this.logInfo(this.getInitMessage(), {
-			operation: "init",
-		});
-
-		try {
-			this.createSupabaseClient({ detectSessionInUrl: true });
-
-			this.logInfo("Supabase client initialized successfully", {
-				operation: "init",
-				duration: Date.now() - startTime,
-				url: this.sanitizeUrl(this.getSupabaseUrl()),
-			});
-
-			this.initialized = true;
-
-			this.logInfo("Initialization complete", {
-				operation: "init",
-				duration: Date.now() - startTime,
-			});
-		} catch (error: any) {
-			this.logError("Failed to initialize Supabase", {
-				operation: "init",
-				duration: Date.now() - startTime,
-				error: {
-					message: error.message,
-					stack: error.stack,
-				},
-			});
-			throw error;
-		}
+	protected getClientConfig(): { detectSessionInUrl: boolean } {
+		return { detectSessionInUrl: true };
 	}
 }
 
