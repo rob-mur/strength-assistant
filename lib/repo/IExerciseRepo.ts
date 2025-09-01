@@ -7,11 +7,11 @@ import { Exercise, ExerciseInput } from "../models/Exercise";
  */
 export interface IExerciseRepo {
   /**
-   * Get all exercises for a user
+   * Get all exercises for a user as an Observable
    * @param userId - The user ID
-   * @returns Promise that resolves to array of exercises
+   * @returns Observable array of exercises that updates in real-time
    */
-  getExercises(userId: string): Promise<Exercise[]>;
+  getExercises(userId: string): Observable<Exercise[]>;
 
   /**
    * Subscribe to real-time exercise updates for a user

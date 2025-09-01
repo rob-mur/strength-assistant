@@ -241,103 +241,77 @@ describe("ExerciseRepo", () => {
   });
 
   describe("getExercises", () => {
-    test("successfully retrieves all exercises with logging", async () => {
-      const mockDocs = [
-        { id: "ex1", data: () => ({ name: "Push-ups" }) },
-        { id: "ex2", data: () => ({ name: "Squats" }) },
+    test("returns an observable that updates with real-time data", () => {
+      const mockUnsubscribe = jest.fn();
+      
+      // Mock subscribeToExercises to call the callback immediately
+      repo.subscribeToExercises = jest.fn().mockImplementation((userId, callback) => {
+        // Simulate immediate callback with mock data
+        setTimeout(() => {
+          callback([
+            { id: "ex1", name: "Push-ups", user_id: userId, created_at: "2023-01-01T00:00:00Z" },
+            { id: "ex2", name: "Squats", user_id: userId, created_at: "2023-01-01T01:00:00Z" },
+          ]);
+        }, 0);
+        return mockUnsubscribe;
+      });
+
+      const exercises$ = repo.getExercises(testUid);
+      
+      // Verify it returns an Observable
+      expect(exercises$).toBeDefined();
+      expect(typeof exercises$.get).toBe('function');
+      expect(typeof exercises$.set).toBe('function');
+      
+      // Verify subscription was set up
+      expect(repo.subscribeToExercises).toHaveBeenCalledWith(testUid, expect.any(Function));
+      
+      // Verify logging
+      expect(logger.debug).toHaveBeenCalledWith(
+        `[ExerciseRepo] Setting up reactive observable for exercises for user: ${testUid}`,
+        expect.objectContaining({
+          service: "ExerciseRepo",
+          platform: "React Native",
+          operation: "get_exercises"
+        })
+      );
+    });
+
+    test("observable starts with empty array", () => {
+      const mockUnsubscribe = jest.fn();
+      
+      repo.subscribeToExercises = jest.fn().mockReturnValue(mockUnsubscribe);
+
+      const exercises$ = repo.getExercises(testUid);
+      
+      // Initially empty
+      expect(exercises$.get()).toEqual([]);
+    });
+
+    test("observable updates when subscription receives new data", (done) => {
+      const mockUnsubscribe = jest.fn();
+      const testData = [
+        { id: "ex1", name: "Push-ups", user_id: testUid, created_at: "2023-01-01T00:00:00Z" }
       ];
-      const mockQuerySnapshot = { docs: mockDocs };
       
-      mockCollection.mockReturnValue("mock-collection");
-      mockGetDocs.mockResolvedValue(mockQuerySnapshot);
+      repo.subscribeToExercises = jest.fn().mockImplementation((userId, callback) => {
+        // Simulate delayed callback
+        setTimeout(() => {
+          callback(testData);
+        }, 10);
+        return mockUnsubscribe;
+      });
 
-      const result = await repo.getExercises(testUid);
-
-      expect(result).toEqual([
-        { id: "ex1", name: "Push-ups", user_id: testUid, created_at: expect.any(String) },
-        { id: "ex2", name: "Squats", user_id: testUid, created_at: expect.any(String) },
-      ]);
+      const exercises$ = repo.getExercises(testUid);
       
-      // Verify logging calls
-      expect(logger.debug).toHaveBeenCalledWith(
-        `[ExerciseRepo] Getting all exercises for user: ${testUid}`,
-        expect.objectContaining({
-          service: "ExerciseRepo",
-          platform: "React Native",
-          operation: "get_all_exercises"
-        })
-      );
-      expect(logger.debug).toHaveBeenCalledWith(
-        expect.stringContaining(`[ExerciseRepo] Successfully retrieved 2 exercises for user: ${testUid}`),
-        expect.objectContaining({
-          service: "ExerciseRepo",
-          platform: "React Native",
-          operation: "get_all_exercises"
-        })
-      );
-    });
-
-    test("throws error for invalid exercise data in collection with logging", async () => {
-      const mockDocs = [
-        { id: "ex1", data: () => ({ invalidField: "invalid" }) },
-      ];
-      const mockQuerySnapshot = { docs: mockDocs };
+      // Initially empty
+      expect(exercises$.get()).toEqual([]);
       
-      mockCollection.mockReturnValue("mock-collection");
-      mockGetDocs.mockResolvedValue(mockQuerySnapshot);
-
-      await expect(repo.getExercises(testUid)).rejects.toThrow(
-        "Invalid exercise data from Firestore for doc ex1"
-      );
-      
-      // Verify error logging
-      expect(logger.error).toHaveBeenCalledWith(
-        `[ExerciseRepo] Invalid exercise data for doc ex1 for user: ${testUid}`,
-        expect.objectContaining({
-          service: "ExerciseRepo",
-          platform: "React Native",
-          operation: "get_all_exercises"
-        })
-      );
-    });
-
-    test("handles empty collection with logging", async () => {
-      const mockQuerySnapshot = { docs: [] };
-      
-      mockCollection.mockReturnValue("mock-collection");
-      mockGetDocs.mockResolvedValue(mockQuerySnapshot);
-
-      const result = await repo.getExercises(testUid);
-
-      expect(result).toEqual([]);
-      
-      // Verify logging for empty collection
-      expect(logger.debug).toHaveBeenCalledWith(
-        expect.stringContaining(`[ExerciseRepo] Successfully retrieved 0 exercises for user: ${testUid}`),
-        expect.objectContaining({
-          service: "ExerciseRepo",
-          platform: "React Native",
-          operation: "get_all_exercises"
-        })
-      );
-    });
-
-    test("handles Firebase errors with logging", async () => {
-      const error = new Error("Firebase query failed");
-      mockCollection.mockReturnValue("mock-collection");
-      mockGetDocs.mockRejectedValue(error);
-
-      await expect(repo.getExercises(testUid)).rejects.toThrow("Firebase query failed");
-      
-      // Verify error logging
-      expect(logger.error).toHaveBeenCalledWith(
-        expect.stringContaining(`[ExerciseRepo] Failed to get exercises for user: ${testUid} after`),
-        expect.objectContaining({
-          service: "ExerciseRepo",
-          platform: "React Native",
-          operation: "get_all_exercises"
-        })
-      );
+      // Set up listener for when observable updates
+      setTimeout(() => {
+        expect(exercises$.get()).toEqual(testData);
+        done();
+      }, 20);
     });
   });
 

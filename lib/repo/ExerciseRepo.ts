@@ -115,48 +115,19 @@ export class ExerciseRepo implements IExerciseRepo {
 		}
 	}
 
-	async getExercises(userId: string): Promise<Exercise[]> {
-		const startTime = Date.now();
-		this.logDebug(`Getting all exercises for user: ${userId}`, "get_all_exercises");
-		
-		try {
-			const querySnapshot = await getDocs(collection(getDb(), this.getExercisesCollectionPath(userId)));
-			const exercises = querySnapshot.docs.map((doc) => {
-				const data = doc.data();
-				if (!this.validateExerciseData(data)) {
-					this.logError(`Invalid exercise data for doc ${doc.id} for user: ${userId}`, "get_all_exercises");
-					throw new Error(`Invalid exercise data from Firestore for doc ${doc.id}`);
-				}
-				return {
-					id: doc.id,
-					name: data.name,
-					user_id: userId,
-					created_at: new Date().toISOString()
-				} as Exercise;
-			});
-			
-			const duration = Date.now() - startTime;
-			this.logDebug(`Successfully retrieved ${exercises.length} exercises for user: ${userId} (${duration}ms)`, "get_all_exercises");
-			return exercises;
-		} catch (error) {
-			const duration = Date.now() - startTime;
-			this.logError(`Failed to get exercises for user: ${userId} after ${duration}ms`, "get_all_exercises");
-			throw error;
-		}
-	}
-
-	getExercisesObservable(userId: string): Observable<Exercise[]> {
+	getExercises(userId: string): Observable<Exercise[]> {
 		const exercises$ = observable<Exercise[]>([]);
 		
-		this.logDebug(`Setting up observable for exercises for user: ${userId}`, "get_exercises_observable");
+		this.logDebug(`Setting up reactive observable for exercises for user: ${userId}`, "get_exercises");
 		
-		// Set up real-time subscription
+		// Set up real-time subscription that feeds the observable
 		this.subscribeToExercises(userId, (exercises) => {
 			exercises$.set(exercises);
 		});
 		
 		return exercises$;
 	}
+
 
 	async deleteExercise(userId: string, exerciseId: string): Promise<void> {
 		const startTime = Date.now();
