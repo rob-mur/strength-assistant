@@ -1,4 +1,4 @@
-import { observable, ObservableArray, Observable } from "@legendapp/state";
+import { observable } from "@legendapp/state";
 import { Exercise } from "../models/Exercise";
 import { User } from "../models/supabase";
 
@@ -8,10 +8,10 @@ import { User } from "../models/supabase";
  */
 export interface AppStore {
   /** Observable array of exercises for the current user */
-  exercises$: ObservableArray<Exercise>;
+  exercises: Exercise[];
   
   /** Observable user state - null when not authenticated */
-  user$: Observable<User | null>;
+  user: User | null;
 }
 
 /**
@@ -19,9 +19,10 @@ export interface AppStore {
  * Initialize with empty state - will be populated by data layer
  */
 export const store$ = observable<AppStore>({
-  exercises$: observable([]),
-  user$: observable(null),
+  exercises: [],
+  user: null,
 });
 
 // Export individual observables for convenience
-export const { exercises$, user$ } = store$;
+export const exercises$ = store$.exercises;
+export const user$ = store$.user;
