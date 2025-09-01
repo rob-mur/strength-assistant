@@ -32,7 +32,7 @@ jest.mock("@/lib/data/firebase/logger", () => ({
 describe("ExerciseRepo", () => {
   let repo: ExerciseRepo;
   const testUid = "test-user-123";
-  const testExercise = "Push-ups";
+  const testExercise = { name: "Push-ups" };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -89,16 +89,15 @@ describe("ExerciseRepo", () => {
       mockCollection.mockReturnValue("mock-collection");
       mockAddDoc.mockResolvedValue(mockDocRef);
 
-      const result = await repo.addExercise(testExercise, testUid);
+      await repo.addExercise(testUid, testExercise);
 
       expect(mockGetDb).toHaveBeenCalled();
       expect(mockCollection).toHaveBeenCalledWith("mock-db", `users/${testUid}/exercises`);
-      expect(mockAddDoc).toHaveBeenCalledWith("mock-collection", { name: testExercise });
-      expect(result).toBe("exercise-123");
+      expect(mockAddDoc).toHaveBeenCalledWith("mock-collection", { name: testExercise.name });
       
       // Verify logging calls
       expect(logger.debug).toHaveBeenCalledWith(
-        `[ExerciseRepo] Adding exercise: "${testExercise}" for user: ${testUid}`,
+        `[ExerciseRepo] Adding exercise: "${testExercise.name}" for user: ${testUid}`,
         expect.objectContaining({
           service: "ExerciseRepo",
           platform: "React Native",
@@ -106,7 +105,7 @@ describe("ExerciseRepo", () => {
         })
       );
       expect(logger.debug).toHaveBeenCalledWith(
-        expect.stringContaining(`[ExerciseRepo] Successfully added exercise "${testExercise}" with ID: exercise-123 for user: ${testUid}`),
+        expect.stringContaining(`[ExerciseRepo] Successfully added exercise "${testExercise.name}" for user: ${testUid}`),
         expect.objectContaining({
           service: "ExerciseRepo",
           platform: "React Native", 
@@ -120,11 +119,11 @@ describe("ExerciseRepo", () => {
       mockCollection.mockReturnValue("mock-collection");
       mockAddDoc.mockRejectedValue(error);
 
-      await expect(repo.addExercise(testExercise, testUid)).rejects.toThrow("Firestore error");
+      await expect(repo.addExercise(testUid, testExercise)).rejects.toThrow("Firestore error");
       
       // Verify error logging
       expect(logger.error).toHaveBeenCalledWith(
-        expect.stringContaining(`[ExerciseRepo] Failed to add exercise "${testExercise}" for user: ${testUid} after`),
+        expect.stringContaining(`[ExerciseRepo] Failed to add exercise "${testExercise.name}" for user: ${testUid} after`),
         expect.objectContaining({
           service: "ExerciseRepo",
           platform: "React Native",
@@ -248,8 +247,8 @@ describe("ExerciseRepo", () => {
       const result = await repo.getExercises(testUid);
 
       expect(result).toEqual([
-        { id: "ex1", name: "Push-ups" },
-        { id: "ex2", name: "Squats" },
+        { id: "ex1", name: "Push-ups", user_id: testUid, created_at: expect.any(String) },
+        { id: "ex2", name: "Squats", user_id: testUid, created_at: expect.any(String) },
       ]);
       
       // Verify logging calls
@@ -353,7 +352,7 @@ describe("ExerciseRepo", () => {
       const unsubscribe = repo.subscribeToExercises(testUid, mockCallback);
 
       expect(mockCallback).toHaveBeenCalledWith([
-        { id: "ex1", name: "Push-ups" },
+        { id: "ex1", name: "Push-ups", user_id: testUid, created_at: expect.any(String) },
       ]);
       expect(typeof unsubscribe).toBe("function");
       

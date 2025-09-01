@@ -11,7 +11,11 @@ export class SupabaseClient {
 
   private getClient(): BaseSupabaseClient<Database> {
     if (!this.client) {
-      this.client = getSupabaseClient() as BaseSupabaseClient<Database>;
+      const client = getSupabaseClient();
+      if (!client || typeof client.from !== 'function') {
+        throw new Error('Invalid Supabase client: missing required methods');
+      }
+      this.client = client as BaseSupabaseClient<Database>;
     }
     return this.client;
   }

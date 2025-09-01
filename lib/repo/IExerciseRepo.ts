@@ -1,5 +1,5 @@
 import { Observable } from "@legendapp/state";
-import { Exercise } from "../models/Exercise";
+import { Exercise, ExerciseInput } from "../models/Exercise";
 
 /**
  * Interface for Exercise repository implementations
@@ -7,19 +7,19 @@ import { Exercise } from "../models/Exercise";
  */
 export interface IExerciseRepo {
   /**
-   * Get all exercises for a user as an Observable
+   * Get all exercises for a user
    * @param userId - The user ID
-   * @returns Observable array of exercises that updates in real-time
+   * @returns Promise that resolves to array of exercises
    */
-  getExercises(userId: string): Observable<Exercise[]>;
+  getExercises(userId: string): Promise<Exercise[]>;
 
   /**
    * Add a new exercise for a user
    * @param userId - The user ID
-   * @param exercise - The exercise to add
+   * @param exercise - The exercise input data
    * @returns Promise that resolves when the exercise is added
    */
-  addExercise(userId: string, exercise: Exercise): Promise<void>;
+  addExercise(userId: string, exercise: ExerciseInput): Promise<void>;
 
   /**
    * Delete an exercise for a user
