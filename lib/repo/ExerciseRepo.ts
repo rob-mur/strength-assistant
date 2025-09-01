@@ -1,4 +1,4 @@
-import { Exercise, ExerciseInput } from "../models/Exercise";
+import { Exercise, ExerciseInput, ExerciseValidator } from "../models/Exercise";
 import { IExerciseRepo } from "./IExerciseRepo";
 import { observable, Observable } from "@legendapp/state";
 import {
@@ -65,10 +65,19 @@ export class ExerciseRepo implements IExerciseRepo {
 		this.logDebug(`Adding exercise: "${exercise.name}" for user: ${userId}`, "add_exercise");
 		
 		try {
+			// Validate and sanitize input
+			ExerciseValidator.validateExerciseInput(exercise);
+			const sanitizedName = ExerciseValidator.sanitizeExerciseName(exercise.name);
+			
+			// Validate userId
+			if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
+				throw new Error('Valid userId is required');
+			}
+			
 			const exerciseCollection = collection(getDb(), this.getExercisesCollectionPath(userId));
-			await addDoc(exerciseCollection, { name: exercise.name });
+			await addDoc(exerciseCollection, { name: sanitizedName });
 			const duration = Date.now() - startTime;
-			this.logDebug(`Successfully added exercise "${exercise.name}" for user: ${userId} (${duration}ms)`, "add_exercise");
+			this.logDebug(`Successfully added exercise "${sanitizedName}" for user: ${userId} (${duration}ms)`, "add_exercise");
 		} catch (error) {
 			const duration = Date.now() - startTime;
 			this.logError(`Failed to add exercise "${exercise.name}" for user: ${userId} after ${duration}ms`, "add_exercise");
@@ -134,6 +143,14 @@ export class ExerciseRepo implements IExerciseRepo {
 		this.logDebug(`Deleting exercise with ID: ${exerciseId} for user: ${userId}`, "delete_exercise");
 		
 		try {
+			// Validate inputs
+			if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
+				throw new Error('Valid userId is required');
+			}
+			if (!exerciseId || typeof exerciseId !== 'string' || exerciseId.trim().length === 0) {
+				throw new Error('Valid exerciseId is required');
+			}
+			
 			const docRef = doc(getDb(), this.getExercisesCollectionPath(userId), exerciseId);
 			await deleteDoc(docRef);
 			

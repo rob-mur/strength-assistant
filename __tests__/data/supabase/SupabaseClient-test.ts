@@ -120,7 +120,7 @@ describe("SupabaseClient", () => {
   });
 
   describe("onAuthStateChange", () => {
-    test("sets up auth state change listener", () => {
+    test("sets up auth state change listener with proper types", () => {
       const mockCallback = jest.fn();
       const mockUnsubscribe = jest.fn();
       mockSupabaseClient.auth.onAuthStateChange.mockReturnValue(mockUnsubscribe);
@@ -130,6 +130,25 @@ describe("SupabaseClient", () => {
       
       expect(mockSupabaseClient.auth.onAuthStateChange).toHaveBeenCalledWith(mockCallback);
       expect(result).toBe(mockUnsubscribe);
+    });
+
+    test("callback receives properly typed parameters", () => {
+      const mockCallback = jest.fn();
+      const mockUnsubscribe = jest.fn();
+      
+      mockSupabaseClient.auth.onAuthStateChange.mockImplementation((callback) => {
+        // Simulate auth state change with properly typed parameters
+        callback('SIGNED_IN', { access_token: 'test', user: { id: 'user-123' } });
+        return mockUnsubscribe;
+      });
+      
+      const client = new SupabaseClient();
+      client.onAuthStateChange(mockCallback);
+      
+      expect(mockCallback).toHaveBeenCalledWith(
+        'SIGNED_IN', 
+        { access_token: 'test', user: { id: 'user-123' } }
+      );
     });
   });
 

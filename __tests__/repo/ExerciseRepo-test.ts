@@ -428,6 +428,31 @@ describe("ExerciseRepo", () => {
         })
       );
     });
+
+    test("validates exercise input and throws error for invalid data", async () => {
+      const invalidExercise = { name: "" };
+      
+      await expect(repo.addExercise(testUid, invalidExercise)).rejects.toThrow("Exercise name cannot be empty");
+    });
+
+    test("validates userId and throws error for invalid userId", async () => {
+      const validExercise = { name: "Valid Exercise" };
+      
+      await expect(repo.addExercise("", validExercise)).rejects.toThrow("Valid userId is required");
+      await expect(repo.addExercise("   ", validExercise)).rejects.toThrow("Valid userId is required");
+    });
+
+    test("sanitizes exercise name before saving", async () => {
+      const exerciseWithExtraSpaces = { name: "  Bench   Press  " };
+      const mockDocRef = { id: "exercise-123" };
+      
+      mockCollection.mockReturnValue("mock-collection");
+      mockAddDoc.mockResolvedValue(mockDocRef);
+
+      await repo.addExercise(testUid, exerciseWithExtraSpaces);
+
+      expect(mockAddDoc).toHaveBeenCalledWith("mock-collection", { name: "Bench Press" });
+    });
   });
 
   describe("deleteExercise", () => {
@@ -479,6 +504,18 @@ describe("ExerciseRepo", () => {
           operation: "delete_exercise"
         })
       );
+    });
+
+    test("validates userId and throws error for invalid userId", async () => {
+      const exerciseId = "valid-exercise-id";
+      
+      await expect(repo.deleteExercise("", exerciseId)).rejects.toThrow("Valid userId is required");
+      await expect(repo.deleteExercise("   ", exerciseId)).rejects.toThrow("Valid userId is required");
+    });
+
+    test("validates exerciseId and throws error for invalid exerciseId", async () => {
+      await expect(repo.deleteExercise(testUid, "")).rejects.toThrow("Valid exerciseId is required");
+      await expect(repo.deleteExercise(testUid, "   ")).rejects.toThrow("Valid exerciseId is required");
     });
   });
 });

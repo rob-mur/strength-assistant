@@ -1,4 +1,4 @@
-import { SupabaseClient as BaseSupabaseClient } from "@supabase/supabase-js";
+import { SupabaseClient as BaseSupabaseClient, AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { Database } from "../../models/supabase";
 import { getSupabaseClient } from "./supabase";
 
@@ -48,7 +48,7 @@ export class SupabaseClient {
   /**
    * Subscribe to auth state changes
    */
-  onAuthStateChange(callback: (event: string, session: any) => void) {
+  onAuthStateChange(callback: (event: AuthChangeEvent, session: Session | null) => void) {
     return this.getClient().auth.onAuthStateChange(callback);
   }
 }
