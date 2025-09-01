@@ -176,6 +176,15 @@ describe("SupabaseService", () => {
     });
 
     test("does not throw when initialized", () => {
+      // Set up required environment variables
+      process.env.EXPO_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
+      process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "test-key";
+      
+      // Mock createSupabaseClient to avoid actual client creation
+      (service as any).createSupabaseClient = jest.fn().mockImplementation(() => {
+        (service as any).client = { mock: "client" };
+      });
+      
       service.init();
       expect(() => service.testAssertInitialized("test operation")).not.toThrow();
     });
