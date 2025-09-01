@@ -14,6 +14,14 @@ export interface IExerciseRepo {
   getExercises(userId: string): Promise<Exercise[]>;
 
   /**
+   * Subscribe to real-time exercise updates for a user
+   * @param userId - The user ID
+   * @param callback - Function called when exercises change
+   * @returns Unsubscribe function
+   */
+  subscribeToExercises(userId: string, callback: (exercises: Exercise[]) => void): () => void;
+
+  /**
    * Add a new exercise for a user
    * @param userId - The user ID
    * @param exercise - The exercise input data

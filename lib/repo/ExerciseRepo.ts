@@ -8,6 +8,7 @@ import {
 	getDoc,
 	getDocs,
 	addDoc,
+	deleteDoc,
 	onSnapshot,
 } from "@/lib/data/firebase";
 import { logger } from "@/lib/data/firebase/logger";
@@ -157,8 +158,21 @@ export class ExerciseRepo implements IExerciseRepo {
 		return exercises$;
 	}
 
-	deleteExercise(userId: string, exerciseId: string): Promise<void> {
-		throw new Error('deleteExercise not implemented yet');
+	async deleteExercise(userId: string, exerciseId: string): Promise<void> {
+		const startTime = Date.now();
+		this.logDebug(`Deleting exercise with ID: ${exerciseId} for user: ${userId}`, "delete_exercise");
+		
+		try {
+			const docRef = doc(getDb(), this.getExercisesCollectionPath(userId), exerciseId);
+			await deleteDoc(docRef);
+			
+			const duration = Date.now() - startTime;
+			this.logDebug(`Successfully deleted exercise with ID: ${exerciseId} for user: ${userId} (${duration}ms)`, "delete_exercise");
+		} catch (error) {
+			const duration = Date.now() - startTime;
+			this.logError(`Failed to delete exercise with ID: ${exerciseId} for user: ${userId} after ${duration}ms`, "delete_exercise");
+			throw error;
+		}
 	}
 
 	subscribeToExercises(uid: string, callback: (exercises: Exercise[]) => void): Unsubscribe {

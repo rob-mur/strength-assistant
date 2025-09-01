@@ -5,6 +5,7 @@ import { logger } from "@/lib/data/firebase/logger";
 const mockAddDoc = jest.fn();
 const mockGetDoc = jest.fn();
 const mockGetDocs = jest.fn();
+const mockDeleteDoc = jest.fn();
 const mockCollection = jest.fn();
 const mockDoc = jest.fn();
 const mockOnSnapshot = jest.fn();
@@ -17,6 +18,7 @@ jest.mock("@/lib/data/firebase", () => ({
   getDoc: (...args: any[]) => mockGetDoc(...args),
   getDocs: (...args: any[]) => mockGetDocs(...args),
   addDoc: (...args: any[]) => mockAddDoc(...args),
+  deleteDoc: (...args: any[]) => mockDeleteDoc(...args),
   onSnapshot: (...args: any[]) => mockOnSnapshot(...args),
 }));
 
@@ -449,6 +451,58 @@ describe("ExerciseRepo", () => {
           service: "ExerciseRepo",
           platform: "React Native",
           operation: "subscribe_exercises"
+        })
+      );
+    });
+  });
+
+  describe("deleteExercise", () => {
+    test("successfully deletes an exercise with logging", async () => {
+      const exerciseId = "exercise-123";
+      
+      mockDoc.mockReturnValue("mock-doc-ref");
+      mockDeleteDoc.mockResolvedValue(undefined);
+
+      await repo.deleteExercise(testUid, exerciseId);
+
+      expect(mockDoc).toHaveBeenCalledWith("mock-db", `users/${testUid}/exercises`, exerciseId);
+      expect(mockDeleteDoc).toHaveBeenCalledWith("mock-doc-ref");
+      
+      // Verify logging calls
+      expect(logger.debug).toHaveBeenCalledWith(
+        `[ExerciseRepo] Deleting exercise with ID: ${exerciseId} for user: ${testUid}`,
+        expect.objectContaining({
+          service: "ExerciseRepo",
+          platform: "React Native",
+          operation: "delete_exercise"
+        })
+      );
+      expect(logger.debug).toHaveBeenCalledWith(
+        expect.stringContaining(`[ExerciseRepo] Successfully deleted exercise with ID: ${exerciseId} for user: ${testUid}`),
+        expect.objectContaining({
+          service: "ExerciseRepo",
+          platform: "React Native",
+          operation: "delete_exercise"
+        })
+      );
+    });
+
+    test("handles delete errors with logging", async () => {
+      const exerciseId = "exercise-123";
+      const error = new Error("Firestore delete error");
+      
+      mockDoc.mockReturnValue("mock-doc-ref");
+      mockDeleteDoc.mockRejectedValue(error);
+
+      await expect(repo.deleteExercise(testUid, exerciseId)).rejects.toThrow("Firestore delete error");
+      
+      // Verify error logging
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.stringContaining(`[ExerciseRepo] Failed to delete exercise with ID: ${exerciseId} for user: ${testUid} after`),
+        expect.objectContaining({
+          service: "ExerciseRepo",
+          platform: "React Native",
+          operation: "delete_exercise"
         })
       );
     });
