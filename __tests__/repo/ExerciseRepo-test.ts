@@ -135,7 +135,7 @@ describe("ExerciseRepo", () => {
 
   describe("getExerciseById", () => {
     test("successfully retrieves an exercise with logging", async () => {
-      const mockSnapData = { name: testExercise };
+      const mockSnapData = { name: testExercise.name };
       const mockSnap = {
         id: "exercise-123",
         data: () => mockSnapData,
@@ -146,7 +146,12 @@ describe("ExerciseRepo", () => {
       const result = await repo.getExerciseById("exercise-123", testUid);
 
       expect(mockDoc).toHaveBeenCalledWith("mock-db", `users/${testUid}/exercises`, "exercise-123");
-      expect(result).toEqual({ id: "exercise-123", name: testExercise });
+      expect(result).toEqual({ 
+        id: "exercise-123", 
+        name: testExercise.name, 
+        user_id: testUid, 
+        created_at: expect.any(String) 
+      });
       
       // Verify logging calls
       expect(logger.debug).toHaveBeenCalledWith(
@@ -158,7 +163,7 @@ describe("ExerciseRepo", () => {
         })
       );
       expect(logger.debug).toHaveBeenCalledWith(
-        expect.stringContaining(`[ExerciseRepo] Successfully retrieved exercise "${testExercise}" (ID: exercise-123) for user: ${testUid}`),
+        expect.stringContaining(`[ExerciseRepo] Successfully retrieved exercise "${testExercise.name}" (ID: exercise-123) for user: ${testUid}`),
         expect.objectContaining({
           service: "ExerciseRepo", 
           platform: "React Native",
