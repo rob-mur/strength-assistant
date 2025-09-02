@@ -10,6 +10,10 @@ cleanup() {
     if [ ! -z "$FIREBASE_PID" ]; then
         kill $FIREBASE_PID 2>/dev/null || true
     fi
+    if [ ! -z "$SUPABASE_PID" ]; then
+        kill $SUPABASE_PID 2>/dev/null || true
+        supabase stop 2>/dev/null || true
+    fi
     if [ ! -z "$EXPO_PID" ]; then
         kill $EXPO_PID 2>/dev/null || true
     fi
@@ -30,6 +34,11 @@ echo "🔥 Starting Firebase emulators..."
 firebase emulators:start &
 FIREBASE_PID=$!
 
+# Start Supabase emulators
+echo "🔥 Starting Supabase emulators..."
+supabase start &
+SUPABASE_PID=$!
+
 # Wait for Firebase emulators
 echo "⏳ Waiting for Firebase emulators to be ready..."
 timeout=30
@@ -43,6 +52,25 @@ while ! curl -s http://localhost:8080 > /dev/null; do
     fi
 done
 echo "✅ Firebase emulators ready"
+
+# Wait for Supabase emulators
+echo "⏳ Waiting for Supabase emulators to be ready..."
+timeout=60
+counter=0
+while ! curl -s http://localhost:54321/health > /dev/null; do
+    sleep 1
+    counter=$((counter + 1))
+    if [ $counter -ge $timeout ]; then
+        echo "❌ Supabase emulators failed to start within $timeout seconds"
+        exit 1
+    fi
+done
+echo "✅ Supabase emulators ready"
+
+# Apply migrations
+echo "🔄 Applying Supabase migrations..."
+supabase db reset --local
+echo "✅ Migrations applied"
 
 # Start Expo web server
 echo "🚀 Starting Expo web server..."

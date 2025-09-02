@@ -12,6 +12,7 @@ describe("SupabaseClient", () => {
     auth: {
       getUser: jest.fn(),
       onAuthStateChange: jest.fn(),
+      signInAnonymously: jest.fn(),
     },
   };
 
@@ -106,9 +107,36 @@ describe("SupabaseClient", () => {
       expect(mockSupabaseClient.auth.getUser).toHaveBeenCalledTimes(1);
     });
 
-    test("throws error when getUser fails", async () => {
+    test("signs in anonymously when getUser fails", async () => {
       const mockError = new Error("Auth error");
+      const mockAnonUser = { id: "anon-123", email: null };
+      
       mockSupabaseClient.auth.getUser.mockResolvedValue({
+        data: { user: null },
+        error: mockError,
+      });
+      
+      mockSupabaseClient.auth.signInAnonymously.mockResolvedValue({
+        data: { user: mockAnonUser },
+        error: null,
+      });
+      
+      const client = new SupabaseClient();
+      const result = await client.getCurrentUser();
+      
+      expect(mockSupabaseClient.auth.signInAnonymously).toHaveBeenCalledTimes(1);
+      expect(result).toBe(mockAnonUser);
+    });
+
+    test("throws error when both getUser and signInAnonymously fail", async () => {
+      const mockError = new Error("Auth error");
+      
+      mockSupabaseClient.auth.getUser.mockResolvedValue({
+        data: { user: null },
+        error: mockError,
+      });
+      
+      mockSupabaseClient.auth.signInAnonymously.mockResolvedValue({
         data: { user: null },
         error: mockError,
       });

@@ -4,6 +4,7 @@ import { Observable, observe, computed } from "@legendapp/state";
 import { exercises$, user$ } from "../data/store";
 import { syncExerciseToSupabase, deleteExerciseFromSupabase, syncHelpers } from "../data/sync/syncConfig";
 import { ExerciseInsert } from "../models/supabase";
+import { supabaseClient } from "../data/supabase/SupabaseClient";
 
 /**
  * Legend State + Supabase implementation of ExerciseRepo
@@ -24,6 +25,7 @@ export class ExerciseRepo implements IExerciseRepo {
 	/**
 	 * Add a new exercise with optimistic updates and error recovery
 	 * Changes are immediately visible in UI and synced in background
+	 * Note: userId parameter is kept for backwards compatibility but Supabase user ID is used internally
 	 */
 	async addExercise(userId: string, exercise: ExerciseInput): Promise<void> {
 		let rollbackOperation: (() => void) | null = null;
@@ -33,16 +35,17 @@ export class ExerciseRepo implements IExerciseRepo {
 			ExerciseValidator.validateExerciseInput(exercise);
 			const sanitizedName = ExerciseValidator.sanitizeExerciseName(exercise.name);
 			
-			// Validate userId
-			if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
-				throw new Error('Valid userId is required');
+			// Get the Supabase user ID (not the Firebase userId parameter)
+			const supabaseUser = await supabaseClient.getCurrentUser();
+			if (!supabaseUser) {
+				throw new Error('User not authenticated with Supabase');
 			}
 			
-			// Create new exercise object
+			// Create new exercise object using Supabase user ID
 			const newExercise: Exercise = {
 				id: crypto.randomUUID(),
 				name: sanitizedName,
-				user_id: userId,
+				user_id: supabaseUser.id,
 				created_at: new Date().toISOString()
 			};
 			
@@ -80,41 +83,50 @@ export class ExerciseRepo implements IExerciseRepo {
 
 	/**
 	 * Get all exercises as a reactive observable
-	 * Filtered for the specified user
+	 * Filtered for the authenticated Supabase user
+	 * Note: userId parameter is kept for backwards compatibility but Supabase user ID is used internally
 	 */
 	getExercises(userId: string): Observable<Exercise[]> {
-		// Create a computed observable that filters exercises for the specific user
-		return computed(() => exercises$.get().filter(ex => ex.user_id === userId));
+		// Create a computed observable that filters exercises for the current Supabase user
+		return computed(() => {
+			const currentUser = user$.get();
+			if (!currentUser) return [];
+			return exercises$.get().filter(ex => ex.user_id === currentUser.id);
+		});
 	}
 
 	/**
 	 * Delete exercise with optimistic updates and error recovery
+	 * Note: userId parameter is kept for backwards compatibility but Supabase user ID is used internally
 	 */
 	async deleteExercise(userId: string, exerciseId: string): Promise<void> {
 		let rollbackOperation: (() => void) | null = null;
 		
 		try {
-			// Validate inputs
-			if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
-				throw new Error('Valid userId is required');
-			}
+			// Validate exerciseId
 			if (!exerciseId || typeof exerciseId !== 'string' || exerciseId.trim().length === 0) {
 				throw new Error('Valid exerciseId is required');
+			}
+			
+			// Get the Supabase user ID (not the Firebase userId parameter)
+			const supabaseUser = await supabaseClient.getCurrentUser();
+			if (!supabaseUser) {
+				throw new Error('User not authenticated with Supabase');
 			}
 			
 			// Store current state for potential rollback
 			const currentExercises = exercises$.get();
 			rollbackOperation = () => exercises$.set(currentExercises);
 			
-			// Optimistic delete - remove from local store immediately
+			// Optimistic delete - remove from local store immediately using Supabase user ID
 			const updatedExercises = currentExercises.filter(
-				exercise => !(exercise.id === exerciseId && exercise.user_id === userId)
+				exercise => !(exercise.id === exerciseId && exercise.user_id === supabaseUser.id)
 			);
 			exercises$.set(updatedExercises);
 			
 			// Attempt immediate sync to validate the operation
 			try {
-				await deleteExerciseFromSupabase(exerciseId, userId);
+				await deleteExerciseFromSupabase(exerciseId, supabaseUser.id);
 			} catch (syncError) {
 				// Rollback optimistic update on sync failure
 				rollbackOperation();
@@ -131,11 +143,17 @@ export class ExerciseRepo implements IExerciseRepo {
 	/**
 	 * Subscribe to exercises changes (for backwards compatibility)
 	 * With Legend State, the observable itself provides real-time updates
+	 * Note: uid parameter is kept for backwards compatibility but Supabase user ID is used internally
 	 */
 	subscribeToExercises(uid: string, callback: (exercises: Exercise[]) => void): () => void {
-		// Use Legend State's observe method for reactive updates with user filtering
+		// Use Legend State's observe method for reactive updates with Supabase user filtering
 		return observe(() => {
-			const filteredExercises = exercises$.get().filter(ex => ex.user_id === uid);
+			const currentUser = user$.get();
+			if (!currentUser) {
+				callback([]);
+				return;
+			}
+			const filteredExercises = exercises$.get().filter(ex => ex.user_id === currentUser.id);
 			callback(filteredExercises);
 		});
 	}

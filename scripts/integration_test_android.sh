@@ -11,6 +11,7 @@ echo "no" | avdmanager create avd --force -n test -k "system-images;android-35;g
 adb start-server
 
 firebase emulators:start &
+supabase start &
 emulator -avd test -no-snapshot-load -no-window -accel on -gpu off &
 
 echo "launched emulator in background"
@@ -19,6 +20,7 @@ EMULATOR_PID=$!
 
 errorhandler () {
     kill $EMULATOR_PID
+    supabase stop 2>/dev/null || true
     npx kill-port 8080
 }
 trap errorhandler ERR EXIT
@@ -34,6 +36,39 @@ while [ "$BOOT_COMPLETED" != "1" ]; do
 done
 
 echo "Emulator is ready!"
+
+# Wait for Firebase emulators
+echo "⏳ Waiting for Firebase emulators to be ready..."
+timeout=30
+counter=0
+while ! curl -s http://localhost:8080 > /dev/null; do
+    sleep 1
+    counter=$((counter + 1))
+    if [ $counter -ge $timeout ]; then
+        echo "❌ Firebase emulators failed to start within $timeout seconds"
+        exit 1
+    fi
+done
+echo "✅ Firebase emulators ready"
+
+# Wait for Supabase emulators and apply migrations
+echo "⏳ Waiting for Supabase emulators to be ready..."
+timeout=60
+counter=0
+while ! curl -s http://localhost:54321/health > /dev/null; do
+    sleep 1
+    counter=$((counter + 1))
+    if [ $counter -ge $timeout ]; then
+        echo "❌ Supabase emulators failed to start within $timeout seconds"
+        exit 1
+    fi
+done
+echo "✅ Supabase emulators ready"
+
+# Apply migrations
+echo "🔄 Applying Supabase migrations..."
+supabase db reset --local
+echo "✅ Migrations applied"
 
 adb install build_preview.apk
 

@@ -80,6 +80,14 @@ jest.mock("@/lib/data/firebase/logger", () => ({
   },
 }));
 
+// Mock SupabaseClient
+const mockSupabaseUser = { id: "supabase-user-123", email: "test@example.com" };
+jest.mock("@/lib/data/supabase/SupabaseClient", () => ({
+  supabaseClient: {
+    getCurrentUser: jest.fn().mockResolvedValue(mockSupabaseUser),
+  },
+}));
+
 // Mock crypto.randomUUID for consistent testing
 const mockUUID = "test-uuid-123";
 global.crypto = {
@@ -122,6 +130,10 @@ describe("ExerciseRepo", () => {
     // Reset sync mocks
     mockSyncExercise.mockResolvedValue(undefined);
     mockDeleteExercise.mockResolvedValue(undefined);
+    
+    // Reset SupabaseClient mock
+    const { supabaseClient } = require("@/lib/data/supabase/SupabaseClient");
+    supabaseClient.getCurrentUser.mockResolvedValue(mockSupabaseUser);
     
     // Reset the singleton instance
     (ExerciseRepo as any).instance = undefined;
@@ -174,19 +186,19 @@ describe("ExerciseRepo", () => {
     test("successfully adds an exercise with optimistic update", async () => {
       await repo.addExercise(testUid, testExercise);
 
-      // Verify optimistic update was applied via set call
+      // Verify optimistic update was applied via set call with Supabase user ID
       expect(mockExercises$.set).toHaveBeenCalledWith([{
         id: mockUUID,
         name: testExercise.name,
-        user_id: testUid,
+        user_id: mockSupabaseUser.id,
         created_at: expect.any(String),
       }]);
 
-      // Verify sync was called
+      // Verify sync was called with Supabase user ID
       expect(mockSyncExercise).toHaveBeenCalledWith({
         id: mockUUID,
         name: testExercise.name,
-        user_id: testUid,
+        user_id: mockSupabaseUser.id,
         created_at: expect.any(String),
       });
     });
@@ -209,11 +221,12 @@ describe("ExerciseRepo", () => {
       await expect(repo.addExercise(testUid, invalidExercise)).rejects.toThrow("Exercise name cannot be empty");
     });
 
-    test("validates userId and throws error for invalid userId", async () => {
+    test("throws error when user not authenticated", async () => {
       const validExercise = { name: "Valid Exercise" };
+      const { supabaseClient } = require("@/lib/data/supabase/SupabaseClient");
+      supabaseClient.getCurrentUser.mockResolvedValue(null);
       
-      await expect(repo.addExercise("", validExercise)).rejects.toThrow("Valid userId is required");
-      await expect(repo.addExercise("   ", validExercise)).rejects.toThrow("Valid userId is required");
+      await expect(repo.addExercise(testUid, validExercise)).rejects.toThrow("User not authenticated with Supabase");
     });
 
     test("sanitizes exercise name before saving", async () => {
@@ -221,11 +234,11 @@ describe("ExerciseRepo", () => {
 
       await repo.addExercise(testUid, exerciseWithExtraSpaces);
 
-      // Verify the set was called with sanitized name
+      // Verify the set was called with sanitized name and Supabase user ID
       expect(mockExercises$.set).toHaveBeenCalledWith([{
         id: mockUUID,
         name: "Bench Press",
-        user_id: testUid,
+        user_id: mockSupabaseUser.id,
         created_at: expect.any(String),
       }]);
     });
@@ -274,11 +287,11 @@ describe("ExerciseRepo", () => {
   });
 
   describe("getExercises", () => {
-    test("returns a computed observable that filters exercises by user", () => {
+    test("returns a computed observable that filters exercises by current Supabase user", () => {
       const testExercises: Exercise[] = [
-        { id: "ex1", name: "Push-ups", user_id: testUid, created_at: "2023-01-01T00:00:00Z" },
+        { id: "ex1", name: "Push-ups", user_id: mockSupabaseUser.id, created_at: "2023-01-01T00:00:00Z" },
         { id: "ex2", name: "Squats", user_id: "other-user", created_at: "2023-01-01T01:00:00Z" },
-        { id: "ex3", name: "Pull-ups", user_id: testUid, created_at: "2023-01-01T02:00:00Z" },
+        { id: "ex3", name: "Pull-ups", user_id: mockSupabaseUser.id, created_at: "2023-01-01T02:00:00Z" },
       ];
       
       // Mock computed to return a function that filters exercises
@@ -291,6 +304,7 @@ describe("ExerciseRepo", () => {
       });
       
       mockExercises$.get.mockReturnValue(testExercises);
+      mockUser$.get.mockReturnValue(mockSupabaseUser);
 
       const exercises$ = repo.getExercises(testUid);
       
@@ -301,9 +315,9 @@ describe("ExerciseRepo", () => {
       const computedFn = computed.mock.calls[0][0];
       const result = computedFn();
       
-      // Should only return exercises for the specific user
+      // Should only return exercises for the current Supabase user
       expect(result).toHaveLength(2);
-      expect(result.every((ex: Exercise) => ex.user_id === testUid)).toBe(true);
+      expect(result.every((ex: Exercise) => ex.user_id === mockSupabaseUser.id)).toBe(true);
     });
   });
 
@@ -311,7 +325,7 @@ describe("ExerciseRepo", () => {
     test("sets up observation and calls callback with filtered exercises", () => {
       const mockCallback = jest.fn();
       const testExercises: Exercise[] = [
-        { id: "ex1", name: "Push-ups", user_id: testUid, created_at: "2023-01-01T00:00:00Z" },
+        { id: "ex1", name: "Push-ups", user_id: mockSupabaseUser.id, created_at: "2023-01-01T00:00:00Z" },
         { id: "ex2", name: "Squats", user_id: "other-user", created_at: "2023-01-01T01:00:00Z" },
       ];
       
@@ -324,11 +338,12 @@ describe("ExerciseRepo", () => {
       });
       
       mockExercises$.get.mockReturnValue(testExercises);
+      mockUser$.get.mockReturnValue(mockSupabaseUser);
 
       const unsubscribe = repo.subscribeToExercises(testUid, mockCallback);
 
       expect(observe).toHaveBeenCalled();
-      expect(mockCallback).toHaveBeenCalledWith([testExercises[0]]); // Only testUid's exercise
+      expect(mockCallback).toHaveBeenCalledWith([testExercises[0]]); // Only Supabase user's exercise
       expect(typeof unsubscribe).toBe("function");
     });
 
@@ -349,8 +364,8 @@ describe("ExerciseRepo", () => {
     test("successfully deletes an exercise with optimistic update", async () => {
       const exerciseId = "exercise-123";
       const testExercises: Exercise[] = [
-        { id: exerciseId, name: "Push-ups", user_id: testUid, created_at: "2023-01-01T00:00:00Z" },
-        { id: "exercise-456", name: "Squats", user_id: testUid, created_at: "2023-01-01T01:00:00Z" },
+        { id: exerciseId, name: "Push-ups", user_id: mockSupabaseUser.id, created_at: "2023-01-01T00:00:00Z" },
+        { id: "exercise-456", name: "Squats", user_id: mockSupabaseUser.id, created_at: "2023-01-01T01:00:00Z" },
       ];
       
       mockExercises$.get.mockReturnValue(testExercises);
@@ -359,17 +374,17 @@ describe("ExerciseRepo", () => {
 
       // Verify optimistic delete - set should be called with remaining exercise
       expect(mockExercises$.set).toHaveBeenCalledWith([
-        { id: "exercise-456", name: "Squats", user_id: testUid, created_at: "2023-01-01T01:00:00Z" },
+        { id: "exercise-456", name: "Squats", user_id: mockSupabaseUser.id, created_at: "2023-01-01T01:00:00Z" },
       ]);
 
-      // Verify sync was called
-      expect(mockDeleteExercise).toHaveBeenCalledWith(exerciseId, testUid);
+      // Verify sync was called with Supabase user ID
+      expect(mockDeleteExercise).toHaveBeenCalledWith(exerciseId, mockSupabaseUser.id);
     });
 
     test("handles delete sync errors with rollback", async () => {
       const exerciseId = "exercise-123";
       const testExercises: Exercise[] = [
-        { id: exerciseId, name: "Push-ups", user_id: testUid, created_at: "2023-01-01T00:00:00Z" },
+        { id: exerciseId, name: "Push-ups", user_id: mockSupabaseUser.id, created_at: "2023-01-01T00:00:00Z" },
       ];
       const syncError = new Error("Supabase delete error");
       
@@ -383,11 +398,12 @@ describe("ExerciseRepo", () => {
       expect(mockExercises$.set).toHaveBeenLastCalledWith(testExercises);
     });
 
-    test("validates userId and throws error for invalid userId", async () => {
+    test("throws error when user not authenticated", async () => {
       const exerciseId = "valid-exercise-id";
+      const { supabaseClient } = require("@/lib/data/supabase/SupabaseClient");
+      supabaseClient.getCurrentUser.mockResolvedValue(null);
       
-      await expect(repo.deleteExercise("", exerciseId)).rejects.toThrow("Valid userId is required");
-      await expect(repo.deleteExercise("   ", exerciseId)).rejects.toThrow("Valid userId is required");
+      await expect(repo.deleteExercise(testUid, exerciseId)).rejects.toThrow("User not authenticated with Supabase");
     });
 
     test("validates exerciseId and throws error for invalid exerciseId", async () => {
