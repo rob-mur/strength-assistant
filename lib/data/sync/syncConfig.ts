@@ -3,6 +3,11 @@ import { exercises$, user$ } from '../store';
 import { Exercise } from '../../models/Exercise';
 import { ExerciseInsert } from '../../models/supabase';
 
+// Sync configuration constants
+const SYNC_RETRY_DELAY = 1000; // 1 second
+const SYNC_TIMEOUT = 30000; // 30 seconds
+const NETWORK_CHECK_INTERVAL = 5000; // 5 seconds
+
 /**
  * Configuration for Legend State sync with Supabase
  * Provides offline-first data synchronization with automatic conflict resolution
@@ -56,17 +61,21 @@ function setupRealtimeSubscription() {
 					if (payload.eventType === 'INSERT') {
 						const newExercise = payload.new as Exercise;
 						if (newExercise.user_id === user.id) {
-							exercises$.set([...currentExercises, newExercise]);
+							exercises$.push(newExercise);
 						}
 					} else if (payload.eventType === 'DELETE') {
 						const deletedExercise = payload.old as Exercise;
-						exercises$.set(currentExercises.filter(ex => ex.id !== deletedExercise.id));
+						const indexToDelete = currentExercises.findIndex(ex => ex.id === deletedExercise.id);
+						if (indexToDelete !== -1) {
+							exercises$.splice(indexToDelete, 1);
+						}
 					} else if (payload.eventType === 'UPDATE') {
 						const updatedExercise = payload.new as Exercise;
 						if (updatedExercise.user_id === user.id) {
-							exercises$.set(currentExercises.map(ex =>
-								ex.id === updatedExercise.id ? updatedExercise : ex
-							));
+							const indexToUpdate = currentExercises.findIndex(ex => ex.id === updatedExercise.id);
+							if (indexToUpdate !== -1) {
+								exercises$[indexToUpdate].set(updatedExercise);
+							}
 						}
 					}
 				})
@@ -170,10 +179,15 @@ export const syncHelpers = {
 	},
 
 	/**
-	 * Check online status (simplified)
+	 * Check online status using browser navigator API
 	 */
 	isOnline(): boolean {
-		// This would be enhanced with network state detection
+		// Use browser's navigator.onLine for basic network detection
+		// In React Native, this would use @react-native-community/netinfo
+		if (typeof navigator !== 'undefined' && 'onLine' in navigator) {
+			return navigator.onLine;
+		}
+		// Fallback to true for environments without navigator
 		return true;
 	},
 

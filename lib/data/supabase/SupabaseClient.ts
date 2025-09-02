@@ -11,7 +11,7 @@ export class SupabaseClient {
 
 	private getClient(): BaseSupabaseClient<Database> {
 		if (!this.client) {
-			const client = getSupabaseClient() as BaseSupabaseClient<Database>;
+			const client = getSupabaseClient();
 			if (!client || typeof client.from !== 'function') {
 				throw new Error('Invalid Supabase client: missing required methods');
 			}

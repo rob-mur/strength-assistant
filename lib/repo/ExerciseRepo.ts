@@ -3,7 +3,6 @@ import { IExerciseRepo } from "./IExerciseRepo";
 import { Observable, observe, computed } from "@legendapp/state";
 import { exercises$, user$ } from "../data/store";
 import { syncExerciseToSupabase, deleteExerciseFromSupabase, syncHelpers } from "../data/sync/syncConfig";
-import { ExerciseInsert } from "../models/supabase";
 import { supabaseClient } from "../data/supabase/SupabaseClient";
 
 /**
@@ -29,18 +28,18 @@ export class ExerciseRepo implements IExerciseRepo {
 	 */
 	async addExercise(userId: string, exercise: ExerciseInput): Promise<void> {
 		let rollbackOperation: (() => void) | null = null;
-		
+
 		try {
 			// Validate and sanitize input
 			ExerciseValidator.validateExerciseInput(exercise);
 			const sanitizedName = ExerciseValidator.sanitizeExerciseName(exercise.name);
-			
+
 			// Get the Supabase user ID (not the Firebase userId parameter)
 			const supabaseUser = await supabaseClient.getCurrentUser();
 			if (!supabaseUser) {
 				throw new Error('User not authenticated with Supabase');
 			}
-			
+
 			// Create new exercise object using Supabase user ID
 			const newExercise: Exercise = {
 				id: crypto.randomUUID(),
@@ -48,14 +47,14 @@ export class ExerciseRepo implements IExerciseRepo {
 				user_id: supabaseUser.id,
 				created_at: new Date().toISOString()
 			};
-			
+
 			// Store current state for potential rollback
 			const currentExercises = exercises$.get();
 			rollbackOperation = () => exercises$.set(currentExercises);
-			
+
 			// Optimistic update - immediately add to local store
 			exercises$.set([...currentExercises, newExercise]);
-			
+
 			// Attempt immediate sync to validate the operation
 			try {
 				await syncExerciseToSupabase(newExercise);
@@ -65,7 +64,7 @@ export class ExerciseRepo implements IExerciseRepo {
 				console.error('Sync failed, rolled back optimistic update:', syncError);
 				throw syncError;
 			}
-			
+
 		} catch (error) {
 			console.error('Failed to add exercise:', error);
 			throw error;
@@ -101,29 +100,29 @@ export class ExerciseRepo implements IExerciseRepo {
 	 */
 	async deleteExercise(userId: string, exerciseId: string): Promise<void> {
 		let rollbackOperation: (() => void) | null = null;
-		
+
 		try {
 			// Validate exerciseId
 			if (!exerciseId || typeof exerciseId !== 'string' || exerciseId.trim().length === 0) {
 				throw new Error('Valid exerciseId is required');
 			}
-			
+
 			// Get the Supabase user ID (not the Firebase userId parameter)
 			const supabaseUser = await supabaseClient.getCurrentUser();
 			if (!supabaseUser) {
 				throw new Error('User not authenticated with Supabase');
 			}
-			
+
 			// Store current state for potential rollback
 			const currentExercises = exercises$.get();
 			rollbackOperation = () => exercises$.set(currentExercises);
-			
+
 			// Optimistic delete - remove from local store immediately using Supabase user ID
 			const updatedExercises = currentExercises.filter(
 				exercise => !(exercise.id === exerciseId && exercise.user_id === supabaseUser.id)
 			);
 			exercises$.set(updatedExercises);
-			
+
 			// Attempt immediate sync to validate the operation
 			try {
 				await deleteExerciseFromSupabase(exerciseId, supabaseUser.id);
@@ -133,7 +132,7 @@ export class ExerciseRepo implements IExerciseRepo {
 				console.error('Delete sync failed, rolled back optimistic update:', syncError);
 				throw syncError;
 			}
-			
+
 		} catch (error) {
 			console.error('Failed to delete exercise:', error);
 			throw error;
