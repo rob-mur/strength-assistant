@@ -78,10 +78,32 @@ while ! curl -s http://localhost:54321/health > /dev/null; do
 done
 echo "✅ Supabase emulators ready"
 
-# Apply migrations
+# Restart Supabase to ensure auth config is loaded properly
+echo "🔄 Restarting Supabase to reload auth configuration..."
+supabase stop
+sleep 2
+
+# Start with fresh config (ensures anonymous auth is enabled)  
+supabase start
+sleep 5
+
+# Wait for Supabase to be ready with auth config loaded
+echo "🔄 Waiting for Supabase to be ready with fresh auth config..."
+timeout=60
+counter=0
+while ! curl -s http://localhost:54321/health > /dev/null; do
+    sleep 1
+    counter=$((counter + 1))
+    if [ $counter -ge $timeout ]; then
+        echo "❌ Supabase failed to restart within $timeout seconds"
+        exit 1
+    fi
+done
+
+# Apply migrations (after auth config is loaded)
 echo "🔄 Applying Supabase migrations..."
 supabase db reset --local
-echo "✅ Migrations applied"
+echo "✅ Migrations applied with fresh auth config"
 
 adb install build_preview.apk
 
