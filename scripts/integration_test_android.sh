@@ -83,6 +83,45 @@ adb install build_preview.apk
 # Create debug output directory
 mkdir -p maestro-debug-output
 
+echo "=== PRE-TEST DIAGNOSTICS ==="
+echo "Device status:"
+adb devices -l
+echo ""
+
+echo "System properties:"
+adb shell getprop ro.build.version.release
+adb shell getprop ro.product.model
+echo ""
+
+echo "Available storage:"
+adb shell df /data | head -2
+echo ""
+
+echo "Current focus window:"
+adb shell dumpsys window windows | grep -i focus | head -5
+echo ""
+
+echo "Recent logcat entries:"
+adb logcat -d | tail -20
+echo ""
+
+echo "Testing manual app launch..."
+adb shell am start -n com.jimmy_solutions.strength_assistant.test/.MainActivity
+sleep 3
+echo "App launch result:"
+adb shell dumpsys activity activities | grep -i strength || echo "No strength activity found"
+echo ""
+
+echo "Testing app connectivity..."
+adb shell ping -c 2 10.0.2.2 2>/dev/null || echo "Cannot ping host machine"
+adb shell netstat -an | grep :54321 || echo "Cannot see Supabase port"
+echo ""
+
+echo "Current running processes:"
+adb shell ps | grep -i strength || echo "No strength process found"
+echo ""
+
+echo "=== STARTING MAESTRO TESTS ==="
 echo "Starting Maestro tests with enhanced debugging..."
 echo "Debug output will be saved to maestro-debug-output/"
 
@@ -92,7 +131,17 @@ maestro test .maestro/android --debug-output maestro-debug-output 2>&1 | tee mae
 # Capture final status (using PIPESTATUS to get maestro's exit code, not tee's)
 MAESTRO_EXIT_CODE=${PIPESTATUS[0]}
 
+echo "=== POST-TEST DIAGNOSTICS ==="
 echo "Maestro tests completed with exit code: $MAESTRO_EXIT_CODE"
+
+echo "Final app state:"
+adb shell dumpsys activity activities | grep -i strength || echo "No strength activity found"
+echo ""
+
+echo "Final logcat entries:"
+adb logcat -d | tail -30
+echo ""
+
 echo "Debug artifacts saved in maestro-debug-output/"
 
 # List any screenshots or debug files created

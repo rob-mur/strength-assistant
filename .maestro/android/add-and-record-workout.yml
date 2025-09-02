@@ -1,26 +1,36 @@
 url: com.jimmy_solutions.strength_assistant.test
 ---
 - runScript: ../../scripts/clear_emulator.js
+- takeScreenshot: debug-workout-01-before-launch.png
 - launchApp
+- takeScreenshot: debug-workout-02-after-launch.png
 
+- takeScreenshot: debug-workout-03-auth-screen.png
 - tapOn:
     id: "continue-as-guest"
     optional: true
+- takeScreenshot: debug-workout-04-after-guest.png
 
 # Wait longer for auth to complete and get-started button to appear  
 - extendedWaitUntil:
     visible:
       id: "get-started"
     timeout: 30000
+- takeScreenshot: debug-workout-05-get-started-visible.png
 - tapOn:
     id: "get-started"
+- takeScreenshot: debug-workout-06-after-get-started.png
+- takeScreenshot: debug-workout-07-home-screen.png
 - tapOn:
     id: "add-exercise"
+- takeScreenshot: debug-workout-08-add-exercise-dialog.png
 - tapOn:
     id: "name"
 - inputText: "ExerciseName"
+- takeScreenshot: debug-workout-09-name-entered.png
 - tapOn:
     id: "submit"
+- takeScreenshot: debug-workout-10-after-submit.png
 # Wait for exercise submission to complete and dialog to close
 - extendedWaitUntil:
     visible:
@@ -32,12 +42,17 @@ url: com.jimmy_solutions.strength_assistant.test
     visible: "ExerciseName"
     timeout: 10000
 - assertVisible: "ExerciseName"
+- takeScreenshot: debug-workout-11-exercise-visible.png
 # Navigate to workout tab (3rd tab from left) and find add-workout button
+- takeScreenshot: debug-workout-12-before-workout-tab.png
 - tapOn:
     point: "900,2336"
+- takeScreenshot: debug-workout-13-workout-tab-clicked.png
 - extendedWaitUntil:
     visible:
       id: "add-workout"
     timeout: 10000
+- takeScreenshot: debug-workout-14-add-workout-visible.png
 - tapOn:
     id: "add-workout"
+- takeScreenshot: debug-workout-15-add-workout-clicked.png

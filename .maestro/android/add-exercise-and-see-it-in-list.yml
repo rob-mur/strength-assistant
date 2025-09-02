@@ -1,27 +1,37 @@
 url: com.jimmy_solutions.strength_assistant.test
 ---
 - runScript: ../../scripts/clear_emulator.js
+- takeScreenshot: debug-01-before-launch.png
 - launchApp
+- takeScreenshot: debug-02-after-launch.png
 
 # Handle optional auth step (only if not already authenticated)
+- takeScreenshot: debug-03-auth-screen.png
 - tapOn:
     id: "continue-as-guest"
     optional: true
+- takeScreenshot: debug-04-after-guest.png
 
 # Wait longer for auth to complete and get-started button to appear
 - extendedWaitUntil:
     visible:
       id: "get-started"
     timeout: 30000
+- takeScreenshot: debug-05-get-started-visible.png
 - tapOn:
     id: "get-started"
+- takeScreenshot: debug-06-after-get-started.png
+- takeScreenshot: debug-07-home-screen.png
 - tapOn:
     id: "add-exercise"
+- takeScreenshot: debug-08-add-exercise-dialog.png
 - tapOn:
     id: "name"
 - inputText: "ExerciseName"
+- takeScreenshot: debug-09-name-entered.png
 - tapOn:
     id: "submit"
+- takeScreenshot: debug-10-after-submit.png
 # Wait for exercise submission to complete and dialog to close
 - extendedWaitUntil:
     visible:
@@ -33,12 +43,17 @@ url: com.jimmy_solutions.strength_assistant.test
     visible:
       id: "exercisesTab"
     timeout: 10000
+- takeScreenshot: debug-11-before-exercises-tab.png
 - tapOn:
     id: "exercisesTab"
+- takeScreenshot: debug-12-exercises-tab-clicked.png
 - assertVisible:
     id: "exercise-screen"
+- takeScreenshot: debug-13-exercise-screen-visible.png
 # Wait for exercises to load from the database
+- takeScreenshot: debug-14-before-exercise-load.png
 - extendedWaitUntil:
     visible:
       id: "ExerciseName"
     timeout: 10000
+- takeScreenshot: debug-15-exercise-loaded.png
