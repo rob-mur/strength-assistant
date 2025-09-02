@@ -103,7 +103,6 @@ export async function syncExerciseToSupabase(exercise: Exercise): Promise<void> 
 		const user = await supabaseClient.getCurrentUser();
 		if (!user) throw new Error('User not authenticated');
 
-		console.log("here");
 		const exerciseToUpsert: ExerciseInsert = {
 			id: exercise.id,
 			name: exercise.name,

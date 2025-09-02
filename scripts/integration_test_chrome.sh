@@ -55,7 +55,7 @@ echo "✅ Firebase emulators ready"
 
 # Wait for Supabase emulators
 echo "⏳ Waiting for Supabase emulators to be ready..."
-timeout=60
+timeout=500
 counter=0
 while ! curl -s http://localhost:54321/health > /dev/null; do
     sleep 1
