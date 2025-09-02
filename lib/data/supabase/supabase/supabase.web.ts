@@ -1,4 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
+import { Database } from "../../../models/supabase";
 import { SupabaseService } from "./supabase-core";
 
 class SupabaseWebService extends SupabaseService {
@@ -21,7 +22,7 @@ export function initSupabase(): void {
 	supabaseService.init();
 }
 
-export function getSupabaseClient(): SupabaseClient {
+export function getSupabaseClient(): SupabaseClient<Database> {
 	return supabaseService.getSupabaseClient();
 }
 

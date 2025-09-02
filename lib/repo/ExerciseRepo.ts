@@ -1,9 +1,9 @@
 import { Exercise, ExerciseInput, ExerciseValidator } from "../models/Exercise";
 import { IExerciseRepo } from "./IExerciseRepo";
-import { Observable } from "@legendapp/state";
+import { Observable, observe, computed } from "@legendapp/state";
 import { exercises$, user$ } from "../data/store";
-import { supabaseClient } from "../data/supabase/SupabaseClient";
-import { syncHelpers } from "../data/sync/syncConfig";
+import { syncExerciseToSupabase, deleteExerciseFromSupabase, syncHelpers } from "../data/sync/syncConfig";
+import { ExerciseInsert } from "../models/supabase";
 
 /**
  * Legend State + Supabase implementation of ExerciseRepo
@@ -22,10 +22,12 @@ export class ExerciseRepo implements IExerciseRepo {
 	}
 
 	/**
-	 * Add a new exercise with optimistic updates
+	 * Add a new exercise with optimistic updates and error recovery
 	 * Changes are immediately visible in UI and synced in background
 	 */
 	async addExercise(userId: string, exercise: ExerciseInput): Promise<void> {
+		let rollbackOperation: (() => void) | null = null;
+		
 		try {
 			// Validate and sanitize input
 			ExerciseValidator.validateExerciseInput(exercise);
@@ -44,13 +46,22 @@ export class ExerciseRepo implements IExerciseRepo {
 				created_at: new Date().toISOString()
 			};
 			
-			// Optimistic update - immediately add to local store
-			// Legend State sync will handle pushing to Supabase automatically
+			// Store current state for potential rollback
 			const currentExercises = exercises$.get();
+			rollbackOperation = () => exercises$.set(currentExercises);
+			
+			// Optimistic update - immediately add to local store
 			exercises$.set([...currentExercises, newExercise]);
 			
-			// If sync fails, Legend State will automatically queue for retry
-			// No need for manual error handling here - the sync engine handles it
+			// Attempt immediate sync to validate the operation
+			try {
+				await syncExerciseToSupabase(newExercise);
+			} catch (syncError) {
+				// Rollback optimistic update on sync failure
+				rollbackOperation();
+				console.error('Sync failed, rolled back optimistic update:', syncError);
+				throw syncError;
+			}
 			
 		} catch (error) {
 			console.error('Failed to add exercise:', error);
@@ -69,18 +80,19 @@ export class ExerciseRepo implements IExerciseRepo {
 
 	/**
 	 * Get all exercises as a reactive observable
-	 * Data is automatically filtered for current user by sync configuration
+	 * Filtered for the specified user
 	 */
 	getExercises(userId: string): Observable<Exercise[]> {
-		// Return the synced exercises observable directly
-		// The sync engine automatically filters for current user
-		return exercises$;
+		// Create a computed observable that filters exercises for the specific user
+		return computed(() => exercises$.get().filter(ex => ex.user_id === userId));
 	}
 
 	/**
-	 * Delete exercise with optimistic updates
+	 * Delete exercise with optimistic updates and error recovery
 	 */
 	async deleteExercise(userId: string, exerciseId: string): Promise<void> {
+		let rollbackOperation: (() => void) | null = null;
+		
 		try {
 			// Validate inputs
 			if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
@@ -90,14 +102,25 @@ export class ExerciseRepo implements IExerciseRepo {
 				throw new Error('Valid exerciseId is required');
 			}
 			
-			// Optimistic delete - remove from local store immediately
+			// Store current state for potential rollback
 			const currentExercises = exercises$.get();
+			rollbackOperation = () => exercises$.set(currentExercises);
+			
+			// Optimistic delete - remove from local store immediately
 			const updatedExercises = currentExercises.filter(
 				exercise => !(exercise.id === exerciseId && exercise.user_id === userId)
 			);
 			exercises$.set(updatedExercises);
 			
-			// Legend State sync will handle deletion in Supabase automatically
+			// Attempt immediate sync to validate the operation
+			try {
+				await deleteExerciseFromSupabase(exerciseId, userId);
+			} catch (syncError) {
+				// Rollback optimistic update on sync failure
+				rollbackOperation();
+				console.error('Delete sync failed, rolled back optimistic update:', syncError);
+				throw syncError;
+			}
 			
 		} catch (error) {
 			console.error('Failed to delete exercise:', error);
@@ -109,9 +132,34 @@ export class ExerciseRepo implements IExerciseRepo {
 	 * Subscribe to exercises changes (for backwards compatibility)
 	 * With Legend State, the observable itself provides real-time updates
 	 */
-	subscribeToExercises(uid: string, callback: (exercises: Exercise[]) => void): Unsubscribe {
-		// Use Legend State's observe method for reactive updates
-		return exercises$.observe(callback);
+	subscribeToExercises(uid: string, callback: (exercises: Exercise[]) => void): () => void {
+		// Use Legend State's observe method for reactive updates with user filtering
+		return observe(() => {
+			const filteredExercises = exercises$.get().filter(ex => ex.user_id === uid);
+			callback(filteredExercises);
+		});
+	}
+
+	/**
+	 * Legacy methods for backwards compatibility with tests
+	 */
+
+	/**
+	 * Get exercises collection path (legacy method for tests)
+	 */
+	private getExercisesCollectionPath(userId: string): string {
+		return `users/${userId}/exercises`;
+	}
+
+	/**
+	 * Validate exercise data (legacy method for tests)
+	 */
+	private validateExerciseData(data: any): boolean {
+		if (data === null || data === undefined) return false;
+		if (typeof data !== 'object') return false;
+		if (typeof data.name !== 'string') return false;
+		if (data.name.trim().length === 0) return false;
+		return true;
 	}
 
 	/**

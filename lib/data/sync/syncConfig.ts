@@ -1,122 +1,139 @@
-import { configurePersistAndSync } from '@legendapp/state/sync';
-import { ObservablePersistAsyncStorage } from '@legendapp/state/persist-plugins/async-storage';
 import { supabaseClient } from '../supabase/SupabaseClient';
 import { exercises$, user$ } from '../store';
 import { Exercise } from '../../models/Exercise';
+import { ExerciseInsert } from '../../models/supabase';
 
 /**
  * Configuration for Legend State sync with Supabase
  * Provides offline-first data synchronization with automatic conflict resolution
  */
 export function configureSyncEngine() {
-  // Configure exercises with offline persistence and Supabase sync
-  configurePersistAndSync(exercises$, {
-    persist: {
-      name: 'exercises',
-      plugin: ObservablePersistAsyncStorage,
-    },
-    sync: {
-      // Initial load from Supabase
-      get: async () => {
-        try {
-          const user = await supabaseClient.getCurrentUser();
-          if (!user) return [];
+  // Initialize with data loading and real-time subscription
+  loadInitialData();
+  setupRealtimeSubscription();
+}
 
-          const { data, error } = await supabaseClient.exercises
-            .select('*')
-            .eq('user_id', user.id);
+/**
+ * Load initial exercises data from Supabase
+ */
+async function loadInitialData() {
+  try {
+    const user = await supabaseClient.getCurrentUser();
+    if (!user) return;
 
-          if (error) throw error;
-          return data || [];
-        } catch (error) {
-          console.error('Failed to load exercises:', error);
-          return [];
-        }
-      },
-      
-      // Save changes to Supabase
-      set: async ({ value, update }) => {
-        try {
-          const user = await supabaseClient.getCurrentUser();
-          if (!user) return;
+    const { data, error } = await (supabaseClient.getSupabaseClient().from('exercises') as any)
+      .select('*')
+      .eq('user_id', user.id);
 
-          const exercises = Array.isArray(value) ? value : [];
+    if (error) throw error;
+    exercises$.set(data || []);
+  } catch (error) {
+    console.error('Failed to load initial exercises:', error);
+  }
+}
+
+/**
+ * Set up real-time subscription for exercises
+ */
+function setupRealtimeSubscription() {
+  let subscription: any = null;
+  
+  const startSubscription = async () => {
+    try {
+      const user = await supabaseClient.getCurrentUser();
+      if (!user) return;
+
+      subscription = supabaseClient.getSupabaseClient()
+        .channel('exercises')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'exercises',
+          filter: `user_id=eq.${user.id}`
+        }, (payload) => {
+          const currentExercises = exercises$.get();
           
-          // For simplicity, we'll do a full sync approach
-          // In a real app, you'd want incremental updates
-          for (const exercise of exercises) {
-            if (!exercise.id) continue;
-            
-            const { error } = await supabaseClient.exercises
-              .upsert({
-                id: exercise.id,
-                name: exercise.name,
-                user_id: exercise.user_id,
-                created_at: exercise.created_at,
-              });
-              
-            if (error) {
-              console.error('Failed to save exercise:', error);
+          if (payload.eventType === 'INSERT') {
+            const newExercise = payload.new as Exercise;
+            if (newExercise.user_id === user.id) {
+              exercises$.set([...currentExercises, newExercise]);
+            }
+          } else if (payload.eventType === 'DELETE') {
+            const deletedExercise = payload.old as Exercise;
+            exercises$.set(currentExercises.filter(ex => ex.id !== deletedExercise.id));
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedExercise = payload.new as Exercise;
+            if (updatedExercise.user_id === user.id) {
+              exercises$.set(currentExercises.map(ex => 
+                ex.id === updatedExercise.id ? updatedExercise : ex
+              ));
             }
           }
-        } catch (error) {
-          console.error('Failed to sync exercises:', error);
-        }
-      },
+        })
+        .subscribe();
+    } catch (error) {
+      console.error('Failed to set up real-time subscription:', error);
+    }
+  };
 
-      // Real-time subscription
-      subscribe: async ({ update }) => {
-        try {
-          const user = await supabaseClient.getCurrentUser();
-          if (!user) return () => {};
-
-          const subscription = supabaseClient.getSupabaseClient()
-            .from('exercises')
-            .on('*', async () => {
-              // Refetch data when changes occur
-              const { data } = await supabaseClient.exercises
-                .select('*')
-                .eq('user_id', user.id);
-              
-              if (data) {
-                update(data);
-              }
-            })
-            .subscribe();
-
-          return () => {
-            supabaseClient.getSupabaseClient().removeSubscription(subscription);
-          };
-        } catch (error) {
-          console.error('Failed to set up real-time subscription:', error);
-          return () => {};
-        }
-      },
-    },
+  // Set up auth state listener to restart subscription when user changes
+  supabaseClient.onAuthStateChange((event, session) => {
+    user$.set(session?.user || null);
+    
+    // Restart subscription when user changes
+    if (subscription) {
+      subscription.unsubscribe();
+      subscription = null;
+    }
+    
+    if (session?.user) {
+      startSubscription();
+      loadInitialData();
+    } else {
+      exercises$.set([]);
+    }
   });
+}
 
-  // Configure user auth state
-  configurePersistAndSync(user$, {
-    sync: {
-      get: async () => {
-        try {
-          return await supabaseClient.getCurrentUser();
-        } catch {
-          return null;
-        }
-      },
+/**
+ * Sync an exercise to Supabase
+ */
+export async function syncExerciseToSupabase(exercise: Exercise): Promise<void> {
+  try {
+    const user = await supabaseClient.getCurrentUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const exerciseToUpsert: ExerciseInsert = {
+      id: exercise.id,
+      name: exercise.name,
+      user_id: exercise.user_id,
+      created_at: exercise.created_at,
+    };
+
+    const { error } = await (supabaseClient.getSupabaseClient().from('exercises') as any)
+      .upsert(exerciseToUpsert);
+    if (error) throw error;
+  } catch (error) {
+    console.error('Failed to sync exercise to Supabase:', error);
+    throw error;
+  }
+}
+
+/**
+ * Delete an exercise from Supabase
+ */
+export async function deleteExerciseFromSupabase(exerciseId: string, userId: string): Promise<void> {
+  try {
+    const { error } = await (supabaseClient.getSupabaseClient().from('exercises') as any)
+      .delete()
+      .eq('id', exerciseId)
+      .eq('user_id', userId);
       
-      subscribe: async ({ update }) => {
-        const { data: { subscription } } = supabaseClient.getSupabaseClient().auth.onAuthStateChange(
-          (event, session) => {
-            update(session?.user || null);
-          }
-        );
-        
-        return () => subscription.unsubscribe();
-      },
-    },
-  });
+    if (error) throw error;
+  } catch (error) {
+    console.error('Failed to delete exercise from Supabase:', error);
+    throw error;
+  }
 }
 
 /**
@@ -132,7 +149,7 @@ export const syncHelpers = {
       const user = await supabaseClient.getCurrentUser();
       if (!user) return;
 
-      const { data, error } = await supabaseClient.exercises
+      const { data, error } = await (supabaseClient.getSupabaseClient().from('exercises') as any)
         .select('*')
         .eq('user_id', user.id);
 

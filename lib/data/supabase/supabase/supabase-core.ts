@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { Database } from "../../../models/supabase";
 import { Logger } from "./logger";
 
 /**
@@ -7,7 +8,7 @@ import { Logger } from "./logger";
  */
 export abstract class SupabaseService {
 	protected initialized: boolean = false;
-	protected client: SupabaseClient | undefined;
+	protected client: SupabaseClient<Database> | undefined;
 	private readonly logger: Logger;
 
 	constructor(serviceName: string) {
@@ -111,7 +112,7 @@ export abstract class SupabaseService {
 			url: this.sanitizeUrl(supabaseUrl)
 		});
 
-		this.client = createClient(supabaseUrl, supabaseAnonKey, {
+		this.client = createClient<Database>(supabaseUrl, supabaseAnonKey, {
 			auth: {
 				autoRefreshToken: true,
 				persistSession: true,
@@ -179,7 +180,7 @@ export abstract class SupabaseService {
 	/**
 	 * Get the Supabase client instance
 	 */
-	getSupabaseClient(): SupabaseClient {
+	getSupabaseClient(): SupabaseClient<Database> {
 		this.assertInitialized("getSupabaseClient()");
 		if (!this.client) {
 			throw new Error("Supabase client not available");

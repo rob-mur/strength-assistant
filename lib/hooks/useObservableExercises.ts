@@ -1,4 +1,4 @@
-import { exercises$ } from '../data/sync';
+import { exercises$ } from '../data/store';
 import { useObservable } from '@legendapp/state/react';
 import { Exercise } from '../models/Exercise';
 
@@ -13,7 +13,7 @@ export function useObservableExercises() {
   const exercises = useObservable(exercises$);
 
   return {
-    exercises: exercises as Exercise[],
+    exercises: exercises.get(),
     
     // Helper to add exercise optimistically 
     addExercise: (exercise: Exercise) => {
