@@ -4,7 +4,7 @@ import { Observable, observe, computed } from "@legendapp/state";
 import { exercises$, user$ } from "../data/store";
 import { syncExerciseToSupabase, deleteExerciseFromSupabase, syncHelpers } from "../data/sync/syncConfig";
 import { supabaseClient } from "../data/supabase/SupabaseClient";
-
+import { v4 as uuidv4 } from 'uuid';
 /**
  * Legend State + Supabase implementation of ExerciseRepo
  * Provides offline-first data access with automatic sync
@@ -30,31 +30,36 @@ export class ExerciseRepo implements IExerciseRepo {
 		let rollbackOperation: (() => void) | null = null;
 
 		try {
+			console.log("About to parse exercise");
 			// Validate and sanitize input
 			ExerciseValidator.validateExerciseInput(exercise);
 			const sanitizedName = ExerciseValidator.sanitizeExerciseName(exercise.name);
 
+			console.log("About to get user");
 			// Get the Supabase user ID (not the Firebase userId parameter)
 			const supabaseUser = await supabaseClient.getCurrentUser();
 			if (!supabaseUser) {
 				throw new Error('User not authenticated with Supabase');
 			}
 
+
 			// Create new exercise object using Supabase user ID
 			const newExercise: Exercise = {
-				id: crypto.randomUUID(),
+				id: uuidv4(),
 				name: sanitizedName,
 				user_id: supabaseUser.id,
 				created_at: new Date().toISOString()
 			};
 
 			// Store current state for potential rollback
+			console.log("About to get current exercise state");
 			const currentExercises = exercises$.get();
 			rollbackOperation = () => exercises$.set(currentExercises);
 
 			// Optimistic update - immediately add to local store
 			exercises$.set([...currentExercises, newExercise]);
 
+			console.log("About to try and sync");
 			// Attempt immediate sync to validate the operation
 			try {
 				await syncExerciseToSupabase(newExercise);

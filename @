@@ -90,8 +90,12 @@ jest.mock("@/lib/data/supabase/SupabaseClient", () => ({
 
 const mockUUID = "test-uuid-123";
 jest.mock('uuid', () => ({
-	v4: () => mockUUID,
+	__esModule: true,
+	default: {
+		v4: jest.fn(() => 'test-uuid-123'),
+	},
 }));
+
 describe("ExerciseRepo", () => {
 	let repo: ExerciseRepo;
 	let mockExercises$: any;
