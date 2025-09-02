@@ -1,20 +1,14 @@
 import { Exercise, ExerciseInput, ExerciseValidator } from "../models/Exercise";
 import { IExerciseRepo } from "./IExerciseRepo";
-import { observable, Observable } from "@legendapp/state";
-import {
-	getDb,
-	collection,
-	doc,
-	getDoc,
-	getDocs,
-	addDoc,
-	deleteDoc,
-	onSnapshot,
-} from "@/lib/data/firebase";
-import { logger } from "@/lib/data/firebase/logger";
+import { Observable } from "@legendapp/state";
+import { exercises$, user$ } from "../data/store";
+import { supabaseClient } from "../data/supabase/SupabaseClient";
+import { syncHelpers } from "../data/sync/syncConfig";
 
-type Unsubscribe = () => void;
-
+/**
+ * Legend State + Supabase implementation of ExerciseRepo
+ * Provides offline-first data access with automatic sync
+ */
 export class ExerciseRepo implements IExerciseRepo {
 	private static instance: ExerciseRepo;
 
@@ -27,43 +21,11 @@ export class ExerciseRepo implements IExerciseRepo {
 		return ExerciseRepo.instance;
 	}
 
-	private getExercisesCollectionPath(uid: string): string {
-		return `users/${uid}/exercises`;
-	}
-
-	private validateExerciseData(data: unknown): data is Exercise {
-		return (
-			data != null &&
-			typeof data === "object" &&
-			"name" in data &&
-			typeof data.name === "string"
-		);
-	}
-
-	private getLogContext(operation: string) {
-		return {
-			service: "ExerciseRepo",
-			platform: "React Native",
-			operation
-		};
-	}
-
-	private logDebug(message: string, operation: string): void {
-		logger.debug(`[ExerciseRepo] ${message}`, this.getLogContext(operation));
-	}
-
-	private logError(message: string, operation: string): void {
-		logger.error(`[ExerciseRepo] ${message}`, this.getLogContext(operation));
-	}
-
-	private logWarn(message: string, operation: string): void {
-		logger.warn(`[ExerciseRepo] ${message}`, this.getLogContext(operation));
-	}
-
+	/**
+	 * Add a new exercise with optimistic updates
+	 * Changes are immediately visible in UI and synced in background
+	 */
 	async addExercise(userId: string, exercise: ExerciseInput): Promise<void> {
-		const startTime = Date.now();
-		this.logDebug(`Adding exercise: "${exercise.name}" for user: ${userId}`, "add_exercise");
-		
 		try {
 			// Validate and sanitize input
 			ExerciseValidator.validateExerciseInput(exercise);
@@ -74,74 +36,51 @@ export class ExerciseRepo implements IExerciseRepo {
 				throw new Error('Valid userId is required');
 			}
 			
-			const exerciseCollection = collection(getDb(), this.getExercisesCollectionPath(userId));
-			await addDoc(exerciseCollection, { name: sanitizedName });
-			const duration = Date.now() - startTime;
-			this.logDebug(`Successfully added exercise "${sanitizedName}" for user: ${userId} (${duration}ms)`, "add_exercise");
-		} catch (error) {
-			const duration = Date.now() - startTime;
-			this.logError(`Failed to add exercise "${exercise.name}" for user: ${userId} after ${duration}ms`, "add_exercise");
-			throw error;
-		}
-	}
-
-	async getExerciseById(id: string, uid: string): Promise<Exercise | undefined> {
-		const startTime = Date.now();
-		this.logDebug(`Getting exercise by ID: ${id} for user: ${uid}`, "get_exercise_by_id");
-		
-		try {
-			const docRef = doc(getDb(), this.getExercisesCollectionPath(uid), id);
-
-			const data = await getDoc(docRef).then((snap) => {
-				const data = snap.data();
-				if (data === undefined) {
-					this.logDebug(`Exercise with ID ${id} not found for user: ${uid}`, "get_exercise_by_id");
-					return undefined;
-				}
-				if (!this.validateExerciseData(data)) {
-					this.logError(`Invalid exercise data for ID ${id} for user: ${uid}`, "get_exercise_by_id");
-					throw new Error("Invalid exercise data from Firestore");
-				}
-				return {
-					id: snap.id,
-					name: data.name,
-					user_id: uid,
-					created_at: new Date().toISOString()
-				} as Exercise;
-			});
+			// Create new exercise object
+			const newExercise: Exercise = {
+				id: crypto.randomUUID(),
+				name: sanitizedName,
+				user_id: userId,
+				created_at: new Date().toISOString()
+			};
 			
-			const duration = Date.now() - startTime;
-			if (data) {
-				this.logDebug(`Successfully retrieved exercise "${data.name}" (ID: ${id}) for user: ${uid} (${duration}ms)`, "get_exercise_by_id");
-			} else {
-				this.logDebug(`Exercise with ID ${id} not found for user: ${uid} (${duration}ms)`, "get_exercise_by_id");
-			}
-			return data;
+			// Optimistic update - immediately add to local store
+			// Legend State sync will handle pushing to Supabase automatically
+			const currentExercises = exercises$.get();
+			exercises$.set([...currentExercises, newExercise]);
+			
+			// If sync fails, Legend State will automatically queue for retry
+			// No need for manual error handling here - the sync engine handles it
+			
 		} catch (error) {
-			const duration = Date.now() - startTime;
-			this.logError(`Failed to get exercise by ID ${id} for user: ${uid} after ${duration}ms`, "get_exercise_by_id");
+			console.error('Failed to add exercise:', error);
 			throw error;
 		}
 	}
 
+	/**
+	 * Get exercise by ID from local store (works offline)
+	 */
+	async getExerciseById(id: string, uid: string): Promise<Exercise | undefined> {
+		// With Legend State, we can get data immediately from local store
+		const exercises = exercises$.get();
+		return exercises.find(exercise => exercise.id === id && exercise.user_id === uid);
+	}
+
+	/**
+	 * Get all exercises as a reactive observable
+	 * Data is automatically filtered for current user by sync configuration
+	 */
 	getExercises(userId: string): Observable<Exercise[]> {
-		const exercises$ = observable<Exercise[]>([]);
-		
-		this.logDebug(`Setting up reactive observable for exercises for user: ${userId}`, "get_exercises");
-		
-		// Set up real-time subscription that feeds the observable
-		this.subscribeToExercises(userId, (exercises) => {
-			exercises$.set(exercises);
-		});
-		
+		// Return the synced exercises observable directly
+		// The sync engine automatically filters for current user
 		return exercises$;
 	}
 
-
+	/**
+	 * Delete exercise with optimistic updates
+	 */
 	async deleteExercise(userId: string, exerciseId: string): Promise<void> {
-		const startTime = Date.now();
-		this.logDebug(`Deleting exercise with ID: ${exerciseId} for user: ${userId}`, "delete_exercise");
-		
 		try {
 			// Validate inputs
 			if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
@@ -151,62 +90,73 @@ export class ExerciseRepo implements IExerciseRepo {
 				throw new Error('Valid exerciseId is required');
 			}
 			
-			const docRef = doc(getDb(), this.getExercisesCollectionPath(userId), exerciseId);
-			await deleteDoc(docRef);
+			// Optimistic delete - remove from local store immediately
+			const currentExercises = exercises$.get();
+			const updatedExercises = currentExercises.filter(
+				exercise => !(exercise.id === exerciseId && exercise.user_id === userId)
+			);
+			exercises$.set(updatedExercises);
 			
-			const duration = Date.now() - startTime;
-			this.logDebug(`Successfully deleted exercise with ID: ${exerciseId} for user: ${userId} (${duration}ms)`, "delete_exercise");
+			// Legend State sync will handle deletion in Supabase automatically
+			
 		} catch (error) {
-			const duration = Date.now() - startTime;
-			this.logError(`Failed to delete exercise with ID: ${exerciseId} for user: ${userId} after ${duration}ms`, "delete_exercise");
+			console.error('Failed to delete exercise:', error);
 			throw error;
 		}
 	}
 
+	/**
+	 * Subscribe to exercises changes (for backwards compatibility)
+	 * With Legend State, the observable itself provides real-time updates
+	 */
 	subscribeToExercises(uid: string, callback: (exercises: Exercise[]) => void): Unsubscribe {
-		this.logDebug(`Setting up real-time subscription to exercises for user: ${uid}`, "subscribe_exercises");
-		
-		const exerciseCollection = collection(getDb(), this.getExercisesCollectionPath(uid));
-		const unsubscribe = onSnapshot(
-			exerciseCollection, 
-			(querySnapshot) => {
-				const startTime = Date.now();
-				this.logDebug(`Real-time update received for user: ${uid}`, "subscribe_exercises");
-				
-				try {
-					const exercises = querySnapshot.docs.map((doc) => {
-						const data = doc.data();
-						if (!this.validateExerciseData(data)) {
-							this.logError(`Invalid exercise data in subscription for doc ${doc.id} for user: ${uid}`, "subscribe_exercises");
-							throw new Error(`Invalid exercise data from Firestore for doc ${doc.id}`);
-						}
-						return {
-							id: doc.id,
-							name: data.name,
-							user_id: uid,
-							created_at: new Date().toISOString()
-						} as Exercise;
-					});
-					
-					const duration = Date.now() - startTime;
-					this.logDebug(`Processed ${exercises.length} exercises from real-time update for user: ${uid} (${duration}ms)`, "subscribe_exercises");
-					callback(exercises);
-				} catch (error) {
-					const duration = Date.now() - startTime;
-					this.logError(`Error processing real-time update for user: ${uid} after ${duration}ms`, "subscribe_exercises");
-					throw error;
-				}
-			},
-			(error) => {
-				this.logError(`Real-time subscription error for user: ${uid}`, "subscribe_exercises");
-				this.logWarn(`Real-time subscription failed for user: ${uid}, data may not be current`, "subscribe_exercises");
-			}
-		);
-		
-		this.logDebug(`Real-time subscription established for user: ${uid}`, "subscribe_exercises");
-		return () => {
-			this.logDebug(`Unsubscribing from real-time updates for user: ${uid}`, "subscribe_exercises");
-			unsubscribe();
-		};
+		// Use Legend State's observe method for reactive updates
+		return exercises$.observe(callback);
+	}
+
+	/**
+	 * New methods for offline-first capabilities
+	 */
+
+	/**
+	 * Check if we're currently online and syncing
+	 */
+	isSyncing(): boolean {
+		return syncHelpers.isSyncing();
+	}
+
+	/**
+	 * Check online status
+	 */
+	isOnline(): boolean {
+		return syncHelpers.isOnline();
+	}
+
+	/**
+	 * Get count of pending changes waiting to sync
+	 */
+	getPendingChangesCount(): number {
+		return syncHelpers.getPendingChangesCount();
+	}
+
+	/**
+	 * Force manual sync (useful for pull-to-refresh)
+	 */
+	async forceSync(): Promise<void> {
+		await syncHelpers.forceSync();
+	}
+
+	/**
+	 * Check if there are sync errors
+	 */
+	hasErrors(): boolean {
+		return syncHelpers.hasErrors();
+	}
+
+	/**
+	 * Get current sync error message
+	 */
+	getErrorMessage(): string | undefined {
+		return syncHelpers.getErrorMessage();
 	}
 }
