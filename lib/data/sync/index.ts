@@ -1,5 +1,6 @@
 import { configureSyncEngine } from './syncConfig';
 import { initSupabase } from '../supabase/supabase';
+import { initFirebase } from '../firebase';
 
 /**
  * Initialize the offline-first data layer
@@ -7,7 +8,8 @@ import { initSupabase } from '../supabase/supabase';
  */
 export async function initializeDataLayer(): Promise<void> {
   try {
-    // Initialize Supabase client first
+    // Initialize both Firebase and Supabase during transition period
+    initFirebase();
     initSupabase();
     
     // Configure Legend State sync engine
