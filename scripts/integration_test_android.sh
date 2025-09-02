@@ -10,6 +10,14 @@ echo "no" | avdmanager create avd --force -n test -k "system-images;android-35;g
 
 adb start-server
 
+# Clean up any existing processes
+pkill -f "firebase emulators" || true
+supabase stop || true
+npx kill-port 9099 || true
+npx kill-port 5000 || true  
+npx kill-port 8080 || true
+sleep 2
+
 firebase emulators:start &
 supabase start &
 emulator -avd test -no-snapshot-load -no-window -accel on -gpu off &

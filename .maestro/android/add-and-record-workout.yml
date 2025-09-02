@@ -7,10 +7,11 @@ url: com.jimmy_solutions.strength_assistant.test
     id: "continue-as-guest"
     optional: true
 
+# Wait longer for auth to complete and get-started button to appear  
 - extendedWaitUntil:
     visible:
       id: "get-started"
-    timeout: 15000
+    timeout: 30000
 - tapOn:
     id: "get-started"
 - tapOn:
@@ -20,6 +21,23 @@ url: com.jimmy_solutions.strength_assistant.test
 - inputText: "ExerciseName"
 - tapOn:
     id: "submit"
+# Wait for exercise submission to complete and dialog to close
+- extendedWaitUntil:
+    visible:
+      id: "add-exercise"
+    timeout: 15000
+- hideKeyboard
+# Wait for exercise to be saved and visible
+- extendedWaitUntil:
+    visible: "ExerciseName"
+    timeout: 10000
 - assertVisible: "ExerciseName"
+# Navigate to workout tab (3rd tab from left) and find add-workout button
+- tapOn:
+    point: "900,2336"
+- extendedWaitUntil:
+    visible:
+      id: "add-workout"
+    timeout: 10000
 - tapOn:
     id: "add-workout"
