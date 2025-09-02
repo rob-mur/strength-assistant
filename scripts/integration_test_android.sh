@@ -6,6 +6,11 @@ unset ANDROID_NDK_HOME
 unset ANDROID_AVD_HOME
 unset XDG_CONFIG_HOME
 
+# Force Supabase emulator mode for Android tests
+export EXPO_PUBLIC_USE_SUPABASE_EMULATOR=true
+export EXPO_PUBLIC_SUPABASE_EMULATOR_HOST=10.0.2.2
+export EXPO_PUBLIC_SUPABASE_EMULATOR_PORT=54321
+
 echo "no" | avdmanager create avd --force -n test -k "system-images;android-35;google_apis_playstore;x86_64" --device "pixel_xl"
 
 adb start-server
@@ -114,7 +119,14 @@ echo ""
 
 echo "Testing app connectivity..."
 adb shell ping -c 2 10.0.2.2 2>/dev/null || echo "Cannot ping host machine"
-adb shell netstat -an | grep :54321 || echo "Cannot see Supabase port"
+echo "Testing host connectivity from emulator:"
+adb shell "curl -s http://10.0.2.2:54321/health" && echo "✅ Can reach Supabase on host" || echo "❌ Cannot reach Supabase on host"
+echo ""
+
+echo "Environment variables for Supabase:"
+echo "EXPO_PUBLIC_USE_SUPABASE_EMULATOR: $EXPO_PUBLIC_USE_SUPABASE_EMULATOR"  
+echo "EXPO_PUBLIC_SUPABASE_EMULATOR_HOST: $EXPO_PUBLIC_SUPABASE_EMULATOR_HOST"
+echo "EXPO_PUBLIC_SUPABASE_EMULATOR_PORT: $EXPO_PUBLIC_SUPABASE_EMULATOR_PORT"
 echo ""
 
 echo "Current running processes:"
