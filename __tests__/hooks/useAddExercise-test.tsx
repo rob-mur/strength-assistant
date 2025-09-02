@@ -24,13 +24,13 @@ describe("useAddExercise", () => {
     const testUid = "test-user-uid";
     const testExercise = "Push-ups";
     
-    mockRepo.addExercise.mockResolvedValue("mock-id");
+    mockRepo.addExercise.mockResolvedValue(undefined);
     
     const { result } = renderHook(() => useAddExercise(testUid));
     
     await result.current(testExercise);
     
-    expect(mockRepo.addExercise).toHaveBeenCalledWith(testExercise, testUid);
+    expect(mockRepo.addExercise).toHaveBeenCalledWith(testUid, { name: testExercise });
   });
 
   test("throws error when uid is empty", async () => {

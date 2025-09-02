@@ -1,39 +1,39 @@
 {
-  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.14.2/.schema/devbox.schema.json",
-  "packages": [
-    "path:../flakes/androidsdk",
-    "maestro@latest",
-    "nodejs@latest",
-    "chromium@latest",
-    "chromedriver@latest",
-    "firebase-tools@latest",
-    "jdk17@latest",
-    "claude-code@latest",
-    "gh@latest",
-    "git@latest",
-    "supabase-cli@latest"
-  ],
-  "shell": {
-    "scripts": {
-      "test": [
-        "../scripts/test.sh"
-      ],
-      "build_preview": [
-        "../scripts/build.sh preview"
-      ],
-      "build_production": [
-        "../scripts/build.sh production"
-      ],
-      "integration_test_android": [
-        "../scripts/integration_test_android.sh"
-      ]
-    }
-  },
-  "env": {
-    "ANDROID_HOME":                  "$PWD/.devbox/nix/profile/default/libexec/android-sdk/",
-    "GRADLE_OPTS":                   "-Dorg.gradle.project.android.aapt2FromMavenOverride=$PWD/.devbox/nix/profile/default/bin/aapt2",
-    "EXPO_PUBLIC_USE_EMULATOR":      "true",
-    "EXPO_PUBLIC_SUPABASE_URL":      "https://oddphoddejomqiyctctq.supabase.co",
-    "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kZHBob2RkZWpvbXFpeWN0Y3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1ODExNjIsImV4cCI6MjA3MjE1NzE2Mn0.MKheiiDO2VCknBaD2QRw4Kf_GeHpQW15qUMMAtK7BDk"  // NOSONAR - Supabase anonymous key is designed to be public
-  }
+	"$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.14.2/.schema/devbox.schema.json",
+	"packages": [
+		"path:../flakes/androidsdk",
+		"maestro@latest",
+		"nodejs@latest",
+		"chromium@latest",
+		"chromedriver@latest",
+		"firebase-tools@latest",
+		"jdk17@latest",
+		"claude-code@latest",
+		"gh@latest",
+		"git@latest",
+		"supabase-cli@latest"
+	],
+	"shell": {
+		"scripts": {
+			"test": [
+				"../scripts/test.sh"
+			],
+			"build_preview": [
+				"../scripts/build.sh preview"
+			],
+			"build_production": [
+				"../scripts/build.sh production"
+			],
+			"integration_test_android": [
+				"../scripts/integration_test_android.sh"
+			]
+		}
+	},
+	"env": {
+		"ANDROID_HOME": "$PWD/.devbox/nix/profile/default/libexec/android-sdk/",
+		"GRADLE_OPTS": "-Dorg.gradle.project.android.aapt2FromMavenOverride=$PWD/.devbox/nix/profile/default/bin/aapt2",
+		"EXPO_PUBLIC_USE_EMULATOR": "true",
+		"EXPO_PUBLIC_SUPABASE_URL": "https://oddphoddejomqiyctctq.supabase.co",
+		"EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kZHBob2RkZWpvbXFpeWN0Y3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1ODExNjIsImV4cCI6MjA3MjE1NzE2Mn0.MKheiiDO2VCknBaD2QRw4Kf_GeHpQW15qUMMAtK7BDk"
+	}
 }

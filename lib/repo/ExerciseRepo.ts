@@ -1,4 +1,6 @@
-import { Exercise } from "../models/Exercise";
+import { Exercise, ExerciseInput, ExerciseValidator } from "../models/Exercise";
+import { IExerciseRepo } from "./IExerciseRepo";
+import { observable, Observable } from "@legendapp/state";
 import {
 	getDb,
 	collection,
@@ -6,13 +8,14 @@ import {
 	getDoc,
 	getDocs,
 	addDoc,
+	deleteDoc,
 	onSnapshot,
 } from "@/lib/data/firebase";
 import { logger } from "@/lib/data/firebase/logger";
 
 type Unsubscribe = () => void;
 
-export class ExerciseRepo {
+export class ExerciseRepo implements IExerciseRepo {
 	private static instance: ExerciseRepo;
 
 	private constructor() { }
@@ -57,19 +60,27 @@ export class ExerciseRepo {
 		logger.warn(`[ExerciseRepo] ${message}`, this.getLogContext(operation));
 	}
 
-	async addExercise(exercise: string, uid: string): Promise<string> {
+	async addExercise(userId: string, exercise: ExerciseInput): Promise<void> {
 		const startTime = Date.now();
-		this.logDebug(`Adding exercise: "${exercise}" for user: ${uid}`, "add_exercise");
+		this.logDebug(`Adding exercise: "${exercise.name}" for user: ${userId}`, "add_exercise");
 		
 		try {
-			const exerciseCollection = collection(getDb(), this.getExercisesCollectionPath(uid));
-			const doc = await addDoc(exerciseCollection, { name: exercise });
+			// Validate and sanitize input
+			ExerciseValidator.validateExerciseInput(exercise);
+			const sanitizedName = ExerciseValidator.sanitizeExerciseName(exercise.name);
+			
+			// Validate userId
+			if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
+				throw new Error('Valid userId is required');
+			}
+			
+			const exerciseCollection = collection(getDb(), this.getExercisesCollectionPath(userId));
+			await addDoc(exerciseCollection, { name: sanitizedName });
 			const duration = Date.now() - startTime;
-			this.logDebug(`Successfully added exercise "${exercise}" with ID: ${doc.id} for user: ${uid} (${duration}ms)`, "add_exercise");
-			return doc.id;
+			this.logDebug(`Successfully added exercise "${sanitizedName}" for user: ${userId} (${duration}ms)`, "add_exercise");
 		} catch (error) {
 			const duration = Date.now() - startTime;
-			this.logError(`Failed to add exercise "${exercise}" for user: ${uid} after ${duration}ms`, "add_exercise");
+			this.logError(`Failed to add exercise "${exercise.name}" for user: ${userId} after ${duration}ms`, "add_exercise");
 			throw error;
 		}
 	}
@@ -91,7 +102,12 @@ export class ExerciseRepo {
 					this.logError(`Invalid exercise data for ID ${id} for user: ${uid}`, "get_exercise_by_id");
 					throw new Error("Invalid exercise data from Firestore");
 				}
-				return { id: snap.id, ...data } as Exercise;
+				return {
+					id: snap.id,
+					name: data.name,
+					user_id: uid,
+					created_at: new Date().toISOString()
+				} as Exercise;
 			});
 			
 			const duration = Date.now() - startTime;
@@ -108,27 +124,41 @@ export class ExerciseRepo {
 		}
 	}
 
-	async getExercises(uid: string): Promise<Exercise[]> {
+	getExercises(userId: string): Observable<Exercise[]> {
+		const exercises$ = observable<Exercise[]>([]);
+		
+		this.logDebug(`Setting up reactive observable for exercises for user: ${userId}`, "get_exercises");
+		
+		// Set up real-time subscription that feeds the observable
+		this.subscribeToExercises(userId, (exercises) => {
+			exercises$.set(exercises);
+		});
+		
+		return exercises$;
+	}
+
+
+	async deleteExercise(userId: string, exerciseId: string): Promise<void> {
 		const startTime = Date.now();
-		this.logDebug(`Getting all exercises for user: ${uid}`, "get_all_exercises");
+		this.logDebug(`Deleting exercise with ID: ${exerciseId} for user: ${userId}`, "delete_exercise");
 		
 		try {
-			const querySnapshot = await getDocs(collection(getDb(), this.getExercisesCollectionPath(uid)));
-			const exercises = querySnapshot.docs.map((doc) => {
-				const data = doc.data();
-				if (!this.validateExerciseData(data)) {
-					this.logError(`Invalid exercise data for doc ${doc.id} for user: ${uid}`, "get_all_exercises");
-					throw new Error(`Invalid exercise data from Firestore for doc ${doc.id}`);
-				}
-				return { id: doc.id, ...data } as Exercise;
-			});
+			// Validate inputs
+			if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
+				throw new Error('Valid userId is required');
+			}
+			if (!exerciseId || typeof exerciseId !== 'string' || exerciseId.trim().length === 0) {
+				throw new Error('Valid exerciseId is required');
+			}
+			
+			const docRef = doc(getDb(), this.getExercisesCollectionPath(userId), exerciseId);
+			await deleteDoc(docRef);
 			
 			const duration = Date.now() - startTime;
-			this.logDebug(`Successfully retrieved ${exercises.length} exercises for user: ${uid} (${duration}ms)`, "get_all_exercises");
-			return exercises;
+			this.logDebug(`Successfully deleted exercise with ID: ${exerciseId} for user: ${userId} (${duration}ms)`, "delete_exercise");
 		} catch (error) {
 			const duration = Date.now() - startTime;
-			this.logError(`Failed to get exercises for user: ${uid} after ${duration}ms`, "get_all_exercises");
+			this.logError(`Failed to delete exercise with ID: ${exerciseId} for user: ${userId} after ${duration}ms`, "delete_exercise");
 			throw error;
 		}
 	}
@@ -150,7 +180,12 @@ export class ExerciseRepo {
 							this.logError(`Invalid exercise data in subscription for doc ${doc.id} for user: ${uid}`, "subscribe_exercises");
 							throw new Error(`Invalid exercise data from Firestore for doc ${doc.id}`);
 						}
-						return { id: doc.id, ...data } as Exercise;
+						return {
+							id: doc.id,
+							name: data.name,
+							user_id: uid,
+							created_at: new Date().toISOString()
+						} as Exercise;
 					});
 					
 					const duration = Date.now() - startTime;

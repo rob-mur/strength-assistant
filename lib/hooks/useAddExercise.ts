@@ -6,7 +6,7 @@ export function useAddExercise(uid: string): (exercise: string) => Promise<void>
       throw new Error("User must be authenticated to add exercises");
     }
     const repo = ExerciseRepo.getInstance();
-    await repo.addExercise(exercise, uid);
+    await repo.addExercise(uid, { name: exercise });
   };
 
   return addExercise;

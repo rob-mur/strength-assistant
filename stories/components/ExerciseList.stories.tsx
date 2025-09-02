@@ -23,14 +23,20 @@ const meta: Meta<typeof ExerciseList> = {
       {
         id: "1",
         name: "Bench Press",
+        user_id: "story-user",
+        created_at: "2023-01-01T00:00:00Z",
       },
       {
         id: "2",
         name: "Squat",
+        user_id: "story-user",
+        created_at: "2023-01-01T01:00:00Z",
       },
       {
         id: "3",
         name: "Deadlift",
+        user_id: "story-user",
+        created_at: "2023-01-01T02:00:00Z",
       },
     ],
   },

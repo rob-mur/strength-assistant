@@ -5,6 +5,7 @@ import { logger } from "@/lib/data/firebase/logger";
 const mockAddDoc = jest.fn();
 const mockGetDoc = jest.fn();
 const mockGetDocs = jest.fn();
+const mockDeleteDoc = jest.fn();
 const mockCollection = jest.fn();
 const mockDoc = jest.fn();
 const mockOnSnapshot = jest.fn();
@@ -17,6 +18,7 @@ jest.mock("@/lib/data/firebase", () => ({
   getDoc: (...args: any[]) => mockGetDoc(...args),
   getDocs: (...args: any[]) => mockGetDocs(...args),
   addDoc: (...args: any[]) => mockAddDoc(...args),
+  deleteDoc: (...args: any[]) => mockDeleteDoc(...args),
   onSnapshot: (...args: any[]) => mockOnSnapshot(...args),
 }));
 
@@ -32,7 +34,7 @@ jest.mock("@/lib/data/firebase/logger", () => ({
 describe("ExerciseRepo", () => {
   let repo: ExerciseRepo;
   const testUid = "test-user-123";
-  const testExercise = "Push-ups";
+  const testExercise = { name: "Push-ups" };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -89,16 +91,15 @@ describe("ExerciseRepo", () => {
       mockCollection.mockReturnValue("mock-collection");
       mockAddDoc.mockResolvedValue(mockDocRef);
 
-      const result = await repo.addExercise(testExercise, testUid);
+      await repo.addExercise(testUid, testExercise);
 
       expect(mockGetDb).toHaveBeenCalled();
       expect(mockCollection).toHaveBeenCalledWith("mock-db", `users/${testUid}/exercises`);
-      expect(mockAddDoc).toHaveBeenCalledWith("mock-collection", { name: testExercise });
-      expect(result).toBe("exercise-123");
+      expect(mockAddDoc).toHaveBeenCalledWith("mock-collection", { name: testExercise.name });
       
       // Verify logging calls
       expect(logger.debug).toHaveBeenCalledWith(
-        `[ExerciseRepo] Adding exercise: "${testExercise}" for user: ${testUid}`,
+        `[ExerciseRepo] Adding exercise: "${testExercise.name}" for user: ${testUid}`,
         expect.objectContaining({
           service: "ExerciseRepo",
           platform: "React Native",
@@ -106,7 +107,7 @@ describe("ExerciseRepo", () => {
         })
       );
       expect(logger.debug).toHaveBeenCalledWith(
-        expect.stringContaining(`[ExerciseRepo] Successfully added exercise "${testExercise}" with ID: exercise-123 for user: ${testUid}`),
+        expect.stringContaining(`[ExerciseRepo] Successfully added exercise "${testExercise.name}" for user: ${testUid}`),
         expect.objectContaining({
           service: "ExerciseRepo",
           platform: "React Native", 
@@ -120,11 +121,11 @@ describe("ExerciseRepo", () => {
       mockCollection.mockReturnValue("mock-collection");
       mockAddDoc.mockRejectedValue(error);
 
-      await expect(repo.addExercise(testExercise, testUid)).rejects.toThrow("Firestore error");
+      await expect(repo.addExercise(testUid, testExercise)).rejects.toThrow("Firestore error");
       
       // Verify error logging
       expect(logger.error).toHaveBeenCalledWith(
-        expect.stringContaining(`[ExerciseRepo] Failed to add exercise "${testExercise}" for user: ${testUid} after`),
+        expect.stringContaining(`[ExerciseRepo] Failed to add exercise "${testExercise.name}" for user: ${testUid} after`),
         expect.objectContaining({
           service: "ExerciseRepo",
           platform: "React Native",
@@ -136,7 +137,7 @@ describe("ExerciseRepo", () => {
 
   describe("getExerciseById", () => {
     test("successfully retrieves an exercise with logging", async () => {
-      const mockSnapData = { name: testExercise };
+      const mockSnapData = { name: testExercise.name };
       const mockSnap = {
         id: "exercise-123",
         data: () => mockSnapData,
@@ -147,7 +148,12 @@ describe("ExerciseRepo", () => {
       const result = await repo.getExerciseById("exercise-123", testUid);
 
       expect(mockDoc).toHaveBeenCalledWith("mock-db", `users/${testUid}/exercises`, "exercise-123");
-      expect(result).toEqual({ id: "exercise-123", name: testExercise });
+      expect(result).toEqual({ 
+        id: "exercise-123", 
+        name: testExercise.name, 
+        user_id: testUid, 
+        created_at: expect.any(String) 
+      });
       
       // Verify logging calls
       expect(logger.debug).toHaveBeenCalledWith(
@@ -159,7 +165,7 @@ describe("ExerciseRepo", () => {
         })
       );
       expect(logger.debug).toHaveBeenCalledWith(
-        expect.stringContaining(`[ExerciseRepo] Successfully retrieved exercise "${testExercise}" (ID: exercise-123) for user: ${testUid}`),
+        expect.stringContaining(`[ExerciseRepo] Successfully retrieved exercise "${testExercise.name}" (ID: exercise-123) for user: ${testUid}`),
         expect.objectContaining({
           service: "ExerciseRepo", 
           platform: "React Native",
@@ -235,103 +241,77 @@ describe("ExerciseRepo", () => {
   });
 
   describe("getExercises", () => {
-    test("successfully retrieves all exercises with logging", async () => {
-      const mockDocs = [
-        { id: "ex1", data: () => ({ name: "Push-ups" }) },
-        { id: "ex2", data: () => ({ name: "Squats" }) },
+    test("returns an observable that updates with real-time data", () => {
+      const mockUnsubscribe = jest.fn();
+      
+      // Mock subscribeToExercises to call the callback immediately
+      repo.subscribeToExercises = jest.fn().mockImplementation((userId, callback) => {
+        // Simulate immediate callback with mock data
+        setTimeout(() => {
+          callback([
+            { id: "ex1", name: "Push-ups", user_id: userId, created_at: "2023-01-01T00:00:00Z" },
+            { id: "ex2", name: "Squats", user_id: userId, created_at: "2023-01-01T01:00:00Z" },
+          ]);
+        }, 0);
+        return mockUnsubscribe;
+      });
+
+      const exercises$ = repo.getExercises(testUid);
+      
+      // Verify it returns an Observable
+      expect(exercises$).toBeDefined();
+      expect(typeof exercises$.get).toBe('function');
+      expect(typeof exercises$.set).toBe('function');
+      
+      // Verify subscription was set up
+      expect(repo.subscribeToExercises).toHaveBeenCalledWith(testUid, expect.any(Function));
+      
+      // Verify logging
+      expect(logger.debug).toHaveBeenCalledWith(
+        `[ExerciseRepo] Setting up reactive observable for exercises for user: ${testUid}`,
+        expect.objectContaining({
+          service: "ExerciseRepo",
+          platform: "React Native",
+          operation: "get_exercises"
+        })
+      );
+    });
+
+    test("observable starts with empty array", () => {
+      const mockUnsubscribe = jest.fn();
+      
+      repo.subscribeToExercises = jest.fn().mockReturnValue(mockUnsubscribe);
+
+      const exercises$ = repo.getExercises(testUid);
+      
+      // Initially empty
+      expect(exercises$.get()).toEqual([]);
+    });
+
+    test("observable updates when subscription receives new data", (done) => {
+      const mockUnsubscribe = jest.fn();
+      const testData = [
+        { id: "ex1", name: "Push-ups", user_id: testUid, created_at: "2023-01-01T00:00:00Z" }
       ];
-      const mockQuerySnapshot = { docs: mockDocs };
       
-      mockCollection.mockReturnValue("mock-collection");
-      mockGetDocs.mockResolvedValue(mockQuerySnapshot);
+      repo.subscribeToExercises = jest.fn().mockImplementation((userId, callback) => {
+        // Simulate delayed callback
+        setTimeout(() => {
+          callback(testData);
+        }, 10);
+        return mockUnsubscribe;
+      });
 
-      const result = await repo.getExercises(testUid);
-
-      expect(result).toEqual([
-        { id: "ex1", name: "Push-ups" },
-        { id: "ex2", name: "Squats" },
-      ]);
+      const exercises$ = repo.getExercises(testUid);
       
-      // Verify logging calls
-      expect(logger.debug).toHaveBeenCalledWith(
-        `[ExerciseRepo] Getting all exercises for user: ${testUid}`,
-        expect.objectContaining({
-          service: "ExerciseRepo",
-          platform: "React Native",
-          operation: "get_all_exercises"
-        })
-      );
-      expect(logger.debug).toHaveBeenCalledWith(
-        expect.stringContaining(`[ExerciseRepo] Successfully retrieved 2 exercises for user: ${testUid}`),
-        expect.objectContaining({
-          service: "ExerciseRepo",
-          platform: "React Native",
-          operation: "get_all_exercises"
-        })
-      );
-    });
-
-    test("throws error for invalid exercise data in collection with logging", async () => {
-      const mockDocs = [
-        { id: "ex1", data: () => ({ invalidField: "invalid" }) },
-      ];
-      const mockQuerySnapshot = { docs: mockDocs };
+      // Initially empty
+      expect(exercises$.get()).toEqual([]);
       
-      mockCollection.mockReturnValue("mock-collection");
-      mockGetDocs.mockResolvedValue(mockQuerySnapshot);
-
-      await expect(repo.getExercises(testUid)).rejects.toThrow(
-        "Invalid exercise data from Firestore for doc ex1"
-      );
-      
-      // Verify error logging
-      expect(logger.error).toHaveBeenCalledWith(
-        `[ExerciseRepo] Invalid exercise data for doc ex1 for user: ${testUid}`,
-        expect.objectContaining({
-          service: "ExerciseRepo",
-          platform: "React Native",
-          operation: "get_all_exercises"
-        })
-      );
-    });
-
-    test("handles empty collection with logging", async () => {
-      const mockQuerySnapshot = { docs: [] };
-      
-      mockCollection.mockReturnValue("mock-collection");
-      mockGetDocs.mockResolvedValue(mockQuerySnapshot);
-
-      const result = await repo.getExercises(testUid);
-
-      expect(result).toEqual([]);
-      
-      // Verify logging for empty collection
-      expect(logger.debug).toHaveBeenCalledWith(
-        expect.stringContaining(`[ExerciseRepo] Successfully retrieved 0 exercises for user: ${testUid}`),
-        expect.objectContaining({
-          service: "ExerciseRepo",
-          platform: "React Native",
-          operation: "get_all_exercises"
-        })
-      );
-    });
-
-    test("handles Firebase errors with logging", async () => {
-      const error = new Error("Firebase query failed");
-      mockCollection.mockReturnValue("mock-collection");
-      mockGetDocs.mockRejectedValue(error);
-
-      await expect(repo.getExercises(testUid)).rejects.toThrow("Firebase query failed");
-      
-      // Verify error logging
-      expect(logger.error).toHaveBeenCalledWith(
-        expect.stringContaining(`[ExerciseRepo] Failed to get exercises for user: ${testUid} after`),
-        expect.objectContaining({
-          service: "ExerciseRepo",
-          platform: "React Native",
-          operation: "get_all_exercises"
-        })
-      );
+      // Set up listener for when observable updates
+      setTimeout(() => {
+        expect(exercises$.get()).toEqual(testData);
+        done();
+      }, 20);
     });
   });
 
@@ -353,7 +333,7 @@ describe("ExerciseRepo", () => {
       const unsubscribe = repo.subscribeToExercises(testUid, mockCallback);
 
       expect(mockCallback).toHaveBeenCalledWith([
-        { id: "ex1", name: "Push-ups" },
+        { id: "ex1", name: "Push-ups", user_id: testUid, created_at: expect.any(String) },
       ]);
       expect(typeof unsubscribe).toBe("function");
       
@@ -447,6 +427,95 @@ describe("ExerciseRepo", () => {
           operation: "subscribe_exercises"
         })
       );
+    });
+
+    test("validates exercise input and throws error for invalid data", async () => {
+      const invalidExercise = { name: "" };
+      
+      await expect(repo.addExercise(testUid, invalidExercise)).rejects.toThrow("Exercise name cannot be empty");
+    });
+
+    test("validates userId and throws error for invalid userId", async () => {
+      const validExercise = { name: "Valid Exercise" };
+      
+      await expect(repo.addExercise("", validExercise)).rejects.toThrow("Valid userId is required");
+      await expect(repo.addExercise("   ", validExercise)).rejects.toThrow("Valid userId is required");
+    });
+
+    test("sanitizes exercise name before saving", async () => {
+      const exerciseWithExtraSpaces = { name: "  Bench   Press  " };
+      const mockDocRef = { id: "exercise-123" };
+      
+      mockCollection.mockReturnValue("mock-collection");
+      mockAddDoc.mockResolvedValue(mockDocRef);
+
+      await repo.addExercise(testUid, exerciseWithExtraSpaces);
+
+      expect(mockAddDoc).toHaveBeenCalledWith("mock-collection", { name: "Bench Press" });
+    });
+  });
+
+  describe("deleteExercise", () => {
+    test("successfully deletes an exercise with logging", async () => {
+      const exerciseId = "exercise-123";
+      
+      mockDoc.mockReturnValue("mock-doc-ref");
+      mockDeleteDoc.mockResolvedValue(undefined);
+
+      await repo.deleteExercise(testUid, exerciseId);
+
+      expect(mockDoc).toHaveBeenCalledWith("mock-db", `users/${testUid}/exercises`, exerciseId);
+      expect(mockDeleteDoc).toHaveBeenCalledWith("mock-doc-ref");
+      
+      // Verify logging calls
+      expect(logger.debug).toHaveBeenCalledWith(
+        `[ExerciseRepo] Deleting exercise with ID: ${exerciseId} for user: ${testUid}`,
+        expect.objectContaining({
+          service: "ExerciseRepo",
+          platform: "React Native",
+          operation: "delete_exercise"
+        })
+      );
+      expect(logger.debug).toHaveBeenCalledWith(
+        expect.stringContaining(`[ExerciseRepo] Successfully deleted exercise with ID: ${exerciseId} for user: ${testUid}`),
+        expect.objectContaining({
+          service: "ExerciseRepo",
+          platform: "React Native",
+          operation: "delete_exercise"
+        })
+      );
+    });
+
+    test("handles delete errors with logging", async () => {
+      const exerciseId = "exercise-123";
+      const error = new Error("Firestore delete error");
+      
+      mockDoc.mockReturnValue("mock-doc-ref");
+      mockDeleteDoc.mockRejectedValue(error);
+
+      await expect(repo.deleteExercise(testUid, exerciseId)).rejects.toThrow("Firestore delete error");
+      
+      // Verify error logging
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.stringContaining(`[ExerciseRepo] Failed to delete exercise with ID: ${exerciseId} for user: ${testUid} after`),
+        expect.objectContaining({
+          service: "ExerciseRepo",
+          platform: "React Native",
+          operation: "delete_exercise"
+        })
+      );
+    });
+
+    test("validates userId and throws error for invalid userId", async () => {
+      const exerciseId = "valid-exercise-id";
+      
+      await expect(repo.deleteExercise("", exerciseId)).rejects.toThrow("Valid userId is required");
+      await expect(repo.deleteExercise("   ", exerciseId)).rejects.toThrow("Valid userId is required");
+    });
+
+    test("validates exerciseId and throws error for invalid exerciseId", async () => {
+      await expect(repo.deleteExercise(testUid, "")).rejects.toThrow("Valid exerciseId is required");
+      await expect(repo.deleteExercise(testUid, "   ")).rejects.toThrow("Valid exerciseId is required");
     });
   });
 });
