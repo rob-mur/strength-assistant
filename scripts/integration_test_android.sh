@@ -120,7 +120,30 @@ echo ""
 echo "Testing app connectivity..."
 adb shell ping -c 2 10.0.2.2 2>/dev/null || echo "Cannot ping host machine"
 echo "Testing host connectivity from emulator:"
-adb shell "curl -s http://10.0.2.2:54321/health" && echo "✅ Can reach Supabase on host" || echo "❌ Cannot reach Supabase on host"
+
+# First verify Supabase is actually running on host
+echo "Verifying Supabase is running on host..."
+if curl -s http://localhost:54321/health >/dev/null 2>&1; then
+    echo "✅ Supabase confirmed running on host"
+else
+    echo "❌ Supabase not reachable on host - this will cause Android tests to fail"
+    echo "Host Supabase status check failed"
+    exit 1
+fi
+
+# Test if Android emulator can reach the host Supabase port
+echo "Testing Android emulator connectivity to Supabase..."
+# Try a simple TCP connection test using /dev/tcp (bash built-in)
+if adb shell "timeout 5 sh -c '</dev/tcp/10.0.2.2/54321'" 2>/dev/null; then
+    echo "✅ Android emulator can connect to Supabase port"
+elif adb shell "nc -z 10.0.2.2 54321" 2>/dev/null; then
+    echo "✅ Android emulator can reach Supabase port (nc test)"
+else
+    # Since ping worked, assume network is OK and Supabase should be reachable
+    echo "⚠️ Cannot directly test port connectivity from emulator"
+    echo "   But host is reachable and Supabase is running - proceeding with tests"
+    echo "   The app should be able to connect to Supabase at 10.0.2.2:54321"
+fi
 echo ""
 
 echo "Environment variables for Supabase:"
@@ -133,9 +156,25 @@ echo "Current running processes:"
 adb shell ps | grep -i strength || echo "No strength process found"
 echo ""
 
+echo "=== PRE-MAESTRO APP STATE CHECK ==="
+echo "Checking if app is responding and logs..."
+sleep 2
+
+echo "Recent app logs (ReactNativeJS):"
+adb logcat -d | grep -E "ReactNativeJS|Supabase|Legend" | tail -20 || echo "No React Native logs found"
+echo ""
+
+echo "App activity state:"
+adb shell dumpsys activity activities | grep -A 5 -B 5 strength || echo "No strength activity details"
+echo ""
+
 echo "=== STARTING MAESTRO TESTS ==="
 echo "Starting Maestro tests with enhanced debugging..."
 echo "Debug output will be saved to maestro-debug-output/"
+
+# Clear old logcat and start capturing new logs during test
+adb logcat -c
+echo "Cleared logcat buffer, starting fresh capture during tests..."
 
 # Run Maestro with debug output and capture console output
 maestro test .maestro/android --debug-output maestro-debug-output 2>&1 | tee maestro-debug-output/maestro-console.log
@@ -145,6 +184,10 @@ MAESTRO_EXIT_CODE=${PIPESTATUS[0]}
 
 echo "=== POST-TEST DIAGNOSTICS ==="
 echo "Maestro tests completed with exit code: $MAESTRO_EXIT_CODE"
+
+echo "App logs during test execution:"
+adb logcat -d | grep -E "ReactNativeJS|Supabase|Legend|Error|Exception" | tail -30 || echo "No relevant logs found"
+echo ""
 
 echo "Final app state:"
 adb shell dumpsys activity activities | grep -i strength || echo "No strength activity found"
