@@ -23,18 +23,40 @@ npx kill-port 5000 || true
 npx kill-port 8080 || true
 sleep 2
 
+# Start services sequentially to avoid Docker resource contention
+echo "🔄 Starting Firebase emulators at $(date)..."
 firebase emulators:start &
-supabase start &
-emulator -avd test -no-snapshot-load -no-window -accel on -gpu off &
+FIREBASE_PID=$!
 
+# Wait for Firebase to be ready before starting Supabase
+echo "⏳ Waiting for Firebase emulators to initialize..."
+timeout=30
+counter=0
+while ! curl -s http://localhost:8080 > /dev/null; do
+    sleep 1
+    counter=$((counter + 1))
+    if [ $counter -ge $timeout ]; then
+        echo "❌ Firebase emulators failed to start within $timeout seconds"
+        exit 1
+    fi
+done
+echo "✅ Firebase emulators ready"
+
+echo "🔄 Starting Supabase (blocking to ensure clean initialization) at $(date)..."
+supabase start
+echo "✅ Supabase started successfully at $(date)"
+
+echo "🔄 Starting Android emulator..."
+emulator -avd test -no-snapshot-load -no-window -accel on -gpu off &
+EMULATOR_PID=$!
 echo "launched emulator in background"
 
-EMULATOR_PID=$!
-
 errorhandler () {
-    kill $EMULATOR_PID
+    kill $EMULATOR_PID 2>/dev/null || true
+    kill $FIREBASE_PID 2>/dev/null || true
     supabase stop 2>/dev/null || true
-    npx kill-port 8080
+    npx kill-port 8080 2>/dev/null || true
+    pkill -f "firebase emulators" 2>/dev/null || true
 }
 trap errorhandler ERR EXIT
 
@@ -50,35 +72,17 @@ done
 
 echo "Emulator is ready!"
 
-# Wait for Firebase emulators
-echo "⏳ Waiting for Firebase emulators to be ready..."
-timeout=30
-counter=0
-while ! curl -s http://localhost:8080 > /dev/null; do
-    sleep 1
-    counter=$((counter + 1))
-    if [ $counter -ge $timeout ]; then
-        echo "❌ Firebase emulators failed to start within $timeout seconds"
-        exit 1
-    fi
-done
-echo "✅ Firebase emulators ready"
+# Firebase already confirmed ready in sequential startup above
 
-# Wait for Supabase emulators and apply migrations
-echo "⏳ Waiting for Supabase emulators to be ready..."
-timeout=120
-counter=0
-while ! curl -s http://localhost:54321/health > /dev/null; do
-    sleep 1
-    counter=$((counter + 1))
-    if [ $counter -ge $timeout ]; then
-        echo "❌ Supabase emulators failed to start within $timeout seconds"
-        echo "Docker container status:"
-        docker ps -a | grep supabase || echo "No supabase containers found"
-        exit 1
-    fi
-done
-echo "✅ Supabase emulators ready"
+# Verify Supabase is responding (should be ready since we started it blocking)
+echo "⏳ Verifying Supabase is ready..."
+if ! curl -s http://localhost:54321/health > /dev/null; then
+    echo "❌ Supabase health check failed despite blocking start"
+    echo "Docker container status:"
+    docker ps -a | grep supabase || echo "No supabase containers found"
+    exit 1
+fi
+echo "✅ Supabase verified ready"
 
 # Apply migrations (config.toml already has anonymous auth enabled)
 echo "🔄 Applying Supabase migrations..."
