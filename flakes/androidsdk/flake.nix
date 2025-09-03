@@ -23,6 +23,7 @@
         includeSystemImages = true;
         systemImageTypes = ["default"];  # Use minimal system images (~1GB savings)
         includeNDK = true;                # NDK required for app build
+        ndkVersion = "27.1.12297006";     # Specify exact NDK version to avoid read-only store issues
         includeCmake = false;             # Remove CMake (~500MB savings)
       };
       androidSdk = androidComposition.androidsdk;
