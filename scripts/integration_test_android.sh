@@ -11,13 +11,9 @@ export EXPO_PUBLIC_USE_SUPABASE_EMULATOR=true
 export EXPO_PUBLIC_SUPABASE_EMULATOR_HOST=10.0.2.2
 export EXPO_PUBLIC_SUPABASE_EMULATOR_PORT=54321
 
-# Install system image and create AVD with proper error handling
-echo "🔄 Installing Android system image..."
-sdkmanager "system-images;android-35;default;x86_64"
-
-echo "🔄 Creating Android AVD..."
-# Use multiple "no" responses to handle all potential prompts
-echo -e "no\nno\nno" | avdmanager create avd --force -n test -k "system-images;android-35;default;x86_64" --device "Nexus 5X"
+echo "🔄 Creating Android AVD using devbox-managed system image..."
+# Use the google_apis_playstore system image that's provided by the flake
+echo -e "no\nno\nno" | avdmanager create avd --force -n test -k "system-images;android-35;google_apis_playstore;x86_64" --device "Nexus 5X"
 
 # Verify AVD was created successfully
 if [ ! -f "$HOME/.android/avd/test.avd/config.ini" ]; then
