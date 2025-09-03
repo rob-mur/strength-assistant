@@ -16,7 +16,8 @@ echo "🔄 Creating Android AVD using devbox-managed system image..."
 echo -e "no\nno\nno" | avdmanager create avd --force -n test -k "system-images;android-35;default;x86_64" --device "Nexus 5X"
 
 # Verify AVD was created successfully
-if [ ! -f "$HOME/.android/avd/test.avd/config.ini" ]; then
+AVD_CONFIG_FILE="$HOME/.android/avd/test.avd/config.ini"
+if [ ! -f "$AVD_CONFIG_FILE" ]; then
     echo "❌ Failed to create Android AVD"
     echo "Available AVDs:"
     avdmanager list avd
@@ -24,7 +25,22 @@ if [ ! -f "$HOME/.android/avd/test.avd/config.ini" ]; then
     avdmanager list targets
     exit 1
 fi
-echo "✅ Android AVD created successfully"
+
+# Optimize AVD for disk space savings
+echo "🔧 Optimizing AVD for reduced disk usage..."
+# Reduce userdata partition from default 7GB to 2GB
+echo "disk.dataPartition.size=2GB" >> "$AVD_CONFIG_FILE"
+# Use minimal RAM (2GB instead of default 4GB)
+echo "hw.ramSize=2048" >> "$AVD_CONFIG_FILE"
+# Disable GPU acceleration to save space/resources
+echo "hw.gpu.enabled=no" >> "$AVD_CONFIG_FILE"
+# Disable audio to save resources
+echo "hw.audioOutput=no" >> "$AVD_CONFIG_FILE"
+echo "hw.audioInput=no" >> "$AVD_CONFIG_FILE"
+# Reduce internal storage size
+echo "disk.dataPartition.initPath=" >> "$AVD_CONFIG_FILE"
+
+echo "✅ Android AVD created and optimized successfully"
 
 adb start-server
 
