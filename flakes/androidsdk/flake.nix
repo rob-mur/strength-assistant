@@ -22,7 +22,7 @@
         emulatorVersion = "35.5.10";
         includeSystemImages = true;
         systemImageTypes = ["default"];  # Use minimal system images (~1GB savings)
-        includeNDK = false;               # Remove NDK (~3GB savings)
+        includeNDK = true;                # NDK required for app build
         includeCmake = false;             # Remove CMake (~500MB savings)
       };
       androidSdk = androidComposition.androidsdk;
