@@ -11,16 +11,21 @@ export EXPO_PUBLIC_USE_SUPABASE_EMULATOR=true
 export EXPO_PUBLIC_SUPABASE_EMULATOR_HOST=10.0.2.2
 export EXPO_PUBLIC_SUPABASE_EMULATOR_PORT=54321
 
-echo "no" | avdmanager create avd --force -n test -k "system-images;android-35;google_apis_playstore;x86_64" --device "pixel_xl"
+# Use smaller Nexus 5X profile and default system image to save disk space
+echo "no" | avdmanager create avd --force -n test -k "system-images;android-35;default;x86_64" --device "Nexus 5X"
 
 adb start-server
 
-# Clean up any existing processes
+# Clean up any existing processes and Docker resources to save disk space
 pkill -f "firebase emulators" || true
 supabase stop || true
 npx kill-port 9099 || true
 npx kill-port 5000 || true  
 npx kill-port 8080 || true
+
+# Clean up Docker resources to free disk space
+echo "🧹 Cleaning up Docker resources to save disk space..."
+docker system prune -f || true
 sleep 2
 
 # Start services sequentially to avoid Docker resource contention
