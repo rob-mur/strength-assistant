@@ -66,44 +66,24 @@ echo "✅ Firebase emulators ready"
 
 # Wait for Supabase emulators and apply migrations
 echo "⏳ Waiting for Supabase emulators to be ready..."
-timeout=60
+timeout=120
 counter=0
 while ! curl -s http://localhost:54321/health > /dev/null; do
     sleep 1
     counter=$((counter + 1))
     if [ $counter -ge $timeout ]; then
         echo "❌ Supabase emulators failed to start within $timeout seconds"
+        echo "Docker container status:"
+        docker ps -a | grep supabase || echo "No supabase containers found"
         exit 1
     fi
 done
 echo "✅ Supabase emulators ready"
 
-# Restart Supabase to ensure auth config is loaded properly
-echo "🔄 Restarting Supabase to reload auth configuration..."
-supabase stop
-sleep 2
-
-# Start with fresh config (ensures anonymous auth is enabled)  
-supabase start
-sleep 5
-
-# Wait for Supabase to be ready with auth config loaded
-echo "🔄 Waiting for Supabase to be ready with fresh auth config..."
-timeout=60
-counter=0
-while ! curl -s http://localhost:54321/health > /dev/null; do
-    sleep 1
-    counter=$((counter + 1))
-    if [ $counter -ge $timeout ]; then
-        echo "❌ Supabase failed to restart within $timeout seconds"
-        exit 1
-    fi
-done
-
-# Apply migrations (after auth config is loaded)
+# Apply migrations (config.toml already has anonymous auth enabled)
 echo "🔄 Applying Supabase migrations..."
 supabase db reset --local
-echo "✅ Migrations applied with fresh auth config"
+echo "✅ Migrations applied successfully"
 
 adb install build_preview.apk
 
