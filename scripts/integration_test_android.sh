@@ -11,8 +11,24 @@ export EXPO_PUBLIC_USE_SUPABASE_EMULATOR=true
 export EXPO_PUBLIC_SUPABASE_EMULATOR_HOST=10.0.2.2
 export EXPO_PUBLIC_SUPABASE_EMULATOR_PORT=54321
 
-# Use smaller Nexus 5X profile and default system image to save disk space
-echo "no" | avdmanager create avd --force -n test -k "system-images;android-35;default;x86_64" --device "Nexus 5X"
+# Install system image and create AVD with proper error handling
+echo "🔄 Installing Android system image..."
+sdkmanager "system-images;android-35;default;x86_64"
+
+echo "🔄 Creating Android AVD..."
+# Use multiple "no" responses to handle all potential prompts
+echo -e "no\nno\nno" | avdmanager create avd --force -n test -k "system-images;android-35;default;x86_64" --device "Nexus 5X"
+
+# Verify AVD was created successfully
+if [ ! -f "$HOME/.android/avd/test.avd/config.ini" ]; then
+    echo "❌ Failed to create Android AVD"
+    echo "Available AVDs:"
+    avdmanager list avd
+    echo "Available system images:"  
+    avdmanager list targets
+    exit 1
+fi
+echo "✅ Android AVD created successfully"
 
 adb start-server
 
