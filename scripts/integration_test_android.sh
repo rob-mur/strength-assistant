@@ -6,10 +6,6 @@ unset ANDROID_NDK_HOME
 unset ANDROID_AVD_HOME
 unset XDG_CONFIG_HOME
 
-# Force Supabase emulator mode for Android tests
-export EXPO_PUBLIC_USE_SUPABASE_EMULATOR=true
-export EXPO_PUBLIC_SUPABASE_EMULATOR_HOST=10.0.2.2
-export EXPO_PUBLIC_SUPABASE_EMULATOR_PORT=54321
 
 echo "🔄 Creating Android AVD using devbox-managed system image..."
 # Use the default system image that's provided by the optimized flake
