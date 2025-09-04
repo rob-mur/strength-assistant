@@ -4,12 +4,18 @@ set -e
 
 echo "🌐 Starting Chrome Integration Tests"
 
+# Change to project root directory (relative to scripts folder)
+cd "$(dirname "$0")/.."
+
 # Cleanup function
 cleanup() {
     echo "🧹 Cleaning up processes..."
     if [ ! -z "$FIREBASE_PID" ]; then
         kill $FIREBASE_PID 2>/dev/null || true
     fi
+
+    supabase stop 2>/dev/null || true
+
     if [ ! -z "$EXPO_PID" ]; then
         kill $EXPO_PID 2>/dev/null || true
     fi
@@ -30,6 +36,10 @@ echo "🔥 Starting Firebase emulators..."
 firebase emulators:start &
 FIREBASE_PID=$!
 
+# Start Supabase emulators
+echo "🔥 Starting Supabase emulators..."
+supabase start
+
 # Wait for Firebase emulators
 echo "⏳ Waiting for Firebase emulators to be ready..."
 timeout=30
@@ -43,6 +53,11 @@ while ! curl -s http://localhost:8080 > /dev/null; do
     fi
 done
 echo "✅ Firebase emulators ready"
+
+# Apply migrations
+echo "🔄 Applying Supabase migrations..."
+supabase db reset --local
+echo "✅ Migrations applied"
 
 # Start Expo web server
 echo "🚀 Starting Expo web server..."

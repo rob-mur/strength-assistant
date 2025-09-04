@@ -52,3 +52,6 @@ firebase.web.config.json
 coverage/
 .firebase/
 maestro-debug-output/
+
+meta/
+debug*.png

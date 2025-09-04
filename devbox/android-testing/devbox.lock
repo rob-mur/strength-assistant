@@ -1,121 +1,57 @@
 {
   "lockfile_version": "1",
   "packages": {
-    "chromedriver@138": {
-      "last_modified": "2025-07-31T04:07:16Z",
-      "resolved": "github:NixOS/nixpkgs/8679b16e11becd487b45d568358ddf9d5640d860#chromedriver",
-      "source": "devbox-search",
-      "version": "138.0.7204.184",
-      "systems": {
-        "aarch64-darwin": {
-          "outputs": [
-            {
-              "name": "out",
-              "path": "/nix/store/hgy63442jv3p5pj3flbac2yf16z8l81i-chromedriver-138.0.7204.184",
-              "default": true
-            }
-          ],
-          "store_path": "/nix/store/hgy63442jv3p5pj3flbac2yf16z8l81i-chromedriver-138.0.7204.184"
-        },
-        "x86_64-darwin": {
-          "outputs": [
-            {
-              "name": "out",
-              "path": "/nix/store/9n84z80snqwbya7ijdfpzqvk316nabsl-chromedriver-138.0.7204.184",
-              "default": true
-            }
-          ],
-          "store_path": "/nix/store/9n84z80snqwbya7ijdfpzqvk316nabsl-chromedriver-138.0.7204.184"
-        }
-      }
-    },
-    "chromium@138": {
-      "last_modified": "2025-07-31T04:07:16Z",
-      "resolved": "github:NixOS/nixpkgs/8679b16e11becd487b45d568358ddf9d5640d860#chromium",
-      "source": "devbox-search",
-      "version": "138.0.7204.183",
-      "systems": {
-        "aarch64-linux": {
-          "outputs": [
-            {
-              "name": "out",
-              "path": "/nix/store/zlb0n29pk59slni1ikx2qx1v8hni6xy0-chromium-138.0.7204.183",
-              "default": true
-            },
-            {
-              "name": "sandbox",
-              "path": "/nix/store/vq7filwmwy60z9fjda0kpnnffj4v84pd-chromium-138.0.7204.183-sandbox"
-            }
-          ],
-          "store_path": "/nix/store/zlb0n29pk59slni1ikx2qx1v8hni6xy0-chromium-138.0.7204.183"
-        },
-        "x86_64-linux": {
-          "outputs": [
-            {
-              "name": "out",
-              "path": "/nix/store/5df9bw0imibdw8griaxz6g55gcr0yq10-chromium-138.0.7204.183",
-              "default": true
-            },
-            {
-              "name": "sandbox",
-              "path": "/nix/store/zpx0h5pg7q0n03awqfxcx3d18x93w6nx-chromium-138.0.7204.183-sandbox"
-            }
-          ],
-          "store_path": "/nix/store/5df9bw0imibdw8griaxz6g55gcr0yq10-chromium-138.0.7204.183"
-        }
-      }
-    },
     "firebase-tools@latest": {
-      "last_modified": "2025-07-28T17:09:23Z",
-      "resolved": "github:NixOS/nixpkgs/648f70160c03151bc2121d179291337ad6bc564b#firebase-tools",
+      "last_modified": "2025-08-08T08:05:48Z",
+      "resolved": "github:NixOS/nixpkgs/a3f3e3f2c983e957af6b07a1db98bafd1f87b7a1#firebase-tools",
       "source": "devbox-search",
-      "version": "14.11.1",
+      "version": "14.11.2",
       "systems": {
         "aarch64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/xi8dai4n5hq9n7v02csgc48d9x21j4z0-firebase-tools-14.11.1",
+              "path": "/nix/store/zf8q36g73lakbil2ri5w999p8l6y2hi4-firebase-tools-14.11.2",
               "default": true
             }
           ],
-          "store_path": "/nix/store/xi8dai4n5hq9n7v02csgc48d9x21j4z0-firebase-tools-14.11.1"
+          "store_path": "/nix/store/zf8q36g73lakbil2ri5w999p8l6y2hi4-firebase-tools-14.11.2"
         },
         "aarch64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/vv94zvz0m96zzwn3mq4lncwlbkab7nxj-firebase-tools-14.11.1",
+              "path": "/nix/store/s1nvrwwynvpl4xaxyvydhxkwnsyjk4hh-firebase-tools-14.11.2",
               "default": true
             }
           ],
-          "store_path": "/nix/store/vv94zvz0m96zzwn3mq4lncwlbkab7nxj-firebase-tools-14.11.1"
+          "store_path": "/nix/store/s1nvrwwynvpl4xaxyvydhxkwnsyjk4hh-firebase-tools-14.11.2"
         },
         "x86_64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/xprhm4dwy4bk5pz1az4dl3bbqy1wz4w8-firebase-tools-14.11.1",
+              "path": "/nix/store/p0azzz6gdpgq8r6xxajmlagpgvz2kgxy-firebase-tools-14.11.2",
               "default": true
             }
           ],
-          "store_path": "/nix/store/xprhm4dwy4bk5pz1az4dl3bbqy1wz4w8-firebase-tools-14.11.1"
+          "store_path": "/nix/store/p0azzz6gdpgq8r6xxajmlagpgvz2kgxy-firebase-tools-14.11.2"
         },
         "x86_64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/76w96qfhwhwk6p1ln4mg5pvn5pl305kb-firebase-tools-14.11.1",
+              "path": "/nix/store/s6sgsylhy32asrr2bpm7v3sv9pvdy40x-firebase-tools-14.11.2",
               "default": true
             }
           ],
-          "store_path": "/nix/store/76w96qfhwhwk6p1ln4mg5pvn5pl305kb-firebase-tools-14.11.1"
+          "store_path": "/nix/store/s6sgsylhy32asrr2bpm7v3sv9pvdy40x-firebase-tools-14.11.2"
         }
       }
     },
     "github:NixOS/nixpkgs/nixpkgs-unstable": {
-      "last_modified": "2025-07-24T23:24:55Z",
-      "resolved": "github:NixOS/nixpkgs/0d00f23f023b7215b3f1035adb5247c8ec180dbc?lastModified=1753399495&narHash=sha256-7XG%2FQBqhrYOyA2houjRTL2NMa7IKZZ%2FsomBqr%2BQ%2F6Wo%3D"
+      "last_modified": "2025-08-15T14:26:43Z",
+      "resolved": "github:NixOS/nixpkgs/32f313e49e42f715491e1ea7b306a87c16fe0388?lastModified=1755268003&narHash=sha256-nNaeJjo861wFR0tjHDyCnHs1rbRtrMgxAKMoig9Sj%2Fw%3D"
     },
     "jdk17@latest": {
       "last_modified": "2025-07-28T17:09:23Z",
@@ -202,9 +138,9 @@
       }
     },
     "nodejs@latest": {
-      "last_modified": "2025-08-04T20:54:38Z",
+      "last_modified": "2025-08-10T04:38:50Z",
       "plugin_version": "0.0.2",
-      "resolved": "github:NixOS/nixpkgs/cab778239e705082fe97bb4990e0d24c50924c04#nodejs_24",
+      "resolved": "github:NixOS/nixpkgs/641d909c4a7538f1539da9240dedb1755c907e40#nodejs_24",
       "source": "devbox-search",
       "version": "24.5.0",
       "systems": {
@@ -216,12 +152,12 @@
               "default": true
             },
             {
-              "name": "libv8",
-              "path": "/nix/store/3ys6v5s5gvd9snwnl4saynl6av7mz3vy-nodejs-24.5.0-libv8"
-            },
-            {
               "name": "dev",
               "path": "/nix/store/j6ayg4xpqy9xdxgrhpqylzq8v7v07c6r-nodejs-24.5.0-dev"
+            },
+            {
+              "name": "libv8",
+              "path": "/nix/store/3ys6v5s5gvd9snwnl4saynl6av7mz3vy-nodejs-24.5.0-libv8"
             }
           ],
           "store_path": "/nix/store/b1j05q96hwagn787p2jlgqcjg2nf5x49-nodejs-24.5.0"
@@ -252,12 +188,12 @@
               "default": true
             },
             {
-              "name": "dev",
-              "path": "/nix/store/fg7pi9s6m0spci1pfqbny0kxmk832i3r-nodejs-24.5.0-dev"
-            },
-            {
               "name": "libv8",
               "path": "/nix/store/75b7iix0pbmxmfnmv90l3q0ll1gc75az-nodejs-24.5.0-libv8"
+            },
+            {
+              "name": "dev",
+              "path": "/nix/store/fg7pi9s6m0spci1pfqbny0kxmk832i3r-nodejs-24.5.0-dev"
             }
           ],
           "store_path": "/nix/store/sbcg21wp4bdzyh2542v77sp535kvfbfq-nodejs-24.5.0"
@@ -279,6 +215,54 @@
             }
           ],
           "store_path": "/nix/store/357id3rjy9417k4dkvxxmpgd9bxrwc7l-nodejs-24.5.0"
+        }
+      }
+    },
+    "supabase-cli@latest": {
+      "last_modified": "2025-07-28T17:09:23Z",
+      "resolved": "github:NixOS/nixpkgs/648f70160c03151bc2121d179291337ad6bc564b#supabase-cli",
+      "source": "devbox-search",
+      "version": "2.23.7",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/5hc0dbbvv6mbbrymm3ilv85g4v7dywxp-supabase-cli-2.23.7",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/5hc0dbbvv6mbbrymm3ilv85g4v7dywxp-supabase-cli-2.23.7"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/3q5bmw911k0afd76fq166g0yjwwycd88-supabase-cli-2.23.7",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/3q5bmw911k0afd76fq166g0yjwwycd88-supabase-cli-2.23.7"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/nymfcbmvx35y1qd0kj35h5fpxm23q3jn-supabase-cli-2.23.7",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/nymfcbmvx35y1qd0kj35h5fpxm23q3jn-supabase-cli-2.23.7"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/72v4hjsxmq9nfs87vrik3vivqwh5nlv8-supabase-cli-2.23.7",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/72v4hjsxmq9nfs87vrik3vivqwh5nlv8-supabase-cli-2.23.7"
         }
       }
     }

@@ -1,3 +1,4 @@
+import "react-native-get-random-values";
 import { SplashScreen, Stack } from "expo-router";
 import React from "react";
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from "react-native-paper";

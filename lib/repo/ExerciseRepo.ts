@@ -1,20 +1,14 @@
 import { Exercise, ExerciseInput, ExerciseValidator } from "../models/Exercise";
 import { IExerciseRepo } from "./IExerciseRepo";
-import { observable, Observable } from "@legendapp/state";
-import {
-	getDb,
-	collection,
-	doc,
-	getDoc,
-	getDocs,
-	addDoc,
-	deleteDoc,
-	onSnapshot,
-} from "@/lib/data/firebase";
-import { logger } from "@/lib/data/firebase/logger";
-
-type Unsubscribe = () => void;
-
+import { Observable, observe, computed } from "@legendapp/state";
+import { exercises$, user$ } from "../data/store";
+import { syncExerciseToSupabase, deleteExerciseFromSupabase, syncHelpers } from "../data/sync/syncConfig";
+import { supabaseClient } from "../data/supabase/SupabaseClient";
+import { v4 as uuidv4 } from 'uuid';
+/**
+ * Legend State + Supabase implementation of ExerciseRepo
+ * Provides offline-first data access with automatic sync
+ */
 export class ExerciseRepo implements IExerciseRepo {
 	private static instance: ExerciseRepo;
 
@@ -27,186 +21,212 @@ export class ExerciseRepo implements IExerciseRepo {
 		return ExerciseRepo.instance;
 	}
 
-	private getExercisesCollectionPath(uid: string): string {
-		return `users/${uid}/exercises`;
-	}
-
-	private validateExerciseData(data: unknown): data is Exercise {
-		return (
-			data != null &&
-			typeof data === "object" &&
-			"name" in data &&
-			typeof data.name === "string"
-		);
-	}
-
-	private getLogContext(operation: string) {
-		return {
-			service: "ExerciseRepo",
-			platform: "React Native",
-			operation
-		};
-	}
-
-	private logDebug(message: string, operation: string): void {
-		logger.debug(`[ExerciseRepo] ${message}`, this.getLogContext(operation));
-	}
-
-	private logError(message: string, operation: string): void {
-		logger.error(`[ExerciseRepo] ${message}`, this.getLogContext(operation));
-	}
-
-	private logWarn(message: string, operation: string): void {
-		logger.warn(`[ExerciseRepo] ${message}`, this.getLogContext(operation));
-	}
-
+	/**
+	 * Add a new exercise with optimistic updates and error recovery
+	 * Changes are immediately visible in UI and synced in background
+	 * Note: userId parameter is kept for backwards compatibility but Supabase user ID is used internally
+	 */
 	async addExercise(userId: string, exercise: ExerciseInput): Promise<void> {
-		const startTime = Date.now();
-		this.logDebug(`Adding exercise: "${exercise.name}" for user: ${userId}`, "add_exercise");
-		
+		let rollbackOperation: (() => void) | null = null;
+
 		try {
+			console.log("About to parse exercise");
 			// Validate and sanitize input
 			ExerciseValidator.validateExerciseInput(exercise);
 			const sanitizedName = ExerciseValidator.sanitizeExerciseName(exercise.name);
-			
-			// Validate userId
-			if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
-				throw new Error('Valid userId is required');
+
+			console.log("About to get user");
+			// Get the Supabase user ID (not the Firebase userId parameter)
+			const supabaseUser = await supabaseClient.getCurrentUser();
+			if (!supabaseUser) {
+				throw new Error('User not authenticated with Supabase');
 			}
-			
-			const exerciseCollection = collection(getDb(), this.getExercisesCollectionPath(userId));
-			await addDoc(exerciseCollection, { name: sanitizedName });
-			const duration = Date.now() - startTime;
-			this.logDebug(`Successfully added exercise "${sanitizedName}" for user: ${userId} (${duration}ms)`, "add_exercise");
+
+
+			// Create new exercise object using Supabase user ID
+			const newExercise: Exercise = {
+				id: uuidv4(),
+				name: sanitizedName,
+				user_id: supabaseUser.id,
+				created_at: new Date().toISOString()
+			};
+
+			// Store current state for potential rollback
+			console.log("About to get current exercise state");
+			const currentExercises = exercises$.get();
+			rollbackOperation = () => exercises$.set(currentExercises);
+
+			// Optimistic update - immediately add to local store
+			exercises$.set([...currentExercises, newExercise]);
+
+			console.log("About to try and sync");
+			// Attempt immediate sync to validate the operation
+			try {
+				await syncExerciseToSupabase(newExercise);
+			} catch (syncError) {
+				// Rollback optimistic update on sync failure
+				rollbackOperation();
+				console.error('Sync failed, rolled back optimistic update:', syncError);
+				throw syncError;
+			}
+
 		} catch (error) {
-			const duration = Date.now() - startTime;
-			this.logError(`Failed to add exercise "${exercise.name}" for user: ${userId} after ${duration}ms`, "add_exercise");
+			console.error('Failed to add exercise:', error);
 			throw error;
 		}
 	}
 
+	/**
+	 * Get exercise by ID from local store (works offline)
+	 */
 	async getExerciseById(id: string, uid: string): Promise<Exercise | undefined> {
-		const startTime = Date.now();
-		this.logDebug(`Getting exercise by ID: ${id} for user: ${uid}`, "get_exercise_by_id");
-		
-		try {
-			const docRef = doc(getDb(), this.getExercisesCollectionPath(uid), id);
-
-			const data = await getDoc(docRef).then((snap) => {
-				const data = snap.data();
-				if (data === undefined) {
-					this.logDebug(`Exercise with ID ${id} not found for user: ${uid}`, "get_exercise_by_id");
-					return undefined;
-				}
-				if (!this.validateExerciseData(data)) {
-					this.logError(`Invalid exercise data for ID ${id} for user: ${uid}`, "get_exercise_by_id");
-					throw new Error("Invalid exercise data from Firestore");
-				}
-				return {
-					id: snap.id,
-					name: data.name,
-					user_id: uid,
-					created_at: new Date().toISOString()
-				} as Exercise;
-			});
-			
-			const duration = Date.now() - startTime;
-			if (data) {
-				this.logDebug(`Successfully retrieved exercise "${data.name}" (ID: ${id}) for user: ${uid} (${duration}ms)`, "get_exercise_by_id");
-			} else {
-				this.logDebug(`Exercise with ID ${id} not found for user: ${uid} (${duration}ms)`, "get_exercise_by_id");
-			}
-			return data;
-		} catch (error) {
-			const duration = Date.now() - startTime;
-			this.logError(`Failed to get exercise by ID ${id} for user: ${uid} after ${duration}ms`, "get_exercise_by_id");
-			throw error;
-		}
+		// With Legend State, we can get data immediately from local store
+		const exercises = exercises$.get();
+		return exercises.find(exercise => exercise.id === id && exercise.user_id === uid);
 	}
 
+	/**
+	 * Get all exercises as a reactive observable
+	 * Filtered for the authenticated Supabase user
+	 * Note: userId parameter is kept for backwards compatibility but Supabase user ID is used internally
+	 */
 	getExercises(userId: string): Observable<Exercise[]> {
-		const exercises$ = observable<Exercise[]>([]);
-		
-		this.logDebug(`Setting up reactive observable for exercises for user: ${userId}`, "get_exercises");
-		
-		// Set up real-time subscription that feeds the observable
-		this.subscribeToExercises(userId, (exercises) => {
-			exercises$.set(exercises);
+		// Create a computed observable that filters exercises for the current Supabase user
+		return computed(() => {
+			const currentUser = user$.get();
+			if (!currentUser) return [];
+			return exercises$.get().filter(ex => ex.user_id === currentUser.id);
 		});
-		
-		return exercises$;
 	}
 
-
+	/**
+	 * Delete exercise with optimistic updates and error recovery
+	 * Note: userId parameter is kept for backwards compatibility but Supabase user ID is used internally
+	 */
 	async deleteExercise(userId: string, exerciseId: string): Promise<void> {
-		const startTime = Date.now();
-		this.logDebug(`Deleting exercise with ID: ${exerciseId} for user: ${userId}`, "delete_exercise");
-		
+		let rollbackOperation: (() => void) | null = null;
+
 		try {
-			// Validate inputs
-			if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
-				throw new Error('Valid userId is required');
-			}
+			// Validate exerciseId
 			if (!exerciseId || typeof exerciseId !== 'string' || exerciseId.trim().length === 0) {
 				throw new Error('Valid exerciseId is required');
 			}
-			
-			const docRef = doc(getDb(), this.getExercisesCollectionPath(userId), exerciseId);
-			await deleteDoc(docRef);
-			
-			const duration = Date.now() - startTime;
-			this.logDebug(`Successfully deleted exercise with ID: ${exerciseId} for user: ${userId} (${duration}ms)`, "delete_exercise");
+
+			// Get the Supabase user ID (not the Firebase userId parameter)
+			const supabaseUser = await supabaseClient.getCurrentUser();
+			if (!supabaseUser) {
+				throw new Error('User not authenticated with Supabase');
+			}
+
+			// Store current state for potential rollback
+			const currentExercises = exercises$.get();
+			rollbackOperation = () => exercises$.set(currentExercises);
+
+			// Optimistic delete - remove from local store immediately using Supabase user ID
+			const updatedExercises = currentExercises.filter(
+				exercise => !(exercise.id === exerciseId && exercise.user_id === supabaseUser.id)
+			);
+			exercises$.set(updatedExercises);
+
+			// Attempt immediate sync to validate the operation
+			try {
+				await deleteExerciseFromSupabase(exerciseId, supabaseUser.id);
+			} catch (syncError) {
+				// Rollback optimistic update on sync failure
+				rollbackOperation();
+				console.error('Delete sync failed, rolled back optimistic update:', syncError);
+				throw syncError;
+			}
+
 		} catch (error) {
-			const duration = Date.now() - startTime;
-			this.logError(`Failed to delete exercise with ID: ${exerciseId} for user: ${userId} after ${duration}ms`, "delete_exercise");
+			console.error('Failed to delete exercise:', error);
 			throw error;
 		}
 	}
 
-	subscribeToExercises(uid: string, callback: (exercises: Exercise[]) => void): Unsubscribe {
-		this.logDebug(`Setting up real-time subscription to exercises for user: ${uid}`, "subscribe_exercises");
-		
-		const exerciseCollection = collection(getDb(), this.getExercisesCollectionPath(uid));
-		const unsubscribe = onSnapshot(
-			exerciseCollection, 
-			(querySnapshot) => {
-				const startTime = Date.now();
-				this.logDebug(`Real-time update received for user: ${uid}`, "subscribe_exercises");
-				
-				try {
-					const exercises = querySnapshot.docs.map((doc) => {
-						const data = doc.data();
-						if (!this.validateExerciseData(data)) {
-							this.logError(`Invalid exercise data in subscription for doc ${doc.id} for user: ${uid}`, "subscribe_exercises");
-							throw new Error(`Invalid exercise data from Firestore for doc ${doc.id}`);
-						}
-						return {
-							id: doc.id,
-							name: data.name,
-							user_id: uid,
-							created_at: new Date().toISOString()
-						} as Exercise;
-					});
-					
-					const duration = Date.now() - startTime;
-					this.logDebug(`Processed ${exercises.length} exercises from real-time update for user: ${uid} (${duration}ms)`, "subscribe_exercises");
-					callback(exercises);
-				} catch (error) {
-					const duration = Date.now() - startTime;
-					this.logError(`Error processing real-time update for user: ${uid} after ${duration}ms`, "subscribe_exercises");
-					throw error;
-				}
-			},
-			(error) => {
-				this.logError(`Real-time subscription error for user: ${uid}`, "subscribe_exercises");
-				this.logWarn(`Real-time subscription failed for user: ${uid}, data may not be current`, "subscribe_exercises");
+	/**
+	 * Subscribe to exercises changes (for backwards compatibility)
+	 * With Legend State, the observable itself provides real-time updates
+	 * Note: uid parameter is kept for backwards compatibility but Supabase user ID is used internally
+	 */
+	subscribeToExercises(uid: string, callback: (exercises: Exercise[]) => void): () => void {
+		// Use Legend State's observe method for reactive updates with Supabase user filtering
+		return observe(() => {
+			const currentUser = user$.get();
+			if (!currentUser) {
+				callback([]);
+				return;
 			}
-		);
-		
-		this.logDebug(`Real-time subscription established for user: ${uid}`, "subscribe_exercises");
-		return () => {
-			this.logDebug(`Unsubscribing from real-time updates for user: ${uid}`, "subscribe_exercises");
-			unsubscribe();
-		};
+			const filteredExercises = exercises$.get().filter(ex => ex.user_id === currentUser.id);
+			callback(filteredExercises);
+		});
+	}
+
+	/**
+	 * Legacy methods for backwards compatibility with tests
+	 */
+
+	/**
+	 * Get exercises collection path (legacy method for tests)
+	 */
+	private getExercisesCollectionPath(userId: string): string {
+		return `users/${userId}/exercises`;
+	}
+
+	/**
+	 * Validate exercise data (legacy method for tests)
+	 */
+	private validateExerciseData(data: any): boolean {
+		if (data === null || data === undefined) return false;
+		if (typeof data !== 'object') return false;
+		if (typeof data.name !== 'string') return false;
+		if (data.name.trim().length === 0) return false;
+		return true;
+	}
+
+	/**
+	 * New methods for offline-first capabilities
+	 */
+
+	/**
+	 * Check if we're currently online and syncing
+	 */
+	isSyncing(): boolean {
+		return syncHelpers.isSyncing();
+	}
+
+	/**
+	 * Check online status
+	 */
+	isOnline(): boolean {
+		return syncHelpers.isOnline();
+	}
+
+	/**
+	 * Get count of pending changes waiting to sync
+	 */
+	getPendingChangesCount(): number {
+		return syncHelpers.getPendingChangesCount();
+	}
+
+	/**
+	 * Force manual sync (useful for pull-to-refresh)
+	 */
+	async forceSync(): Promise<void> {
+		await syncHelpers.forceSync();
+	}
+
+	/**
+	 * Check if there are sync errors
+	 */
+	hasErrors(): boolean {
+		return syncHelpers.hasErrors();
+	}
+
+	/**
+	 * Get current sync error message
+	 */
+	getErrorMessage(): string | undefined {
+		return syncHelpers.getErrorMessage();
 	}
 }

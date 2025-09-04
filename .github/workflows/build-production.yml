@@ -17,6 +17,18 @@ jobs:
     environment: Dev
     
     steps:
+      - name: Maximize build space
+        uses: easimon/maximize-build-space@v10
+        with:
+          root-reserve-mb: 512
+          temp-reserve-mb: 50
+          swap-size-mb: 1024
+          remove-dotnet: 'true'
+          remove-android: 'true'
+          remove-haskell: 'true'
+          remove-codeql: 'true'
+          remove-docker-images: 'true'
+
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
 
@@ -25,8 +37,10 @@ jobs:
         with:
           firebase-config: ${{ secrets.FIREBASE_WEB_CONFIG }}
           google-services-config: ${{ secrets.GOOGLE_SERVICES }}
+          devbox-config: android-build
 
       - name: Build production APK
+        working-directory: devbox/android-build
         run: devbox run build_production
 
       - name: Create Release

@@ -21,7 +21,7 @@
         includeEmulator = true;
         emulatorVersion = "35.5.10";
         includeSystemImages = true;
-        systemImageTypes = ["google_apis_playstore"];
+        systemImageTypes = ["default"];
         includeNDK = true;
         ndkVersion = "27.1.12297006";
         includeCmake = true;

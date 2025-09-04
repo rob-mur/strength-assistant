@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Change to project root directory (relative to scripts folder)
+cd "$(dirname "$0")/.."
+
 # Build script that accepts a profile argument
 # Usage: ./scripts/build.sh <profile> [output_name]
 # Example: ./scripts/build.sh preview build_preview.apk

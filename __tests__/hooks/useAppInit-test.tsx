@@ -44,16 +44,22 @@ jest.mock("@/lib/data/supabase", () => ({
   initSupabase: jest.fn(),
 }));
 
+jest.mock("@/lib/data/sync", () => ({
+  initializeDataLayer: jest.fn(),
+}));
+
 import { useFonts } from "expo-font";
 import { SplashScreen } from "expo-router";
 import { initFirebase } from "@/lib/data/firebase";
 import { logger } from "@/lib/data/firebase/logger";
 import { initSupabase } from "@/lib/data/supabase";
+import { initializeDataLayer } from "@/lib/data/sync";
 
 describe("useAppInit", () => {
   const mockUseFonts = useFonts as jest.MockedFunction<typeof useFonts>;
   const mockInitFirebase = initFirebase as jest.MockedFunction<typeof initFirebase>;
   const mockInitSupabase = initSupabase as jest.MockedFunction<typeof initSupabase>;
+  const mockInitializeDataLayer = initializeDataLayer as jest.MockedFunction<typeof initializeDataLayer>;
   const mockHideAsync = SplashScreen.hideAsync as jest.MockedFunction<typeof SplashScreen.hideAsync>;
 
   beforeEach(() => {
@@ -82,8 +88,7 @@ describe("useAppInit", () => {
 
   test("initializes services and hides splash screen when ready", async () => {
     mockUseFonts.mockReturnValue([true, null]);
-    mockInitFirebase.mockImplementation(() => {});
-    mockInitSupabase.mockImplementation(() => {});
+    mockInitializeDataLayer.mockResolvedValue(undefined);
     
     const { result } = renderHook(() => useAppInit());
     
@@ -91,19 +96,15 @@ describe("useAppInit", () => {
       expect(result.current).toBe(true);
     });
     
-    expect(mockInitFirebase).toHaveBeenCalled();
-    expect(mockInitSupabase).toHaveBeenCalled();
+    expect(mockInitializeDataLayer).toHaveBeenCalled();
     expect(mockHideAsync).toHaveBeenCalled();
     expect(logger.info).toHaveBeenCalledWith("Starting app initialization", expect.any(Object));
     expect(logger.info).toHaveBeenCalledWith("App initialization complete", expect.any(Object));
   });
 
-  test("handles Firebase error but continues with Supabase", async () => {
+  test("handles data layer error gracefully", async () => {
     mockUseFonts.mockReturnValue([true, null]);
-    mockInitFirebase.mockImplementation(() => {
-      throw new Error("Firebase failed");
-    });
-    mockInitSupabase.mockImplementation(() => {});
+    mockInitializeDataLayer.mockRejectedValue(new Error("Data layer failed"));
     
     const { result } = renderHook(() => useAppInit());
     
@@ -111,19 +112,15 @@ describe("useAppInit", () => {
       expect(result.current).toBe(true);
     });
     
-    expect(logger.error).toHaveBeenCalledWith("Firebase initialization failed", expect.objectContaining({
-      operation: "firebase_init"
+    expect(logger.error).toHaveBeenCalledWith("App initialization error", expect.objectContaining({
+      operation: "init"
     }));
-    expect(logger.warn).toHaveBeenCalledWith("Continuing without Firebase", expect.any(Object));
-    expect(mockInitSupabase).toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith("App will continue with limited functionality", expect.any(Object));
   });
 
-  test("handles Supabase error gracefully", async () => {
+  test("logs initialization steps correctly", async () => {
     mockUseFonts.mockReturnValue([true, null]);
-    mockInitFirebase.mockImplementation(() => {});
-    mockInitSupabase.mockImplementation(() => {
-      throw new Error("Supabase failed");
-    });
+    mockInitializeDataLayer.mockResolvedValue(undefined);
     
     const { result } = renderHook(() => useAppInit());
     
@@ -131,32 +128,33 @@ describe("useAppInit", () => {
       expect(result.current).toBe(true);
     });
     
-    expect(logger.error).toHaveBeenCalledWith("Supabase initialization failed", expect.objectContaining({
-      operation: "supabase_init"
+    expect(logger.info).toHaveBeenCalledWith("Initializing offline-first data layer...", expect.objectContaining({
+      operation: "data_layer_init"
     }));
-    expect(logger.warn).toHaveBeenCalledWith("Continuing without Supabase", expect.any(Object));
+    expect(logger.info).toHaveBeenCalledWith("Offline-first data layer initialized successfully", expect.objectContaining({
+      operation: "data_layer_init"
+    }));
   });
 
-  test("logs debug messages during Supabase initialization", async () => {
+  test("logs debug messages during data layer initialization", async () => {
     mockUseFonts.mockReturnValue([true, null]);
-    mockInitFirebase.mockImplementation(() => {});
-    mockInitSupabase.mockImplementation(() => {});
+    mockInitializeDataLayer.mockResolvedValue(undefined);
     
     renderHook(() => useAppInit());
     
     await waitFor(() => {
-      expect(logger.debug).toHaveBeenCalledWith("SUPABASE DEBUG: About to call initSupabase", expect.objectContaining({
+      expect(logger.info).toHaveBeenCalledWith("Initializing offline-first data layer...", expect.objectContaining({
         service: "App Init",
         platform: "React Native",
-        operation: "supabase_init"
+        operation: "data_layer_init"
       }));
     });
     
     await waitFor(() => {
-      expect(logger.debug).toHaveBeenCalledWith("SUPABASE DEBUG: Supabase initialization completed successfully", expect.objectContaining({
+      expect(logger.info).toHaveBeenCalledWith("Offline-first data layer initialized successfully", expect.objectContaining({
         service: "App Init", 
         platform: "React Native",
-        operation: "supabase_init"
+        operation: "data_layer_init"
       }));
     });
   });

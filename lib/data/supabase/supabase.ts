@@ -1,8 +1,10 @@
 import { Platform } from "react-native";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { Database } from "../../models/supabase";
 
 interface SupabaseInitializer {
 	initSupabase(): void;
-	getSupabaseClient(): any;
+	getSupabaseClient(): SupabaseClient<Database>;
 }
 
 const getSupabaseModule = (): SupabaseInitializer => {
