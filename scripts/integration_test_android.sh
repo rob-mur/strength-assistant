@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Change to project root directory (relative to scripts folder)
+cd "$(dirname "$0")/.."
+
 # Github actions has a conflicting environment variable
 unset ANDROID_SDK_ROOT
 unset ANDROID_NDK_HOME

@@ -4,6 +4,9 @@ set -e
 
 echo "🌐 Starting Chrome Integration Tests"
 
+# Change to project root directory (relative to scripts folder)
+cd "$(dirname "$0")/.."
+
 # Cleanup function
 cleanup() {
     echo "🧹 Cleaning up processes..."
