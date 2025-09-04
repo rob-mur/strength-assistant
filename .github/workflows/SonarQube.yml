@@ -24,7 +24,7 @@ jobs:
           devbox-config: minimal
 
       - name: Test and coverage
-        run: devbox run test
+        run: devbox run collect_coverage
         working-directory: devbox/minimal
 
       - name: SonarQube Scan

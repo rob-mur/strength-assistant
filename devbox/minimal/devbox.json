@@ -13,6 +13,9 @@
 			"test": [
 				"../../scripts/test.sh"
 			],
+			"collect_coverage": [
+				"../../scripts/collect-coverage.sh"
+			],
 			"integration_test_chrome": [
 				"../../scripts/integration_test_chrome.sh"
 			],
