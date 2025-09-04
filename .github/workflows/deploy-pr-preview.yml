@@ -32,6 +32,7 @@ jobs:
 
       - name: 🚀 Build web app
         run: devbox run build_web
+        working-directory: devbox/minimal
 
       - name: 🔥 Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
