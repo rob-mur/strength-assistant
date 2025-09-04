@@ -7,18 +7,23 @@ inputs:
   google-services-config:
     description: 'Google services configuration JSON'
     required: false
-  devbox-version:
-    description: 'Devbox version to install'
+  devbox-config:
+    description: 'Devbox configuration folder to use (minimal, android-build, android-testing, dev)'
     required: false
-    default: '0.14.2'
-  enable-devbox-cache:
-    description: 'Enable devbox cache'
-    required: false
-    default: 'true'
+    default: 'minimal'
 
 runs:
   using: 'composite'
   steps:
+    - name: Check devbox.lock exists
+      shell: bash
+      run: |
+        if [ ! -f "devbox/${{ inputs.devbox-config }}/devbox.lock" ]; then
+          echo "Error: devbox.lock file not found in devbox/${{ inputs.devbox-config }}/"
+          echo "Please generate it locally with: cd devbox/${{ inputs.devbox-config }} && devbox install"
+          exit 1
+        fi
+
     - name: Populate Firebase web config
       if: inputs.firebase-config != ''
       shell: bash
@@ -38,8 +43,18 @@ runs:
     - name: Install devbox
       uses: jetify-com/devbox-install-action@v0.11.0
       with:
-        devbox-version: ${{ inputs.devbox-version }}
-        enable-cache: ${{ inputs.enable-devbox-cache }}
+        devbox-version: 0.14.2
+        project-path: devbox/${{ inputs.devbox-config }}
+
+    - name: Validate devbox.lock is in sync
+      shell: bash
+      run: |
+        cd devbox/${{ inputs.devbox-config }}
+        if ! devbox install --tidy-lockfile --quiet; then
+          echo "Error: devbox.lock is out of sync with devbox.json"
+          echo "Please regenerate locally with: cd devbox/${{ inputs.devbox-config }} && devbox install"
+          exit 1
+        fi
 
     - name: 📦 Get npm cache directory path
       id: npm-cache-dir-path

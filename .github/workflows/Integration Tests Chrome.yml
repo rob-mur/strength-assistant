@@ -21,6 +21,7 @@ jobs:
         with:
           firebase-config: ${{ secrets.FIREBASE_WEB_CONFIG }}
           google-services-config: ${{ secrets.GOOGLE_SERVICES }}
+          devbox-config: minimal
 
       - name: 🧪 Run Chrome integration tests
         run: devbox run integration_test_chrome

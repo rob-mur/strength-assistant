@@ -31,6 +31,7 @@ jobs:
         with:
           firebase-config: ${{ secrets.FIREBASE_WEB_CONFIG }}
           google-services-config: ${{ secrets.GOOGLE_SERVICES }}
+          devbox-config: android-build
 
       - name: Build
         run: devbox run build_preview
@@ -74,6 +75,11 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: preview_build
+
+      - name: 🛠 Setup testing environment  
+        uses: ./.github/actions/setup-dev-environment
+        with:
+          devbox-config: android-testing
 
       - name: Run tests
         run: devbox run integration_test_android

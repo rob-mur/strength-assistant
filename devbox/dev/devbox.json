@@ -1,7 +1,7 @@
 {
 	"$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.14.2/.schema/devbox.schema.json",
 	"packages": [
-		"path:../flakes/androidsdk",
+		"path:flakes/androidsdk",
 		"maestro@latest",
 		"nodejs@latest",
 		"chromium@latest",
@@ -14,18 +14,25 @@
 		"supabase-cli@latest"
 	],
 	"shell": {
+		"init_hook": [
+			"cd $PROJECT_ROOT 2>/dev/null || cd ../..",
+			"alias sync-devbox='bash $PROJECT_ROOT/scripts/sync-devbox.sh'"
+		],
 		"scripts": {
 			"test": [
-				"../scripts/test.sh"
+				"../../scripts/test.sh"
 			],
 			"build_preview": [
-				"../scripts/build.sh preview"
+				"../../scripts/build.sh preview"
 			],
 			"build_production": [
-				"../scripts/build.sh production"
+				"../../scripts/build.sh production"
 			],
 			"integration_test_android": [
-				"../scripts/integration_test_android.sh"
+				"../../scripts/integration_test_android.sh"
+			],
+			"sync_devbox": [
+				"../../scripts/sync-devbox.sh"
 			]
 		}
 	},
@@ -33,6 +40,7 @@
 		"ANDROID_HOME": "$PWD/.devbox/nix/profile/default/libexec/android-sdk/",
 		"GRADLE_OPTS": "-Dorg.gradle.project.android.aapt2FromMavenOverride=$PWD/.devbox/nix/profile/default/bin/aapt2",
 		"EXPO_PUBLIC_USE_EMULATOR": "true",
-		"EXPO_PUBLIC_USE_SUPABASE_EMULATOR": "true"
+		"EXPO_PUBLIC_USE_SUPABASE_EMULATOR": "true",
+		"DEVBOX_SHELL_ENABLED": "true"
 	}
 }

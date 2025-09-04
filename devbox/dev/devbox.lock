@@ -26,6 +26,14 @@
             }
           ],
           "store_path": "/nix/store/x3hcqj7zfz3mbi23xa27g51fmxw5j1gz-chromedriver-139.0.7258.67"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "path": "/nix/store/irw8hl3lnvfw2dwj6sqs5ahfw2qcg1dc-chromedriver-unwrapped-139.0.7258.66",
+              "default": true
+            }
+          ]
         }
       }
     },

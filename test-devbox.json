@@ -1,0 +1,1 @@
+{"packages": ["echo $TEST_VAR"]}

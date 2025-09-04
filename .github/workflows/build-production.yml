@@ -25,6 +25,7 @@ jobs:
         with:
           firebase-config: ${{ secrets.FIREBASE_WEB_CONFIG }}
           google-services-config: ${{ secrets.GOOGLE_SERVICES }}
+          devbox-config: android-build
 
       - name: Build production APK
         run: devbox run build_production
