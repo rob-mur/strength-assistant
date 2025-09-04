@@ -5,7 +5,8 @@
 		"maestro@latest",
 		"nodejs@latest",
 		"firebase-tools@latest",
-		"jdk17@latest"
+		"jdk17@latest",
+		"supabase-cli@latest"
 	],
 	"shell": {
 		"scripts": {
