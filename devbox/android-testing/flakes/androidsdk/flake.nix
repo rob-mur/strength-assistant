@@ -17,7 +17,7 @@
       androidComposition = pkgs.androidenv.composeAndroidPackages {
         buildToolsVersions = ["35.0.0"];
         platformVersions = ["35"];
-        abiVersions = ["arm64-v8a"];
+        abiVersions = ["x86_64"];
         includeEmulator = true;
         emulatorVersion = "35.5.10";
         includeSystemImages = true;
@@ -36,3 +36,4 @@
       };
     });
 }
+
