@@ -1,23 +1,24 @@
 {
-  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.14.2/.schema/devbox.schema.json",
-  "packages": [
-    "nodejs@latest",
-    "chromium@138",
-    "chromedriver@138",
-    "firebase-tools@latest",
-    "supabase-cli@latest"
-  ],
-  "shell": {
-    "scripts": {
-      "test": [
-        "../../scripts/test.sh"
-      ],
-      "integration_test_chrome": [
-        "../../scripts/integration_test_chrome.sh"
-      ],
-      "build_web": [
-        "cd ../.. && npm run build_web"
-      ]
-    }
-  }
+	"$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.14.2/.schema/devbox.schema.json",
+	"packages": [
+		"nodejs@latest",
+		"chromium@138",
+		"chromedriver@138",
+		"firebase-tools@latest",
+		"supabase-cli@latest",
+		"maestro@latest"
+	],
+	"shell": {
+		"scripts": {
+			"test": [
+				"../../scripts/test.sh"
+			],
+			"integration_test_chrome": [
+				"../../scripts/integration_test_chrome.sh"
+			],
+			"build_web": [
+				"cd ../.. && npm run build_web"
+			]
+		}
+	}
 }

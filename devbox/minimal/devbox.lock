@@ -125,6 +125,54 @@
       "last_modified": "2025-08-15T14:26:43Z",
       "resolved": "github:NixOS/nixpkgs/32f313e49e42f715491e1ea7b306a87c16fe0388?lastModified=1755268003&narHash=sha256-nNaeJjo861wFR0tjHDyCnHs1rbRtrMgxAKMoig9Sj%2Fw%3D"
     },
+    "maestro@latest": {
+      "last_modified": "2025-07-28T17:09:23Z",
+      "resolved": "github:NixOS/nixpkgs/648f70160c03151bc2121d179291337ad6bc564b#maestro",
+      "source": "devbox-search",
+      "version": "1.41.0",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/wdh5dqj7han3fy2r62jq08ndnbdj228v-maestro-1.41.0",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/wdh5dqj7han3fy2r62jq08ndnbdj228v-maestro-1.41.0"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/mr6mv9qrq5qys5jchk688jgmv5bgd3hh-maestro-1.41.0",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/mr6mv9qrq5qys5jchk688jgmv5bgd3hh-maestro-1.41.0"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/jjrldvglil3grcfqjv39z7m5k1yrz005-maestro-1.41.0",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/jjrldvglil3grcfqjv39z7m5k1yrz005-maestro-1.41.0"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/igbz81mscx90cd75ffdgjxp3lgpybi8j-maestro-1.41.0",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/igbz81mscx90cd75ffdgjxp3lgpybi8j-maestro-1.41.0"
+        }
+      }
+    },
     "nodejs@latest": {
       "last_modified": "2025-08-10T04:38:50Z",
       "plugin_version": "0.0.2",
