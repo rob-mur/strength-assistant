@@ -21,10 +21,11 @@
         includeEmulator = true;
         emulatorVersion = "35.5.10";
         includeSystemImages = true;
-        systemImageTypes = ["default"];  # Use minimal system images (~1GB savings)
-        includeNDK = true;                # NDK required for app build
-        ndkVersion = "27.1.12297006";     # Specify exact NDK version to avoid read-only store issues
-        includeCmake = true;              # CMake required for app build
+        systemImageTypes = ["default"];
+        includeNDK = true;
+        ndkVersion = "27.1.12297006";
+        includeCmake = true;
+        cmakeVersions = ["3.22.1"];
       };
       androidSdk = androidComposition.androidsdk;
     in {
