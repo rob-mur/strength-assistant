@@ -25,6 +25,7 @@ jobs:
 
       - name: Test and coverage
         run: devbox run test
+        working-directory: devbox/minimal
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v5
