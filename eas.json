@@ -11,16 +11,14 @@
 		"preview": {
 			"distribution": "internal",
 			"android": {
-				"buildType": "apk",
-				"architectures": ["x86_64"]
+				"buildType": "apk"
 			},
 			"environment": "preview"
 		},
 		"production": {
 			"distribution": "internal",
 			"android": {
-				"buildType": "apk",
-				"architectures": ["arm64-v8a"]
+				"buildType": "apk"
 			},
 			"environment": "production"
 		}
