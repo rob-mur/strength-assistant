@@ -4,7 +4,8 @@
     "nodejs@latest",
     "chromium@138",
     "chromedriver@138",
-    "firebase-tools@latest"
+    "firebase-tools@latest",
+    "supabase-cli@latest"
   ],
   "shell": {
     "scripts": {
