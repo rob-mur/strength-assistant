@@ -1,10 +1,10 @@
-import AddExerciseScreen from "@/app/(tabs)/exercises/add";
+import AddWorkoutScreen from "@/app/add";
 import type { Meta, StoryObj } from "@storybook/react-native";
 import { fn } from "storybook/test";
 
-const meta: Meta<typeof AddExerciseScreen> = {
-  title: "Screens/AddExerciseScreen",
-  component: AddExerciseScreen,
+const meta: Meta<typeof AddWorkoutScreen> = {
+  title: "Screens/AddWorkoutScreen",
+  component: AddWorkoutScreen,
   parameters: {
     layout: "padded",
   },
@@ -12,7 +12,7 @@ const meta: Meta<typeof AddExerciseScreen> = {
 
 export default meta;
 
-type Story = StoryObj<typeof AddExerciseScreen>;
+type Story = StoryObj<typeof AddWorkoutScreen>;
 
 export const Default: Story = {
   args: {},
@@ -23,7 +23,7 @@ export const Loading: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Add exercise screen in loading state during form submission",
+        story: "Add workout screen in loading state during form submission",
       },
     },
   },
@@ -34,7 +34,7 @@ export const WithValidationError: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Add exercise screen showing validation error states",
+        story: "Add workout screen showing validation error states",
       },
     },
   },
