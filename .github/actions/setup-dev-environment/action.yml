@@ -48,8 +48,8 @@ runs:
 
     - name: Validate devbox.lock is in sync
       shell: bash
+      working-directory: devbox/${{ inputs.devbox-config }}
       run: |
-        cd devbox/${{ inputs.devbox-config }}
         if ! devbox install --tidy-lockfile --quiet; then
           echo "Error: devbox.lock is out of sync with devbox.json"
           echo "Please regenerate locally with: cd devbox/${{ inputs.devbox-config }} && devbox install"
@@ -59,6 +59,7 @@ runs:
     - name: 📦 Get npm cache directory path
       id: npm-cache-dir-path
       shell: bash
+      working-directory: devbox/${{ inputs.devbox-config }}
       run: echo "dir=$(devbox run -- npm config get cache)" >> $GITHUB_OUTPUT
 
     - name: 📦 Setup npm cache
@@ -71,4 +72,5 @@ runs:
 
     - name: 📦 Install dependencies
       shell: bash
+      working-directory: devbox/${{ inputs.devbox-config }}
       run: devbox run npm install

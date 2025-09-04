@@ -24,6 +24,7 @@ jobs:
           devbox-config: minimal
 
       - name: 🧪 Run Chrome integration tests
+        working-directory: devbox/minimal
         run: devbox run integration_test_chrome
 
       - name: Upload debug artifacts

@@ -20,4 +20,5 @@ jobs:
           devbox-config: minimal
 
       - name: Test
+        working-directory: devbox/minimal
         run: devbox run test

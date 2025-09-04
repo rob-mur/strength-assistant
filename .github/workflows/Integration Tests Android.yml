@@ -34,6 +34,7 @@ jobs:
           devbox-config: android-build
 
       - name: Build
+        working-directory: devbox/android-build
         run: devbox run build_preview
 
       - name: Upload output
@@ -82,6 +83,7 @@ jobs:
           devbox-config: android-testing
 
       - name: Run tests
+        working-directory: devbox/android-testing
         run: devbox run integration_test_android
 
       - name: Upload debug artifacts

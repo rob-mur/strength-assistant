@@ -28,6 +28,7 @@ jobs:
           devbox-config: android-build
 
       - name: Build production APK
+        working-directory: devbox/android-build
         run: devbox run build_production
 
       - name: Create Release
