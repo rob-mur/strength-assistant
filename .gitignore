@@ -54,3 +54,4 @@ coverage/
 maestro-debug-output/
 
 meta/
+*.png
