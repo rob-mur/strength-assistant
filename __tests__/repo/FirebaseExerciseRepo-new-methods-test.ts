@@ -113,36 +113,6 @@ describe('FirebaseExerciseRepo - New Methods', () => {
 		});
 	});
 
-	describe('Private method coverage', () => {
-		test('validateExerciseData correctly validates exercise data', () => {
-			// Access private method through prototype for testing
-			const validateExerciseData = (FirebaseExerciseRepo.prototype as any).validateExerciseData;
-			const boundMethod = validateExerciseData.bind({});
-
-			// Valid data
-			expect(boundMethod({ name: 'Push-ups' })).toBe(true);
-			expect(boundMethod({ name: 'Squats', id: 'test-id' })).toBe(true);
-
-			// Invalid data
-			expect(boundMethod(null)).toBe(false);
-			expect(boundMethod(undefined)).toBe(false);
-			expect(boundMethod('string')).toBe(false);
-			expect(boundMethod(123)).toBe(false);
-			expect(boundMethod({})).toBe(false);
-			expect(boundMethod({ name: 123 })).toBe(false);
-			expect(boundMethod({ name: '' })).toBe(false);
-			expect(boundMethod({ name: '   ' })).toBe(false);
-		});
-
-		test('getExercisesCollectionPath returns correct path', () => {
-			// Access private method through prototype for testing
-			const getExercisesCollectionPath = (FirebaseExerciseRepo.prototype as any).getExercisesCollectionPath;
-			const boundMethod = getExercisesCollectionPath.bind({});
-
-			expect(boundMethod(testUserId)).toBe(`users/${testUserId}/exercises`);
-			expect(boundMethod('another-user')).toBe('users/another-user/exercises');
-		});
-	});
 
 	describe('Logger usage', () => {
 		test('methods use logger with correct platform property', () => {

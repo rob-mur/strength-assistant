@@ -13,6 +13,8 @@ import {
   Unsubscribe
 } from "firebase/firestore";
 import { logger } from "../data/firebase/logger";
+import { RepositoryLogger } from "./utils/LoggingUtils";
+import { RepositoryUtils } from "./utils/RepositoryUtils";
 
 /**
  * Firebase implementation of ExerciseRepo
@@ -38,18 +40,9 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
       try {
         initializeFirebaseServices();
         this.initialized = true;
-        logger.info("Firebase Exercise Repository initialized", {
-          service: "FirebaseExerciseRepo",
-          platform: "mobile",
-          operation: "init"
-        });
+        RepositoryLogger.logSuccess("FirebaseExerciseRepo", "initialize");
       } catch (error: any) {
-        logger.error("Failed to initialize Firebase services", {
-          service: "FirebaseExerciseRepo",
-          platform: "mobile",
-          operation: "init",
-          error: { message: error.message, stack: error.stack }
-        });
+        RepositoryLogger.logError("FirebaseExerciseRepo", "initialize Firebase services", error);
         throw error;
       }
     }
@@ -67,7 +60,7 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
       const sanitizedName = ExerciseValidator.sanitizeExerciseName(exercise.name);
 
       const db = getDb();
-      const exercisesCollection = collection(db, this.getExercisesCollectionPath(userId));
+      const exercisesCollection = collection(db, RepositoryUtils.getExercisesCollectionPath(userId));
       
       const newExercise = {
         name: sanitizedName,
@@ -76,18 +69,9 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 
       await addDoc(exercisesCollection, newExercise);
       
-      logger.info("Exercise added successfully", {
-        service: "FirebaseExerciseRepo",
-        platform: "mobile",
-        operation: "addExercise"
-      });
+      RepositoryLogger.logSuccess("FirebaseExerciseRepo", "addExercise");
     } catch (error: any) {
-      logger.error("Failed to add exercise", {
-        service: "FirebaseExerciseRepo",
-        platform: "mobile",
-        operation: "addExercise",
-        error: { message: error.message, stack: error.stack }
-      });
+      RepositoryLogger.logError("FirebaseExerciseRepo", "add exercise", error);
       throw error;
     }
   }
@@ -101,42 +85,20 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
     const exercises$ = observable<Exercise[]>([]);
     
     try {
-      const db = getDb();
-      const exercisesCollection = collection(db, this.getExercisesCollectionPath(userId));
-      const exercisesQuery = query(exercisesCollection, orderBy("created_at", "desc"));
+      const exercisesQuery = this.createExercisesQuery(userId);
       
       // Set up real-time listener
       const unsubscribe = onSnapshot(exercisesQuery, (snapshot) => {
-        const exercises: Exercise[] = [];
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          if (this.validateExerciseData(data)) {
-            exercises.push({
-              id: doc.id,
-              name: data.name,
-              user_id: userId,
-              created_at: data.created_at
-            });
-          }
-        });
+        const exercises = this.processSnapshot(snapshot, userId);
         exercises$.set(exercises);
       });
 
       // Store unsubscribe function for cleanup
       (exercises$ as any)._unsubscribe = unsubscribe;
       
-      logger.info("Exercise subscription established", {
-        service: "FirebaseExerciseRepo",
-        platform: "mobile",
-        operation: "getExercises"
-      });
+      RepositoryLogger.logSuccess("FirebaseExerciseRepo", "getExercises");
     } catch (error: any) {
-      logger.error("Failed to get exercises", {
-        service: "FirebaseExerciseRepo",
-        platform: "mobile",
-        operation: "getExercises",
-        error: { message: error.message, stack: error.stack }
-      });
+      RepositoryLogger.logError("FirebaseExerciseRepo", "get exercises", error);
     }
     
     return exercises$;
@@ -149,40 +111,18 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
     this.ensureInitialized();
     
     try {
-      const db = getDb();
-      const exercisesCollection = collection(db, this.getExercisesCollectionPath(userId));
-      const exercisesQuery = query(exercisesCollection, orderBy("created_at", "desc"));
+      const exercisesQuery = this.createExercisesQuery(userId);
       
       const unsubscribe = onSnapshot(exercisesQuery, (snapshot) => {
-        const exercises: Exercise[] = [];
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          if (this.validateExerciseData(data)) {
-            exercises.push({
-              id: doc.id,
-              name: data.name,
-              user_id: userId,
-              created_at: data.created_at
-            });
-          }
-        });
+        const exercises = this.processSnapshot(snapshot, userId);
         callback(exercises);
       });
       
-      logger.info("Exercise subscription callback established", {
-        service: "FirebaseExerciseRepo",
-        platform: "mobile",
-        operation: "subscribeToExercises"
-      });
+      RepositoryLogger.logSuccess("FirebaseExerciseRepo", "subscribeToExercises");
       
       return unsubscribe;
     } catch (error: any) {
-      logger.error("Failed to subscribe to exercises", {
-        service: "FirebaseExerciseRepo",
-        platform: "mobile",
-        operation: "subscribeToExercises",
-        error: { message: error.message, stack: error.stack }
-      });
+      RepositoryLogger.logError("FirebaseExerciseRepo", "subscribe to exercises", error);
       // Return no-op function on error
       return () => {};
     }
@@ -196,37 +136,20 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
     
     try {
       // Validate exerciseId
-      if (!exerciseId || typeof exerciseId !== 'string' || exerciseId.trim().length === 0) {
-        throw new Error('Valid exerciseId is required');
-      }
+      RepositoryUtils.validateExerciseId(exerciseId);
 
       const db = getDb();
-      const exerciseDoc = doc(db, this.getExercisesCollectionPath(userId), exerciseId);
+      const exerciseDoc = doc(db, RepositoryUtils.getExercisesCollectionPath(userId), exerciseId);
       
       await deleteDoc(exerciseDoc);
       
-      logger.info("Exercise deleted successfully", {
-        service: "FirebaseExerciseRepo",
-        platform: "mobile",
-        operation: "deleteExercise"
-      });
+      RepositoryLogger.logSuccess("FirebaseExerciseRepo", "deleteExercise");
     } catch (error: any) {
-      logger.error("Failed to delete exercise", {
-        service: "FirebaseExerciseRepo",
-        platform: "mobile",
-        operation: "deleteExercise",
-        error: { message: error.message, stack: error.stack }
-      });
+      RepositoryLogger.logError("FirebaseExerciseRepo", "delete exercise", error);
       throw error;
     }
   }
 
-  /**
-   * Get exercises collection path for a user
-   */
-  private getExercisesCollectionPath(userId: string): string {
-    return `users/${userId}/exercises`;
-  }
 
   /**
    * Get a specific exercise by ID for a user
@@ -237,12 +160,7 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
       const exercises = exercises$.get();
       return exercises.find(exercise => exercise.id === exerciseId);
     } catch (error: any) {
-      logger.error("Failed to get exercise by ID", {
-        service: "FirebaseExerciseRepo",
-        platform: "mobile",
-        operation: "getExerciseById",
-        error: { message: error.message, stack: error.stack }
-      });
+      RepositoryLogger.logError("FirebaseExerciseRepo", "get exercise by ID", error);
       return undefined;
     }
   }
@@ -292,13 +210,31 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
   }
 
   /**
-   * Validate exercise data from Firestore
+   * Create an exercises query for the given user
    */
-  private validateExerciseData(data: any): boolean {
-    if (data === null || data === undefined) return false;
-    if (typeof data !== 'object') return false;
-    if (typeof data.name !== 'string') return false;
-    if (data.name.trim().length === 0) return false;
-    return true;
+  private createExercisesQuery(userId: string) {
+    const db = getDb();
+    const exercisesCollection = collection(db, RepositoryUtils.getExercisesCollectionPath(userId));
+    return query(exercisesCollection, orderBy("created_at", "desc"));
   }
+
+  /**
+   * Process snapshot data and convert to Exercise array
+   */
+  private processSnapshot(snapshot: any, userId: string): Exercise[] {
+    const exercises: Exercise[] = [];
+    snapshot.forEach((doc: any) => {
+      const data = doc.data();
+      if (RepositoryUtils.validateExerciseData(data)) {
+        exercises.push({
+          id: doc.id,
+          name: data.name,
+          user_id: userId,
+          created_at: data.created_at
+        });
+      }
+    });
+    return exercises;
+  }
+
 }

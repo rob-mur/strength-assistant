@@ -5,6 +5,7 @@ import { exercises$, user$ } from "../data/store";
 import { syncExerciseToSupabase, deleteExerciseFromSupabase, syncHelpers } from "../data/sync/syncConfig";
 import { supabaseClient } from "../data/supabase/SupabaseClient";
 import { v4 as uuidv4 } from 'uuid';
+import { RepositoryUtils } from "./utils/RepositoryUtils";
 /**
  * Legend State + Supabase implementation of ExerciseRepo
  * Provides offline-first data access with automatic sync
@@ -27,57 +28,66 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
 	 * Note: userId parameter is kept for backwards compatibility but Supabase user ID is used internally
 	 */
 	async addExercise(userId: string, exercise: ExerciseInput): Promise<void> {
-		let rollbackOperation: (() => void) | null = null;
+		// Validate and prepare exercise data
+		const sanitizedName = this.validateAndSanitizeExercise(exercise);
+		const authenticatedUser = await this.validateUserAuthentication(userId);
+		const newExercise = this.createNewExercise(sanitizedName, authenticatedUser.id);
+
+		// Perform optimistic update with rollback capability
+		await this.performOptimisticUpdate(newExercise, () => syncExerciseToSupabase(newExercise));
+	}
+
+	/**
+	 * Validate and sanitize exercise input
+	 */
+	private validateAndSanitizeExercise(exercise: ExerciseInput): string {
+		ExerciseValidator.validateExerciseInput(exercise);
+		return ExerciseValidator.sanitizeExerciseName(exercise.name);
+	}
+
+	/**
+	 * Validate user authentication and consistency
+	 */
+	private async validateUserAuthentication(userId: string): Promise<{ id: string }> {
+		const supabaseUser = await supabaseClient.getCurrentUser();
+		if (!supabaseUser) {
+			throw new Error('User not authenticated with Supabase');
+		}
+
+		if (userId && userId !== supabaseUser.id) {
+			throw new Error(`User ID mismatch: Expected ${userId}, but Supabase user is ${supabaseUser.id}. This may indicate a user mapping issue during Firebase-to-Supabase migration.`);
+		}
+
+		return supabaseUser;
+	}
+
+	/**
+	 * Create new exercise object
+	 */
+	private createNewExercise(sanitizedName: string, userId: string): Exercise {
+		return {
+			id: uuidv4(),
+			name: sanitizedName,
+			user_id: userId,
+			created_at: new Date().toISOString()
+		};
+	}
+
+	/**
+	 * Perform optimistic update with rollback on failure
+	 */
+	private async performOptimisticUpdate<T>(newItem: T, syncOperation: () => Promise<void>): Promise<void> {
+		const currentExercises = exercises$.get();
+		const rollbackOperation = () => exercises$.set(currentExercises);
+
+		// Optimistic update
+		exercises$.set([...currentExercises, newItem] as Exercise[]);
 
 		try {
-			console.log("About to parse exercise");
-			// Validate and sanitize input
-			ExerciseValidator.validateExerciseInput(exercise);
-			const sanitizedName = ExerciseValidator.sanitizeExerciseName(exercise.name);
-
-			console.log("About to get user");
-			// Get the Supabase user ID and validate against the provided userId parameter
-			const supabaseUser = await supabaseClient.getCurrentUser();
-			if (!supabaseUser) {
-				throw new Error('User not authenticated with Supabase');
-			}
-
-			// Validate user ID consistency to prevent data isolation issues during migration
-			if (userId && userId !== supabaseUser.id) {
-				throw new Error(`User ID mismatch: Expected ${userId}, but Supabase user is ${supabaseUser.id}. This may indicate a user mapping issue during Firebase-to-Supabase migration.`);
-			}
-
-
-			// Create new exercise object using Supabase user ID
-			const newExercise: Exercise = {
-				id: uuidv4(),
-				name: sanitizedName,
-				user_id: supabaseUser.id,
-				created_at: new Date().toISOString()
-			};
-
-			// Store current state for potential rollback
-			console.log("About to get current exercise state");
-			const currentExercises = exercises$.get();
-			rollbackOperation = () => exercises$.set(currentExercises);
-
-			// Optimistic update - immediately add to local store
-			exercises$.set([...currentExercises, newExercise]);
-
-			console.log("About to try and sync");
-			// Attempt immediate sync to validate the operation
-			try {
-				await syncExerciseToSupabase(newExercise);
-			} catch (syncError) {
-				// Rollback optimistic update on sync failure
-				rollbackOperation();
-				console.error('Sync failed, rolled back optimistic update:', syncError);
-				throw syncError;
-			}
-
-		} catch (error) {
-			console.error('Failed to add exercise:', error);
-			throw error;
+			await syncOperation();
+		} catch (syncError) {
+			rollbackOperation();
+			throw syncError;
 		}
 	}
 
@@ -109,48 +119,33 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
 	 * Note: userId parameter is kept for backwards compatibility but Supabase user ID is used internally
 	 */
 	async deleteExercise(userId: string, exerciseId: string): Promise<void> {
-		let rollbackOperation: (() => void) | null = null;
+		// Validate inputs and user authentication
+		RepositoryUtils.validateExerciseId(exerciseId);
+		const authenticatedUser = await this.validateUserAuthentication(userId);
+
+		// Perform optimistic delete with rollback capability
+		await this.performOptimisticDelete(exerciseId, authenticatedUser.id);
+	}
+
+
+	/**
+	 * Perform optimistic delete with rollback on failure
+	 */
+	private async performOptimisticDelete(exerciseId: string, userId: string): Promise<void> {
+		const currentExercises = exercises$.get();
+		const rollbackOperation = () => exercises$.set(currentExercises);
+
+		// Optimistic delete - remove from local store immediately
+		const updatedExercises = currentExercises.filter(
+			exercise => !(exercise.id === exerciseId && exercise.user_id === userId)
+		);
+		exercises$.set(updatedExercises);
 
 		try {
-			// Validate exerciseId
-			if (!exerciseId || typeof exerciseId !== 'string' || exerciseId.trim().length === 0) {
-				throw new Error('Valid exerciseId is required');
-			}
-
-			// Get the Supabase user ID and validate against the provided userId parameter
-			const supabaseUser = await supabaseClient.getCurrentUser();
-			if (!supabaseUser) {
-				throw new Error('User not authenticated with Supabase');
-			}
-
-			// Validate user ID consistency to prevent data isolation issues during migration
-			if (userId && userId !== supabaseUser.id) {
-				throw new Error(`User ID mismatch: Expected ${userId}, but Supabase user is ${supabaseUser.id}. This may indicate a user mapping issue during Firebase-to-Supabase migration.`);
-			}
-
-			// Store current state for potential rollback
-			const currentExercises = exercises$.get();
-			rollbackOperation = () => exercises$.set(currentExercises);
-
-			// Optimistic delete - remove from local store immediately using Supabase user ID
-			const updatedExercises = currentExercises.filter(
-				exercise => !(exercise.id === exerciseId && exercise.user_id === supabaseUser.id)
-			);
-			exercises$.set(updatedExercises);
-
-			// Attempt immediate sync to validate the operation
-			try {
-				await deleteExerciseFromSupabase(exerciseId, supabaseUser.id);
-			} catch (syncError) {
-				// Rollback optimistic update on sync failure
-				rollbackOperation();
-				console.error('Delete sync failed, rolled back optimistic update:', syncError);
-				throw syncError;
-			}
-
-		} catch (error) {
-			console.error('Failed to delete exercise:', error);
-			throw error;
+			await deleteExerciseFromSupabase(exerciseId, userId);
+		} catch (syncError) {
+			rollbackOperation();
+			throw syncError;
 		}
 	}
 
@@ -176,23 +171,7 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
 	 * Legacy methods for backwards compatibility with tests
 	 */
 
-	/**
-	 * Get exercises collection path (legacy method for tests)
-	 */
-	private getExercisesCollectionPath(userId: string): string {
-		return `users/${userId}/exercises`;
-	}
 
-	/**
-	 * Validate exercise data (legacy method for tests)
-	 */
-	private validateExerciseData(data: any): boolean {
-		if (data === null || data === undefined) return false;
-		if (typeof data !== 'object') return false;
-		if (typeof data.name !== 'string') return false;
-		if (data.name.trim().length === 0) return false;
-		return true;
-	}
 
 	/**
 	 * New methods for offline-first capabilities
