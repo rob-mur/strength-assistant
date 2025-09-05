@@ -2,6 +2,78 @@ import { ExerciseRepoFactory } from "@/lib/repo/ExerciseRepoFactory";
 import { FirebaseExerciseRepo } from "@/lib/repo/FirebaseExerciseRepo";
 import { SupabaseExerciseRepo } from "@/lib/repo/SupabaseExerciseRepo";
 
+// Mock @legendapp/state first
+jest.mock('@legendapp/state', () => ({
+  observable: jest.fn(),
+  observe: jest.fn(),
+  computed: jest.fn(),
+}), { virtual: true });
+
+// Mock all Firebase and Supabase dependencies
+jest.mock('@/lib/data/firebase/initializer', () => ({
+  initializeFirebaseServices: jest.fn(),
+  getDb: jest.fn(),
+}));
+
+jest.mock('@/lib/data/supabase/SupabaseClient', () => ({
+  supabaseClient: {
+    getCurrentUser: jest.fn(),
+  }
+}));
+
+jest.mock('@/lib/data/store', () => ({
+  exercises$: {
+    get: jest.fn(),
+    set: jest.fn(),
+  },
+  user$: {
+    get: jest.fn(),
+  },
+}));
+
+jest.mock('@/lib/data/sync/syncConfig', () => ({
+  syncExerciseToSupabase: jest.fn(),
+  deleteExerciseFromSupabase: jest.fn(),
+  syncHelpers: {
+    isSyncing: jest.fn(),
+    isOnline: jest.fn(),
+    getPendingChangesCount: jest.fn(),
+    forceSync: jest.fn(),
+    hasErrors: jest.fn(),
+    getErrorMessage: jest.fn(),
+  }
+}));
+
+jest.mock('@/lib/models/Exercise', () => ({
+  ExerciseValidator: {
+    validateExerciseInput: jest.fn(),
+    sanitizeExerciseName: jest.fn(),
+  }
+}));
+
+jest.mock('firebase/firestore', () => ({
+  collection: jest.fn(),
+  addDoc: jest.fn(),
+  deleteDoc: jest.fn(),
+  doc: jest.fn(),
+  onSnapshot: jest.fn(),
+  query: jest.fn(),
+  orderBy: jest.fn(),
+}));
+
+jest.mock('@/lib/data/firebase/logger', () => ({
+  logger: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+  }
+}));
+
+jest.mock('uuid', () => ({
+  v4: jest.fn(() => 'test-uuid'),
+}));
+
 // Mock Expo Constants
 jest.mock('expo-constants', () => ({
   default: {

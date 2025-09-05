@@ -1,6 +1,13 @@
 import { FirebaseExerciseRepo } from '@/lib/repo/FirebaseExerciseRepo';
 import { Exercise, ExerciseInput } from '@/lib/models/Exercise';
 
+// Mock @legendapp/state first
+jest.mock('@legendapp/state', () => ({
+  observable: jest.fn(),
+  observe: jest.fn(),
+  computed: jest.fn(),
+}), { virtual: true });
+
 // Mock Firebase modules to avoid native module issues in tests
 jest.mock('@/lib/data/firebase', () => ({
 	db: {},
