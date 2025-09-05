@@ -12,7 +12,7 @@ export class ExerciseRepo implements IExerciseRepo {
 	private delegate: IExerciseRepo;
 
 	private constructor() {
-		// Get the appropriate implementation from the factory
+		// Initialize delegate - will be refreshed on each getInstance() call
 		this.delegate = ExerciseRepoFactory.getInstance();
 	}
 
@@ -20,6 +20,9 @@ export class ExerciseRepo implements IExerciseRepo {
 		if (!ExerciseRepo.instance) {
 			ExerciseRepo.instance = new ExerciseRepo();
 		}
+		// Always refresh the delegate to respect environment variable changes
+		// This ensures the repo uses the correct implementation even if USE_SUPABASE_DATA changes at runtime
+		ExerciseRepo.instance.delegate = ExerciseRepoFactory.getInstance();
 		return ExerciseRepo.instance;
 	}
 

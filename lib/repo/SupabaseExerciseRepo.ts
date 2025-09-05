@@ -36,10 +36,15 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
 			const sanitizedName = ExerciseValidator.sanitizeExerciseName(exercise.name);
 
 			console.log("About to get user");
-			// Get the Supabase user ID (not the Firebase userId parameter)
+			// Get the Supabase user ID and validate against the provided userId parameter
 			const supabaseUser = await supabaseClient.getCurrentUser();
 			if (!supabaseUser) {
 				throw new Error('User not authenticated with Supabase');
+			}
+
+			// Validate user ID consistency to prevent data isolation issues during migration
+			if (userId && userId !== supabaseUser.id) {
+				throw new Error(`User ID mismatch: Expected ${userId}, but Supabase user is ${supabaseUser.id}. This may indicate a user mapping issue during Firebase-to-Supabase migration.`);
 			}
 
 
@@ -112,10 +117,15 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
 				throw new Error('Valid exerciseId is required');
 			}
 
-			// Get the Supabase user ID (not the Firebase userId parameter)
+			// Get the Supabase user ID and validate against the provided userId parameter
 			const supabaseUser = await supabaseClient.getCurrentUser();
 			if (!supabaseUser) {
 				throw new Error('User not authenticated with Supabase');
+			}
+
+			// Validate user ID consistency to prevent data isolation issues during migration
+			if (userId && userId !== supabaseUser.id) {
+				throw new Error(`User ID mismatch: Expected ${userId}, but Supabase user is ${supabaseUser.id}. This may indicate a user mapping issue during Firebase-to-Supabase migration.`);
 			}
 
 			// Store current state for potential rollback
