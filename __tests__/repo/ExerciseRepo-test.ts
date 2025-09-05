@@ -93,6 +93,7 @@ jest.mock('uuid', () => ({
 	v4: () => mockUUID,
 }));
 describe("ExerciseRepo", () => {
+	const originalEnv = process.env;
 	let repo: ExerciseRepo;
 	let mockExercises$: any;
 	let mockUser$: any;
@@ -101,6 +102,15 @@ describe("ExerciseRepo", () => {
 	let mockHelpers: any;
 	const testUid = "test-user-123";
 	const testExercise = { name: "Push-ups" };
+
+	beforeAll(() => {
+		// Set environment to use Supabase to avoid Firebase native module issues
+		process.env.USE_SUPABASE_DATA = 'true';
+	});
+
+	afterAll(() => {
+		process.env = originalEnv;
+	});
 
 	beforeEach(() => {
 		jest.clearAllMocks();
@@ -133,8 +143,9 @@ describe("ExerciseRepo", () => {
 		const { supabaseClient } = require("@/lib/data/supabase/SupabaseClient");
 		supabaseClient.getCurrentUser.mockResolvedValue(mockSupabaseUser);
 
-		// Reset the singleton instance
-		(ExerciseRepo as any).instance = undefined;
+		// Reset the factory instances
+		const { ExerciseRepoFactory } = require("@/lib/repo/ExerciseRepoFactory");
+		ExerciseRepoFactory.resetInstances();
 		repo = ExerciseRepo.getInstance();
 	});
 
@@ -146,36 +157,43 @@ describe("ExerciseRepo", () => {
 	});
 
 	test("getExercisesCollectionPath returns correct path", () => {
-		const path = (repo as any).getExercisesCollectionPath(testUid);
+		// Access the underlying delegate to test private methods
+		const delegate = (repo as any).delegate;
+		const path = (delegate as any).getExercisesCollectionPath(testUid);
 		expect(path).toBe(`users/${testUid}/exercises`);
 	});
 
 	describe("validateExerciseData", () => {
 		test("validates correct exercise data", () => {
 			const validData = { name: "Push-ups" };
-			const isValid = (repo as any).validateExerciseData(validData);
+			const delegate = (repo as any).delegate;
+			const isValid = (delegate as any).validateExerciseData(validData);
 			expect(isValid).toBe(true);
 		});
 
 		test("rejects data without name", () => {
 			const invalidData = { id: "123" };
-			const isValid = (repo as any).validateExerciseData(invalidData);
+			const delegate = (repo as any).delegate;
+			const isValid = (delegate as any).validateExerciseData(invalidData);
 			expect(isValid).toBe(false);
 		});
 
 		test("rejects null data", () => {
-			const isValid = (repo as any).validateExerciseData(null);
+			const delegate = (repo as any).delegate;
+			const isValid = (delegate as any).validateExerciseData(null);
 			expect(isValid).toBe(false);
 		});
 
 		test("rejects non-object data", () => {
-			const isValid = (repo as any).validateExerciseData("string");
+			const delegate = (repo as any).delegate;
+			const isValid = (delegate as any).validateExerciseData("string");
 			expect(isValid).toBe(false);
 		});
 
 		test("rejects data with non-string name", () => {
 			const invalidData = { name: 123 };
-			const isValid = (repo as any).validateExerciseData(invalidData);
+			const delegate = (repo as any).delegate;
+			const isValid = (delegate as any).validateExerciseData(invalidData);
 			expect(isValid).toBe(false);
 		});
 	});

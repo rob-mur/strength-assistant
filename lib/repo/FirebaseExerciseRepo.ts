@@ -40,11 +40,13 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
         this.initialized = true;
         logger.info("Firebase Exercise Repository initialized", {
           service: "FirebaseExerciseRepo",
+          platform: "mobile",
           operation: "init"
         });
       } catch (error: any) {
         logger.error("Failed to initialize Firebase services", {
           service: "FirebaseExerciseRepo",
+          platform: "mobile",
           operation: "init",
           error: { message: error.message, stack: error.stack }
         });
@@ -76,14 +78,14 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
       
       logger.info("Exercise added successfully", {
         service: "FirebaseExerciseRepo",
-        operation: "addExercise",
-        userId: userId.substring(0, 8) + "..."
+        platform: "mobile",
+        operation: "addExercise"
       });
     } catch (error: any) {
       logger.error("Failed to add exercise", {
         service: "FirebaseExerciseRepo",
+        platform: "mobile",
         operation: "addExercise",
-        userId: userId.substring(0, 8) + "...",
         error: { message: error.message, stack: error.stack }
       });
       throw error;
@@ -125,14 +127,14 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
       
       logger.info("Exercise subscription established", {
         service: "FirebaseExerciseRepo",
-        operation: "getExercises",
-        userId: userId.substring(0, 8) + "..."
+        platform: "mobile",
+        operation: "getExercises"
       });
     } catch (error: any) {
       logger.error("Failed to get exercises", {
         service: "FirebaseExerciseRepo",
+        platform: "mobile",
         operation: "getExercises",
-        userId: userId.substring(0, 8) + "...",
         error: { message: error.message, stack: error.stack }
       });
     }
@@ -169,16 +171,16 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
       
       logger.info("Exercise subscription callback established", {
         service: "FirebaseExerciseRepo",
-        operation: "subscribeToExercises",
-        userId: userId.substring(0, 8) + "..."
+        platform: "mobile",
+        operation: "subscribeToExercises"
       });
       
       return unsubscribe;
     } catch (error: any) {
       logger.error("Failed to subscribe to exercises", {
         service: "FirebaseExerciseRepo",
+        platform: "mobile",
         operation: "subscribeToExercises",
-        userId: userId.substring(0, 8) + "...",
         error: { message: error.message, stack: error.stack }
       });
       // Return no-op function on error
@@ -205,16 +207,14 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
       
       logger.info("Exercise deleted successfully", {
         service: "FirebaseExerciseRepo",
-        operation: "deleteExercise",
-        userId: userId.substring(0, 8) + "...",
-        exerciseId: exerciseId.substring(0, 8) + "..."
+        platform: "mobile",
+        operation: "deleteExercise"
       });
     } catch (error: any) {
       logger.error("Failed to delete exercise", {
         service: "FirebaseExerciseRepo",
+        platform: "mobile",
         operation: "deleteExercise",
-        userId: userId.substring(0, 8) + "...",
-        exerciseId: exerciseId.substring(0, 8) + "...",
         error: { message: error.message, stack: error.stack }
       });
       throw error;
@@ -226,6 +226,69 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
    */
   private getExercisesCollectionPath(userId: string): string {
     return `users/${userId}/exercises`;
+  }
+
+  /**
+   * Get a specific exercise by ID for a user
+   */
+  async getExerciseById(exerciseId: string, userId: string): Promise<Exercise | undefined> {
+    try {
+      const exercises$ = this.getExercises(userId);
+      const exercises = exercises$.get();
+      return exercises.find(exercise => exercise.id === exerciseId);
+    } catch (error: any) {
+      logger.error("Failed to get exercise by ID", {
+        service: "FirebaseExerciseRepo",
+        platform: "mobile",
+        operation: "getExerciseById",
+        error: { message: error.message, stack: error.stack }
+      });
+      return undefined;
+    }
+  }
+
+  // Offline-first capabilities (Firebase doesn't directly support these, so we provide defaults)
+  /**
+   * Check if the repository is currently syncing data
+   */
+  isSyncing(): boolean {
+    return false;
+  }
+
+  /**
+   * Check if the repository is currently online
+   */
+  isOnline(): boolean {
+    return navigator.onLine ?? true;
+  }
+
+  /**
+   * Get the count of pending changes that need to be synced
+   */
+  getPendingChangesCount(): number {
+    return 0;
+  }
+
+  /**
+   * Force synchronization of pending changes
+   */
+  async forceSync(): Promise<void> {
+    // Firebase handles sync automatically, no-op
+    return Promise.resolve();
+  }
+
+  /**
+   * Check if there are any sync errors
+   */
+  hasErrors(): boolean {
+    return false;
+  }
+
+  /**
+   * Get the current error message if any
+   */
+  getErrorMessage(): string | null {
+    return null;
   }
 
   /**

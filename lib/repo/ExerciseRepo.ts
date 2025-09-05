@@ -52,6 +52,56 @@ export class ExerciseRepo implements IExerciseRepo {
 	}
 
 	/**
+	 * Get a specific exercise by ID - delegates to the configured implementation
+	 */
+	async getExerciseById(exerciseId: string, userId: string): Promise<import("../models/Exercise").Exercise | undefined> {
+		return this.delegate.getExerciseById(exerciseId, userId);
+	}
+
+	// Offline-first capabilities - delegates to the configured implementation
+	/**
+	 * Check if the repository is currently syncing data
+	 */
+	isSyncing(): boolean {
+		return this.delegate.isSyncing();
+	}
+
+	/**
+	 * Check if the repository is currently online
+	 */
+	isOnline(): boolean {
+		return this.delegate.isOnline();
+	}
+
+	/**
+	 * Get the count of pending changes that need to be synced
+	 */
+	getPendingChangesCount(): number {
+		return this.delegate.getPendingChangesCount();
+	}
+
+	/**
+	 * Force synchronization of pending changes
+	 */
+	async forceSync(): Promise<void> {
+		return this.delegate.forceSync();
+	}
+
+	/**
+	 * Check if there are any sync errors
+	 */
+	hasErrors(): boolean {
+		return this.delegate.hasErrors();
+	}
+
+	/**
+	 * Get the current error message if any
+	 */
+	getErrorMessage(): string | null {
+		return this.delegate.getErrorMessage();
+	}
+
+	/**
 	 * Get the current data source being used
 	 */
 	getCurrentDataSource(): 'firebase' | 'supabase' {

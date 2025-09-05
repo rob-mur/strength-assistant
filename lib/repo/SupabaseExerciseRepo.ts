@@ -226,7 +226,7 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
 	/**
 	 * Get current sync error message
 	 */
-	getErrorMessage(): string | undefined {
-		return syncHelpers.getErrorMessage();
+	getErrorMessage(): string | null {
+		return syncHelpers.getErrorMessage() ?? null;
 	}
 }

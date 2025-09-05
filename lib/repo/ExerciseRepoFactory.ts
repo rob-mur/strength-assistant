@@ -1,7 +1,6 @@
 import { IExerciseRepo } from "./IExerciseRepo";
 import { FirebaseExerciseRepo } from "./FirebaseExerciseRepo";
 import { SupabaseExerciseRepo } from "./SupabaseExerciseRepo";
-import Constants from 'expo-constants';
 
 /**
  * Factory class for creating appropriate Exercise Repository instances
@@ -19,12 +18,12 @@ export class ExerciseRepoFactory {
     const useSupabase = this.shouldUseSupabase();
     
     if (useSupabase) {
-      if (!this.supabaseInstance) {
+      if (this.supabaseInstance === null) {
         this.supabaseInstance = SupabaseExerciseRepo.getInstance();
       }
       return this.supabaseInstance;
     } else {
-      if (!this.firebaseInstance) {
+      if (this.firebaseInstance === null) {
         this.firebaseInstance = FirebaseExerciseRepo.getInstance();
       }
       return this.firebaseInstance;
@@ -35,14 +34,21 @@ export class ExerciseRepoFactory {
    * Determines whether to use Supabase based on environment variable
    */
   private static shouldUseSupabase(): boolean {
-    // Check environment variable from expo-constants
-    const useSupabaseEnv = Constants.expoConfig?.extra?.useSupabaseData;
-    
-    // Also check process.env for web builds
+    // Check process.env first (preferred for web builds and testing)
     const useSupabaseProcess = process.env.USE_SUPABASE_DATA;
     
-    // Default to false if not set
-    const useSupabase = useSupabaseEnv || useSupabaseProcess;
+    // Fall back to expo-constants if process.env not set
+    // Use dynamic import to avoid issues with Jest mocking
+    let useSupabaseEnv;
+    try {
+      const Constants = require('expo-constants').default;
+      useSupabaseEnv = Constants.expoConfig?.extra?.useSupabaseData;
+    } catch (error) {
+      useSupabaseEnv = undefined;
+    }
+    
+    // Prefer process.env, fall back to expo config
+    const useSupabase = useSupabaseProcess !== undefined ? useSupabaseProcess : useSupabaseEnv;
     
     // Convert string values to boolean
     if (typeof useSupabase === 'string') {
