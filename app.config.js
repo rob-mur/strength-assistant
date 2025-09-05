@@ -13,6 +13,11 @@ export default ({ config }) => {
   
   return {
     ...baseConfig,
+    extra: {
+      ...baseConfig.extra,
+      // Feature flag for data layer migration
+      useSupabaseData: process.env.USE_SUPABASE_DATA === 'true'
+    },
     plugins: [
       ...filteredPlugins,
       [
