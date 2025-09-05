@@ -384,68 +384,51 @@ describe('SupabaseExerciseRepo', () => {
 
   describe('Error handling', () => {
     test('addExercise logs and re-throws errors', async () => {
-      const consoleError = jest.spyOn(console, 'error').mockImplementation();
       const error = new Error('Test error');
       
       (supabaseClient.getCurrentUser as jest.Mock).mockRejectedValue(error);
 
       await expect(repo.addExercise(testUserId, { name: 'Test' }))
         .rejects.toThrow('Test error');
-
-      expect(consoleError).toHaveBeenCalledWith('Failed to add exercise:', error);
-      consoleError.mockRestore();
     });
 
     test('deleteExercise logs and re-throws errors', async () => {
-      const consoleError = jest.spyOn(console, 'error').mockImplementation();
       const error = new Error('Test error');
       
       (supabaseClient.getCurrentUser as jest.Mock).mockRejectedValue(error);
 
       await expect(repo.deleteExercise(testUserId, testExerciseId))
         .rejects.toThrow('Test error');
-
-      expect(consoleError).toHaveBeenCalledWith('Failed to delete exercise:', error);
-      consoleError.mockRestore();
     });
   });
 
-  describe('Console logging', () => {
-    test('addExercise includes console.log statements', async () => {
-      const consoleLog = jest.spyOn(console, 'log').mockImplementation();
-
-      await repo.addExercise(testUserId, { name: 'Test' });
-
-      expect(consoleLog).toHaveBeenCalledWith("About to parse exercise");
-      expect(consoleLog).toHaveBeenCalledWith("About to get user");
-      expect(consoleLog).toHaveBeenCalledWith("About to get current exercise state");
-      expect(consoleLog).toHaveBeenCalledWith("About to try and sync");
-      
-      consoleLog.mockRestore();
-    });
-
-    test('sync failure logs rollback message', async () => {
-      const consoleError = jest.spyOn(console, 'error').mockImplementation();
+  describe('Error recovery', () => {
+    test('sync failure rolls back optimistic update for addExercise', async () => {
       const syncError = new Error('Sync failed');
       (syncExerciseToSupabase as jest.Mock).mockRejectedValue(syncError);
+      
+      // Get initial state
+      const initialExercises = exercises$.get();
 
       await expect(repo.addExercise(testUserId, { name: 'Test' }))
         .rejects.toThrow('Sync failed');
 
-      expect(consoleError).toHaveBeenCalledWith('Sync failed, rolled back optimistic update:', syncError);
-      consoleError.mockRestore();
+      // Verify rollback occurred
+      expect(exercises$.get()).toEqual(initialExercises);
     });
 
-    test('delete sync failure logs rollback message', async () => {
-      const consoleError = jest.spyOn(console, 'error').mockImplementation();
+    test('sync failure rolls back optimistic update for deleteExercise', async () => {
       const syncError = new Error('Delete sync failed');
       (deleteExerciseFromSupabase as jest.Mock).mockRejectedValue(syncError);
+      
+      // Get initial state
+      const initialExercises = exercises$.get();
 
       await expect(repo.deleteExercise(testUserId, testExerciseId))
         .rejects.toThrow('Delete sync failed');
 
-      expect(consoleError).toHaveBeenCalledWith('Delete sync failed, rolled back optimistic update:', syncError);
-      consoleError.mockRestore();
+      // Verify rollback occurred
+      expect(exercises$.get()).toEqual(initialExercises);
     });
   });
 });

@@ -116,10 +116,10 @@ describe('FirebaseExerciseRepo - Comprehensive Tests', () => {
     });
 
     test('logs successful initialization', () => {
-      expect(logger.info).toHaveBeenCalledWith("Firebase Exercise Repository initialized", {
+      expect(logger.info).toHaveBeenCalledWith("initialize completed successfully", {
         service: "FirebaseExerciseRepo",
         platform: "mobile",
-        operation: "init"
+        operation: "initialize"
       });
     });
 
@@ -136,7 +136,7 @@ describe('FirebaseExerciseRepo - Comprehensive Tests', () => {
       expect(logger.error).toHaveBeenCalledWith("Failed to initialize Firebase services", {
         service: "FirebaseExerciseRepo",
         platform: "mobile",
-        operation: "init",
+        operation: "initialize Firebase services",
         error: { message: initError.message, stack: initError.stack }
       });
     });
@@ -172,7 +172,7 @@ describe('FirebaseExerciseRepo - Comprehensive Tests', () => {
         name: exerciseInput.name.trim(),
         created_at: expect.any(String)
       });
-      expect(logger.info).toHaveBeenCalledWith("Exercise added successfully", {
+      expect(logger.info).toHaveBeenCalledWith("addExercise completed successfully", {
         service: "FirebaseExerciseRepo",
         platform: "mobile",
         operation: "addExercise"
@@ -205,7 +205,7 @@ describe('FirebaseExerciseRepo - Comprehensive Tests', () => {
       expect(logger.error).toHaveBeenCalledWith("Failed to add exercise", expect.objectContaining({
         service: "FirebaseExerciseRepo",
         platform: "mobile",
-        operation: "addExercise",
+        operation: "add exercise",
         error: { message: validationError.message, stack: validationError.stack }
       }));
     });
@@ -218,6 +218,9 @@ describe('FirebaseExerciseRepo - Comprehensive Tests', () => {
         .rejects.toThrow('Firebase add failed');
 
       expect(logger.error).toHaveBeenCalledWith("Failed to add exercise", expect.objectContaining({
+        service: "FirebaseExerciseRepo",
+        platform: "mobile",
+        operation: "add exercise",
         error: { message: firebaseError.message, stack: firebaseError.stack }
       }));
     });
@@ -236,7 +239,7 @@ describe('FirebaseExerciseRepo - Comprehensive Tests', () => {
       expect(query).toHaveBeenCalledWith(mockCollection, 'orderBy-result');
       expect(orderBy).toHaveBeenCalledWith("created_at", "desc");
       expect(onSnapshot).toHaveBeenCalledWith(mockQuery, expect.any(Function));
-      expect(logger.info).toHaveBeenCalledWith("Exercise subscription established", {
+      expect(logger.info).toHaveBeenCalledWith("getExercises completed successfully", {
         service: "FirebaseExerciseRepo",
         platform: "mobile",
         operation: "getExercises"
@@ -321,6 +324,9 @@ describe('FirebaseExerciseRepo - Comprehensive Tests', () => {
       const result = repo.getExercises(testUserId);
 
       expect(logger.error).toHaveBeenCalledWith("Failed to get exercises", expect.objectContaining({
+        service: "FirebaseExerciseRepo",
+        platform: "mobile",
+        operation: "get exercises",
         error: { message: queryError.message, stack: queryError.stack }
       }));
     });
@@ -339,7 +345,7 @@ describe('FirebaseExerciseRepo - Comprehensive Tests', () => {
       expect(query).toHaveBeenCalledWith(mockCollection, 'orderBy-result');
       expect(onSnapshot).toHaveBeenCalledWith(mockQuery, expect.any(Function));
       expect(result).toBe(mockUnsubscribe);
-      expect(logger.info).toHaveBeenCalledWith("Exercise subscription callback established", {
+      expect(logger.info).toHaveBeenCalledWith("subscribeToExercises completed successfully", {
         service: "FirebaseExerciseRepo",
         platform: "mobile",
         operation: "subscribeToExercises"
@@ -387,6 +393,9 @@ describe('FirebaseExerciseRepo - Comprehensive Tests', () => {
 
       expect(typeof result).toBe('function');
       expect(logger.error).toHaveBeenCalledWith("Failed to subscribe to exercises", expect.objectContaining({
+        service: "FirebaseExerciseRepo",
+        platform: "mobile",
+        operation: "subscribe to exercises",
         error: { message: subscriptionError.message, stack: subscriptionError.stack }
       }));
       
@@ -402,7 +411,7 @@ describe('FirebaseExerciseRepo - Comprehensive Tests', () => {
       expect(getDb).toHaveBeenCalled();
       expect(doc).toHaveBeenCalledWith(mockDb, `users/${testUserId}/exercises`, testExerciseId);
       expect(deleteDoc).toHaveBeenCalledWith(mockDoc);
-      expect(logger.info).toHaveBeenCalledWith("Exercise deleted successfully", {
+      expect(logger.info).toHaveBeenCalledWith("deleteExercise completed successfully", {
         service: "FirebaseExerciseRepo",
         platform: "mobile",
         operation: "deleteExercise"
@@ -430,6 +439,9 @@ describe('FirebaseExerciseRepo - Comprehensive Tests', () => {
         .rejects.toThrow('Delete failed');
 
       expect(logger.error).toHaveBeenCalledWith("Failed to delete exercise", expect.objectContaining({
+        service: "FirebaseExerciseRepo",
+        platform: "mobile",
+        operation: "delete exercise",
         error: { message: deleteError.message, stack: deleteError.stack }
       }));
     });
@@ -470,6 +482,9 @@ describe('FirebaseExerciseRepo - Comprehensive Tests', () => {
 
       expect(result).toBeUndefined();
       expect(logger.error).toHaveBeenCalledWith("Failed to get exercise by ID", expect.objectContaining({
+        service: "FirebaseExerciseRepo",
+        platform: "mobile",
+        operation: "get exercise by ID",
         error: { message: error.message, stack: error.stack }
       }));
     });
