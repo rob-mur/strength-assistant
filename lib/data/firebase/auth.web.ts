@@ -8,8 +8,7 @@ import {
 	signOut,
 	onAuthStateChanged,
 	User,
-	// @ts-ignore - Using compat import path to work around Firebase auth initialization bug
-} from "@firebase/auth-compat/node_modules/@firebase/auth";
+} from "firebase/auth";
 import { getFirebaseApp } from "./firebase.web";
 import { FirebaseService } from "./firebase-core";
 
@@ -76,12 +75,21 @@ class AuthWebService extends FirebaseService {
 			});
 
 			try {
-				connectAuthEmulator(this.authInstance, emulatorUrl);
-				this.logInfo("Successfully connected to Auth emulator", {
-					operation: "emulator_setup",
-					emulator: { host, port }
-				});
+				// Check if emulator is already connected (prevents double connection errors)
+				if (!(this.authInstance as any)._delegate?._config?.emulator) {
+					connectAuthEmulator(this.authInstance, emulatorUrl, { disableWarnings: true });
+					this.logInfo("Successfully connected to Auth emulator", {
+						operation: "emulator_setup",
+						emulator: { host, port }
+					});
+				} else {
+					this.logInfo("Auth emulator already connected", {
+						operation: "emulator_setup",
+						emulator: { host, port }
+					});
+				}
 			} catch (error: any) {
+				// In Chrome test environment, emulator connection failures should not block the app
 				this.logError("Failed to connect to emulator", {
 					operation: "emulator_setup",
 					emulator: { host, port },
@@ -89,7 +97,7 @@ class AuthWebService extends FirebaseService {
 						message: error.message
 					}
 				});
-				this.logWarn("Continuing with production Auth");
+				this.logWarn("Continuing without emulator for Chrome testing compatibility");
 			}
 		} else {
 			this.logInfo("Production mode, using production Auth", {

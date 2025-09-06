@@ -77,11 +77,19 @@ class FirebaseWebService extends FirebaseService {
 			});
 
 			try {
-				connectFirestoreEmulator(this.db, host, port);
-				this.logInfo("Successfully connected to Firestore emulator", {
-					operation: "emulator_setup",
-					emulator: { host, port }
-				});
+				// Check if emulator is already connected
+				if (!(this.db as any)._delegate?._databaseId?.database?.includes('emulator')) {
+					connectFirestoreEmulator(this.db, host, port);
+					this.logInfo("Successfully connected to Firestore emulator", {
+						operation: "emulator_setup",
+						emulator: { host, port }
+					});
+				} else {
+					this.logInfo("Firestore emulator already connected", {
+						operation: "emulator_setup",
+						emulator: { host, port }
+					});
+				}
 			} catch (error: any) {
 				this.logError("Failed to connect to emulator", {
 					operation: "emulator_setup",
@@ -90,7 +98,7 @@ class FirebaseWebService extends FirebaseService {
 						message: error.message
 					}
 				});
-				this.logWarn("Continuing with production Firestore");
+				this.logWarn("Continuing without emulator for Chrome testing compatibility");
 			}
 		} else {
 			this.logInfo("Production mode, using production Firestore", {
