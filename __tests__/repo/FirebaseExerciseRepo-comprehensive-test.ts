@@ -2,15 +2,6 @@ import { FirebaseExerciseRepo } from '@/lib/repo/FirebaseExerciseRepo';
 import { Exercise, ExerciseInput, ExerciseValidator } from '@/lib/models/Exercise';
 import { initializeFirebaseServices, getDb } from '@/lib/data/firebase/initializer';
 import { logger } from '@/lib/data/firebase/logger';
-import { 
-  collection, 
-  addDoc, 
-  deleteDoc, 
-  doc, 
-  onSnapshot, 
-  query, 
-  orderBy 
-} from 'firebase/firestore';
 
 // Mock all Firebase modules
 jest.mock('@/lib/data/firebase/initializer', () => ({
@@ -25,16 +16,6 @@ jest.mock('@/lib/data/firebase/logger', () => ({
     warn: jest.fn(),
     debug: jest.fn(),
   }
-}));
-
-jest.mock('firebase/firestore', () => ({
-  collection: jest.fn(),
-  addDoc: jest.fn(),
-  deleteDoc: jest.fn(),
-  doc: jest.fn(),
-  onSnapshot: jest.fn(),
-  query: jest.fn(),
-  orderBy: jest.fn(),
 }));
 
 jest.mock('@/lib/models/Exercise', () => ({
@@ -58,10 +39,21 @@ describe('FirebaseExerciseRepo - Comprehensive Tests', () => {
   let repo: FirebaseExerciseRepo;
   const testUserId = 'test-user-123';
   const testExerciseId = 'test-exercise-123';
-  const mockDb = { fake: 'db' };
-  const mockCollection = { fake: 'collection' };
-  const mockQuery = { fake: 'query' };
-  const mockDoc = { fake: 'doc' };
+  const mockDb = { 
+    collection: jest.fn(),
+  };
+  const mockCollection = { 
+    add: jest.fn(),
+    doc: jest.fn(),
+    orderBy: jest.fn(),
+    onSnapshot: jest.fn(),
+  };
+  const mockQuery = { 
+    onSnapshot: jest.fn(),
+  };
+  const mockDoc = { 
+    delete: jest.fn(),
+  };
 
   beforeAll(() => {
     // Setup global navigator mock
@@ -85,17 +77,16 @@ describe('FirebaseExerciseRepo - Comprehensive Tests', () => {
       configurable: true
     });
     
-    // Setup default mocks
+    // Setup default mocks for React Native Firebase API
     (initializeFirebaseServices as jest.Mock).mockImplementation();
     (getDb as jest.Mock).mockReturnValue(mockDb);
-    (collection as jest.Mock).mockReturnValue(mockCollection);
-    (query as jest.Mock).mockReturnValue(mockQuery);
-    (orderBy as jest.Mock).mockReturnValue('orderBy-result');
-    (doc as jest.Mock).mockReturnValue(mockDoc);
+    mockDb.collection.mockReturnValue(mockCollection);
+    mockCollection.orderBy.mockReturnValue(mockQuery);
+    mockCollection.doc.mockReturnValue(mockDoc);
+    mockCollection.add.mockResolvedValue({ id: testExerciseId });
+    mockDoc.delete.mockResolvedValue(undefined);
     (ExerciseValidator.validateExerciseInput as jest.Mock).mockImplementation();
     (ExerciseValidator.sanitizeExerciseName as jest.Mock).mockImplementation((name: string) => name.trim());
-    (addDoc as jest.Mock).mockResolvedValue({ id: testExerciseId });
-    (deleteDoc as jest.Mock).mockResolvedValue(undefined);
     
     repo = FirebaseExerciseRepo.getInstance();
   });
@@ -167,8 +158,8 @@ describe('FirebaseExerciseRepo - Comprehensive Tests', () => {
       expect(ExerciseValidator.validateExerciseInput).toHaveBeenCalledWith(exerciseInput);
       expect(ExerciseValidator.sanitizeExerciseName).toHaveBeenCalledWith(exerciseInput.name);
       expect(getDb).toHaveBeenCalled();
-      expect(collection).toHaveBeenCalledWith(mockDb, `users/${testUserId}/exercises`);
-      expect(addDoc).toHaveBeenCalledWith(mockCollection, {
+      expect(mockDb.collection).toHaveBeenCalledWith(`users/${testUserId}/exercises`);
+      expect(mockCollection.add).toHaveBeenCalledWith({
         name: exerciseInput.name.trim(),
         created_at: expect.any(String)
       });
@@ -188,7 +179,7 @@ describe('FirebaseExerciseRepo - Comprehensive Tests', () => {
 
       expect(ExerciseValidator.validateExerciseInput).toHaveBeenCalledWith({ name: originalName });
       expect(ExerciseValidator.sanitizeExerciseName).toHaveBeenCalledWith(originalName);
-      expect(addDoc).toHaveBeenCalledWith(mockCollection, expect.objectContaining({
+      expect(mockCollection.add).toHaveBeenCalledWith(expect.objectContaining({
         name: sanitizedName
       }));
     });
@@ -212,7 +203,7 @@ describe('FirebaseExerciseRepo - Comprehensive Tests', () => {
 
     test('handles Firebase add errors', async () => {
       const firebaseError = new Error('Firebase add failed');
-      (addDoc as jest.Mock).mockRejectedValue(firebaseError);
+      mockCollection.add.mockRejectedValue(firebaseError);
 
       await expect(repo.addExercise(testUserId, exerciseInput))
         .rejects.toThrow('Firebase add failed');
@@ -230,15 +221,14 @@ describe('FirebaseExerciseRepo - Comprehensive Tests', () => {
     test('sets up Firebase query with correct parameters', () => {
       const { observable } = require('@legendapp/state');
       const mockUnsubscribe = jest.fn();
-      (onSnapshot as jest.Mock).mockReturnValue(mockUnsubscribe);
+      mockQuery.onSnapshot.mockReturnValue(mockUnsubscribe);
 
       const result = repo.getExercises(testUserId);
 
       expect(getDb).toHaveBeenCalled();
-      expect(collection).toHaveBeenCalledWith(mockDb, `users/${testUserId}/exercises`);
-      expect(query).toHaveBeenCalledWith(mockCollection, 'orderBy-result');
-      expect(orderBy).toHaveBeenCalledWith("created_at", "desc");
-      expect(onSnapshot).toHaveBeenCalledWith(mockQuery, expect.any(Function));
+      expect(mockDb.collection).toHaveBeenCalledWith(`users/${testUserId}/exercises`);
+      expect(mockCollection.orderBy).toHaveBeenCalledWith("created_at", "desc");
+      expect(mockQuery.onSnapshot).toHaveBeenCalledWith(expect.any(Function));
       expect(logger.info).toHaveBeenCalledWith("getExercises completed successfully", {
         service: "FirebaseExerciseRepo",
         platform: "mobile",
@@ -250,7 +240,7 @@ describe('FirebaseExerciseRepo - Comprehensive Tests', () => {
       const { observable } = require('@legendapp/state');
 
       let snapshotCallback: (snapshot: any) => void;
-      (onSnapshot as jest.Mock).mockImplementation((query, callback) => {
+      mockQuery.onSnapshot.mockImplementation((callback) => {
         snapshotCallback = callback;
         return jest.fn();
       });
@@ -280,7 +270,7 @@ describe('FirebaseExerciseRepo - Comprehensive Tests', () => {
       const { observable } = require('@legendapp/state');
 
       let snapshotCallback: (snapshot: any) => void;
-      (onSnapshot as jest.Mock).mockImplementation((query, callback) => {
+      mockQuery.onSnapshot.mockImplementation((callback) => {
         snapshotCallback = callback;
         return jest.fn();
       });
@@ -317,7 +307,7 @@ describe('FirebaseExerciseRepo - Comprehensive Tests', () => {
       const { observable } = require('@legendapp/state');
 
       const queryError = new Error('Query failed');
-      (onSnapshot as jest.Mock).mockImplementation(() => {
+      mockQuery.onSnapshot.mockImplementation(() => {
         throw queryError;
       });
 
@@ -336,14 +326,14 @@ describe('FirebaseExerciseRepo - Comprehensive Tests', () => {
     test('sets up Firebase subscription with callback', () => {
       const callback = jest.fn();
       const mockUnsubscribe = jest.fn();
-      (onSnapshot as jest.Mock).mockReturnValue(mockUnsubscribe);
+      mockQuery.onSnapshot.mockReturnValue(mockUnsubscribe);
 
       const result = repo.subscribeToExercises(testUserId, callback);
 
       expect(getDb).toHaveBeenCalled();
-      expect(collection).toHaveBeenCalledWith(mockDb, `users/${testUserId}/exercises`);
-      expect(query).toHaveBeenCalledWith(mockCollection, 'orderBy-result');
-      expect(onSnapshot).toHaveBeenCalledWith(mockQuery, expect.any(Function));
+      expect(mockDb.collection).toHaveBeenCalledWith(`users/${testUserId}/exercises`);
+      expect(mockCollection.orderBy).toHaveBeenCalledWith("created_at", "desc");
+      expect(mockQuery.onSnapshot).toHaveBeenCalledWith(expect.any(Function));
       expect(result).toBe(mockUnsubscribe);
       expect(logger.info).toHaveBeenCalledWith("subscribeToExercises completed successfully", {
         service: "FirebaseExerciseRepo",
@@ -356,7 +346,7 @@ describe('FirebaseExerciseRepo - Comprehensive Tests', () => {
       const callback = jest.fn();
       let snapshotCallback: (snapshot: any) => void;
       
-      (onSnapshot as jest.Mock).mockImplementation((query, cb) => {
+      mockQuery.onSnapshot.mockImplementation((cb) => {
         snapshotCallback = cb;
         return jest.fn();
       });
@@ -385,7 +375,7 @@ describe('FirebaseExerciseRepo - Comprehensive Tests', () => {
     test('returns no-op function on error', () => {
       const callback = jest.fn();
       const subscriptionError = new Error('Subscription failed');
-      (onSnapshot as jest.Mock).mockImplementation(() => {
+      mockQuery.onSnapshot.mockImplementation(() => {
         throw subscriptionError;
       });
 
@@ -409,8 +399,9 @@ describe('FirebaseExerciseRepo - Comprehensive Tests', () => {
       await repo.deleteExercise(testUserId, testExerciseId);
 
       expect(getDb).toHaveBeenCalled();
-      expect(doc).toHaveBeenCalledWith(mockDb, `users/${testUserId}/exercises`, testExerciseId);
-      expect(deleteDoc).toHaveBeenCalledWith(mockDoc);
+      expect(mockDb.collection).toHaveBeenCalledWith(`users/${testUserId}/exercises`);
+      expect(mockCollection.doc).toHaveBeenCalledWith(testExerciseId);
+      expect(mockDoc.delete).toHaveBeenCalled();
       expect(logger.info).toHaveBeenCalledWith("deleteExercise completed successfully", {
         service: "FirebaseExerciseRepo",
         platform: "mobile",
@@ -428,12 +419,12 @@ describe('FirebaseExerciseRepo - Comprehensive Tests', () => {
       await expect(repo.deleteExercise(testUserId, null as any))
         .rejects.toThrow('Valid exerciseId is required');
 
-      expect(deleteDoc).not.toHaveBeenCalled();
+      expect(mockDoc.delete).not.toHaveBeenCalled();
     });
 
     test('handles Firebase delete errors', async () => {
       const deleteError = new Error('Delete failed');
-      (deleteDoc as jest.Mock).mockRejectedValue(deleteError);
+      mockDoc.delete.mockRejectedValue(deleteError);
 
       await expect(repo.deleteExercise(testUserId, testExerciseId))
         .rejects.toThrow('Delete failed');
@@ -533,7 +524,7 @@ describe('FirebaseExerciseRepo - Comprehensive Tests', () => {
       const { observable } = require('@legendapp/state');
 
       const mockUnsubscribe = jest.fn();
-      (onSnapshot as jest.Mock).mockReturnValue(mockUnsubscribe);
+      mockQuery.onSnapshot.mockReturnValue(mockUnsubscribe);
 
       repo.getExercises(testUserId);
 

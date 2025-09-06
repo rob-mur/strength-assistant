@@ -84,7 +84,7 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
       const exercisesQuery = this.createExercisesQuery(userId);
       
       // Set up real-time listener
-      const unsubscribe = exercisesQuery.onSnapshot((snapshot) => {
+      const unsubscribe = exercisesQuery.onSnapshot((snapshot: FirebaseFirestoreTypes.QuerySnapshot) => {
         const exercises = this.processSnapshot(snapshot, userId);
         exercises$.set(exercises);
       });
@@ -109,7 +109,7 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
     try {
       const exercisesQuery = this.createExercisesQuery(userId);
       
-      const unsubscribe = exercisesQuery.onSnapshot((snapshot) => {
+      const unsubscribe = exercisesQuery.onSnapshot((snapshot: FirebaseFirestoreTypes.QuerySnapshot) => {
         const exercises = this.processSnapshot(snapshot, userId);
         callback(exercises);
       });
