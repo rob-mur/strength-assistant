@@ -73,10 +73,14 @@ echo "🔄 Applying Supabase migrations..."
 supabase db reset --local
 echo "✅ Migrations applied"
 
+# Patch expo-router context to use static app root
+echo "🔧 Patching expo-router context for static resolution..."
+node scripts/fix-expo-router-context.js
+
 # Start Expo web server
 echo "🚀 Starting Expo web server..."
-# Use the npm script that sets EXPO_ROUTER_APP_ROOT before launching Expo
-npm run web -- --port 8081 &
+# Set EXPO_ROUTER_APP_ROOT and launch Expo directly to ensure environment inheritance
+EXPO_ROUTER_APP_ROOT=./app npx expo start --web --port 8081 &
 EXPO_PID=$!
 
 # Wait for Expo web server

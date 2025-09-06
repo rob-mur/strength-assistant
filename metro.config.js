@@ -8,6 +8,12 @@ const { getDefaultConfig } = require("expo/metro-config");
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
 
+// Use custom transformer to handle EXPO_ROUTER_APP_ROOT at build time
+config.transformer = {
+  ...config.transformer,
+  babelTransformerPath: require.resolve('./metro-transformer.js'),
+};
+
 const withStorybook = require("@storybook/react-native/metro/withStorybook");
 
 const fs = require("fs");

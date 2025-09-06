@@ -6,9 +6,9 @@ export default ({ config }) => {
   // Force set EXPO_ROUTER_APP_ROOT for all builds, especially web/test builds
   process.env.EXPO_ROUTER_APP_ROOT = process.env.EXPO_ROUTER_APP_ROOT || './app';
   
-  // Also set it as a build constant for metro
-  if (global) {
-    global.EXPO_ROUTER_APP_ROOT = process.env.EXPO_ROUTER_APP_ROOT;
+  // Ensure the variable is available at build time for Metro
+  if (typeof process !== 'undefined' && process.env) {
+    process.env.EXPO_ROUTER_APP_ROOT = './app';
   }
   
   // Start with the base config from app.json

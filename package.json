@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
-    "web": "EXPO_ROUTER_APP_ROOT=./app expo start --web",
+    "web": "node scripts/fix-expo-router-context.js && EXPO_ROUTER_APP_ROOT=./app expo start --web",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo run:android",
     "lint": "expo lint",
