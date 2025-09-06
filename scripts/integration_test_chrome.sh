@@ -75,10 +75,8 @@ echo "✅ Migrations applied"
 
 # Start Expo web server
 echo "🚀 Starting Expo web server..."
-# Ensure environment variables are available for Metro bundling
-export EXPO_ROUTER_APP_ROOT=./app
-# Use environment variable in command to ensure it's available during bundling
-EXPO_ROUTER_APP_ROOT=./app npx expo start --web --port 8081 &
+# Use the npm script that sets EXPO_ROUTER_APP_ROOT before launching Expo
+npm run web -- --port 8081 &
 EXPO_PID=$!
 
 # Wait for Expo web server
