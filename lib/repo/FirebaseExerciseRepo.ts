@@ -60,6 +60,9 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
       const sanitizedName = ExerciseValidator.sanitizeExerciseName(exercise.name);
 
       const db = getDb();
+      if (!db) {
+        throw new Error("Firebase Firestore instance is not available. Ensure Firebase is properly initialized.");
+      }
       const exercisesCollection = collection(db, RepositoryUtils.getExercisesCollectionPath(userId));
       
       const newExercise = {
@@ -139,6 +142,9 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
       RepositoryUtils.validateExerciseId(exerciseId);
 
       const db = getDb();
+      if (!db) {
+        throw new Error("Firebase Firestore instance is not available. Ensure Firebase is properly initialized.");
+      }
       const exerciseDoc = doc(db, RepositoryUtils.getExercisesCollectionPath(userId), exerciseId);
       
       await deleteDoc(exerciseDoc);
@@ -214,6 +220,9 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
    */
   private createExercisesQuery(userId: string) {
     const db = getDb();
+    if (!db) {
+      throw new Error("Firebase Firestore instance is not available. Ensure Firebase is properly initialized.");
+    }
     const exercisesCollection = collection(db, RepositoryUtils.getExercisesCollectionPath(userId));
     return query(exercisesCollection, orderBy("created_at", "desc"));
   }
