@@ -1,18 +1,8 @@
-// CRITICAL: Set EXPO_ROUTER_APP_ROOT as early as possible for Metro
-// This MUST be the very first thing that runs
-process.env.EXPO_ROUTER_APP_ROOT = process.env.EXPO_ROUTER_APP_ROOT || './app';
-
 // Learn more https://docs.expo.io/guides/customizing-metro
 const { getDefaultConfig } = require("expo/metro-config");
 
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
-
-// Use custom transformer to handle EXPO_ROUTER_APP_ROOT at build time
-config.transformer = {
-  ...config.transformer,
-  babelTransformerPath: require.resolve('./metro-transformer.js'),
-};
 
 const withStorybook = require("@storybook/react-native/metro/withStorybook");
 

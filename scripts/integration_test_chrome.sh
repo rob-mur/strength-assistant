@@ -11,7 +11,6 @@ cd "$(dirname "$0")/.."
 export USE_SUPABASE_DATA=false
 export EXPO_PUBLIC_USE_SUPABASE_DATA=false
 export NODE_ENV=test
-export EXPO_ROUTER_APP_ROOT=./app
 
 # Load test environment if available
 if [ -f ".env.test" ]; then
@@ -79,8 +78,7 @@ node scripts/fix-expo-router-context.js
 
 # Start Expo web server
 echo "🚀 Starting Expo web server..."
-# Set EXPO_ROUTER_APP_ROOT and launch Expo directly to ensure environment inheritance
-EXPO_ROUTER_APP_ROOT=./app npx expo start --web --port 8081 &
+npx expo start --web --port 8081 &
 EXPO_PID=$!
 
 # Wait for Expo web server
