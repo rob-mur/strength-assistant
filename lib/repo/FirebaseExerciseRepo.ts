@@ -3,15 +3,8 @@ import { IExerciseRepo } from "./IExerciseRepo";
 import { Observable, observable } from "@legendapp/state";
 import { initializeFirebaseServices, getDb } from "../data/firebase/initializer";
 import { 
-  collection, 
-  addDoc, 
-  deleteDoc, 
-  doc, 
-  onSnapshot, 
-  query, 
-  orderBy,
-  Unsubscribe
-} from "firebase/firestore";
+  FirebaseFirestoreTypes
+} from "@react-native-firebase/firestore";
 import { logger } from "../data/firebase/logger";
 import { RepositoryLogger } from "./utils/LoggingUtils";
 import { RepositoryUtils } from "./utils/RepositoryUtils";
@@ -63,14 +56,14 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
       if (!db) {
         throw new Error("Firebase Firestore instance is not available. Ensure Firebase is properly initialized.");
       }
-      const exercisesCollection = collection(db, RepositoryUtils.getExercisesCollectionPath(userId));
+      const exercisesCollection = db.collection(RepositoryUtils.getExercisesCollectionPath(userId));
       
       const newExercise = {
         name: sanitizedName,
         created_at: new Date().toISOString()
       };
 
-      await addDoc(exercisesCollection, newExercise);
+      await exercisesCollection.add(newExercise);
       
       RepositoryLogger.logSuccess("FirebaseExerciseRepo", "addExercise");
     } catch (error: any) {
@@ -91,7 +84,7 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
       const exercisesQuery = this.createExercisesQuery(userId);
       
       // Set up real-time listener
-      const unsubscribe = onSnapshot(exercisesQuery, (snapshot) => {
+      const unsubscribe = exercisesQuery.onSnapshot((snapshot) => {
         const exercises = this.processSnapshot(snapshot, userId);
         exercises$.set(exercises);
       });
@@ -116,7 +109,7 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
     try {
       const exercisesQuery = this.createExercisesQuery(userId);
       
-      const unsubscribe = onSnapshot(exercisesQuery, (snapshot) => {
+      const unsubscribe = exercisesQuery.onSnapshot((snapshot) => {
         const exercises = this.processSnapshot(snapshot, userId);
         callback(exercises);
       });
@@ -145,9 +138,9 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
       if (!db) {
         throw new Error("Firebase Firestore instance is not available. Ensure Firebase is properly initialized.");
       }
-      const exerciseDoc = doc(db, RepositoryUtils.getExercisesCollectionPath(userId), exerciseId);
+      const exerciseDoc = db.collection(RepositoryUtils.getExercisesCollectionPath(userId)).doc(exerciseId);
       
-      await deleteDoc(exerciseDoc);
+      await exerciseDoc.delete();
       
       RepositoryLogger.logSuccess("FirebaseExerciseRepo", "deleteExercise");
     } catch (error: any) {
@@ -223,16 +216,16 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
     if (!db) {
       throw new Error("Firebase Firestore instance is not available. Ensure Firebase is properly initialized.");
     }
-    const exercisesCollection = collection(db, RepositoryUtils.getExercisesCollectionPath(userId));
-    return query(exercisesCollection, orderBy("created_at", "desc"));
+    const exercisesCollection = db.collection(RepositoryUtils.getExercisesCollectionPath(userId));
+    return exercisesCollection.orderBy("created_at", "desc");
   }
 
   /**
    * Process snapshot data and convert to Exercise array
    */
-  private processSnapshot(snapshot: any, userId: string): Exercise[] {
+  private processSnapshot(snapshot: FirebaseFirestoreTypes.QuerySnapshot, userId: string): Exercise[] {
     const exercises: Exercise[] = [];
-    snapshot.forEach((doc: any) => {
+    snapshot.forEach((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
       const data = doc.data();
       if (RepositoryUtils.validateExerciseData(data)) {
         exercises.push({
