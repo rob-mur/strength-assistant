@@ -3,6 +3,11 @@ import appJson from './app.json';
 export default ({ config }) => {
   const isProduction = process.env.EAS_BUILD_PROFILE === 'production';
   
+  // Ensure EXPO_ROUTER_APP_ROOT is set for web builds
+  if (!process.env.EXPO_ROUTER_APP_ROOT) {
+    process.env.EXPO_ROUTER_APP_ROOT = './app';
+  }
+  
   // Start with the base config from app.json
   const baseConfig = appJson.expo;
   

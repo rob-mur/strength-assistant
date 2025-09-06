@@ -70,11 +70,21 @@ export const useAppInit = () => {
 						stack: error.stack
 					}
 				});
-				logger.warn("App will continue with limited functionality", {
-					service: "App Init",
-					platform: "React Native",
-					operation: "init"
-				});
+				
+				// In web/Chrome testing environments, continue with degraded functionality
+				if (typeof window !== 'undefined') {
+					logger.warn("Web environment detected, continuing with degraded functionality for testing", {
+						service: "App Init",
+						platform: "React Native",
+						operation: "init"
+					});
+				} else {
+					logger.warn("App will continue with limited functionality", {
+						service: "App Init",
+						platform: "React Native",
+						operation: "init"
+					});
+				}
 			} finally {
 				setAppReady(true);
 				logger.info("App initialization complete", {
