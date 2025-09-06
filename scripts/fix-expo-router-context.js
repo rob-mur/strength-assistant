@@ -3,45 +3,65 @@
 const fs = require('fs');
 const path = require('path');
 
-// Find the expo-router _ctx.web.js file and patch it
-function findExpoRouterContext() {
-  const possiblePaths = [
-    'node_modules/expo-router/_ctx.web.js',
-    '../node_modules/expo-router/_ctx.web.js'
-  ];
+// Find all expo-router context files that need patching
+function findExpoRouterContextFiles() {
+  const contextFiles = ['_ctx.web.js', '_ctx-html.js', '_ctx.js'];
+  const nodePaths = ['node_modules/expo-router', '../node_modules/expo-router'];
+  const foundFiles = [];
   
-  for (const possiblePath of possiblePaths) {
-    if (fs.existsSync(possiblePath)) {
-      return possiblePath;
+  for (const nodePath of nodePaths) {
+    for (const contextFile of contextFiles) {
+      const fullPath = path.join(nodePath, contextFile);
+      if (fs.existsSync(fullPath)) {
+        foundFiles.push(fullPath);
+      }
+    }
+    // If we found files in this node_modules, use those
+    if (foundFiles.length > 0) {
+      break;
     }
   }
-  return null;
+  
+  return foundFiles;
 }
 
 function patchExpoRouterContext() {
-  const contextPath = findExpoRouterContext();
-  if (!contextPath) {
-    console.log('⚠️  Could not find expo-router _ctx.web.js file to patch');
+  const contextFiles = findExpoRouterContextFiles();
+  if (contextFiles.length === 0) {
+    console.log('⚠️  Could not find any expo-router context files to patch');
     return;
   }
   
-  console.log(`📝 Patching ${contextPath} to use static app root...`);
+  console.log(`📝 Found ${contextFiles.length} expo-router context files to patch...`);
   
-  try {
-    let content = fs.readFileSync(contextPath, 'utf8');
+  let totalPatched = 0;
+  
+  for (const contextPath of contextFiles) {
+    console.log(`📝 Patching ${contextPath}...`);
     
-    // Replace process.env.EXPO_ROUTER_APP_ROOT with a static value
-    const originalContent = content;
-    content = content.replace(/process\.env\.EXPO_ROUTER_APP_ROOT/g, '"./app"');
-    
-    if (content !== originalContent) {
-      fs.writeFileSync(contextPath, content, 'utf8');
-      console.log('✅ Successfully patched expo-router context file');
-    } else {
-      console.log('ℹ️  No changes needed - file already contains static values');
+    try {
+      let content = fs.readFileSync(contextPath, 'utf8');
+      
+      // Replace process.env.EXPO_ROUTER_APP_ROOT with a static value
+      const originalContent = content;
+      content = content.replace(/process\.env\.EXPO_ROUTER_APP_ROOT/g, '"./app"');
+      
+      if (content !== originalContent) {
+        fs.writeFileSync(contextPath, content, 'utf8');
+        console.log(`✅ Successfully patched ${path.basename(contextPath)}`);
+        totalPatched++;
+      } else {
+        console.log(`ℹ️  ${path.basename(contextPath)} already contains static values`);
+      }
+    } catch (error) {
+      console.error(`❌ Failed to patch ${path.basename(contextPath)}:`, error.message);
     }
-  } catch (error) {
-    console.error('❌ Failed to patch expo-router context:', error.message);
+  }
+  
+  if (totalPatched > 0) {
+    console.log(`🎉 Successfully patched ${totalPatched} expo-router context files`);
+  } else {
+    console.log('ℹ️  All context files were already up to date');
   }
 }
 
