@@ -7,6 +7,19 @@ echo "🌐 Starting Chrome Integration Tests"
 # Change to project root directory (relative to scripts folder)
 cd "$(dirname "$0")/.."
 
+# Set environment variables for testing
+export USE_SUPABASE_DATA=false
+export EXPO_PUBLIC_USE_SUPABASE_DATA=false
+export NODE_ENV=test
+
+# Load test environment if available
+if [ -f ".env.test" ]; then
+    echo "📋 Loading test environment configuration..."
+    set -a
+    source .env.test
+    set +a
+fi
+
 # Cleanup function
 cleanup() {
     echo "🧹 Cleaning up processes..."

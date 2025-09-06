@@ -32,10 +32,18 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
     if (!this.initialized) {
       try {
         initializeFirebaseServices();
+        
+        // Validate that Firebase is actually ready
+        const db = getDb();
+        if (!db) {
+          throw new Error("Firebase initialization completed but Firestore instance is not available");
+        }
+        
         this.initialized = true;
         RepositoryLogger.logSuccess("FirebaseExerciseRepo", "initialize");
       } catch (error: any) {
         RepositoryLogger.logError("FirebaseExerciseRepo", "initialize Firebase services", error);
+        this.initialized = false; // Ensure we retry on next call
         throw error;
       }
     }
