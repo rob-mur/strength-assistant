@@ -33,3 +33,12 @@ jest.mock('react-native', () => {
   RN.Platform.OS = 'ios'; // Set to non-web to test native path
   return RN;
 });
+
+// Mock navigator global for web APIs used in isOnline() method
+Object.defineProperty(global, 'navigator', {
+  value: {
+    onLine: true,
+  },
+  writable: true,
+  configurable: true,
+});

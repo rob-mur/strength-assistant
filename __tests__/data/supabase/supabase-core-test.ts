@@ -1,6 +1,11 @@
 import { SupabaseService } from "@/lib/data/supabase/supabase/supabase-core";
 import { Logger } from "@/lib/data/supabase/supabase/logger";
 
+// Mock Supabase JS
+jest.mock("@supabase/supabase-js", () => ({
+  createClient: jest.fn(),
+}), { virtual: true });
+
 // Mock the Logger
 jest.mock("@/lib/data/supabase/supabase/logger");
 

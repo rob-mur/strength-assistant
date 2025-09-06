@@ -102,7 +102,13 @@ class FirebaseWebService extends FirebaseService {
 	getDb(): Firestore {
 		this.assertInitialized("getDb()");
 		if (!this.db) {
-			throw new Error("Firestore instance not available");
+			const error = new Error("Firestore instance not available. This may indicate an initialization timing issue in web environment.");
+			this.logError("getDb() called but Firestore instance is null", {
+				operation: "getDb",
+				initialized: this.initialized,
+				dbInstance: !!this.db
+			});
+			throw error;
 		}
 		return this.db;
 	}

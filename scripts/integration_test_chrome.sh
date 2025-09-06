@@ -7,6 +7,19 @@ echo "🌐 Starting Chrome Integration Tests"
 # Change to project root directory (relative to scripts folder)
 cd "$(dirname "$0")/.."
 
+# Set environment variables for testing
+export USE_SUPABASE_DATA=false
+export EXPO_PUBLIC_USE_SUPABASE_DATA=false
+export NODE_ENV=test
+
+# Load test environment if available
+if [ -f ".env.test" ]; then
+    echo "📋 Loading test environment configuration..."
+    set -a
+    source .env.test
+    set +a
+fi
+
 # Cleanup function
 cleanup() {
     echo "🧹 Cleaning up processes..."
@@ -58,6 +71,10 @@ echo "✅ Firebase emulators ready"
 echo "🔄 Applying Supabase migrations..."
 supabase db reset --local
 echo "✅ Migrations applied"
+
+# Patch expo-router context to use static app root
+echo "🔧 Patching expo-router context for static resolution..."
+node scripts/fix-expo-router-context.js
 
 # Start Expo web server
 echo "🚀 Starting Expo web server..."
