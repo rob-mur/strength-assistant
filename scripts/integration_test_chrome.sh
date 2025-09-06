@@ -77,7 +77,8 @@ echo "✅ Migrations applied"
 echo "🚀 Starting Expo web server..."
 # Ensure environment variables are available for Metro bundling
 export EXPO_ROUTER_APP_ROOT=./app
-npx expo start --web --port 8081 &
+# Use environment variable in command to ensure it's available during bundling
+EXPO_ROUTER_APP_ROOT=./app npx expo start --web --port 8081 &
 EXPO_PID=$!
 
 # Wait for Expo web server

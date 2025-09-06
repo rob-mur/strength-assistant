@@ -106,6 +106,11 @@ describe("useAppInit", () => {
     mockUseFonts.mockReturnValue([true, null]);
     mockInitializeDataLayer.mockRejectedValue(new Error("Data layer failed"));
     
+    // Mock window to be undefined to test native path
+    const originalWindow = global.window;
+    // @ts-ignore
+    delete global.window;
+    
     const { result } = renderHook(() => useAppInit());
     
     await waitFor(() => {
@@ -116,6 +121,9 @@ describe("useAppInit", () => {
       operation: "init"
     }));
     expect(logger.warn).toHaveBeenCalledWith("App will continue with limited functionality", expect.any(Object));
+    
+    // Restore window
+    global.window = originalWindow;
   });
 
   test("logs initialization steps correctly", async () => {

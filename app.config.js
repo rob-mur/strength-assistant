@@ -3,9 +3,12 @@ import appJson from './app.json';
 export default ({ config }) => {
   const isProduction = process.env.EAS_BUILD_PROFILE === 'production';
   
-  // Ensure EXPO_ROUTER_APP_ROOT is set for web builds
-  if (!process.env.EXPO_ROUTER_APP_ROOT) {
-    process.env.EXPO_ROUTER_APP_ROOT = './app';
+  // Force set EXPO_ROUTER_APP_ROOT for all builds, especially web/test builds
+  process.env.EXPO_ROUTER_APP_ROOT = process.env.EXPO_ROUTER_APP_ROOT || './app';
+  
+  // Also set it as a build constant for metro
+  if (global) {
+    global.EXPO_ROUTER_APP_ROOT = process.env.EXPO_ROUTER_APP_ROOT;
   }
   
   // Start with the base config from app.json
