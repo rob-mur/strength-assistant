@@ -1,6 +1,54 @@
 {
   "lockfile_version": "1",
   "packages": {
+    "android-tools@latest": {
+      "last_modified": "2025-08-12T09:17:37Z",
+      "resolved": "github:NixOS/nixpkgs/372d9eeeafa5b15913201e2b92e8e539ac7c64d1#android-tools",
+      "source": "devbox-search",
+      "version": "35.0.2",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/vjlkwivxlzdlaa1qvdjky5bjkrnrh8id-android-tools-35.0.2",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/vjlkwivxlzdlaa1qvdjky5bjkrnrh8id-android-tools-35.0.2"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/7s7s1qgbifnhbprcivsqavzs8zsaj1k1-android-tools-35.0.2",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/7s7s1qgbifnhbprcivsqavzs8zsaj1k1-android-tools-35.0.2"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/acq72nqc5zm4rnx3967w7gxsdwz3nkf6-android-tools-35.0.2",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/acq72nqc5zm4rnx3967w7gxsdwz3nkf6-android-tools-35.0.2"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/zwmflixav9lk0fw2bnpyikrdb6fdckvm-android-tools-35.0.2",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/zwmflixav9lk0fw2bnpyikrdb6fdckvm-android-tools-35.0.2"
+        }
+      }
+    },
     "chromedriver@latest": {
       "last_modified": "2025-08-08T08:05:48Z",
       "resolved": "github:NixOS/nixpkgs/a3f3e3f2c983e957af6b07a1db98bafd1f87b7a1#chromedriver",

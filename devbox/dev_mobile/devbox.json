@@ -10,7 +10,8 @@
 		"claude-code@latest",
 		"gh@latest",
 		"git@latest",
-		"supabase-cli@latest"
+		"supabase-cli@latest",
+		"android-tools@latest"
 	],
 	"shell": {
 		"init_hook": [
@@ -32,6 +33,18 @@
 			],
 			"sync_devbox": [
 				"../../scripts/sync-devbox.sh"
+			],
+			"adb_devices": [
+				"adb devices -l"
+			],
+			"adb_logs": [
+				"adb logcat | tee adb-session-$(date +%Y%m%d_%H%M%S).log"
+			],
+			"maestro_device_test": [
+				"maestro test flows/ --device $(adb devices | grep -E 'device$' | head -1 | cut -f1) || echo 'No device connected or maestro flows not found'"
+			],
+			"adb_version": [
+				"adb version"
 			]
 		}
 	},
@@ -40,6 +53,7 @@
 		"GRADLE_OPTS": "-Dorg.gradle.project.android.aapt2FromMavenOverride=$PWD/.devbox/nix/profile/default/bin/aapt2",
 		"EXPO_PUBLIC_USE_EMULATOR": "true",
 		"EXPO_PUBLIC_USE_SUPABASE_EMULATOR": "true",
-		"DEVBOX_SHELL_ENABLED": "true"
+		"DEVBOX_SHELL_ENABLED": "true",
+		"ADB_VENDOR_KEYS": "$HOME/.android"
 	}
 }
