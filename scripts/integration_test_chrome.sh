@@ -170,19 +170,18 @@ for test_file in .maestro/web/*.yml; do
         # Clear console log for this test
         echo "=== Starting test: $(basename "$test_file") at $(date) ===" >> "$CONSOLE_LOG_FILE"
         
-        # Run test with enhanced logging and output capture
-        echo "🔍 Running test with enhanced Maestro debugging..."
+        # Run test with debug output and console capture
+        echo "🔍 Running test with Maestro debug output..."
         set +e  # Don't exit on command failure, we need to capture exit code
         
         # Set enhanced logging environment
         export MAESTRO_CLI_LOG_LEVEL=DEBUG
         
-        # Run maestro with verbose output and full logging
+        # Run maestro with valid CLI options and full logging
         maestro test "$test_file" \
           --headless \
           --debug-output maestro-debug-output \
-          --verbose \
-          --format JUNIT \
+          --format junit \
           --env MAESTRO_CLI_LOG_LEVEL=DEBUG \
           2>&1 | tee "maestro-debug-output/maestro-console-$(basename "$test_file" .yml).log"
         INDIVIDUAL_EXIT_CODE=${PIPESTATUS[0]}  # Get maestro's exit code, not tee's
@@ -215,7 +214,7 @@ Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
 Chrome User Data: $CHROME_USER_DATA_DIR
 Console Log: $([ -f "$CONSOLE_LOG_FILE" ] && echo "Available" || echo "Not Found")
 Maestro Output: $([ -f "maestro-debug-output/maestro-console-${TEST_NAME}.log" ] && echo "Available" || echo "Not Found")
-JSON Report: $([ -f "maestro-debug-output/test-result-${TEST_NAME}.json" ] && echo "Available" || echo "Not Found")
+JUnit Report: $([ -f "maestro-debug-output/report.xml" ] && echo "Available" || echo "Not Found")
 EOF
         
         if [ $INDIVIDUAL_EXIT_CODE -eq 0 ]; then
