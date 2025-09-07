@@ -55,3 +55,8 @@ maestro-debug-output/
 
 meta/
 debug*.png
+
+# Local dev setup
+devbox.json
+devbox.lock
+flakes/
