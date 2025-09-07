@@ -205,6 +205,27 @@ for test_file in .maestro/web/*.yml; do
             echo "📊 Maestro log size: $(wc -l < "maestro-debug-output/maestro-console-${TEST_NAME}.log") lines"
         fi
         
+        # Check for screenshots
+        SCREENSHOT_COUNT=0
+        SCREENSHOT_LIST=""
+        if [ -d "maestro-debug-output" ]; then
+            SCREENSHOT_COUNT=$(find maestro-debug-output -name "*.png" | wc -l)
+            if [ $SCREENSHOT_COUNT -gt 0 ]; then
+                echo "📸 Found $SCREENSHOT_COUNT screenshots:"
+                SCREENSHOT_LIST=$(find maestro-debug-output -name "*.png" -exec basename {} \; | sort | head -10)
+                echo "$SCREENSHOT_LIST" | while read -r screenshot; do
+                    if [ -n "$screenshot" ]; then
+                        echo "  📷 $screenshot"
+                    fi
+                done
+                if [ $SCREENSHOT_COUNT -gt 10 ]; then
+                    echo "  📷 ... and $((SCREENSHOT_COUNT - 10)) more screenshots"
+                fi
+            else
+                echo "⚠️ No screenshots found in debug output"
+            fi
+        fi
+
         # Create test summary
         cat > "maestro-debug-output/test-summary-${TEST_NAME}.txt" << EOF
 Test: $TEST_NAME
@@ -215,6 +236,9 @@ Chrome User Data: $CHROME_USER_DATA_DIR
 Console Log: $([ -f "$CONSOLE_LOG_FILE" ] && echo "Available" || echo "Not Found")
 Maestro Output: $([ -f "maestro-debug-output/maestro-console-${TEST_NAME}.log" ] && echo "Available" || echo "Not Found")
 JUnit Report: $([ -f "maestro-debug-output/report.xml" ] && echo "Available" || echo "Not Found")
+Screenshots: $SCREENSHOT_COUNT captured
+Screenshot Files: 
+$SCREENSHOT_LIST
 EOF
         
         if [ $INDIVIDUAL_EXIT_CODE -eq 0 ]; then
@@ -262,6 +286,41 @@ if [ $TEST_COUNT -eq 0 ]; then
 fi
 
 echo "🏁 Test Summary: $PASSED_COUNT/$TEST_COUNT tests passed"
+
+# Final debug artifacts summary
+echo ""
+echo "📋 Final Debug Artifacts Summary:"
+if [ -d "maestro-debug-output" ]; then
+    echo "🗂️ Debug output directory contents:"
+    ls -la maestro-debug-output/ | head -20
+    
+    echo ""
+    echo "📸 Screenshot Summary:"
+    TOTAL_SCREENSHOTS=$(find maestro-debug-output -name "*.png" | wc -l)
+    echo "   Total screenshots captured: $TOTAL_SCREENSHOTS"
+    if [ $TOTAL_SCREENSHOTS -gt 0 ]; then
+        echo "   Screenshot files:"
+        find maestro-debug-output -name "*.png" | sort | head -10 | while read -r screenshot; do
+            SIZE=$(stat -f%z "$screenshot" 2>/dev/null || stat -c%s "$screenshot" 2>/dev/null || echo "unknown")
+            echo "   📷 $(basename "$screenshot") ($SIZE bytes)"
+        done
+        if [ $TOTAL_SCREENSHOTS -gt 10 ]; then
+            echo "   📷 ... and $((TOTAL_SCREENSHOTS - 10)) more screenshots"
+        fi
+    fi
+    
+    echo ""
+    echo "📊 Log File Summary:"
+    for log_file in maestro-debug-output/*.log; do
+        if [ -f "$log_file" ]; then
+            SIZE=$(stat -f%z "$log_file" 2>/dev/null || stat -c%s "$log_file" 2>/dev/null || echo "unknown")
+            LINES=$(wc -l < "$log_file" 2>/dev/null || echo "unknown")
+            echo "   📝 $(basename "$log_file"): $LINES lines, $SIZE bytes"
+        fi
+    done
+else
+    echo "⚠️ No debug artifacts directory found"
+fi
 
 if [ ! -z "$FIRST_FAILED_EXIT_CODE" ]; then
     echo "❌ Tests failed"
