@@ -54,9 +54,13 @@ coverage/
 maestro-debug-output/
 
 meta/
-debug*.png
 
 # Local dev setup
 devbox.json
 devbox.lock
 flakes/
+
+!assets/
+*.png
+
+report.xml
