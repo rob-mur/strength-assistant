@@ -12,20 +12,22 @@ export function AuthAwareLayout({ children }: AuthAwareLayoutProps) {
 	const { user, loading } = useAuthContext();
 	const [forceShowAuth, setForceShowAuth] = useState(false);
 
-	// Immediate auth screen for Chrome testing - skip loading entirely 
+	// Show auth screen appropriately for different environments
 	useEffect(() => {
-		if (loading && (process.env.CHROME_TEST === 'true' || process.env.CI === 'true')) {
+		if (loading) {
 			// In Chrome test environment, show auth screen immediately
-			console.warn("Chrome test environment detected - showing auth screen immediately");
-			setForceShowAuth(true);
-		} else if (loading) {
-			// Normal timeout for other environments
-			const timeout = setTimeout(() => {
-				console.warn("Auth loading timeout - forcing auth screen display");
+			if (process.env.CHROME_TEST === 'true' || process.env.CI === 'true') {
+				console.warn("Chrome test environment detected - showing auth screen immediately");
 				setForceShowAuth(true);
-			}, 5000); // Reduced to 5 seconds
+			} else {
+				// Normal timeout for other environments
+				const timeout = setTimeout(() => {
+					console.warn("Auth loading timeout - forcing auth screen display");
+					setForceShowAuth(true);
+				}, 5000); // 5 seconds timeout
 
-			return () => clearTimeout(timeout);
+				return () => clearTimeout(timeout);
+			}
 		}
 	}, [loading]);
 

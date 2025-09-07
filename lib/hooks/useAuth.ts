@@ -36,9 +36,9 @@ export function useAuth() {
 	});
 
 	useEffect(() => {
-		// Skip all Firebase initialization in Chrome test environment
+		// In Chrome test environment, show auth screen for testing
 		if (process.env.CHROME_TEST === 'true' || process.env.CI === 'true') {
-			console.warn("Chrome test environment - skipping Firebase auth initialization");
+			console.warn("Chrome test environment - showing auth screen for testing");
 			setAuthState({
 				user: null,
 				loading: false,
