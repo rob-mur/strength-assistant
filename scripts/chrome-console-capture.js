@@ -21,14 +21,35 @@ class ConsoleCapture {
     try {
       console.log(`🔍 Starting console capture, connecting to Chrome on port ${this.port}`);
       
-      // Connect to Chrome DevTools
-      this.client = await CDP({ port: this.port });
+      // Wait for Chrome to be ready
+      let retries = 0;
+      const maxRetries = 10;
+      let client = null;
+      
+      while (retries < maxRetries) {
+        try {
+          client = await CDP({ port: this.port });
+          break;
+        } catch (error) {
+          console.log(`⏳ Waiting for Chrome DevTools (attempt ${retries + 1}/${maxRetries})...`);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          retries++;
+        }
+      }
+      
+      if (!client) {
+        throw new Error(`Failed to connect to Chrome DevTools after ${maxRetries} attempts`);
+      }
+      
+      this.client = client;
       const { Console, Runtime, Page } = this.client;
 
       // Enable Console and Runtime domains
       await Console.enable();
       await Runtime.enable();
       await Page.enable();
+      
+      console.log(`✅ Connected to Chrome DevTools on port ${this.port}`);
 
       // Listen for console messages
       Console.messageAdded((params) => {

@@ -122,11 +122,27 @@ export MAESTRO_CHROME_PATH="$CHROME_WRAPPER_SCRIPT"
 
 # Start Chrome console capture using DevTools Protocol
 echo "🔍 Starting Chrome console capture..."
+echo "📄 Console log file: $CONSOLE_LOG_FILE"
+echo "🔌 Chrome DevTools port: 9222"
+
+# Ensure console capture script exists
+if [ ! -f "scripts/chrome-console-capture.js" ]; then
+    echo "❌ Chrome console capture script not found!"
+    exit 1
+fi
+
+# Start console capture with enhanced error handling
 node scripts/chrome-console-capture.js "$CONSOLE_LOG_FILE" 9222 &
 CONSOLE_CAPTURE_PID=$!
+echo "🔄 Console capture process started with PID: $CONSOLE_CAPTURE_PID"
 
-# Wait for console capture to initialize
+# Wait for console capture to initialize and verify it's running
 sleep 3
+if ! kill -0 $CONSOLE_CAPTURE_PID 2>/dev/null; then
+    echo "⚠️ Console capture process may have failed to start"
+else
+    echo "✅ Console capture process is running"
+fi
 
 # Run Maestro tests
 echo "🧪 Running Maestro Chrome tests..."
@@ -148,17 +164,54 @@ for test_file in .maestro/web/*.yml; do
         # Clear console log for this test
         echo "=== Starting test: $(basename "$test_file") at $(date) ===" >> "$CONSOLE_LOG_FILE"
         
-        # Run test
-        maestro test "$test_file" --headless --debug-output maestro-debug-output
-        INDIVIDUAL_EXIT_CODE=$?
+        # Run test with enhanced logging and output capture
+        echo "🔍 Running test with enhanced Maestro debugging..."
+        set +e  # Don't exit on command failure, we need to capture exit code
         
-        # Add browser console output to debug artifacts  
+        # Set enhanced logging environment
+        export MAESTRO_CLI_LOG_LEVEL=DEBUG
+        
+        # Run maestro with verbose output and full logging
+        maestro test "$test_file" \
+          --headless \
+          --debug-output maestro-debug-output \
+          --verbose \
+          --format json \
+          --report "maestro-debug-output/test-result-$(basename "$test_file" .yml).json" \
+          --env MAESTRO_CLI_LOG_LEVEL=DEBUG \
+          2>&1 | tee "maestro-debug-output/maestro-console-$(basename "$test_file" .yml).log"
+        INDIVIDUAL_EXIT_CODE=${PIPESTATUS[0]}  # Get maestro's exit code, not tee's
+        
+        set -e  # Re-enable exit on error
+        
+# Add comprehensive debug artifacts collection
+        TEST_NAME=$(basename "$test_file" .yml)
+        
+        # Copy browser console output
         if [ -f "$CONSOLE_LOG_FILE" ]; then
             echo "📋 Copying browser console output to debug artifacts..."
-            cp "$CONSOLE_LOG_FILE" "maestro-debug-output/browser-console-$(basename "$test_file" .yml).log"
+            cp "$CONSOLE_LOG_FILE" "maestro-debug-output/browser-console-${TEST_NAME}.log"
         else
             echo "⚠️ No console log file found at $CONSOLE_LOG_FILE"
         fi
+        
+        # Generate Chrome debug info
+        if [ -f "maestro-debug-output/maestro-console-${TEST_NAME}.log" ]; then
+            echo "📋 Maestro console output captured successfully"
+            echo "📊 Maestro log size: $(wc -l < "maestro-debug-output/maestro-console-${TEST_NAME}.log") lines"
+        fi
+        
+        # Create test summary
+        cat > "maestro-debug-output/test-summary-${TEST_NAME}.txt" << EOF
+Test: $TEST_NAME
+Status: $([ $INDIVIDUAL_EXIT_CODE -eq 0 ] && echo "PASSED" || echo "FAILED")
+Exit Code: $INDIVIDUAL_EXIT_CODE
+Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+Chrome User Data: $CHROME_USER_DATA_DIR
+Console Log: $([ -f "$CONSOLE_LOG_FILE" ] && echo "Available" || echo "Not Found")
+Maestro Output: $([ -f "maestro-debug-output/maestro-console-${TEST_NAME}.log" ] && echo "Available" || echo "Not Found")
+JSON Report: $([ -f "maestro-debug-output/test-result-${TEST_NAME}.json" ] && echo "Available" || echo "Not Found")
+EOF
         
         if [ $INDIVIDUAL_EXIT_CODE -eq 0 ]; then
             echo "✅ $(basename "$test_file") passed"
@@ -168,12 +221,25 @@ for test_file in .maestro/web/*.yml; do
             FIRST_FAILED_EXIT_CODE=${FIRST_FAILED_EXIT_CODE:-$INDIVIDUAL_EXIT_CODE}
             
             # Show recent console output for failed tests
+            echo "📋 Debug information for failed test:"
             if [ -f "$CONSOLE_LOG_FILE" ]; then
-                echo "📋 Recent browser console output:"
+                echo "🌐 Recent browser console output (last 20 lines):"
                 tail -20 "$CONSOLE_LOG_FILE" 2>/dev/null || echo "No console output available"
             else
-                echo "⚠️ No console log file available for failed test analysis"
+                echo "⚠️ No console log file available at $CONSOLE_LOG_FILE"
             fi
+            
+            # Show Maestro debug output
+            if [ -f "maestro-debug-output/maestro-console-${TEST_NAME}.log" ]; then
+                echo "🤖 Recent Maestro output (last 15 lines):"
+                tail -15 "maestro-debug-output/maestro-console-${TEST_NAME}.log" 2>/dev/null || echo "No Maestro output available"
+            else
+                echo "⚠️ No Maestro console log available"
+            fi
+            
+            # List all available debug files
+            echo "📂 Available debug artifacts:"
+            ls -la maestro-debug-output/ 2>/dev/null || echo "No debug artifacts found"
         fi
         
         # Cleanup
