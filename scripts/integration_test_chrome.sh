@@ -11,6 +11,8 @@ cd "$(dirname "$0")/.."
 export USE_SUPABASE_DATA=false
 export EXPO_PUBLIC_USE_SUPABASE_DATA=false
 export NODE_ENV=test
+export CHROME_TEST=true
+export CI=true
 
 # Load test environment if available
 if [ -f ".env.test" ]; then

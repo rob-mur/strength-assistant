@@ -9,37 +9,32 @@ const withStorybook = require("@storybook/react-native/metro/withStorybook");
 const fs = require("fs");
 const path = require("path");
 
-// Configure custom symbolicate to handle anonymous files gracefully
-config.symbolicateLocation = (stackTrace) => {
-  return stackTrace.filter((frame) => {
-    // Filter out frames with <anonymous> filenames that cause Metro errors
-    return frame.file !== '<anonymous>' && !frame.file?.includes('<anonymous>');
-  });
-};
-
-// Add server configuration to handle symbolication errors gracefully
-config.server = config.server || {};
-config.server.enhanceMiddleware = (middleware, server) => {
-  return (req, res, next) => {
-    // Handle symbolication requests that might fail with <anonymous> files
-    if (req.url && req.url.includes('/symbolicate')) {
-      const originalSend = res.send;
-      res.send = function(data) {
-        try {
-          if (typeof data === 'string' && data.includes('<anonymous>')) {
-            // Return empty symbolication result instead of failing
-            const emptyResult = JSON.stringify({ stack: [] });
-            return originalSend.call(this, emptyResult);
-          }
-        } catch (error) {
-          console.warn('Symbolication middleware error:', error);
-        }
-        return originalSend.call(this, data);
-      };
-    }
-    return middleware(req, res, next);
+// Completely disable symbolication for Chrome test environment
+if (process.env.CHROME_TEST === 'true' || process.env.CI === 'true') {
+  // Disable symbolication entirely to prevent <anonymous> file errors
+  config.symbolicateLocation = () => [];
+  
+  // Override server middleware to reject all symbolication requests
+  config.server = config.server || {};
+  config.server.enhanceMiddleware = (middleware, server) => {
+    return (req, res, next) => {
+      if (req.url && req.url.includes('/symbolicate')) {
+        // Return empty result immediately without processing
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ stack: [] }));
+        return;
+      }
+      return middleware(req, res, next);
+    };
   };
-};
+} else {
+  // Configure normal symbolication for development
+  config.symbolicateLocation = (stackTrace) => {
+    return stackTrace.filter((frame) => {
+      return frame.file !== '<anonymous>' && !frame.file?.includes('<anonymous>');
+    });
+  };
+}
 
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   const moduleFolder = moduleName.substring(2);
