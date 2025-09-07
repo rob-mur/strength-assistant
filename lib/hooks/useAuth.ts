@@ -36,7 +36,7 @@ export function useAuth() {
 	});
 
 	useEffect(() => {
-		// In Chrome test environment, show auth screen for testing
+		// In Chrome test environment, show auth screen for testing (don't skip it entirely!)
 		if (process.env.CHROME_TEST === 'true' || process.env.CI === 'true') {
 			console.warn("Chrome test environment - showing auth screen for testing");
 			setAuthState({
@@ -133,7 +133,7 @@ export function useAuth() {
 	const signInAnonymously = async (): Promise<void> => {
 		// In Chrome test environment, create mock user immediately
 		if (process.env.CHROME_TEST === 'true' || process.env.CI === 'true' || process.env.NODE_ENV === 'test') {
-			console.warn("Chrome/test environment - creating mock user for testing");
+			console.log("🔍 useAuth: Creating mock user for Chrome test environment");
 			setAuthState({
 				user: {
 					uid: "test-user-chrome",
@@ -143,6 +143,7 @@ export function useAuth() {
 				loading: false,
 				error: null,
 			});
+			console.log("🔍 useAuth: Mock user created successfully");
 			return;
 		}
 		

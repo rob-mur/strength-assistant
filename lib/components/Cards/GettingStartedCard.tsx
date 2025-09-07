@@ -30,7 +30,13 @@ const GettingStartedCard = ({
               mode="contained"
               icon="arrow-right"
               contentStyle={{ flexDirection: "row-reverse" }}
-              onPress={(_) => on_get_started(router)}
+              onPress={(_) => {
+                // Debug logging for Chrome tests
+                if (process.env.CHROME_TEST === 'true' || process.env.CI === 'true') {
+                  console.log("🔍 GettingStartedCard: Get started button tapped, navigating to exercises");
+                }
+                on_get_started(router);
+              }}
             >
               {call_to_action}
             </Button>

@@ -72,6 +72,10 @@ export function AuthScreen() {
 	};
 
 	const handleAnonymousAuth = async () => {
+		// Debug logging for Chrome tests
+		if (process.env.CHROME_TEST === 'true' || process.env.CI === 'true') {
+			console.log("🔍 AuthScreen: Continue as guest button tapped");
+		}
 		clearError();
 		await signInAnonymously();
 	};

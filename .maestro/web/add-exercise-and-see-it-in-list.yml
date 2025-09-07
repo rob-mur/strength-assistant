@@ -10,6 +10,10 @@ url: http://localhost:8081
 - tapOn:
     id: "get-started"
     optional: true
+# Ensure we're on the exercises screen before trying to add an exercise
+- tapOn:
+    id: "exercisesTab"
+    optional: true
 - tapOn:
     id: "add-exercise"
 - tapOn:
@@ -17,8 +21,6 @@ url: http://localhost:8081
 - inputText: "ExerciseName"
 - tapOn:
     id: "submit"
-- tapOn:
-    id: "exercisesTab"
 - assertVisible:
     id: "exercise-screen"
 - assertVisible:
