@@ -108,12 +108,15 @@ CONSOLE_LOG_FILE="/tmp/chrome-console-$$.log"
 
 cat > "$CHROME_WRAPPER_SCRIPT" << 'EOF'
 #!/bin/bash
+echo "🚀 Starting Chrome with DevTools on port 9222..."
 if command -v chromium >/dev/null 2>&1; then
-    exec chromium --no-sandbox --headless --disable-dev-shm-usage --disable-gpu --remote-debugging-port=9222 --enable-logging --log-level=0 --user-data-dir=/tmp/chrome-test-$$ "$@"
+    echo "📱 Using Chromium browser"
+    exec chromium --no-sandbox --headless --disable-dev-shm-usage --disable-gpu --remote-debugging-port=9222 --remote-allow-origins=* --enable-logging --log-level=0 --user-data-dir=/tmp/chrome-test-$$ "$@"
 elif command -v google-chrome >/dev/null 2>&1; then
-    exec google-chrome --no-sandbox --headless --disable-dev-shm-usage --disable-gpu --remote-debugging-port=9222 --enable-logging --log-level=0 --user-data-dir=/tmp/chrome-test-$$ "$@"
+    echo "📱 Using Google Chrome browser"
+    exec google-chrome --no-sandbox --headless --disable-dev-shm-usage --disable-gpu --remote-debugging-port=9222 --remote-allow-origins=* --enable-logging --log-level=0 --user-data-dir=/tmp/chrome-test-$$ "$@"
 else
-    echo "No Chrome binary found"
+    echo "❌ No Chrome binary found"
     exit 1
 fi
 EOF
@@ -131,7 +134,10 @@ if [ ! -f "scripts/chrome-console-capture.js" ]; then
     exit 1
 fi
 
-# Start console capture with enhanced error handling
+# Start console capture with enhanced error handling and Chrome startup delay
+echo "⏳ Waiting for Chrome to be available for DevTools connection..."
+sleep 5  # Give Chrome more time to start and enable DevTools
+
 node scripts/chrome-console-capture.js "$CONSOLE_LOG_FILE" 9222 &
 CONSOLE_CAPTURE_PID=$!
 echo "🔄 Console capture process started with PID: $CONSOLE_CAPTURE_PID"
@@ -176,8 +182,7 @@ for test_file in .maestro/web/*.yml; do
           --headless \
           --debug-output maestro-debug-output \
           --verbose \
-          --format json \
-          --report "maestro-debug-output/test-result-$(basename "$test_file" .yml).json" \
+          --format JUNIT \
           --env MAESTRO_CLI_LOG_LEVEL=DEBUG \
           2>&1 | tee "maestro-debug-output/maestro-console-$(basename "$test_file" .yml).log"
         INDIVIDUAL_EXIT_CODE=${PIPESTATUS[0]}  # Get maestro's exit code, not tee's

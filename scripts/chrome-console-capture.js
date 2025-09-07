@@ -21,18 +21,23 @@ class ConsoleCapture {
     try {
       console.log(`🔍 Starting console capture, connecting to Chrome on port ${this.port}`);
       
-      // Wait for Chrome to be ready
+      // Wait for Chrome to be ready with extended timeout
       let retries = 0;
-      const maxRetries = 10;
+      const maxRetries = 15; // Increased from 10 to 15
       let client = null;
       
       while (retries < maxRetries) {
         try {
-          client = await CDP({ port: this.port });
-          break;
+          // Check if Chrome DevTools port is accessible first
+          const targets = await CDP.List({ port: this.port });
+          if (targets && targets.length > 0) {
+            // Connect to the first available target
+            client = await CDP({ port: this.port, target: targets[0] });
+            break;
+          }
         } catch (error) {
           console.log(`⏳ Waiting for Chrome DevTools (attempt ${retries + 1}/${maxRetries})...`);
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 2000)); // Increased delay from 1s to 2s
           retries++;
         }
       }
