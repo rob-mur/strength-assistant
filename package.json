@@ -80,6 +80,7 @@
     "@types/jest": "^29.5.12",
     "@types/react": "~19.0.10",
     "babel-loader": "^8.4.1",
+    "chrome-remote-interface": "^0.33.2",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~9.2.0",
     "eslint-config-prettier": "^10.1.8",
