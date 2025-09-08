@@ -6,7 +6,8 @@
 		"chromedriver@138",
 		"firebase-tools@latest",
 		"supabase-cli@latest",
-		"maestro@latest"
+		"maestro@latest",
+		"jdk17@latest"
 	],
 	"shell": {
 		"scripts": {
