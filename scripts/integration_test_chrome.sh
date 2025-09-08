@@ -82,7 +82,7 @@ node scripts/fix-expo-router-context.js
 
 # Start Expo web server
 echo "🚀 Starting Expo web server..."
-npx expo start --web --port 8081 &
+NODE_OPTIONS=--openssl-legacy-provider npx expo start --web --port 8081 &
 EXPO_PID=$!
 
 # Wait for Expo web server

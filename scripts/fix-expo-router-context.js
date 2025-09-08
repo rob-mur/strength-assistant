@@ -3,9 +3,9 @@
 const fs = require('fs');
 const path = require('path');
 
-// Find all expo-router context files that need patching
+// Find all expo-router files that need patching
 function findExpoRouterContextFiles() {
-  const contextFiles = ['_ctx.web.js', '_ctx-html.js', '_ctx.js'];
+  const contextFiles = ['_ctx.web.js', '_ctx-html.js', '_ctx.js', 'build/onboard/Tutorial.js', 'build/onboard/createEntryFile.js'];
   const nodePaths = ['node_modules/expo-router', '../node_modules/expo-router'];
   const foundFiles = [];
   
@@ -42,9 +42,9 @@ function patchExpoRouterContext() {
     try {
       let content = fs.readFileSync(contextPath, 'utf8');
       
-      // Replace process.env.EXPO_ROUTER_APP_ROOT with a static value
+      // Replace process.env.EXPO_ROUTER_ABS_APP_ROOT with a static value
       const originalContent = content;
-      content = content.replace(/process\.env\.EXPO_ROUTER_APP_ROOT/g, '"./app"');
+      content = content.replace(/process\.env\.EXPO_ROUTER_ABS_APP_ROOT/g, '"./app"');
       
       if (content !== originalContent) {
         fs.writeFileSync(contextPath, content, 'utf8');

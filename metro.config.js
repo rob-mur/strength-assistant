@@ -9,32 +9,36 @@ const withStorybook = require("@storybook/react-native/metro/withStorybook");
 const fs = require("fs");
 const path = require("path");
 
-// Completely disable symbolication for Chrome test environment
-if (process.env.CHROME_TEST === 'true' || process.env.CI === 'true') {
-  // Disable symbolication entirely to prevent <anonymous> file errors
-  config.symbolicateLocation = () => [];
-  
-  // Override server middleware to reject all symbolication requests
-  config.server = config.server || {};
-  config.server.enhanceMiddleware = (middleware, server) => {
-    return (req, res, next) => {
-      if (req.url && req.url.includes('/symbolicate')) {
-        // Return empty result immediately without processing
+// Configure Metro to handle symbolication errors gracefully
+const originalReadFileSync = require('fs').readFileSync;
+require('fs').readFileSync = function(filename, options) {
+  try {
+    return originalReadFileSync.call(this, filename, options);
+  } catch (error) {
+    // If trying to read 'unknown' file for symbolication, return empty content
+    if (filename && filename.includes('unknown') && error.code === 'ENOENT') {
+      return '';
+    }
+    throw error;
+  }
+};
+
+// Configure symbolication middleware for Chrome test compatibility
+config.server = config.server || {};
+config.server.enhanceMiddleware = (middleware, server) => {
+  return (req, res, next) => {
+    // Handle symbolication requests more robustly
+    if (req.url && (req.url.includes('/symbolicate') || req.url.includes('/source-map'))) {
+      if (process.env.CHROME_TEST === 'true' || process.env.CI === 'true') {
+        // Block all symbolication requests in test environment
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ stack: [] }));
         return;
       }
-      return middleware(req, res, next);
-    };
+    }
+    return middleware(req, res, next);
   };
-} else {
-  // Configure normal symbolication for development
-  config.symbolicateLocation = (stackTrace) => {
-    return stackTrace.filter((frame) => {
-      return frame.file !== '<anonymous>' && !frame.file?.includes('<anonymous>');
-    });
-  };
-}
+};
 
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   const moduleFolder = moduleName.substring(2);

@@ -3,8 +3,8 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "expo start",
-    "web": "node scripts/fix-expo-router-context.js && expo start --web",
+    "start": "cross-env NODE_OPTIONS=--openssl-legacy-provider EXPO_ROUTER_ABS_APP_ROOT=$PWD/app expo start",
+    "web": "cross-env NODE_OPTIONS=--openssl-legacy-provider EXPO_ROUTER_ABS_APP_ROOT=$PWD/app expo start --web",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo run:android",
     "lint": "expo lint",
@@ -81,6 +81,7 @@
     "@types/react": "~19.0.10",
     "babel-loader": "^8.4.1",
     "chrome-remote-interface": "^0.33.2",
+    "cross-env": "^10.0.0",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~9.2.0",
     "eslint-config-prettier": "^10.1.8",
