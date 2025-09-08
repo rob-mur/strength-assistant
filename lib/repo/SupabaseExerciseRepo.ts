@@ -105,7 +105,7 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
 	 * Filtered for the authenticated Supabase user
 	 * Note: userId parameter is kept for backwards compatibility but Supabase user ID is used internally
 	 */
-	getExercises(userId: string): Observable<Exercise[]> {
+	getExercises(_userId: string): Observable<Exercise[]> {
 		// Create a computed observable that filters exercises for the current Supabase user
 		return computed(() => {
 			const currentUser = user$.get();

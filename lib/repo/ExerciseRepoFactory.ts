@@ -38,12 +38,12 @@ export class ExerciseRepoFactory {
     const useSupabaseProcess = process.env.USE_SUPABASE_DATA;
     
     // Fall back to expo-constants if process.env not set
-    // Use dynamic import to avoid issues with Jest mocking
     let useSupabaseEnv;
     try {
-      const Constants = require('expo-constants').default;
+      // Use require for compatibility with Jest mocking
+      const { default: Constants } = require('expo-constants');
       useSupabaseEnv = Constants.expoConfig?.extra?.useSupabaseData;
-    } catch (error) {
+    } catch {
       useSupabaseEnv = undefined;
     }
     

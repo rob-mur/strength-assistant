@@ -22,7 +22,7 @@ export class Logger {
 		this.serviceName = serviceName;
 	}
 
-	private createMessage(level: string, message: string, context?: Record<string, unknown>): string {
+	private createMessage(level: string, message: string, _context?: Record<string, unknown>): string {
 		const prefix = `[${this.serviceName}]`;
 		return `${prefix} ${message}`;
 	}

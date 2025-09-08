@@ -2,14 +2,7 @@ import { initializeApp, FirebaseApp } from "@firebase/app";
 import {
 	connectFirestoreEmulator,
 	Firestore,
-	getFirestore,
-	collection,
-	query,
-	orderBy,
-	onSnapshot,
-	addDoc,
-	deleteDoc,
-	doc
+	getFirestore
 } from "@firebase/firestore";
 import { FirebaseService } from "./firebase-core";
 import firebaseConfig from "../../../firebase.web.config.json";

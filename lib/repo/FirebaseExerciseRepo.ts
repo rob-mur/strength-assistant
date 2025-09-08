@@ -3,7 +3,6 @@ import { IExerciseRepo } from "./IExerciseRepo";
 import { Observable, observable } from "@legendapp/state";
 import { initializeFirebaseServices, getDb } from "../data/firebase/initializer";
 import { Platform } from "react-native";
-import { logger } from "../data/firebase/logger";
 import { RepositoryLogger } from "./utils/LoggingUtils";
 import { RepositoryUtils } from "./utils/RepositoryUtils";
 
