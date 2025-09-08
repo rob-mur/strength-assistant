@@ -9,7 +9,6 @@ cd "$(dirname "$0")/.."
 
 # Set environment variables for testing
 export USE_SUPABASE_DATA=false
-export EXPO_PUBLIC_USE_SUPABASE_DATA=false
 export NODE_ENV=test
 export CHROME_TEST=true
 export CI=true
