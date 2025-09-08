@@ -149,4 +149,12 @@ export function getFirebaseApp(): FirebaseApp {
 }
 
 // Export Firestore functions for modular SDK
-export { collection, query, orderBy, onSnapshot, addDoc, deleteDoc, doc } from "@firebase/firestore";
+export { 
+	collection, 
+	query, 
+	orderBy, 
+	onSnapshot, 
+	addDoc, 
+	deleteDoc, 
+	doc 
+} from "@firebase/firestore";
