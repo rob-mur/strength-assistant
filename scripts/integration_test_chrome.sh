@@ -77,11 +77,16 @@ echo "✅ Migrations applied"
 
 # Set expo-router environment variable
 echo "🔧 Setting expo-router environment variable..."
+export EXPO_ROUTER_APP_ROOT="$PWD/app"
 export EXPO_ROUTER_ABS_APP_ROOT="$PWD/app"
+echo "🔍 Debug: EXPO_ROUTER_APP_ROOT=$EXPO_ROUTER_APP_ROOT"
+echo "🔍 Debug: PWD=$PWD"
+echo "🔍 Debug: Directory contents:"
+ls -la "$PWD/app" | head -5 || echo "❌ App directory not found"
 
 # Start Expo web server
 echo "🚀 Starting Expo web server..."
-NODE_OPTIONS=--openssl-legacy-provider npx expo start --web --port 8081 &
+EXPO_ROUTER_APP_ROOT="$PWD/app" NODE_OPTIONS=--openssl-legacy-provider npx expo start --web --port 8081 &
 EXPO_PID=$!
 
 # Wait for Expo web server
