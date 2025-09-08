@@ -1,6 +1,14 @@
 // Learn more https://docs.expo.io/guides/customizing-metro
 const { getDefaultConfig } = require("expo/metro-config");
 
+// Ensure EXPO_ROUTER_APP_ROOT is set for CI compatibility
+if (!process.env.EXPO_ROUTER_APP_ROOT) {
+  process.env.EXPO_ROUTER_APP_ROOT = require('path').join(__dirname, 'app');
+  console.log(`[Metro] Set EXPO_ROUTER_APP_ROOT to: ${process.env.EXPO_ROUTER_APP_ROOT}`);
+} else {
+  console.log(`[Metro] Using existing EXPO_ROUTER_APP_ROOT: ${process.env.EXPO_ROUTER_APP_ROOT}`);
+}
+
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
 

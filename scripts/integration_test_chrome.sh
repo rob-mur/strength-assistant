@@ -75,19 +75,63 @@ echo "🔄 Applying Supabase migrations..."
 supabase db reset --local
 echo "✅ Migrations applied"
 
-# Set expo-router environment variable
+# Set expo-router environment variable with multiple approaches
 echo "🔧 Setting expo-router environment variable..."
-export EXPO_ROUTER_APP_ROOT="$PWD/app"
-export EXPO_ROUTER_ABS_APP_ROOT="$PWD/app"
+PROJECT_ROOT="$PWD"
+APP_ROOT="$PROJECT_ROOT/app"
+export EXPO_ROUTER_APP_ROOT="$APP_ROOT"
+export EXPO_ROUTER_ABS_APP_ROOT="$APP_ROOT"
+
+# Debug environment setup
+echo "🔍 Debug: PROJECT_ROOT=$PROJECT_ROOT"
+echo "🔍 Debug: APP_ROOT=$APP_ROOT" 
 echo "🔍 Debug: EXPO_ROUTER_APP_ROOT=$EXPO_ROUTER_APP_ROOT"
 echo "🔍 Debug: PWD=$PWD"
 echo "🔍 Debug: Directory contents:"
-ls -la "$PWD/app" | head -5 || echo "❌ App directory not found"
+ls -la "$APP_ROOT" | head -5 || echo "❌ App directory not found"
 
-# Start Expo web server
+# Verify environment variable is accessible to child processes
+echo "🔍 Debug: Testing env var in subshell:"
+(echo "  Subshell EXPO_ROUTER_APP_ROOT=$EXPO_ROUTER_APP_ROOT")
+
+# Verify the path resolves correctly and contains expected files
+echo "🔍 Debug: Verifying app directory structure:"
+if [ -d "$APP_ROOT" ]; then
+  echo "  ✅ App directory exists: $APP_ROOT"
+  echo "  📁 Key files in app directory:"
+  ls -la "$APP_ROOT" | grep -E "\.(tsx?|js)$" | head -3 || echo "  ⚠️ No TypeScript/JavaScript files found"
+  if [ -f "$APP_ROOT/_layout.tsx" ]; then
+    echo "  ✅ Found _layout.tsx"
+  else
+    echo "  ❌ Missing _layout.tsx"
+  fi
+else
+  echo "  ❌ App directory does not exist: $APP_ROOT"
+  echo "  📁 Available directories:"
+  ls -la "$PROJECT_ROOT" | grep "^d" | head -5
+fi
+
+# Create a wrapper script to ensure environment variables are set for Expo
+EXPO_WRAPPER_SCRIPT="/tmp/expo-wrapper-$$"
+cat > "$EXPO_WRAPPER_SCRIPT" << EOF
+#!/bin/bash
+export EXPO_ROUTER_APP_ROOT="$APP_ROOT"
+export EXPO_ROUTER_ABS_APP_ROOT="$APP_ROOT"
+export NODE_OPTIONS=--openssl-legacy-provider
+echo "🔍 Expo wrapper debug: EXPO_ROUTER_APP_ROOT=\$EXPO_ROUTER_APP_ROOT"
+echo "🔍 Expo wrapper debug: Working directory=\$(pwd)"
+cd "$PROJECT_ROOT"
+exec npx expo start --web --port 8081 "\$@"
+EOF
+chmod +x "$EXPO_WRAPPER_SCRIPT"
+
+# Start Expo web server with wrapper script
 echo "🚀 Starting Expo web server..."
-EXPO_ROUTER_APP_ROOT="$PWD/app" NODE_OPTIONS=--openssl-legacy-provider npx expo start --web --port 8081 &
+"$EXPO_WRAPPER_SCRIPT" &
 EXPO_PID=$!
+
+# Add cleanup for wrapper script
+trap 'cleanup; rm -f "$EXPO_WRAPPER_SCRIPT" 2>/dev/null || true' EXIT ERR
 
 # Wait for Expo web server
 echo "⏳ Waiting for Expo web server to be ready..."
