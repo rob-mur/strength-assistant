@@ -76,9 +76,9 @@ echo "🔄 Applying Supabase migrations..."
 supabase db reset --local
 echo "✅ Migrations applied"
 
-# Patch expo-router context to use static app root
-echo "🔧 Patching expo-router context for static resolution..."
-node scripts/fix-expo-router-context.js
+# Set expo-router environment variable
+echo "🔧 Setting expo-router environment variable..."
+export EXPO_ROUTER_ABS_APP_ROOT="$PWD/app"
 
 # Start Expo web server
 echo "🚀 Starting Expo web server..."
