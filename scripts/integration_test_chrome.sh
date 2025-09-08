@@ -35,10 +35,7 @@ cleanup() {
         kill $EXPO_PID 2>/dev/null || true
     fi
     
-    # Kill console capture process
-    if [ ! -z "$CONSOLE_CAPTURE_PID" ]; then
-        kill $CONSOLE_CAPTURE_PID 2>/dev/null || true
-    fi
+    # Console capture process removed
     
     # Kill Chrome processes
     pkill -f "chrome.*--headless" 2>/dev/null || true
@@ -102,19 +99,18 @@ while ! curl -s http://localhost:8081 > /dev/null; do
 done
 echo "✅ Expo web server ready"
 
-# Create Chrome wrapper script with remote debugging enabled
+# Create Chrome wrapper script
 CHROME_WRAPPER_SCRIPT="/tmp/chrome-wrapper-$$"
-CONSOLE_LOG_FILE="/tmp/chrome-console-$$.log"
 
 cat > "$CHROME_WRAPPER_SCRIPT" << 'EOF'
 #!/bin/bash
-echo "🚀 Starting Chrome with DevTools on port 9222..."
+echo "🚀 Starting Chrome for Maestro testing..."
 if command -v chromium >/dev/null 2>&1; then
     echo "📱 Using Chromium browser"
-    exec chromium --no-sandbox --headless --disable-dev-shm-usage --disable-gpu --remote-debugging-port=9222 --remote-allow-origins=* --enable-logging --log-level=0 --user-data-dir=/tmp/chrome-test-$$ "$@"
+    exec chromium --no-sandbox --headless --disable-dev-shm-usage --disable-gpu --user-data-dir=/tmp/chrome-test-$$ "$@"
 elif command -v google-chrome >/dev/null 2>&1; then
     echo "📱 Using Google Chrome browser"
-    exec google-chrome --no-sandbox --headless --disable-dev-shm-usage --disable-gpu --remote-debugging-port=9222 --remote-allow-origins=* --enable-logging --log-level=0 --user-data-dir=/tmp/chrome-test-$$ "$@"
+    exec google-chrome --no-sandbox --headless --disable-dev-shm-usage --disable-gpu --user-data-dir=/tmp/chrome-test-$$ "$@"
 else
     echo "❌ No Chrome binary found"
     exit 1
@@ -123,32 +119,8 @@ EOF
 chmod +x "$CHROME_WRAPPER_SCRIPT"
 export MAESTRO_CHROME_PATH="$CHROME_WRAPPER_SCRIPT"
 
-# Start Chrome console capture using DevTools Protocol
-echo "🔍 Starting Chrome console capture..."
-echo "📄 Console log file: $CONSOLE_LOG_FILE"
-echo "🔌 Chrome DevTools port: 9222"
-
-# Ensure console capture script exists
-if [ ! -f "scripts/chrome-console-capture.js" ]; then
-    echo "❌ Chrome console capture script not found!"
-    exit 1
-fi
-
-# Start console capture with enhanced error handling and Chrome startup delay
-echo "⏳ Waiting for Chrome to be available for DevTools connection..."
-sleep 5  # Give Chrome more time to start and enable DevTools
-
-node scripts/chrome-console-capture.js "$CONSOLE_LOG_FILE" 9222 &
-CONSOLE_CAPTURE_PID=$!
-echo "🔄 Console capture process started with PID: $CONSOLE_CAPTURE_PID"
-
-# Wait for console capture to initialize and verify it's running
-sleep 3
-if ! kill -0 $CONSOLE_CAPTURE_PID 2>/dev/null; then
-    echo "⚠️ Console capture process may have failed to start"
-else
-    echo "✅ Console capture process is running"
-fi
+# Note: Chrome DevTools connection removed as it's not compatible with Maestro test execution
+echo "📄 Console output will be captured through Expo web server logs"
 
 # Run Maestro tests
 echo "🧪 Running Maestro Chrome tests..."
@@ -167,8 +139,8 @@ for test_file in .maestro/web/*.yml; do
         CHROME_USER_DATA_DIR=$(mktemp -d -t maestro-chrome-test-XXXXXX)
         export MAESTRO_CHROME_USER_DATA_DIR="$CHROME_USER_DATA_DIR"
         
-        # Clear console log for this test
-        echo "=== Starting test: $(basename "$test_file") at $(date) ===" >> "$CONSOLE_LOG_FILE"
+        # Clear log marker for this test
+        echo "=== Starting test: $(basename "$test_file") at $(date) ==="
         
         # Run test with debug output and console capture
         echo "🔍 Running test with Maestro debug output..."
@@ -191,13 +163,8 @@ for test_file in .maestro/web/*.yml; do
 # Add comprehensive debug artifacts collection
         TEST_NAME=$(basename "$test_file" .yml)
         
-        # Copy browser console output
-        if [ -f "$CONSOLE_LOG_FILE" ]; then
-            echo "📋 Copying browser console output to debug artifacts..."
-            cp "$CONSOLE_LOG_FILE" "maestro-debug-output/browser-console-${TEST_NAME}.log"
-        else
-            echo "⚠️ No console log file found at $CONSOLE_LOG_FILE"
-        fi
+        # Browser console output handled through Expo logs
+        echo "📋 Browser console output available through Expo web server logs"
         
         # Generate Chrome debug info
         if [ -f "maestro-debug-output/maestro-console-${TEST_NAME}.log" ]; then
@@ -233,7 +200,6 @@ Status: $([ $INDIVIDUAL_EXIT_CODE -eq 0 ] && echo "PASSED" || echo "FAILED")
 Exit Code: $INDIVIDUAL_EXIT_CODE
 Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
 Chrome User Data: $CHROME_USER_DATA_DIR
-Console Log: $([ -f "$CONSOLE_LOG_FILE" ] && echo "Available" || echo "Not Found")
 Maestro Output: $([ -f "maestro-debug-output/maestro-console-${TEST_NAME}.log" ] && echo "Available" || echo "Not Found")
 JUnit Report: $([ -f "maestro-debug-output/report.xml" ] && echo "Available" || echo "Not Found")
 Screenshots: $SCREENSHOT_COUNT captured
@@ -248,14 +214,9 @@ EOF
             echo "❌ $(basename "$test_file") failed with exit code $INDIVIDUAL_EXIT_CODE"
             FIRST_FAILED_EXIT_CODE=${FIRST_FAILED_EXIT_CODE:-$INDIVIDUAL_EXIT_CODE}
             
-            # Show recent console output for failed tests
+            # Show debug information for failed tests
             echo "📋 Debug information for failed test:"
-            if [ -f "$CONSOLE_LOG_FILE" ]; then
-                echo "🌐 Recent browser console output (last 20 lines):"
-                tail -20 "$CONSOLE_LOG_FILE" 2>/dev/null || echo "No console output available"
-            else
-                echo "⚠️ No console log file available at $CONSOLE_LOG_FILE"
-            fi
+            echo "🌐 Browser console output available through Expo web server logs"
             
             # Show Maestro debug output
             if [ -f "maestro-debug-output/maestro-console-${TEST_NAME}.log" ]; then

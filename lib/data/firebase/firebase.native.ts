@@ -85,6 +85,7 @@ class FirestoreNativeService extends FirebaseService {
 	}
 
 	getDb(): FirebaseFirestoreTypes.Module {
+		console.log("getting db");
 		this.assertInitialized("getDb()");
 		if (!this.db) {
 			const error = new Error("Firestore instance not available. This may indicate an emulator connection failure or initialization issue.");

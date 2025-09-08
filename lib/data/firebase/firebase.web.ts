@@ -3,6 +3,13 @@ import {
 	connectFirestoreEmulator,
 	Firestore,
 	getFirestore,
+	collection,
+	query,
+	orderBy,
+	onSnapshot,
+	addDoc,
+	deleteDoc,
+	doc
 } from "@firebase/firestore";
 import { FirebaseService } from "./firebase-core";
 import firebaseConfig from "../../../firebase.web.config.json";
@@ -148,4 +155,5 @@ export function getFirebaseApp(): FirebaseApp {
 	return firebaseService.getFirebaseApp();
 }
 
-export * from "firebase/firestore";
+// Export Firestore functions for modular SDK
+export { collection, query, orderBy, onSnapshot, addDoc, deleteDoc, doc } from "@firebase/firestore";
