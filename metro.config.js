@@ -4,11 +4,7 @@ const { getDefaultConfig } = require("expo/metro-config");
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
 
-// Use custom transformer to handle TTY issues in debug package
-config.transformer = {
-  ...config.transformer,
-  babelTransformerPath: require.resolve("./metro.transform.js"),
-};
+// Remove custom transformer - use default Metro transformer
 
 // Configure web polyfills to prevent Node.js module issues
 if (config.resolver.alias) {
