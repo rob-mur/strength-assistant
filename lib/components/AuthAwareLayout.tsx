@@ -41,16 +41,7 @@ export function AuthAwareLayout({ children }: AuthAwareLayoutProps) {
 	}
 
 	if (!user || forceShowAuth) {
-		// Debug logging for Chrome tests
-		if (process.env.CHROME_TEST === 'true' || process.env.CI === 'true') {
-			console.log("🔍 AuthAwareLayout: Showing auth screen", { user: !!user, forceShowAuth, loading });
-		}
 		return <AuthScreen />;
-	}
-
-	// Debug logging for Chrome tests  
-	if (process.env.CHROME_TEST === 'true' || process.env.CI === 'true') {
-		console.log("🔍 AuthAwareLayout: User authenticated, showing main app", { userId: user?.uid, isAnonymous: user?.isAnonymous });
 	}
 
 	return <>{children}</>;
