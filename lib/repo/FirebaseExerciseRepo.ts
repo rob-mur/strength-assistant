@@ -142,10 +142,7 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 		this.ensureInitialized();
 
 		try {
-			console.log("start");
 			const exercisesQuery = this.createExercisesQuery(userId);
-
-			console.log("made query");
 			
 			let unsubscribe: () => void;
 			
@@ -159,14 +156,12 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 				const { onSnapshot } = firebaseModule;
 				unsubscribe = onSnapshot(exercisesQuery, (snapshot: QuerySnapshot) => {
 					const exercises = this.processSnapshot(snapshot, userId);
-					console.log("processed snapshot");
 					callback(exercises);
 				});
 			} else {
 				// Use React Native Firebase for native platforms
 				unsubscribe = exercisesQuery.onSnapshot((snapshot: QuerySnapshot) => {
 					const exercises = this.processSnapshot(snapshot, userId);
-					console.log("processed snapshot");
 					callback(exercises);
 				});
 			}
@@ -175,7 +170,6 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 
 			return unsubscribe;
 		} catch (error: any) {
-			console.log("here");
 			RepositoryLogger.logError("FirebaseExerciseRepo", "subscribe to exercises", error);
 			// Return no-op function on error
 			return () => { };
@@ -291,8 +285,6 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 		}
 		
 		const path = RepositoryUtils.getExercisesCollectionPath(userId);
-		console.log("Collection path:", path);
-		
 		if (Platform.OS === "web") {
 			// Use modular SDK for web
 			const firebaseModule = getFirebaseModule();
@@ -302,12 +294,10 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 			
 			const { collection, query, orderBy } = firebaseModule;
 			const exercisesCollection = collection(db, path);
-			console.log("Created web collection reference");
 			return query(exercisesCollection, orderBy("created_at", "desc"));
 		} else {
 			// Use React Native Firebase for native platforms
 			const exercisesCollection = db.collection(path);
-			console.log("Created native collection reference");
 			return exercisesCollection.orderBy("created_at", "desc");
 		}
 	}

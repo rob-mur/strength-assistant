@@ -4,6 +4,17 @@ const { getDefaultConfig } = require("expo/metro-config");
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
 
+// Add polyfills for web build to handle Node.js modules
+config.resolver.alias = {
+  ...config.resolver.alias,
+  tty: false,
+  process: 'process/browser',
+};
+
+// Configure Metro to handle process polyfills for web builds  
+config.resolver.platforms = ['web', 'native', 'ios', 'android'];
+config.resolver.mainFields = ['browser', 'module', 'main'];
+
 const withStorybook = require("@storybook/react-native/metro/withStorybook");
 
 const fs = require("fs");
