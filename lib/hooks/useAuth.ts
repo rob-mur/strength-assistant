@@ -35,99 +35,109 @@ export function useAuth() {
 		error: null,
 	});
 
+	// Helper function to handle user state changes
+	const handleUserStateChange = (user: any) => {
+		const userData = user ? {
+			uid: user.uid,
+			email: user.email,
+			isAnonymous: user.isAnonymous,
+		} : null;
+
+		setAuthState({
+			user: userData,
+			loading: false,
+			error: null,
+		});
+	};
+
+	// Helper function to set error state
+	const setErrorState = () => {
+		setAuthState({
+			user: null,
+			loading: false,
+			error: null,
+		});
+	};
+
+	// Helper function to initialize auth with timeout
+	const initializeAuthWithTimeout = async (authFunctions: any): Promise<void> => {
+		const initPromise = new Promise<void>((resolve, reject) => {
+			try {
+				authFunctions.initAuth();
+				resolve();
+			} catch (error) {
+				reject(error);
+			}
+		});
+		
+		const timeoutPromise = new Promise<never>((_, reject) => {
+			setTimeout(() => reject(new Error("Auth initialization timeout")), 5000);
+		});
+		
+		return Promise.race([initPromise, timeoutPromise]);
+	};
+
+	// Helper function to setup auth listener
+	const setupAuthListener = (authFunctions: any): (() => void) | undefined => {
+		const userStateHandler = (user: any) => {
+			try {
+				handleUserStateChange(user);
+			} catch (error) {
+				setErrorState();
+			}
+		};
+		
+		return Platform.OS === "web" 
+			? authFunctions.onAuthStateChangedWeb(userStateHandler)
+			: authFunctions.onAuthStateChangedNative(userStateHandler);
+	};
+
+	// Main auth initialization function
+	const initializeAuth = async (): Promise<(() => void) | undefined> => {
+		try {
+			const authFunctions = getAuthFunctions();
+			await initializeAuthWithTimeout(authFunctions);
+			return setupAuthListener(authFunctions);
+		} catch (error: any) {
+			setErrorState();
+			return undefined;
+		}
+	};
+
 	useEffect(() => {
-		// In Chrome test environment, show auth screen for testing (don't skip it entirely!)
+		// Early return for test environments
 		if (process.env.CHROME_TEST === 'true' || process.env.CI === 'true') {
-			setAuthState({
-				user: null,
-				loading: false,
-				error: null,
-			});
+			setErrorState();
 			return;
 		}
 		
 		let unsubscribe: (() => void) | undefined;
-		
-		const initializeAuth = async () => {
-			try {
-				const authFunctions = getAuthFunctions();
-				
-				// Initialize auth with timeout
-				const initPromise = new Promise<void>((resolve, reject) => {
-					try {
-						authFunctions.initAuth();
-						resolve();
-					} catch (error) {
-						reject(error);
-					}
-				});
-				
-				// Shorter timeout for faster failure
-				const timeoutPromise = new Promise<never>((_, reject) => {
-					setTimeout(() => reject(new Error("Auth initialization timeout")), 5000);
-				});
-				
-				await Promise.race([initPromise, timeoutPromise]);
-
-				// Set up auth state listener
-				const userStateHandler = (user: any) => {
-					try {
-						setAuthState({
-							user: user ? {
-								uid: user.uid,
-								email: user.email,
-								isAnonymous: user.isAnonymous,
-							} : null,
-							loading: false,
-							error: null,
-						});
-					} catch (error) {
-						setAuthState({
-							user: null,
-							loading: false,
-							error: null,
-						});
-					}
-				};
-				
-				unsubscribe = Platform.OS === "web" 
-					? authFunctions.onAuthStateChangedWeb(userStateHandler)
-					: authFunctions.onAuthStateChangedNative(userStateHandler);
-					
-			} catch (error: any) {
-				setAuthState({
-					user: null,
-					loading: false,
-					error: null,
-				});
-			}
-		};
 
 		// Shorter delay to speed up initialization
 		const timeoutId = setTimeout(() => {
-			initializeAuth().catch((error) => {
-				setAuthState({
-					user: null,
-					loading: false,
-					error: null,
+			initializeAuth()
+				.then((authUnsubscribe) => {
+					unsubscribe = authUnsubscribe;
+				})
+				.catch(() => {
+					setErrorState();
 				});
-			});
 		}, 50);
 
 		return () => {
 			clearTimeout(timeoutId);
-			if (unsubscribe) {
-				try {
-					unsubscribe();
-				} catch (error) {
-					// Silently handle cleanup errors
-				}
+			if (!unsubscribe) return;
+			
+			try {
+				unsubscribe();
+			} catch (error) {
+				// Silently handle cleanup errors
 			}
 		};
 	}, []);
 
 	const signInAnonymously = async (): Promise<void> => {
-		// In Chrome test environment, create mock user immediately
+		// Early return for test environments
 		if (process.env.CHROME_TEST === 'true' || process.env.CI === 'true' || process.env.NODE_ENV === 'test') {
 			setAuthState({
 				user: {
@@ -144,11 +154,12 @@ export function useAuth() {
 		try {
 			const authFunctions = getAuthFunctions();
 			setAuthState(prev => ({ ...prev, loading: true, error: null }));
-			if (Platform.OS === "web") {
-				await authFunctions.signInAnonymouslyWeb();
-			} else {
-				await authFunctions.signInAnonymouslyNative();
-			}
+			
+			const signInFunction = Platform.OS === "web" 
+				? authFunctions.signInAnonymouslyWeb
+				: authFunctions.signInAnonymouslyNative;
+			
+			await signInFunction();
 		} catch (error: any) {
 			console.error("Anonymous sign in failed:", error);
 			setAuthState(prev => ({
@@ -163,11 +174,12 @@ export function useAuth() {
 		try {
 			const authFunctions = getAuthFunctions();
 			setAuthState(prev => ({ ...prev, loading: true, error: null }));
-			if (Platform.OS === "web") {
-				await authFunctions.createAccountWeb(email, password);
-			} else {
-				await authFunctions.createAccountNative(email, password);
-			}
+			
+			const createFunction = Platform.OS === "web" 
+				? authFunctions.createAccountWeb
+				: authFunctions.createAccountNative;
+			
+			await createFunction(email, password);
 		} catch (error: any) {
 			setAuthState(prev => ({
 				...prev,
@@ -181,11 +193,12 @@ export function useAuth() {
 		try {
 			const authFunctions = getAuthFunctions();
 			setAuthState(prev => ({ ...prev, loading: true, error: null }));
-			if (Platform.OS === "web") {
-				await authFunctions.signInWeb(email, password);
-			} else {
-				await authFunctions.signInNative(email, password);
-			}
+			
+			const signInFunction = Platform.OS === "web" 
+				? authFunctions.signInWeb
+				: authFunctions.signInNative;
+			
+			await signInFunction(email, password);
 		} catch (error: any) {
 			setAuthState(prev => ({
 				...prev,
@@ -199,11 +212,12 @@ export function useAuth() {
 		try {
 			const authFunctions = getAuthFunctions();
 			setAuthState(prev => ({ ...prev, loading: true, error: null }));
-			if (Platform.OS === "web") {
-				await authFunctions.signOutWeb();
-			} else {
-				await authFunctions.signOutNative();
-			}
+			
+			const signOutFunction = Platform.OS === "web" 
+				? authFunctions.signOutWeb
+				: authFunctions.signOutNative;
+			
+			await signOutFunction();
 		} catch (error: any) {
 			setAuthState(prev => ({
 				...prev,
