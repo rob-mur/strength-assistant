@@ -24,7 +24,7 @@ export default function WorkoutScreen({
         style={{ position: "absolute", margin: 16, right: 0, bottom: 0 }}
         icon="plus"
         testID="add-workout"
-        onPress={(_) => router.navigate("./add")}
+        onPress={(_) => router.navigate("/add")}
       />
     </View>
   );
