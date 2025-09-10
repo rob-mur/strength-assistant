@@ -1,75 +1,75 @@
 {
   "lockfile_version": "1",
   "packages": {
-    "chromedriver@138": {
-      "last_modified": "2025-07-31T04:07:16Z",
-      "resolved": "github:NixOS/nixpkgs/8679b16e11becd487b45d568358ddf9d5640d860#chromedriver",
+    "chromedriver@latest": {
+      "last_modified": "2025-08-08T08:05:48Z",
+      "resolved": "github:NixOS/nixpkgs/a3f3e3f2c983e957af6b07a1db98bafd1f87b7a1#chromedriver",
       "source": "devbox-search",
-      "version": "138.0.7204.184",
+      "version": "139.0.7258.67",
       "systems": {
         "aarch64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/hgy63442jv3p5pj3flbac2yf16z8l81i-chromedriver-138.0.7204.184",
+              "path": "/nix/store/nhrkssnykfv895jln6lr0mmg2ssppydv-chromedriver-139.0.7258.67",
               "default": true
             }
           ],
-          "store_path": "/nix/store/hgy63442jv3p5pj3flbac2yf16z8l81i-chromedriver-138.0.7204.184"
+          "store_path": "/nix/store/nhrkssnykfv895jln6lr0mmg2ssppydv-chromedriver-139.0.7258.67"
         },
         "x86_64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/9n84z80snqwbya7ijdfpzqvk316nabsl-chromedriver-138.0.7204.184",
+              "path": "/nix/store/x3hcqj7zfz3mbi23xa27g51fmxw5j1gz-chromedriver-139.0.7258.67",
               "default": true
             }
           ],
-          "store_path": "/nix/store/9n84z80snqwbya7ijdfpzqvk316nabsl-chromedriver-138.0.7204.184"
+          "store_path": "/nix/store/x3hcqj7zfz3mbi23xa27g51fmxw5j1gz-chromedriver-139.0.7258.67"
         },
         "x86_64-linux": {
           "outputs": [
             {
-              "path": "/nix/store/faa0h7cim84fl8sa33wjvjcjh0r1f0v9-chromedriver-unwrapped-138.0.7204.183",
+              "path": "/nix/store/irw8hl3lnvfw2dwj6sqs5ahfw2qcg1dc-chromedriver-unwrapped-139.0.7258.66",
               "default": true
             }
           ]
         }
       }
     },
-    "chromium@138": {
-      "last_modified": "2025-07-31T04:07:16Z",
-      "resolved": "github:NixOS/nixpkgs/8679b16e11becd487b45d568358ddf9d5640d860#chromium",
+    "chromium@latest": {
+      "last_modified": "2025-08-08T08:05:48Z",
+      "resolved": "github:NixOS/nixpkgs/a3f3e3f2c983e957af6b07a1db98bafd1f87b7a1#chromium",
       "source": "devbox-search",
-      "version": "138.0.7204.183",
+      "version": "139.0.7258.66",
       "systems": {
         "aarch64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/zlb0n29pk59slni1ikx2qx1v8hni6xy0-chromium-138.0.7204.183",
+              "path": "/nix/store/b1snbj5535qm022cmhszymgjx1d5ypgb-chromium-139.0.7258.66",
               "default": true
             },
             {
               "name": "sandbox",
-              "path": "/nix/store/vq7filwmwy60z9fjda0kpnnffj4v84pd-chromium-138.0.7204.183-sandbox"
+              "path": "/nix/store/p3j8b7qdinfy8i7fq2836ci4qcb2f69w-chromium-139.0.7258.66-sandbox"
             }
           ],
-          "store_path": "/nix/store/zlb0n29pk59slni1ikx2qx1v8hni6xy0-chromium-138.0.7204.183"
+          "store_path": "/nix/store/b1snbj5535qm022cmhszymgjx1d5ypgb-chromium-139.0.7258.66"
         },
         "x86_64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/5df9bw0imibdw8griaxz6g55gcr0yq10-chromium-138.0.7204.183",
+              "path": "/nix/store/p737fiz2cv6q2173c3kxvzrl05g21s7l-chromium-139.0.7258.66",
               "default": true
             },
             {
               "name": "sandbox",
-              "path": "/nix/store/zpx0h5pg7q0n03awqfxcx3d18x93w6nx-chromium-138.0.7204.183-sandbox"
+              "path": "/nix/store/qlsx39w2i3p6a5afw1j6b1k6pfbyrc3q-chromium-139.0.7258.66-sandbox"
             }
           ],
-          "store_path": "/nix/store/5df9bw0imibdw8griaxz6g55gcr0yq10-chromium-138.0.7204.183"
+          "store_path": "/nix/store/p737fiz2cv6q2173c3kxvzrl05g21s7l-chromium-139.0.7258.66"
         }
       }
     },
@@ -122,8 +122,8 @@
       }
     },
     "github:NixOS/nixpkgs/nixpkgs-unstable": {
-      "last_modified": "2025-08-15T14:26:43Z",
-      "resolved": "github:NixOS/nixpkgs/32f313e49e42f715491e1ea7b306a87c16fe0388?lastModified=1755268003&narHash=sha256-nNaeJjo861wFR0tjHDyCnHs1rbRtrMgxAKMoig9Sj%2Fw%3D"
+      "last_modified": "2025-09-05T01:14:44Z",
+      "resolved": "github:NixOS/nixpkgs/ca77296380960cd497a765102eeb1356eb80fed0?lastModified=1757034884&narHash=sha256-PgLSZDBEWUHpfTRfFyklmiiLBE1i1aGCtz4eRA3POao%3D"
     },
     "jdk17@latest": {
       "last_modified": "2025-07-28T17:09:23Z",

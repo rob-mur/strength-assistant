@@ -85,19 +85,29 @@ CHROME_WRAPPER_SCRIPT="/tmp/chrome-wrapper-$$"
 cat > "$CHROME_WRAPPER_SCRIPT" << 'EOF'
 #!/bin/bash
 echo "🚀 Starting Chrome for Maestro testing..."
+# Force use of devbox-provided chromium to match chromedriver version
 if command -v chromium >/dev/null 2>&1; then
-    echo "📱 Using Chromium browser"
+    echo "📱 Using devbox Chromium browser ($(chromium --version 2>/dev/null || echo 'version unknown'))"
     exec chromium --no-sandbox --headless --disable-dev-shm-usage --disable-gpu --user-data-dir=/tmp/chrome-test-$$ "$@"
-elif command -v google-chrome >/dev/null 2>&1; then
-    echo "📱 Using Google Chrome browser"
-    exec google-chrome --no-sandbox --headless --disable-dev-shm-usage --disable-gpu --user-data-dir=/tmp/chrome-test-$$ "$@"
 else
-    echo "❌ No Chrome binary found"
+    echo "❌ Chromium not found in devbox environment"
+    echo "Available browsers:"
+    command -v google-chrome >/dev/null 2>&1 && echo "  - google-chrome: $(google-chrome --version 2>/dev/null || echo 'version unknown')"
+    command -v chrome >/dev/null 2>&1 && echo "  - chrome: $(chrome --version 2>/dev/null || echo 'version unknown')"
     exit 1
 fi
 EOF
 chmod +x "$CHROME_WRAPPER_SCRIPT"
 export MAESTRO_CHROME_PATH="$CHROME_WRAPPER_SCRIPT"
+
+# Set ChromeDriver path to use devbox-provided version
+if command -v chromedriver >/dev/null 2>&1; then
+    CHROMEDRIVER_PATH=$(command -v chromedriver)
+    export MAESTRO_CHROMEDRIVER_PATH="$CHROMEDRIVER_PATH"
+    echo "🔧 Using ChromeDriver: $CHROMEDRIVER_PATH ($(chromedriver --version 2>/dev/null || echo 'version unknown'))"
+else
+    echo "⚠️ ChromeDriver not found in PATH"
+fi
 
 # Note: Chrome DevTools connection removed as it's not compatible with Maestro test execution
 echo "📄 Console output will be captured through Expo web server logs"
