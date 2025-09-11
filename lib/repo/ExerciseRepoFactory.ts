@@ -44,7 +44,7 @@ export class ExerciseRepoFactory {
     }
     
     // Prefer process.env, fall back to expo config
-    const useSupabase = useSupabaseProcess !== undefined ? useSupabaseProcess : useSupabaseEnv;
+    const useSupabase = useSupabaseProcess ?? useSupabaseEnv;
     
     // Convert string values to boolean
     if (typeof useSupabase === 'string') {
