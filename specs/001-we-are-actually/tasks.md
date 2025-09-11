@@ -16,9 +16,52 @@
 - Include exact file paths in descriptions
 - All tasks must result in `devbox run test` passing
 
-## Path Conventions
-- **React Native**: `lib/` for core logic, `app/` for screens, `__tests__/` for tests
-- Existing structure: `lib/data/`, `lib/models/`, `lib/hooks/`, `lib/components/`
+## Path Conventions & Implementation References
+
+### Existing File Structure (Check before creating new files)
+```
+lib/
+├── models/
+│   ├── ExerciseRecord.ts          ✅ IMPLEMENTED (lines 1-245)
+│   ├── UserAccount.ts             ✅ IMPLEMENTED (lines 1-341) 
+│   ├── SyncStateRecord.ts         ✅ IMPLEMENTED (lines 1-367)
+│   └── Exercise.ts                (legacy - reference only)
+├── data/
+│   ├── supabase/
+│   │   ├── SupabaseStorage.ts     🔧 PARTIAL (lines 33-392, needs import fixes)
+│   │   └── supabase.ts            ✅ CLIENT SETUP
+│   ├── firebase/                  ✅ EXISTING (reference for patterns)
+│   └── sync/                      (may be useful for migration)
+├── config/
+│   └── supabase-env.ts            ✅ IMPLEMENTED (lines 1-90)
+├── hooks/                         ✅ EXISTING (update these)
+├── components/                    ✅ EXISTING (add sync status here)
+└── repo/                          ✅ EXISTING (update ExerciseRepo)
+
+app/
+└── (tabs)/exercises/              ✅ EXISTING (update for real-time sync)
+
+__tests__/
+├── contracts/                     🔧 PARTIAL (contract tests exist, may fail)
+└── integration/                   🔧 PARTIAL (integration tests exist, may fail)
+```
+
+### Key Implementation Guidance
+
+**When working on models (T010-T012)**:
+- Import fixes needed: Remove non-existent imports from contract files
+- Add proper exports for functions used by storage backends
+- Ensure UUID generation works (currently custom implementation)
+
+**When working on SupabaseStorage (T013)**:
+- Fix import path: `../../specs/001-we-are-actually/contracts/storage-interface` → use relative contract
+- Complete missing method implementations (check contract interface)
+- Fix UserAccount and SyncState imports
+
+**When creating new Legend State files (T016-T017)**:
+- Reference: `specs/001-we-are-actually/contracts/legend-state-config.ts:1-109`
+- Create in `lib/data/legend-state/` directory (new)
+- Follow observable pattern from Legend State documentation
 
 ## Phase 3.1: Setup & Dependencies
 - [ ] T001 Install Legend State dependencies: `@legendapp/state` and sync plugins
@@ -35,46 +78,60 @@
 - [ ] T009 [P] Integration test for feature flag migration flow in `__tests__/integration/feature-flag-migration.test.ts`
 
 ## Phase 3.3: Core Implementation (ONLY after tests are failing)
-- [ ] T010 [P] Implement ExerciseRecord model with validation in `lib/models/ExerciseRecord.ts`
-- [ ] T011 [P] Implement UserAccount model with auth types in `lib/models/UserAccount.ts`
-- [ ] T012 [P] Implement SyncStateRecord model for sync tracking in `lib/models/SyncStateRecord.ts`
-- [ ] T013 Implement Supabase StorageBackend in `lib/data/supabase/SupabaseStorage.ts`
-- [ ] T014 Implement Supabase authentication service in `lib/data/supabase/SupabaseAuth.ts`
-- [ ] T015 Create Legend State store configuration in `lib/state/ExerciseStore.ts`
-- [ ] T016 Implement Legend State sync engine integration in `lib/state/SupabaseSync.ts`
+
+### Data Models (Parallel - Different Files)
+**Reference**: Models already exist but need import fixes
+- [ ] T010 [P] Fix import paths in ExerciseRecord model `lib/models/ExerciseRecord.ts:1-245` (already implemented)
+- [ ] T011 [P] Fix import paths in UserAccount model `lib/models/UserAccount.ts:1-341` (already implemented)  
+- [ ] T012 [P] Fix import paths in SyncStateRecord model `lib/models/SyncStateRecord.ts:1-367` (already implemented)
+
+### Storage Backend Implementation
+**Reference**: SupabaseStorage partially implemented at `lib/data/supabase/SupabaseStorage.ts:33-392`
+- [ ] T013 Fix import errors and complete SupabaseStorage missing methods in `lib/data/supabase/SupabaseStorage.ts`
+- [ ] T014 Create Firebase storage adapter implementing same interface in `lib/data/firebase/FirebaseStorage.ts`
+- [ ] T015 Create StorageManager with feature flag switching in `lib/data/StorageManager.ts`
+
+### Legend State Integration (New Files)
+**Reference**: No existing implementations - create from contracts at `specs/001-we-are-actually/contracts/legend-state-config.ts`
+- [ ] T016 Create Legend State store configuration in `lib/data/legend-state/ExerciseStore.ts`
+- [ ] T017 Create Legend State actions with backend integration in `lib/data/legend-state/ExerciseActions.ts`
 
 ## Phase 3.4: Feature Flag Integration
-- [ ] T017 Implement StorageManager with feature flag switching in `lib/data/StorageManager.ts`
-- [ ] T018 Update ExerciseRepo to use StorageManager with USE_SUPABASE_DATA flag in `lib/repo/ExerciseRepo.ts`
-- [ ] T019 Implement data consistency validation logic in `lib/migration/ConsistencyValidator.ts`
-- [ ] T020 Create migration utilities for Firebase to Supabase in `lib/migration/DataMigrator.ts`
+**Reference**: Use existing ExerciseRepo pattern from codebase
+- [ ] T018 Create unified data layer entry point in `lib/data/index.ts` (exports StorageManager, feature flag logic)
+- [ ] T019 Update ExerciseRepo to use StorageManager with USE_SUPABASE_DATA flag in `lib/repo/ExerciseRepo.ts`
+- [ ] T020 Implement data consistency validation logic in `lib/migration/ConsistencyValidator.ts`
+- [ ] T021 Create migration utilities for Firebase to Supabase in `lib/migration/DataMigrator.ts`
 
 ## Phase 3.5: UI Integration & Real-time Updates
-- [ ] T021 [P] Update useExercises hook to use new storage backend in `lib/hooks/useExercises.ts`
-- [ ] T022 [P] Update useAddExercise hook with Legend State integration in `lib/hooks/useAddExercise.ts`
-- [ ] T023 [P] Create sync status indicator component in `lib/components/SyncStatusIcon.tsx`
-- [ ] T024 Update exercise list screen with real-time sync updates in `app/(tabs)/exercises/index.tsx`
-- [ ] T025 Update add exercise screen with optimistic updates in `app/(tabs)/exercises/add.tsx`
+**Reference**: Follow existing hook patterns from `lib/hooks/` and screen patterns from `app/`
+- [ ] T022 [P] Update useExercises hook to use new storage backend in `lib/hooks/useExercises.ts` (existing file)
+- [ ] T023 [P] Update useAddExercise hook with Legend State integration in `lib/hooks/useAddExercise.ts` (existing file)
+- [ ] T024 [P] Create sync status indicator component in `lib/components/SyncStatusIcon.tsx`
+- [ ] T025 Update exercise list screen with real-time sync updates in `app/(tabs)/exercises/index.tsx` (existing file)
+- [ ] T026 Update add exercise screen with optimistic updates in `app/(tabs)/exercises/add.tsx` (existing file)
 
-## Phase 3.6: Authentication Integration
-- [ ] T026 Implement Supabase auth provider component in `lib/components/SupabaseAuthProvider.tsx`
-- [ ] T027 Create feature-flag controlled auth context in `lib/context/AuthContext.tsx`
-- [ ] T028 [P] Update authentication screens for dual auth support in `app/(auth)/`
-- [ ] T029 [P] Implement anonymous to authenticated user migration in `lib/auth/UserMigration.ts`
+## Phase 3.6: Authentication Integration  
+**Reference**: Follow existing Firebase auth patterns from `lib/data/firebase/auth.*.ts`
+- [ ] T027 Implement Supabase auth provider component in `lib/components/SupabaseAuthProvider.tsx`
+- [ ] T028 Create feature-flag controlled auth context in `lib/context/AuthContext.tsx` 
+- [ ] T029 [P] Update authentication screens for dual auth support in `app/(auth)/` (if exists)
+- [ ] T030 [P] Implement anonymous to authenticated user migration in `lib/auth/UserMigration.ts`
 
 ## Phase 3.7: Testing & Validation
-- [ ] T030 [P] Add unit tests for ExerciseRecord validation in `__tests__/models/ExerciseRecord.test.ts`
-- [ ] T031 [P] Add unit tests for Legend State store actions in `__tests__/state/ExerciseStore.test.ts`
-- [ ] T032 [P] Add unit tests for sync status logic in `__tests__/state/SyncState.test.ts`
-- [ ] T033 E2E test for offline-first functionality using Maestro in `__tests__/e2e/offline-first.test.js`
-- [ ] T034 E2E test for cross-device sync using Maestro in `__tests__/e2e/cross-device-sync.test.js`
-- [ ] T035 Performance test for local operations (<50ms) in `__tests__/performance/local-operations.test.ts`
+**Reference**: Follow existing test patterns from `__tests__/` directory
+- [ ] T031 [P] Add unit tests for ExerciseRecord validation in `__tests__/models/ExerciseRecord.test.ts`
+- [ ] T032 [P] Add unit tests for Legend State store actions in `__tests__/data/legend-state/ExerciseStore.test.ts`
+- [ ] T033 [P] Add unit tests for sync status logic in `__tests__/data/legend-state/SyncState.test.ts`
+- [ ] T034 E2E test for offline-first functionality using Maestro in `__tests__/e2e/offline-first.test.js`
+- [ ] T035 E2E test for cross-device sync using Maestro in `__tests__/e2e/cross-device-sync.test.js`
+- [ ] T036 Performance test for local operations (<50ms) in `__tests__/performance/local-operations.test.ts`
 
 ## Phase 3.8: Migration & Cleanup
-- [ ] T036 Create migration script for existing Firebase users in `scripts/migrate-firebase-users.ts`
-- [ ] T037 Implement data validation checks for migration accuracy in `lib/migration/MigrationValidator.ts`
-- [ ] T038 [P] Update documentation with new authentication flow in `docs/authentication.md`
-- [ ] T039 [P] Update CLAUDE.md with Legend State and migration context
+**Reference**: See existing Firebase patterns and migration logic from Phase 3.4
+- [ ] T037 Create migration script for existing Firebase users in `scripts/migrate-firebase-users.ts`
+- [ ] T038 [P] Update documentation with new authentication flow in `docs/authentication.md` (if docs/ exists)
+- [ ] T039 [P] Update CLAUDE.md with Legend State and migration context at project root
 - [ ] T040 **🚨 MANDATORY FINAL VALIDATION: Run `devbox run test` and fix ALL issues**
 
 ## Dependencies
