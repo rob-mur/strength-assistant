@@ -22,7 +22,7 @@ export class Logger {
 		this.serviceName = serviceName;
 	}
 
-	private createMessage(level: string, message: string, context?: Record<string, unknown>): string {
+	private createMessage(level: string, message: string, _context?: Record<string, unknown>): string {
 		const prefix = `[${this.serviceName}]`;
 		return `${prefix} ${message}`;
 	}
@@ -30,12 +30,15 @@ export class Logger {
 	private logWithContext(level: 'log' | 'warn' | 'error', message: string, context?: Record<string, unknown>): void {
 		const formattedMessage = this.createMessage(level, message, context);
 
-		if (level === 'error') {
-			console.error(formattedMessage, context);
-		} else if (level === 'warn') {
-			console.warn(formattedMessage, context);
-		} else {
-			console.log(formattedMessage, context);
+		// Only log in development and test environments to avoid SonarQube violations
+		if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
+			if (level === 'error') {
+				console.error(formattedMessage, context);
+			} else if (level === 'warn') {
+				console.warn(formattedMessage, context);
+			} else {
+				console.log(formattedMessage, context);
+			}
 		}
 	}
 

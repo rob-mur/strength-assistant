@@ -54,4 +54,16 @@ coverage/
 maestro-debug-output/
 
 meta/
-debug*.png
+
+# Local dev setup
+/devbox.json
+/devbox.lock
+/flakes/
+
+*.png
+!assets/images/*.png
+
+report.xml
+
+
+**/.devbox/

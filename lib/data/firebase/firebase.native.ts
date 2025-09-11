@@ -75,6 +75,7 @@ class FirestoreNativeService extends FirebaseService {
 					}
 				});
 				this.logWarn("Continuing with production Firestore");
+				// Don't rethrow - continue with production Firestore
 			}
 		} else {
 			this.logInfo("Production mode, using production Firestore", {
@@ -86,7 +87,13 @@ class FirestoreNativeService extends FirebaseService {
 	getDb(): FirebaseFirestoreTypes.Module {
 		this.assertInitialized("getDb()");
 		if (!this.db) {
-			throw new Error("Firestore instance not available");
+			const error = new Error("Firestore instance not available. This may indicate an emulator connection failure or initialization issue.");
+			this.logError("getDb() called but Firestore instance is null", {
+				operation: "getDb",
+				initialized: this.initialized,
+				dbInstance: !!this.db
+			});
+			throw error;
 		}
 		return this.db;
 	}

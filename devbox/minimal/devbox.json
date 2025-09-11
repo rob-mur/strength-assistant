@@ -2,11 +2,12 @@
 	"$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.14.2/.schema/devbox.schema.json",
 	"packages": [
 		"nodejs@latest",
-		"chromium@138",
-		"chromedriver@138",
+		"chromium@latest",
+		"chromedriver@latest",
 		"firebase-tools@latest",
 		"supabase-cli@latest",
-		"maestro@latest"
+		"maestro@latest",
+		"jdk17@latest"
 	],
 	"shell": {
 		"scripts": {

@@ -2,24 +2,34 @@ url: http://localhost:8081
 ---
 - runScript: ../../scripts/clear_emulator.js
 - launchApp
+- takeScreenshot: "01-app-launched.png"
 # Handle optional auth step (only if not already authenticated)
 - tapOn:
     id: "continue-as-guest"
     optional: true
+- takeScreenshot: "02-after-auth-attempt.png"
 # Handle optional onboarding step (only if not already seen)
 - tapOn:
     id: "get-started"
     optional: true
+- takeScreenshot: "03-after-onboarding-attempt.png"
+# Ensure we're on the exercises screen before trying to add an exercise
+- tapOn:
+    id: "exercisesTab"
+    optional: true
+- takeScreenshot: "04-exercises-tab-selected.png"
 - tapOn:
     id: "add-exercise"
+- takeScreenshot: "05-add-exercise-form-opened.png"
 - tapOn:
     id: "name"
 - inputText: "ExerciseName"
+- takeScreenshot: "06-exercise-name-entered.png"
 - tapOn:
     id: "submit"
-- tapOn:
-    id: "exercisesTab"
+- takeScreenshot: "07-after-submit.png"
 - assertVisible:
     id: "exercise-screen"
 - assertVisible:
     id: "ExerciseName"
+- takeScreenshot: "08-final-exercise-list.png"

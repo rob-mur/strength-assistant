@@ -14,10 +14,6 @@
 		"supabase-cli@latest"
 	],
 	"shell": {
-		"init_hook": [
-			"cd $PROJECT_ROOT 2>/dev/null || cd ../..",
-			"alias sync-devbox='bash $PROJECT_ROOT/scripts/sync-devbox.sh'"
-		],
 		"scripts": {
 			"test": [
 				"../../scripts/test.sh"
@@ -30,6 +26,9 @@
 			],
 			"integration_test_android": [
 				"../../scripts/integration_test_android.sh"
+			],
+			"integration_test_chrome": [
+				"../../scripts/integration_test_chrome.sh"
 			],
 			"sync_devbox": [
 				"../../scripts/sync-devbox.sh"

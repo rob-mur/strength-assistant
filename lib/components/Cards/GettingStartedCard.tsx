@@ -30,7 +30,9 @@ const GettingStartedCard = ({
               mode="contained"
               icon="arrow-right"
               contentStyle={{ flexDirection: "row-reverse" }}
-              onPress={(_) => on_get_started(router)}
+              onPress={(_) => {
+                on_get_started(router);
+              }}
             >
               {call_to_action}
             </Button>

@@ -1,9 +1,12 @@
-import { createClient } from "@supabase/supabase-js";
 import { initSupabase, getSupabaseClient, resetSupabaseService } from "@/lib/data/supabase/supabase/supabase.native";
 
 // Mock the Supabase client
-jest.mock("@supabase/supabase-js");
-const mockCreateClient = createClient as jest.MockedFunction<typeof createClient>;
+jest.mock("@supabase/supabase-js", () => ({
+  createClient: jest.fn(),
+}), { virtual: true });
+
+const { createClient } = require("@supabase/supabase-js");
+const mockCreateClient = createClient;
 
 // Mock environment variables
 const originalEnv = process.env;

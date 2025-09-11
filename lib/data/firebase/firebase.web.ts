@@ -2,7 +2,7 @@ import { initializeApp, FirebaseApp } from "@firebase/app";
 import {
 	connectFirestoreEmulator,
 	Firestore,
-	getFirestore,
+	getFirestore
 } from "@firebase/firestore";
 import { FirebaseService } from "./firebase-core";
 import firebaseConfig from "../../../firebase.web.config.json";
@@ -77,11 +77,19 @@ class FirebaseWebService extends FirebaseService {
 			});
 
 			try {
-				connectFirestoreEmulator(this.db, host, port);
-				this.logInfo("Successfully connected to Firestore emulator", {
-					operation: "emulator_setup",
-					emulator: { host, port }
-				});
+				// Check if emulator is already connected
+				if (!(this.db as any)._delegate?._databaseId?.database?.includes('emulator')) {
+					connectFirestoreEmulator(this.db, host, port);
+					this.logInfo("Successfully connected to Firestore emulator", {
+						operation: "emulator_setup",
+						emulator: { host, port }
+					});
+				} else {
+					this.logInfo("Firestore emulator already connected", {
+						operation: "emulator_setup",
+						emulator: { host, port }
+					});
+				}
 			} catch (error: any) {
 				this.logError("Failed to connect to emulator", {
 					operation: "emulator_setup",
@@ -90,7 +98,7 @@ class FirebaseWebService extends FirebaseService {
 						message: error.message
 					}
 				});
-				this.logWarn("Continuing with production Firestore");
+				this.logWarn("Continuing without emulator for Chrome testing compatibility");
 			}
 		} else {
 			this.logInfo("Production mode, using production Firestore", {
@@ -102,7 +110,13 @@ class FirebaseWebService extends FirebaseService {
 	getDb(): Firestore {
 		this.assertInitialized("getDb()");
 		if (!this.db) {
-			throw new Error("Firestore instance not available");
+			const error = new Error("Firestore instance not available. This may indicate an initialization timing issue in web environment.");
+			this.logError("getDb() called but Firestore instance is null", {
+				operation: "getDb",
+				initialized: this.initialized,
+				dbInstance: !!this.db
+			});
+			throw error;
 		}
 		return this.db;
 	}
@@ -134,4 +148,13 @@ export function getFirebaseApp(): FirebaseApp {
 	return firebaseService.getFirebaseApp();
 }
 
-export * from "firebase/firestore";
+// Export Firestore functions for modular SDK
+export { 
+	collection, 
+	query, 
+	orderBy, 
+	onSnapshot, 
+	addDoc, 
+	deleteDoc, 
+	doc 
+} from "@firebase/firestore";
