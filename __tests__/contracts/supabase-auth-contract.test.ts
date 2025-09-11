@@ -7,7 +7,7 @@
  * CRITICAL: This test MUST fail initially - SupabaseAuth doesn't exist yet.
  */
 
-import { UserAccount } from '../../specs/001-we-are-actually/contracts/storage-interface';
+import type { UserAccount } from '../../lib/models/UserAccount';
 
 describe('Supabase Auth Contract', () => {
   let supabaseAuth: any;

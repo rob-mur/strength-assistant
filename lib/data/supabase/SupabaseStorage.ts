@@ -5,7 +5,35 @@
  * providing exercise CRUD operations, user management, and sync tracking.
  */
 
-import { StorageBackend, ExerciseRecord, UserAccount, SyncStateRecord } from '../../../specs/001-we-are-actually/contracts/storage-interface';
+// Import interfaces from local models instead of contracts
+import type { ExerciseRecord } from '../../models/ExerciseRecord';
+import type { UserAccount } from '../../models/UserAccount';  
+import type { SyncStateRecord } from '../../models/SyncStateRecord';
+
+// StorageBackend interface definition (matches contract)
+export interface StorageBackend {
+  // Exercise CRUD operations
+  createExercise(exercise: Omit<ExerciseRecord, 'id' | 'createdAt' | 'updatedAt' | 'syncStatus'>): Promise<ExerciseRecord>;
+  getExercises(userId?: string): Promise<ExerciseRecord[]>;
+  updateExercise(id: string, updates: Partial<Pick<ExerciseRecord, 'name'>>): Promise<ExerciseRecord>;
+  deleteExercise(id: string): Promise<void>;
+
+  // User management
+  getCurrentUser(): Promise<UserAccount | null>;
+  signInWithEmail(email: string, password: string): Promise<UserAccount>;
+  signUpWithEmail(email: string, password: string): Promise<UserAccount>;
+  signInAnonymously(): Promise<UserAccount>;
+  signOut(): Promise<void>;
+
+  // Sync management
+  getPendingSyncRecords(): Promise<SyncStateRecord[]>;
+  markSyncComplete(recordId: string): Promise<void>;
+  markSyncError(recordId: string, error: string): Promise<void>;
+  
+  // Real-time subscriptions
+  subscribeToExercises(userId: string, callback: (exercises: ExerciseRecord[]) => void): () => void;
+  subscribeToAuthState(callback: (user: UserAccount | null) => void): () => void;
+}
 import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
 import { getSupabaseUrl, getSupabaseEnvConfig } from '../../config/supabase-env';
 import { 

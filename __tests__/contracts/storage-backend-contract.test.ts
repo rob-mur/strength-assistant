@@ -7,13 +7,16 @@
  * CRITICAL: This test MUST fail initially - implementations don't exist yet.
  */
 
-import { StorageBackend, ExerciseRecord, UserAccount, SyncStateRecord } from '../../specs/001-we-are-actually/contracts/storage-interface';
+import { StorageBackend } from '../../lib/data/supabase/SupabaseStorage';
+import type { ExerciseRecord } from '../../lib/models/ExerciseRecord';
+import type { UserAccount } from '../../lib/models/UserAccount';
+import type { SyncStateRecord } from '../../lib/models/SyncStateRecord';
 
 describe('StorageBackend Contract', () => {
   let storageBackend: StorageBackend;
 
   beforeEach(() => {
-    // This will fail initially - SupabaseStorage doesn't exist yet
+    // Import and instantiate SupabaseStorage
     const { SupabaseStorage } = require('../../lib/data/supabase/SupabaseStorage');
     storageBackend = new SupabaseStorage();
   });

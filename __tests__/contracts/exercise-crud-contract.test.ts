@@ -7,7 +7,7 @@
  * CRITICAL: This test MUST fail initially - implementations don't exist yet.
  */
 
-import { ExerciseRecord } from '../../specs/001-we-are-actually/contracts/storage-interface';
+import type { ExerciseRecord } from '../../lib/models/ExerciseRecord';
 
 describe('Exercise CRUD Contract', () => {
   let exerciseService: any;
