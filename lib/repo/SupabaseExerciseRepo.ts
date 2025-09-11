@@ -111,7 +111,7 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
 			const currentUser = user$.get();
 			if (!currentUser) return [];
 			return exercises$.get().filter(ex => ex.user_id === currentUser.id);
-		});
+		}) as unknown as Observable<Exercise[]>;
 	}
 
 	/**

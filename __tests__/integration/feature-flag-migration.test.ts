@@ -50,7 +50,7 @@ describe('Feature Flag Migration Flow', () => {
       // Verify data in Firebase
       const firebaseExercises = await app.getExercises();
       expect(firebaseExercises).toHaveLength(5);
-      expect(firebaseExercises.map(e => e.name)).toContain('Bench Press');
+      expect(firebaseExercises.map((e: any) => e.name)).toContain('Bench Press');
 
       // Verify data exists in Firebase console/backend
       const firebaseData = await app.getFirebaseData(user.id);
@@ -63,7 +63,7 @@ describe('Feature Flag Migration Flow', () => {
       // App behavior should remain identical
       const supabaseExercises = await app.getExercises();
       expect(supabaseExercises).toHaveLength(5);
-      expect(supabaseExercises.map(e => e.name)).toContain('Bench Press');
+      expect(supabaseExercises.map((e: any) => e.name)).toContain('Bench Press');
 
       // CRUD operations should work identically
       await app.addExercise('Supabase Exercise');
@@ -72,7 +72,7 @@ describe('Feature Flag Migration Flow', () => {
 
       await app.updateExercise(afterAdd[0].id, 'Updated Exercise');
       const afterUpdate = await app.getExercises();
-      expect(afterUpdate.find(e => e.id === afterAdd[0].id)?.name).toBe('Updated Exercise');
+      expect(afterUpdate.find((e: any) => e.id === afterAdd[0].id)?.name).toBe('Updated Exercise');
 
       await app.deleteExercise(afterAdd[0].id);
       const afterDelete = await app.getExercises();
@@ -234,7 +234,7 @@ describe('Feature Flag Migration Flow', () => {
       // Local operations should still work
       await app.addExercise('Local Only');
       const exercises = await app.getExercises();
-      expect(exercises.map(e => e.name)).toContain('Local Only');
+      expect(exercises.map((e: any) => e.name)).toContain('Local Only');
 
       // Sync status should indicate errors
       const syncStatus = await app.getSyncStatus();
@@ -266,7 +266,7 @@ describe('Feature Flag Migration Flow', () => {
         
         // Data should still be accessible
         const exercises = await app.getExercises();
-        expect(exercises.map(e => e.name)).toContain('Pre-migration Exercise');
+        expect(exercises.map((e: any) => e.name)).toContain('Pre-migration Exercise');
       }
     });
   });
@@ -325,7 +325,7 @@ describe('Feature Flag Migration Flow', () => {
 
     it('should support migration testing in development mode', async () => {
       // Only run in dev mode
-      if (!__DEV__) {
+      if (!(global as any).__DEV__) {
         return;
       }
 
@@ -339,7 +339,7 @@ describe('Feature Flag Migration Flow', () => {
 
       const logs = await app.getMigrationLogs();
       expect(logs.length).toBeGreaterThan(0);
-      expect(logs.some(log => log.includes('Migration test mode'))).toBe(true);
+      expect(logs.some((log: any) => log.includes('Migration test mode'))).toBe(true);
     });
   });
 });

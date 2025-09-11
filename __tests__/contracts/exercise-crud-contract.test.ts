@@ -88,7 +88,7 @@ describe('Exercise CRUD Contract', () => {
       expect(endTime - startTime).toBeLessThan(100);
       
       expect(exercises).toHaveLength(3);
-      exercises.forEach(exercise => {
+      exercises.forEach((exercise: any) => {
         expect(exercise.id).toBeDefined();
         expect(exercise.name).toBeDefined();
         expect(exercise.createdAt).toBeInstanceOf(Date);
@@ -192,7 +192,7 @@ describe('Exercise CRUD Contract', () => {
         .rejects.toThrow('Exercise not found');
 
       const exercises = await exerciseService.getExercises();
-      expect(exercises.find(ex => ex.id === testExercise.id)).toBeUndefined();
+      expect(exercises.find((ex: any) => ex.id === testExercise.id)).toBeUndefined();
     });
 
     it('should handle deletion of non-existent exercise', async () => {
@@ -209,7 +209,7 @@ describe('Exercise CRUD Contract', () => {
 
       // Should create a sync record for the deletion
       const syncRecords = await exerciseService.getPendingSyncRecords();
-      const deleteRecord = syncRecords.find(r => r.recordId === testExercise.id && r.operation === 'delete');
+      const deleteRecord = syncRecords.find((r: any) => r.recordId === testExercise.id && r.operation === 'delete');
       
       expect(deleteRecord).toBeDefined();
     });
@@ -228,8 +228,8 @@ describe('Exercise CRUD Contract', () => {
       const exercises = await newServiceInstance.getExercises();
       
       expect(exercises).toHaveLength(2);
-      expect(exercises.map(e => e.name)).toContain('Persistent Exercise 1');
-      expect(exercises.map(e => e.name)).toContain('Persistent Exercise 2');
+      expect(exercises.map((e: any) => e.name)).toContain('Persistent Exercise 1');
+      expect(exercises.map((e: any) => e.name)).toContain('Persistent Exercise 2');
     });
 
     it('should maintain sync status across app restarts', async () => {
@@ -283,7 +283,7 @@ describe('Exercise CRUD Contract', () => {
       const syncRecords = await exerciseService.getPendingSyncRecords();
       
       expect(syncRecords.length).toBeGreaterThanOrEqual(3); // Including testExercise
-      syncRecords.forEach(record => {
+      syncRecords.forEach((record: any) => {
         expect(record.recordType).toBe('exercise');
         expect(record.operation).toBe('create');
         expect(record.pendingSince).toBeInstanceOf(Date);

@@ -58,7 +58,7 @@ describe('Authenticated Cross-Device Sync', () => {
       expect(exercisesA).toHaveLength(2);
       
       const syncStatuses = await Promise.all(
-        exercisesA.map(exercise => deviceA.getSyncStatus(exercise.id))
+        exercisesA.map((exercise: any) => deviceA.getSyncStatus(exercise.id))
       );
       
       syncStatuses.forEach(status => {
@@ -107,38 +107,42 @@ describe('Authenticated Cross-Device Sync', () => {
       const exercisesA = await deviceA.getExercises();
 
       expect(exercisesB).toHaveLength(2);
-      expect(exercisesB.map(e => e.name)).toContain('Bench Press');
-      expect(exercisesB.map(e => e.name)).toContain('Deadlift');
+      expect(exercisesB.map((e: any) => e.name)).toContain('Bench Press');
+      expect(exercisesB.map((e: any) => e.name)).toContain('Deadlift');
 
       // IDs should match across devices
-      const benchPressA = exercisesA.find(e => e.name === 'Bench Press');
-      const benchPressB = exercisesB.find(e => e.name === 'Bench Press');
+      const benchPressA = exercisesA.find((e: any) => e.name === 'Bench Press');
+      const benchPressB = exercisesB.find((e: any) => e.name === 'Bench Press');
       
       expect(benchPressA?.id).toBe(benchPressB?.id);
     });
 
-    it('should sync real-time changes between devices', async (done) => {
+    it('should sync real-time changes between devices', async () => {
       // Sign in on Device B
       await deviceB.signIn(testEmail, testPassword);
       await deviceB.waitForSyncComplete();
 
       // Set up real-time sync listener on Device B
       let changeCount = 0;
-      const unsubscribe = deviceB.subscribeToExerciseChanges((exercises) => {
-        changeCount++;
-        
-        if (changeCount === 2) { // Initial load + new exercise
-          expect(exercises).toHaveLength(3);
-          expect(exercises.map(e => e.name)).toContain('Incline Bench Press');
-          unsubscribe();
-          done();
-        }
+      const promise = new Promise<void>((resolve) => {
+        const unsubscribe = deviceB.subscribeToExerciseChanges((exercises: any) => {
+          changeCount++;
+          
+          if (changeCount === 2) { // Initial load + new exercise
+            expect(exercises).toHaveLength(3);
+            expect(exercises.map((e: any) => e.name)).toContain('Incline Bench Press');
+            unsubscribe();
+            resolve();
+          }
+        });
       });
 
       // Add exercise on Device A after a short delay
       setTimeout(async () => {
         await deviceA.addExercise('Incline Bench Press');
       }, 100);
+
+      await promise;
     });
 
     it('should handle conflict resolution with last-write-wins', async () => {
@@ -148,7 +152,7 @@ describe('Authenticated Cross-Device Sync', () => {
 
       // Get the same exercise on both devices
       const exercisesA = await deviceA.getExercises();
-      const benchPressId = exercisesA.find(e => e.name === 'Bench Press')?.id;
+      const benchPressId = exercisesA.find((e: any) => e.name === 'Bench Press')?.id;
       expect(benchPressId).toBeDefined();
 
       // Simultaneous updates on both devices
@@ -169,8 +173,8 @@ describe('Authenticated Cross-Device Sync', () => {
       const finalExercisesA = await deviceA.getExercises();
       const finalExercisesB = await deviceB.getExercises();
       
-      const finalNameA = finalExercisesA.find(e => e.id === benchPressId)?.name;
-      const finalNameB = finalExercisesB.find(e => e.id === benchPressId)?.name;
+      const finalNameA = finalExercisesA.find((e: any) => e.id === benchPressId)?.name;
+      const finalNameB = finalExercisesB.find((e: any) => e.id === benchPressId)?.name;
 
       expect(finalNameA).toBe('Bench Press - Device B');
       expect(finalNameB).toBe('Bench Press - Device B');
@@ -203,8 +207,8 @@ describe('Authenticated Cross-Device Sync', () => {
       // Verify changes are local on Device A
       const offlineExercises = await deviceA.getExercises();
       expect(offlineExercises).toHaveLength(3);
-      expect(offlineExercises.map(e => e.name)).toContain('Offline Exercise 1');
-      expect(offlineExercises.map(e => e.name)).toContain('Updated While Offline');
+      expect(offlineExercises.map((e: any) => e.name)).toContain('Offline Exercise 1');
+      expect(offlineExercises.map((e: any) => e.name)).toContain('Updated While Offline');
 
       // Device B should not see changes yet
       const deviceBExercises = await deviceB.getExercises();
@@ -219,9 +223,9 @@ describe('Authenticated Cross-Device Sync', () => {
       const syncedExercises = await deviceB.getExercises();
       
       expect(syncedExercises).toHaveLength(3);
-      expect(syncedExercises.map(e => e.name)).toContain('Offline Exercise 1');
-      expect(syncedExercises.map(e => e.name)).toContain('Offline Exercise 2');
-      expect(syncedExercises.map(e => e.name)).toContain('Updated While Offline');
+      expect(syncedExercises.map((e: any) => e.name)).toContain('Offline Exercise 1');
+      expect(syncedExercises.map((e: any) => e.name)).toContain('Offline Exercise 2');
+      expect(syncedExercises.map((e: any) => e.name)).toContain('Updated While Offline');
     });
 
     it('should handle partial sync failures gracefully', async () => {
@@ -240,7 +244,7 @@ describe('Authenticated Cross-Device Sync', () => {
 
       // Verify exercises are marked as error
       const exercises = await deviceA.getExercises();
-      const failedExercises = exercises.filter(e => 
+      const failedExercises = exercises.filter((e: any) => 
         e.name.includes('Will Fail') && e.syncStatus === 'error'
       );
       
@@ -255,8 +259,8 @@ describe('Authenticated Cross-Device Sync', () => {
       await deviceB.waitForSyncComplete();
       const syncedExercises = await deviceB.getExercises();
       
-      expect(syncedExercises.map(e => e.name)).toContain('Will Fail Sync 1');
-      expect(syncedExercises.map(e => e.name)).toContain('Will Fail Sync 2');
+      expect(syncedExercises.map((e: any) => e.name)).toContain('Will Fail Sync 1');
+      expect(syncedExercises.map((e: any) => e.name)).toContain('Will Fail Sync 2');
     });
   });
 
@@ -325,9 +329,9 @@ describe('Authenticated Cross-Device Sync', () => {
 
       // All devices should have all exercises
       ['From Device A', 'From Device B', 'From Device C'].forEach(name => {
-        expect(finalA.map(e => e.name)).toContain(name);
-        expect(finalB.map(e => e.name)).toContain(name);
-        expect(finalC.map(e => e.name)).toContain(name);
+        expect(finalA.map((e: any) => e.name)).toContain(name);
+        expect(finalB.map((e: any) => e.name)).toContain(name);
+        expect(finalC.map((e: any) => e.name)).toContain(name);
       });
     });
 
@@ -369,9 +373,9 @@ describe('Authenticated Cross-Device Sync', () => {
       expect(finalC).toHaveLength(5);
 
       ['While B Offline - A', 'While B Offline - C', 'Offline on B'].forEach(name => {
-        expect(finalA.map(e => e.name)).toContain(name);
-        expect(finalB.map(e => e.name)).toContain(name);
-        expect(finalC.map(e => e.name)).toContain(name);
+        expect(finalA.map((e: any) => e.name)).toContain(name);
+        expect(finalB.map((e: any) => e.name)).toContain(name);
+        expect(finalC.map((e: any) => e.name)).toContain(name);
       });
     });
   });

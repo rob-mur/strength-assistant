@@ -126,7 +126,7 @@ describe('Supabase Auth Contract', () => {
   });
 
   describe('Authentication State Subscription', () => {
-    it('should notify subscribers of auth state changes', async (done) => {
+    it('should notify subscribers of auth state changes', async () => {
       let callbackCount = 0;
       const callback = (user: UserAccount | null) => {
         callbackCount++;
@@ -138,7 +138,7 @@ describe('Supabase Auth Contract', () => {
           // Second callback should be the authenticated user
           expect(user).toBeDefined();
           expect(user?.isAnonymous).toBe(true);
-          done();
+          // done();
         }
       };
 

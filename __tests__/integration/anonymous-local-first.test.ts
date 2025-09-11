@@ -175,10 +175,10 @@ describe('Anonymous User Local-First Experience', () => {
   describe('Performance Requirements', () => {
     it('should meet local-first performance targets', async () => {
       const performanceMetrics = {
-        exerciseCreation: [],
-        exerciseListLoad: [],
-        exerciseUpdate: [],
-        exerciseDelete: []
+        exerciseCreation: [] as number[],
+        exerciseListLoad: [] as number[],
+        exerciseUpdate: [] as number[],
+        exerciseDelete: [] as number[]
       };
 
       // Test exercise creation performance

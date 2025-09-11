@@ -125,20 +125,23 @@ export class DataLayerAPI {
    * Get the current backend info
    */
   getBackendInfo() {
+    const { storageManager } = require('./StorageManager');
     return storageManager.getBackendInfo();
   }
 
   /**
    * Get current feature flags
    */
-  getFeatureFlags(): FeatureFlags {
+  getFeatureFlags() {
+    const { storageManager } = require('./StorageManager');
     return storageManager.getFeatureFlags();
   }
 
   /**
    * Subscribe to auth state changes
    */
-  subscribeToAuthState(callback: (user: UserAccount | null) => void): () => void {
+  subscribeToAuthState(callback: (user: any | null) => void): () => void {
+    const { storageManager } = require('./StorageManager');
     const activeBackend = storageManager.getActiveStorageBackend();
     return activeBackend.subscribeToAuthState(callback);
   }
@@ -147,6 +150,7 @@ export class DataLayerAPI {
    * Check if user is authenticated
    */
   isAuthenticated(): boolean {
+    const { exerciseStore } = require('./legend-state/ExerciseStore');
     const user = exerciseStore.user.get();
     return user?.isAuthenticated ?? false;
   }
@@ -155,6 +159,7 @@ export class DataLayerAPI {
    * Check if user is anonymous
    */
   isAnonymous(): boolean {
+    const { exerciseStore } = require('./legend-state/ExerciseStore');
     const user = exerciseStore.user.get();
     return user?.isAnonymous ?? true;
   }
@@ -163,6 +168,7 @@ export class DataLayerAPI {
    * Get sync statistics
    */
   getSyncStats() {
+    const { exerciseStore } = require('./legend-state/ExerciseStore');
     const syncState = exerciseStore.syncState.get();
     const exercises = Object.values(exerciseStore.exercises.get());
     
@@ -173,9 +179,9 @@ export class DataLayerAPI {
       pendingChanges: syncState.pendingChanges,
       errorCount: syncState.errors.length,
       totalExercises: exercises.length,
-      syncedExercises: exercises.filter(e => e.syncStatus === 'synced').length,
-      pendingExercises: exercises.filter(e => e.syncStatus === 'pending').length,
-      failedExercises: exercises.filter(e => e.syncStatus === 'error').length
+      syncedExercises: exercises.filter((e: any) => e.syncStatus === 'synced').length,
+      pendingExercises: exercises.filter((e: any) => e.syncStatus === 'pending').length,
+      failedExercises: exercises.filter((e: any) => e.syncStatus === 'error').length
     };
   }
 
@@ -183,6 +189,7 @@ export class DataLayerAPI {
    * Cleanup - dispose all resources
    */
   dispose(): void {
+    const { disposeSync } = require('./legend-state/ExerciseStore');
     disposeSync();
     
     if (__DEV__) {
