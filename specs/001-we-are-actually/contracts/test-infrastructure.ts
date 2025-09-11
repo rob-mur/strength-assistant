@@ -8,6 +8,16 @@
 
 import { Exercise } from '../../../lib/models/Exercise';
 import { UserAccount } from '../../../lib/models/UserAccount';
+import { 
+  MockFactoryConfig, 
+  TestDataBuilderConfig, 
+  FirebaseMockConfig, 
+  SupabaseMockConfig, 
+  ReactNativeMockConfig,
+  TestDataConfig,
+  MockFactoryCollection as JestMockFactoryCollection,
+  TestDataBuilderCollection as JestTestDataBuilderCollection 
+} from './jest-validation';
 
 export interface TestInfrastructureManager {
   /**
@@ -30,14 +40,14 @@ export interface TestInfrastructureManager {
    * @param factoryConfig Configuration for mock factories
    * @returns Promise resolving to mock factory collection
    */
-  getMockFactories(factoryConfig: MockFactoryConfig): Promise<MockFactoryCollection>;
+  getMockFactories(factoryConfig: MockFactoryConfig): Promise<JestMockFactoryCollection>;
   
   /**
    * Gets or creates test data builders
    * @param builderConfig Configuration for test data builders
    * @returns Promise resolving to test data builder collection
    */
-  getTestDataBuilders(builderConfig: TestDataBuilderConfig): Promise<TestDataBuilderCollection>;
+  getTestDataBuilders(builderConfig: TestDataBuilderConfig): Promise<JestTestDataBuilderCollection>;
   
   /**
    * Cleans up all test infrastructure
@@ -821,4 +831,70 @@ export interface ValidationDetail {
   
   /** Additional details */
   details?: Record<string, any>;
+}
+
+// Missing type definitions
+
+export interface FirebaseServiceMocks {
+  /** Mock Firebase Auth */
+  auth: any;
+  
+  /** Mock Firebase Firestore */
+  firestore: any;
+  
+  /** Mock Firebase Functions */
+  functions: any;
+}
+
+export interface SupabaseServiceMocks {
+  /** Mock Supabase Auth */
+  auth: any;
+  
+  /** Mock Supabase Database */
+  database: any;
+  
+  /** Mock Supabase Storage */
+  storage: any;
+}
+
+export interface ReactNativeModuleMocks {
+  /** Mock AsyncStorage */
+  asyncStorage: any;
+  
+  /** Mock navigation */
+  navigation: any;
+  
+  /** Mock other modules */
+  modules: Record<string, any>;
+}
+
+export interface GlobalTestConfig {
+  /** Global timeout settings */
+  timeouts: {
+    default: number;
+    async: number;
+    setup: number;
+    teardown: number;
+  };
+  
+  /** Global test environment settings */
+  environment: Record<string, string>;
+  
+  /** Global mock settings */
+  mocks: {
+    enabled: boolean;
+    clearBetweenTests: boolean;
+    resetBetweenTests: boolean;
+  };
+}
+
+export interface MockServiceConfig {
+  /** Firebase service mocking configuration */
+  firebase: FirebaseMockConfig;
+  
+  /** Supabase service mocking configuration */
+  supabase: SupabaseMockConfig;
+  
+  /** React Native module mocking configuration */
+  reactNative: ReactNativeMockConfig;
 }

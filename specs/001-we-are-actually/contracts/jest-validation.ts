@@ -209,6 +209,231 @@ export interface TestConfiguration {
   constitutionalRequirements: string[];
 }
 
+export interface TestConfigValidationResult {
+  /** Whether configuration is valid */
+  valid: boolean;
+  
+  /** Configuration validation issues */
+  issues: TestValidationIssue[];
+  
+  /** Validated configuration */
+  validatedConfig?: TestConfiguration;
+}
+
+export interface InfrastructureValidationResult {
+  /** Whether all required infrastructure is available */
+  available: boolean;
+  
+  /** Missing infrastructure components */
+  missingComponents: string[];
+  
+  /** Available infrastructure components */
+  availableComponents: string[];
+  
+  /** Infrastructure setup recommendations */
+  recommendations: string[];
+}
+
+export interface ConstitutionalComplianceResult {
+  /** Whether constitutional requirements are met */
+  compliant: boolean;
+  
+  /** Constitutional violations found */
+  violations: GovernanceViolation[];
+  
+  /** Compliance score (0-100) */
+  score: number;
+  
+  /** Recommendations for compliance */
+  recommendations: string[];
+}
+
+export interface TestValidationResults {
+  /** Test execution status */
+  passed: boolean;
+  
+  /** Test results summary */
+  summary: TestSuiteValidationResult;
+  
+  /** Individual test results */
+  testResults: TestResult[];
+}
+
+export interface TestResult {
+  /** Test name */
+  name: string;
+  
+  /** Test status */
+  status: 'passed' | 'failed' | 'skipped';
+  
+  /** Error message if failed */
+  error?: string;
+  
+  /** Execution time in ms */
+  duration: number;
+}
+
+export interface RepairCompletionStatus {
+  /** Whether repair was successful */
+  successful: boolean;
+  
+  /** Repair completion timestamp */
+  completedAt: Date;
+  
+  /** Final test status */
+  finalStatus: RepairAttemptResult;
+  
+  /** Validation results after repair */
+  validationResults: TestValidationResults;
+}
+
+export interface MockFactoryConfig {
+  /** Target service or module to mock */
+  target: string;
+  
+  /** Mock factory type */
+  type: 'jest' | 'sinon' | 'custom';
+  
+  /** Configuration options */
+  options: Record<string, any>;
+}
+
+export interface MockFactoryCollection {
+  /** Available mock factories */
+  factories: Record<string, MockFactory>;
+  
+  /** Factory configuration */
+  config: MockFactoryConfig[];
+}
+
+export interface MockFactory {
+  /** Create a mock instance */
+  create(config?: any): any;
+  
+  /** Reset all mocks */
+  reset(): void;
+  
+  /** Clear all mocks */
+  clear(): void;
+}
+
+export interface TestDataBuilderConfig {
+  /** Builder type */
+  type: string;
+  
+  /** Builder configuration */
+  config: Record<string, any>;
+  
+  /** Default values */
+  defaults?: Record<string, any>;
+}
+
+export interface TestDataBuilderCollection {
+  /** Available test data builders */
+  builders: Record<string, TestDataBuilder>;
+  
+  /** Builder configuration */
+  config: TestDataBuilderConfig[];
+}
+
+export interface TestDataBuilder {
+  /** Build test data */
+  build(overrides?: any): any;
+  
+  /** Build multiple instances */
+  buildMany(count: number, overrides?: any): any[];
+}
+
+export interface InfrastructureAvailabilityResult {
+  /** Whether all infrastructure is available */
+  available: boolean;
+  
+  /** Available infrastructure components */
+  availableComponents: string[];
+  
+  /** Missing infrastructure components */
+  missingComponents: string[];
+  
+  /** Setup instructions for missing components */
+  setupInstructions: Record<string, string>;
+}
+
+export interface ViolationReportingResult {
+  /** Whether violations were reported successfully */
+  reported: boolean;
+  
+  /** Number of violations reported */
+  violationCount: number;
+  
+  /** Reporting timestamp */
+  reportedAt: Date;
+  
+  /** Report reference ID */
+  reportId: string;
+}
+
+export interface TestEnvironmentConfig {
+  /** Environment variables */
+  env: Record<string, string>;
+  
+  /** Setup scripts to run before tests */
+  setupScripts: string[];
+  
+  /** Teardown scripts to run after tests */
+  teardownScripts: string[];
+  
+  /** Timeout configuration */
+  timeouts: {
+    test: number;
+    setup: number;
+    teardown: number;
+  };
+}
+
+export interface MockConfiguration {
+  /** Mock implementation strategy */
+  strategy: 'stub' | 'spy' | 'mock';
+  
+  /** Mock behavior configuration */
+  behavior: Record<string, any>;
+  
+  /** Return values for mock methods */
+  returnValues: Record<string, any>;
+}
+
+export interface FirebaseMockConfig {
+  /** Mock authentication service */
+  auth: boolean;
+  
+  /** Mock Firestore service */
+  firestore: boolean;
+  
+  /** Mock configuration */
+  config: Record<string, any>;
+}
+
+export interface SupabaseMockConfig {
+  /** Mock authentication service */
+  auth: boolean;
+  
+  /** Mock database service */
+  database: boolean;
+  
+  /** Mock configuration */
+  config: Record<string, any>;
+}
+
+export interface ReactNativeMockConfig {
+  /** Mock AsyncStorage */
+  asyncStorage: boolean;
+  
+  /** Mock navigation */
+  navigation: boolean;
+  
+  /** Mock configuration */
+  config: Record<string, any>;
+}
+
 export interface MockRequirement {
   /** Service or module to mock */
   target: string;
