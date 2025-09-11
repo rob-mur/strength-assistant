@@ -1,4 +1,4 @@
-# Implementation Plan: TypeScript Testing Infrastructure & Constitution Update
+# Implementation Plan: Jest Test Suite Repair & Constitutional Enhancement
 
 **Branch**: `001-we-are-actually` | **Date**: 2025-01-15 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/home/rob/Documents/Github/strength-assistant/specs/001-we-are-actually/spec.md`
@@ -29,54 +29,54 @@
 - Phase 3-4: Implementation execution (manual or via tools)
 
 ## Summary
-Implement robust TypeScript testing infrastructure to prevent compilation errors in test pipeline and update the project constitution to mandate strict TypeScript validation as part of the testing requirements. The primary goal is ensuring `devbox run test` passes consistently with proper TypeScript compilation, addressing the critical issue where TypeScript errors prevent test execution.
+Fix failing Jest tests in the test suite and enhance the constitution to prevent regression. While the TypeScript constitutional amendment successfully enforced TypeScript compilation, 80 failing Jest tests remain that need repair. Additionally, update the constitution to include Jest test success validation to prevent future test failures from being overlooked.
 
 ## Technical Context
 **Language/Version**: TypeScript/JavaScript (React Native with Expo)  
-**Primary Dependencies**: Jest (testing), TypeScript compiler (tsc), ESLint, Prettier, React Native Testing Library, Expo  
-**Storage**: Local file system (TypeScript config, Jest config, test files)  
-**Testing**: Jest with React Native Testing Library, `devbox run test` pipeline includes TypeScript compilation
-**Target Platform**: React Native cross-platform (iOS, Android, Web)
-**Project Type**: mobile - React Native app requiring strict TypeScript validation in CI/testing  
-**Performance Goals**: TypeScript compilation must complete without errors before test execution  
-**Constraints**: Must maintain backward compatibility with existing test files while enforcing strict TypeScript validation  
-**Scale/Scope**: ~373 existing tests across 30 test suites, prevent regression of TypeScript compilation issues
+**Primary Dependencies**: Jest (testing), React Native Testing Library, TypeScript compiler (tsc), ESLint, Prettier, Expo  
+**Storage**: Local file system (test files, Jest configuration, constitutional amendments)  
+**Testing**: Jest with React Native Testing Library, `devbox run test` pipeline includes TypeScript + Jest validation  
+**Target Platform**: React Native cross-platform (iOS, Android, Web) + CI/CD pipeline  
+**Project Type**: mobile - React Native app requiring comprehensive test suite validation  
+**Performance Goals**: All tests must pass consistently, Jest execution time <2 minutes  
+**Constraints**: Must maintain backward compatibility with existing test files while ensuring 100% test passage  
+**Scale/Scope**: ~373 existing tests across 30 test suites, with 80 currently failing that need immediate repair  
 
-**Migration Context**: The issue is that `devbox run test` includes TypeScript compilation checks that are currently failing, blocking the entire test suite execution. This violates the fundamental testing principle that tests must be runnable at all times.
+**Current Issue**: The constitutional amendment for TypeScript compilation succeeded but left 80 failing Jest tests. These failures violate the constitutional principle that "`devbox run test` MUST pass completely before any commit" and need immediate resolution.
 
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
 **Simplicity**:
-- Projects: 1 (single React Native app with testing infrastructure)
-- Using framework directly? Yes - using Jest, TypeScript, and ESLint directly without wrappers
-- Single data model? Yes - TypeScript configuration and test validation rules
-- Avoiding patterns? Yes - no complex testing abstractions, direct toolchain integration
+- Projects: 1 (single React Native app with test infrastructure repair)
+- Using framework directly? Yes - using Jest, TypeScript, and React Native Testing Library directly
+- Single data model? Yes - Test repair entities and constitutional amendment tracking
+- Avoiding patterns? Yes - no complex testing abstractions, direct test fixes
 
 **Architecture**:
-- EVERY feature as library? N/A - this is infrastructure/tooling update, not user features
-- Libraries listed: N/A - updating existing testing pipeline configuration
+- EVERY feature as library? N/A - this is infrastructure/testing repair, not user features
+- Libraries listed: N/A - repairing existing test infrastructure
 - CLI per library: N/A - leveraging existing `devbox run test` command
 - Library docs: N/A - updating constitution and testing docs only
 
 **Testing (NON-NEGOTIABLE)**:
-- RED-GREEN-Refactor cycle enforced? ✅ This plan addresses the critical issue: tests MUST be runnable
-- `devbox run test` MUST pass before any feature is considered complete? ✅ This is the core problem being solved
-- Git commits show tests before implementation? ✅ Will add pre-commit TypeScript validation
-- Order: Contract→Integration→E2E→Unit strictly followed? ✅ Maintained in updated pipeline
-- Real dependencies used? ✅ No mocking changes - fixing actual TypeScript compilation
-- Integration tests for: TypeScript validation, test pipeline integrity ✅ Will add validation tests
-- FORBIDDEN: Committing code that breaks `devbox run test` compilation ✅ Core constitutional addition
+- RED-GREEN-Refactor cycle enforced? ✅ This plan addresses the critical issue: ALL tests MUST pass
+- `devbox run test` MUST pass completely before any commit? ✅ This is the core problem being solved
+- Git commits show tests before implementation? ✅ Will fix failing tests before any new features
+- Order: Contract→Integration→E2E→Unit strictly followed? ✅ Maintained in repair approach
+- Real dependencies used? ✅ No mocking changes - fixing actual test failures
+- Integration tests for: Jest validation, test pipeline integrity ✅ Will add validation infrastructure
+- FORBIDDEN: Committing code with failing tests ✅ Core constitutional enhancement
 
 **Observability**:
-- Structured logging included? ✅ TypeScript compiler provides detailed error reporting
-- Frontend logs → backend? N/A - this is development tooling
-- Error context sufficient? ✅ TypeScript errors provide file/line context
+- Structured logging included? ✅ Jest provides detailed test failure reporting
+- Frontend logs → backend? N/A - this is development/testing tooling
+- Error context sufficient? ✅ Jest failures provide file/line context
 
 **Versioning**:
-- Version number assigned? No version change needed - infrastructure fix
+- Version number assigned? Constitutional amendment v2.3.0 (adding Jest validation)
 - BUILD increments on every change? N/A - not changing user-facing functionality  
-- Breaking changes handled? ✅ Backward compatible TypeScript configuration updates
+- Breaking changes handled? ✅ Backward compatible test repairs and constitutional updates
 
 ## Project Structure
 
@@ -128,7 +128,7 @@ ios/ or android/
 └── [platform-specific structure]
 ```
 
-**Structure Decision**: Using existing React Native app structure with enhanced testing infrastructure configuration
+**Structure Decision**: Using existing React Native app structure with enhanced test infrastructure repair
 
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context** above:
@@ -189,26 +189,17 @@ ios/ or android/
 **Task Generation Strategy**:
 - Load `/templates/tasks-template.md` as base
 - Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
-- TypeScript validation contract → contract test task [P]
-- Constitutional amendment contract → constitutional validation test task [P]
-- Pre-commit hook implementation → configuration task
-- Constitution update → formal amendment process task
-- **MANDATORY: Final task must be "Run `devbox run test` and fix all issues"**
+- Each contract → contract test task [P]
+- Each entity → model creation task [P] 
+- Each user story → integration test task
+- Implementation tasks to make tests pass
 
 **Ordering Strategy**:
 - TDD order: Tests before implementation 
-- Constitutional amendment before technical implementation
-- Pre-commit hooks before final validation
-- All tasks must result in `devbox run test` passing
+- Dependency order: Models before services before UI
 - Mark [P] for parallel execution (independent files)
 
-**Quality Gates**:
-- Each implementation task includes test success validation
-- No task is complete until its tests pass in `devbox run test`
-- Final validation task ensures entire test suite passes
-- Constitutional compliance verification at each stage
-
-**Estimated Output**: 15-20 numbered, ordered tasks in tasks.md + mandatory test validation
+**Estimated Output**: 25-30 numbered, ordered tasks in tasks.md
 
 **IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
 
@@ -232,18 +223,18 @@ ios/ or android/
 *This checklist is updated during execution flow*
 
 **Phase Status**:
-- [x] Phase 0: Research complete (/plan command)
-- [x] Phase 1: Design complete (/plan command)
-- [x] Phase 2: Task planning complete (/plan command - describe approach only)
+- [ ] Phase 0: Research complete (/plan command)
+- [ ] Phase 1: Design complete (/plan command)
+- [ ] Phase 2: Task planning complete (/plan command - describe approach only)
 - [ ] Phase 3: Tasks generated (/tasks command)
 - [ ] Phase 4: Implementation complete
 - [ ] Phase 5: Validation passed
 
 **Gate Status**:
-- [x] Initial Constitution Check: PASS
-- [x] Post-Design Constitution Check: PASS
-- [x] All NEEDS CLARIFICATION resolved
-- [x] Complexity deviations documented (none required)
+- [ ] Initial Constitution Check: PASS
+- [ ] Post-Design Constitution Check: PASS
+- [ ] All NEEDS CLARIFICATION resolved
+- [ ] Complexity deviations documented
 
 ---
-*Based on Constitution v2.2.0 - See `/memory/constitution.md`*
+*Based on Constitution v2.1.1 - See `/memory/constitution.md`*

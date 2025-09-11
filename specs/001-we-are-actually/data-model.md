@@ -1,144 +1,299 @@
-# Data Model: TypeScript Testing Infrastructure & Constitution Enhancement
+# Data Model: Jest Test Suite Repair & Constitutional Enhancement
 
-## 🚨 Critical Testing Infrastructure Requirements
+## 🚨 Critical Test Infrastructure Requirements
 
-All TypeScript and testing configurations must enforce strict validation:
-- **TypeScript Compilation**: Must succeed before any test execution (`devbox run test`)
-- **Pre-commit Validation**: TypeScript errors must be caught before commit
-- **Constitutional Compliance**: Testing requirements must be constitutionally mandated
-- **Multi-layered Enforcement**: IDE, pre-commit, and CI validation layers
+All test infrastructure and constitutional amendments must enforce:
+- **Complete Test Pass**: `devbox run test` MUST succeed completely before any commit
+- **Zero Test Regressions**: No failing tests allowed in main branch
+- **Constitutional Compliance**: All test requirements must be constitutionally mandated
+- **Systematic Repair Tracking**: All 80 failing tests must be systematically tracked and fixed
 
-## ✅ Enhanced Testability Requirements
+## ✅ Enhanced Test Infrastructure Requirements
 
-All data models and configurations must support:
-- **TypeScript Strict Mode**: No implicit any types, strict null checks enabled
-- **Contract Testable**: Interfaces must be implementable with proper TypeScript types
-- **Integration Testable**: Configuration must work across development and CI environments  
-- **`devbox run test` Guaranteed Success**: All implementations must pass comprehensive validation pipeline
+All test entities and configurations must support:
+- **TypeScript Strict Mode**: Full type safety in test infrastructure
+- **Mock-First Development**: Complete mock implementations before real functionality
+- **Incremental Repair**: Systematic approach to fixing test failures
+- **Constitutional Governance**: Formal governance to prevent future test regressions
 
-## Core Entities for TypeScript Testing Infrastructure
+## Core Entities for Jest Test Suite Repair
 
-### TypeScript Configuration Entity
-**Purpose**: Centralized TypeScript compiler configuration for consistent validation
+### Test Infrastructure Entity
+**Purpose**: Missing test utilities that are causing 80 test failures
 **Fields**:
-- `compilerOptions`: object (TypeScript compiler settings)
-  - `strict`: boolean (required: true)
-  - `noImplicitAny`: boolean (required: true)  
-  - `noImplicitReturns`: boolean (required: true)
-  - `skipLibCheck`: boolean (required: false for thorough checking)
-- `include`: string[] (files/patterns to compile)
-- `exclude`: string[] (files/patterns to ignore)
+- `testDeviceId`: string (unique identifier for test device simulation)
+- `deviceName`: string (human-readable device name like "Device-A")
+- `networkStatus`: boolean (online/offline simulation)
+- `authState`: AuthenticationState (current authentication status)
+- `exercises`: Exercise[] (local exercise data)
+- `syncQueue`: SyncOperation[] (pending sync operations)
+- `initialized`: boolean (whether device is ready for testing)
 
 **Validation Rules**:
-- Strict mode must be enabled
-- No implicit any types allowed  
-- All included files must compile without errors
-
-### Pre-commit Hook Configuration Entity
-**Purpose**: Git hook configuration to validate TypeScript before commits
-**Fields**:
-- `hookType`: "pre-commit" (fixed value)
-- `commands`: ValidationCommand[]
-- `exitOnFailure`: boolean (required: true)
-
-**Validation Rules**:
-- Must execute TypeScript compilation before allowing commit
-- Must fail commit if compilation errors exist
-
-### Constitutional Amendment Entity
-**Purpose**: Formal update to project constitution for TypeScript requirements
-**Fields**:
-- `section`: "Testing (NON-NEGOTIABLE)"
-- `requirements`: string[] (new constitutional requirements)
-- `prohibitions`: string[] (newly forbidden actions)
-- `version`: string (constitutional version number)
+- `deviceName` must be unique within test session
+- `networkStatus` controls whether sync operations succeed
+- `authState` must be valid for authenticated operations
 
 **State Transitions**:
-- Draft → Review → Approved → Enacted
+- Creation: initialized = false, networkStatus = true
+- Init: initialized = true, authState = anonymous
+- SignUp/SignIn: authState = authenticated
+- Cleanup: all state reset to initial values
 
-## Legacy Entities (Maintained for Original Feature)
-
-### Exercise Record
-**Purpose**: Represents user's workout and exercise data
+### Test Data Builder Entity
+**Purpose**: Factory pattern for creating test data and mocks
 **Fields**:
-- `id`: string (UUID, primary key)
-- `name`: string (exercise name, required)
-- `createdAt`: timestamp (creation time)
-- `updatedAt`: timestamp (last modification time)
-- `userId`: string (user identifier, nullable for anonymous users)
-- `syncStatus`: enum ['pending', 'synced', 'error'] (sync state tracking)
+- `exerciseFactory`: ExerciseDataFactory (creates test exercises)
+- `userFactory`: UserDataFactory (creates test users)
+- `syncStateFactory`: SyncStateDataFactory (creates sync state records)
+- `mockConfig`: MockConfiguration (configuration for mock services)
 
 **Validation Rules**:
-- `name` must be non-empty string, max 255 characters
-- `id` must be valid UUID format
-- `createdAt` and `updatedAt` must be valid timestamps
-- `updatedAt` must be >= `createdAt`
+- All factories must produce valid, type-safe test data
+- Mock configurations must match real service interfaces
+- Generated data must be deterministic for test reproducibility
+
+### Test Failure Tracking Entity
+**Purpose**: Systematic tracking of the 80 failing tests and their repair status
+**Fields**:
+- `testId`: string (unique identifier for each failing test)
+- `testFile`: string (file path of the failing test)
+- `testName`: string (test description/name)
+- `failureCategory`: TestFailureCategory (classification of failure type)
+- `failureReason`: string (specific error message or reason)
+- `repairStatus`: RepairStatus (current status of repair effort)
+- `requiredInfrastructure`: string[] (list of missing infrastructure needed)
+- `repairPriority`: RepairPriority (urgency/importance of fixing this test)
+- `blockedBy`: string[] (other test IDs that must be fixed first)
+- `estimatedEffort`: number (estimated hours to repair)
+- `assignedTo`: string (developer responsible for repair)
+- `lastAttemptedAt`: timestamp (when repair was last attempted)
+- `repairedAt`: timestamp (when test was successfully fixed)
+
+**Validation Rules**:
+- `testId` must be unique across all failing tests
+- `repairStatus` must progress logically (failed → in_progress → testing → completed)
+- `requiredInfrastructure` must reference valid infrastructure components
+- `estimatedEffort` must be positive number
 
 **State Transitions**:
-- Creation: syncStatus starts as 'pending'
-- Successful sync: 'pending' → 'synced'
-- Sync failure: 'pending' → 'error'
-- Local modification of synced record: 'synced' → 'pending'
+- Discovery: repairStatus = "failed"
+- Assignment: repairStatus = "assigned"
+- Work begins: repairStatus = "in_progress"
+- Fix implemented: repairStatus = "testing"
+- Test passes: repairStatus = "completed"
 
-### User Account
-**Purpose**: Identity for cross-device synchronization
+### Test Failure Category Enum
+**Purpose**: Classification system for the 80 failing tests
+**Values**:
+- `MISSING_INFRASTRUCTURE`: Test requires TestDevice or other missing utilities
+- `INCOMPLETE_IMPLEMENTATION`: Test expects functionality not yet implemented
+- `MOCK_CONFIGURATION`: Test fails due to inadequate mock setup
+- `MODULE_RESOLUTION`: Test fails due to Jest configuration issues
+- `CONSTITUTIONAL_FRAMEWORK`: Test fails due to constitutional testing requirements
+- `TYPE_SAFETY`: Test fails due to TypeScript validation errors
+- `DEPENDENCY_CONFLICT`: Test fails due to conflicting dependencies
+
+### Repair Status Enum
+**Purpose**: Tracking repair progress for each failing test
+**Values**:
+- `failed`: Test is failing, no repair work started
+- `triaged`: Test has been analyzed and categorized
+- `assigned`: Test has been assigned to a developer
+- `in_progress`: Repair work is actively underway
+- `testing`: Repair implemented, validating the fix
+- `completed`: Test now passes consistently
+- `blocked`: Cannot proceed due to dependencies
+
+### Repair Priority Enum
+**Purpose**: Prioritization system for test repairs
+**Values**:
+- `critical`: Blocks other tests or core functionality
+- `high`: Important for feature completeness
+- `medium`: Standard test that should be fixed
+- `low`: Nice to have, can be deferred
+
+## Constitutional Amendment Entities
+
+### Constitutional Test Governance Entity
+**Purpose**: Enhanced constitutional requirements specifically for test governance
 **Fields**:
-- `id`: string (UUID, primary key)
-- `email`: string (nullable, for email/password auth)
-- `isAnonymous`: boolean (true for anonymous users)
-- `createdAt`: timestamp
-- `lastSyncAt`: timestamp (last successful sync)
+- `amendmentId`: string (unique identifier for this amendment)
+- `section`: "Testing (NON-NEGOTIABLE)" (constitutional section being enhanced)
+- `newRequirements`: string[] (enhanced test requirements)
+- `enforcementMechanisms`: TestEnforcementMechanism[] (how requirements are enforced)
+- `gracePeriodDays`: number (transition time before full enforcement)
+- `exemptions`: TestExemption[] (temporary exemptions during repair)
+
+**New Constitutional Requirements**:
+- "All tests MUST pass before any commit to main branch"
+- "Test failures MUST be tracked systematically with repair timelines"
+- "Test infrastructure MUST be implemented before tests that depend on it"
+- "Mock implementations MUST match real service interfaces with TypeScript validation"
+- "Test regression prevention MUST be enforced through CI/CD pipeline"
+- "Test failure root cause analysis MUST be documented for future prevention"
+
+### Test Enforcement Mechanism Entity
+**Purpose**: Specific enforcement mechanisms for test governance
+**Fields**:
+- `mechanismType`: TestEnforcementType (type of enforcement)
+- `triggerCondition`: string (when this enforcement activates)
+- `action`: EnforcementAction (what happens when triggered)
+- `configuration`: EnforcementConfig (parameters for this mechanism)
+
+**Enforcement Types**:
+- `PRE_COMMIT_TEST_VALIDATION`: Run tests before allowing commits
+- `CI_PIPELINE_BLOCKING`: Block CI pipeline on test failures
+- `TEST_REGRESSION_DETECTION`: Detect and prevent new test failures
+- `INFRASTRUCTURE_DEPENDENCY_CHECK`: Ensure test infrastructure exists before tests
+- `MOCK_INTERFACE_VALIDATION`: Validate mocks match real interfaces
+
+### Test Infrastructure Configuration Entity
+**Purpose**: Configuration for Jest and test environment
+**Fields**:
+- `jestConfig`: JestConfiguration (Jest-specific settings)
+- `mockStrategy`: MockStrategy (approach to mocking services)
+- `testEnvironment`: TestEnvironmentConfig (environment setup)
+- `coverageRequirements`: CoverageThresholds (constitutional coverage requirements)
+- `infrastructurePaths`: InfrastructurePaths (paths to test utilities and mocks)
 
 **Validation Rules**:
-- `email` must be valid email format when provided
-- `isAnonymous` and `email` are mutually exclusive (email implies non-anonymous)
+- Jest configuration must support React Native Expo environment
+- Mock strategy must provide complete mock implementations
+- Coverage requirements must align with constitutional mandates
+- Infrastructure paths must exist and be accessible to all tests
 
-### Sync State Tracking
-**Purpose**: Track synchronization status and pending changes
+## Configuration Entities
+
+### Jest Enhanced Configuration Entity
+**Purpose**: Enhanced Jest configuration to support test infrastructure and constitutional requirements
 **Fields**:
-- `recordId`: string (foreign key to Exercise Record)
-- `recordType`: string ('exercise' for future extensibility)
-- `operation`: enum ['create', 'update', 'delete']
-- `pendingSince`: timestamp (when change was queued)
-- `attempts`: number (retry counter)
-- `lastError`: string (nullable, last sync error message)
+- `preset`: "jest-expo" (React Native Expo preset)
+- `transformIgnorePatterns`: string[] (modules to transform)
+- `setupFilesAfterEnv`: string[] (setup files for test environment)
+- `globalSetup`: string (global setup file for constitutional validation)
+- `testEnvironment`: "jsdom" (test environment)
+- `coverageThreshold`: CoverageThresholdConfig (constitutional coverage requirements)
+- `testPathIgnorePatterns`: string[] (patterns to ignore)
+- `moduleFileExtensions`: string[] (supported file extensions)
+- `testMatch`: string[] (test file patterns)
 
-**Business Rules**:
-- Maximum 5 retry attempts before marking as failed
-- Retry backoff: 1s, 5s, 30s, 2m, 10m
-- Successful sync removes record from sync state table
+**Constitutional Coverage Thresholds**:
+- Global: 80% branches, functions, lines, statements
+- Test Infrastructure: 95% branches, functions, lines, statements
+- Constitutional Framework: 95% branches, functions, lines, statements
+
+### Mock Factory Configuration Entity
+**Purpose**: Configuration for systematic mock creation to fix failing tests
+**Fields**:
+- `firebaseMocks`: FirebaseMockConfig (Firebase service mocks)
+- `supabaseMocks`: SupabaseMockConfig (Supabase service mocks)
+- `reactNativeMocks`: ReactNativeMockConfig (React Native module mocks)
+- `testUtilityMocks`: TestUtilityMockConfig (custom test utility mocks)
+- `authMocks`: AuthenticationMockConfig (authentication service mocks)
+
+**Validation Rules**:
+- All mocks must implement complete interfaces with TypeScript validation
+- Mock responses must be deterministic for test reproducibility
+- Mock configurations must be easily switchable between test and real implementations
+
+## Test Infrastructure Implementation Plan
+
+### Missing Infrastructure Components (Priority 1)
+**Required for fixing 80 failing tests**:
+
+1. **TestDevice Class** (`/home/rob/Documents/Github/strength-assistant/lib/test-utils/TestDevice.ts`)
+   - Device simulation with network status control
+   - Authentication state management
+   - Exercise CRUD operations
+   - Sync status tracking and simulation
+   - Real-time subscription management
+
+2. **Mock Factories** (`/home/rob/Documents/Github/strength-assistant/lib/test-utils/mocks/`)
+   - ExerciseMockFactory: Creates test exercise data
+   - UserMockFactory: Creates test user accounts
+   - SyncStateMockFactory: Creates sync state records
+   - ServiceMockFactory: Creates service mocks (Firebase, Supabase)
+
+3. **Test Data Builders** (`/home/rob/Documents/Github/strength-assistant/lib/test-utils/builders/`)
+   - ExerciseBuilder: Fluent API for creating test exercises
+   - UserBuilder: Fluent API for creating test users
+   - ScenarioBuilder: Creates complex test scenarios
+
+4. **Enhanced Jest Configuration**
+   - Updated transformIgnorePatterns for all dependencies
+   - Proper mock setup and teardown
+   - Constitutional validation integration
+   - Improved module resolution
+
+### Constitutional Framework Integration (Priority 2)
+**Enhanced governance to prevent future test regressions**:
+
+1. **Test Constitution Amendment**
+   - Formal amendment to project constitution
+   - Mandatory test passing requirements
+   - Enforcement mechanisms definition
+   - Grace period for current failing tests
+
+2. **Automated Enforcement**
+   - Pre-commit hooks for test validation
+   - CI/CD pipeline integration
+   - Test regression detection
+   - Automated reporting and alerting
 
 ## Relationships
 
 ```
-User Account (1) ←→ (many) Exercise Records
-User Account (1) ←→ (many) Sync State Tracking
-Exercise Records (1) ←→ (0-1) Sync State Tracking
+TestFailureTracking (1) ←→ (many) RequiredInfrastructure
+TestFailureTracking (many) ←→ (many) TestFailureTracking (blocking relationships)
+ConstitutionalTestGovernance (1) ←→ (many) TestEnforcementMechanism
+TestInfrastructureEntity (1) ←→ (many) TestDataBuilder
+MockFactoryConfiguration (1) ←→ (many) TestInfrastructureEntity
+JestEnhancedConfiguration (1) ←→ (1) ConstitutionalTestGovernance
 ```
 
-## Storage Implementation
+## Success Metrics
 
-### Local Storage (Legend State)
-- Automatic persistence to device storage
-- Optimistic updates for immediate UI feedback  
-- Background sync queue management
-- Conflict resolution with last-write-wins strategy
+### Immediate Success Metrics (Week 1)
+- All 80 failing tests catalogued and triaged
+- TestDevice infrastructure implemented
+- Basic mock factories created
+- At least 20 tests passing
 
-### Cloud Storage (Supabase)
-- PostgreSQL tables matching entity structure
-- Row-level security for user data isolation
-- Real-time subscriptions for cross-device sync
-- Automatic timestamp management with triggers
+### Short-term Success Metrics (Month 1)
+- All 80 tests passing consistently
+- Constitutional amendment enacted
+- Full test infrastructure implemented
+- Zero test regressions in CI/CD
 
-## Migration Schema
+### Long-term Success Metrics (Quarter 1)
+- Test coverage above constitutional thresholds
+- Automated test regression prevention
+- Full constitutional compliance
+- Test infrastructure used for new feature development
 
-### Feature Flag Control
-- `useSupabaseStorage`: boolean flag controlling storage backend
-- `useSupabaseAuth`: boolean flag controlling authentication backend
-- `migrationPhase`: enum ['firebase', 'dual-write', 'supabase', 'cleanup']
+## Migration Strategy
 
-### Data Consistency Validation
-- Checksum comparison between Firebase and Supabase
-- Record count validation across backends
-- User-specific data integrity checks
-- Automated consistency reporting
+### Phase 1: Emergency Repair (Week 1)
+- Implement minimal TestDevice to unblock tests
+- Create basic mock configurations
+- Fix Jest configuration issues
+- Target critical and high priority failures
+
+### Phase 2: Infrastructure Completion (Week 2-3)
+- Complete TestDevice implementation
+- Build comprehensive mock factories
+- Implement test data builders
+- Fix all remaining test failures
+
+### Phase 3: Constitutional Enhancement (Week 4)
+- Draft and review constitutional amendment
+- Implement automated enforcement mechanisms
+- Enable full constitutional compliance
+- Document test governance framework
+
+### Phase 4: Prevention and Monitoring (Ongoing)
+- Monitor for test regressions
+- Continuous improvement of test infrastructure
+- Regular constitutional compliance audits
+- Test framework evolution and enhancement
