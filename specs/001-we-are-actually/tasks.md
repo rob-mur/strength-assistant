@@ -3,29 +3,18 @@
 **Input**: Design documents from `/home/rob/Documents/Github/strength-assistant/specs/001-we-are-actually/`
 **Prerequisites**: plan.md (required), research.md, data-model.md, contracts/
 
-## Execution Flow (main)
-```
-1. Load plan.md from feature directory
-   → Extract: React Native + Expo, Legend State, Supabase, feature flags
-2. Load optional design documents:
-   → data-model.md: ExerciseRecord, UserAccount, SyncState entities
-   → contracts/: StorageBackend interface, Legend State config
-   → quickstart.md: Anonymous/authenticated user scenarios, migration testing
-3. Generate tasks by category:
-   → Setup: Legend State dependencies, Supabase auth setup
-   → Tests: contract tests, integration scenarios, migration tests
-   → Core: Supabase backend implementation, Legend State integration
-   → Integration: Feature flag switching, migration logic
-   → Polish: E2E tests, performance validation, cleanup
-4. Apply task rules:
-   → Different files = mark [P] for parallel
-   → Tests before implementation (TDD)
-   → Migration phase ordering
-```
+## 🚨 CRITICAL SUCCESS CRITERIA 🚨
+
+**BEFORE ANY TASK IS CONSIDERED COMPLETE:**
+- **`devbox run test` MUST pass successfully**
+- This includes: Package lock validation, TypeScript checks, ESLint, Format checking, Jest tests
+- Integration tests can run in CI (due to speed), but all unit tests must pass locally
+- No task is complete until all code quality checks pass
 
 ## Format: `[ID] [P?] Description`
 - **[P]**: Can run in parallel (different files, no dependencies)
 - Include exact file paths in descriptions
+- All tasks must result in `devbox run test` passing
 
 ## Path Conventions
 - **React Native**: `lib/` for core logic, `app/` for screens, `__tests__/` for tests
@@ -86,7 +75,7 @@
 - [ ] T037 Implement data validation checks for migration accuracy in `lib/migration/MigrationValidator.ts`
 - [ ] T038 [P] Update documentation with new authentication flow in `docs/authentication.md`
 - [ ] T039 [P] Update CLAUDE.md with Legend State and migration context
-- [ ] T040 Create rollback strategy documentation in `docs/rollback-strategy.md`
+- [ ] T040 **🚨 MANDATORY FINAL VALIDATION: Run `devbox run test` and fix ALL issues**
 
 ## Dependencies
 - Setup (T001-T003) before all other phases
@@ -142,6 +131,44 @@ Task: "Create sync status indicator component in lib/components/SyncStatusIcon.t
 - Commit after each task
 - All tests must use Devbox environment for reproducibility
 
+## Quality Assurance Notes
+
+### Test-First Development Rules
+1. **RED Phase**: Each test MUST fail when first written (no implementation exists)
+2. **GREEN Phase**: Write minimal code to make test pass  
+3. **REFACTOR Phase**: Improve code while keeping tests green
+4. **Validation**: Run `devbox run test` after each task completion
+
+### Task Completion Requirements
+**ONLY mark a task as completed when:**
+- All tests pass in `devbox run test`
+- No TypeScript compilation errors
+- No ESLint violations
+- Consistent formatting with Prettier
+- Implementation fully satisfies contract requirements
+
+**Never mark complete if:**
+- Tests are failing
+- Implementation is partial
+- Code quality checks fail
+- Dependencies are unresolved
+
+### Common Failure Patterns to Avoid
+- ❌ Writing implementation before tests
+- ❌ Declaring task complete without running `devbox run test`
+- ❌ Accumulating TypeScript or ESLint errors
+- ❌ Modifying same file in parallel tasks (causes conflicts)
+- ❌ Skipping the RED phase in TDD cycle
+
+## Final Deliverable Validation
+
+The feature is complete ONLY when:
+1. All 40 tasks are marked complete
+2. `devbox run test` passes without any failures
+3. All three user scenarios from quickstart.md execute successfully
+4. Feature flag switching works for both `USE_SUPABASE_DATA=true` and `USE_SUPABASE_DATA=false`
+5. No outstanding TypeScript, ESLint, or formatting issues
+
 ## Validation Checklist
 *GATE: Checked before considering tasks complete*
 
@@ -154,3 +181,4 @@ Task: "Create sync status indicator component in lib/components/SyncStatusIcon.t
 - [x] Feature flag integration properly sequenced
 - [x] Migration strategy tasks included
 - [x] Performance and E2E testing included
+- [x] Mandatory final validation task included (T040)
