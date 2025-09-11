@@ -30,7 +30,13 @@ jest.mock('@react-native-firebase/auth', () => {
 // Mock platform detection to avoid requiring native Firebase
 jest.mock('react-native', () => {
   const RN = jest.requireActual('react-native');
-  RN.Platform.OS = 'ios'; // Set to non-web to test native path
+  
+  // Ensure Platform object exists and set OS
+  if (!RN.Platform) {
+    RN.Platform = {};
+  }
+  RN.Platform.OS = 'web'; // Default to web for most tests
+  
   return RN;
 });
 

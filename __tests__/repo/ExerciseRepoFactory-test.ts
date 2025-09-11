@@ -87,6 +87,9 @@ jest.mock('expo-constants', () => ({
 const originalEnv = process.env;
 
 // Mock Firebase and Supabase implementations
+const MockedFirebaseExerciseRepo = jest.mocked(FirebaseExerciseRepo);
+const MockedSupabaseExerciseRepo = jest.mocked(SupabaseExerciseRepo);
+
 jest.mock('@/lib/repo/FirebaseExerciseRepo');
 jest.mock('@/lib/repo/SupabaseExerciseRepo');
 
@@ -100,6 +103,10 @@ describe('ExerciseRepoFactory', () => {
     
     // Clear all mocks
     jest.clearAllMocks();
+    
+    // Reset mock implementations
+    MockedFirebaseExerciseRepo.getInstance.mockReturnValue({} as any);
+    MockedSupabaseExerciseRepo.getInstance.mockReturnValue({} as any);
   });
 
   afterEach(() => {
@@ -112,8 +119,8 @@ describe('ExerciseRepoFactory', () => {
       
       const repo = ExerciseRepoFactory.getInstance();
       
-      expect(FirebaseExerciseRepo.getInstance).toHaveBeenCalled();
-      expect(SupabaseExerciseRepo.getInstance).not.toHaveBeenCalled();
+      expect(MockedFirebaseExerciseRepo.getInstance).toHaveBeenCalled();
+      expect(MockedSupabaseExerciseRepo.getInstance).not.toHaveBeenCalled();
     });
 
     test('returns Firebase implementation when USE_SUPABASE_DATA is undefined', () => {
@@ -121,8 +128,8 @@ describe('ExerciseRepoFactory', () => {
       
       const repo = ExerciseRepoFactory.getInstance();
       
-      expect(FirebaseExerciseRepo.getInstance).toHaveBeenCalled();
-      expect(SupabaseExerciseRepo.getInstance).not.toHaveBeenCalled();
+      expect(MockedFirebaseExerciseRepo.getInstance).toHaveBeenCalled();
+      expect(MockedSupabaseExerciseRepo.getInstance).not.toHaveBeenCalled();
     });
 
     test('returns Supabase implementation when USE_SUPABASE_DATA is true', () => {
@@ -130,8 +137,8 @@ describe('ExerciseRepoFactory', () => {
       
       const repo = ExerciseRepoFactory.getInstance();
       
-      expect(SupabaseExerciseRepo.getInstance).toHaveBeenCalled();
-      expect(FirebaseExerciseRepo.getInstance).not.toHaveBeenCalled();
+      expect(MockedSupabaseExerciseRepo.getInstance).toHaveBeenCalled();
+      expect(MockedFirebaseExerciseRepo.getInstance).not.toHaveBeenCalled();
     });
 
     test('returns same Firebase instance on multiple calls', () => {
@@ -141,7 +148,7 @@ describe('ExerciseRepoFactory', () => {
       const repo2 = ExerciseRepoFactory.getInstance();
       
       // Should only call getInstance once due to caching
-      expect(FirebaseExerciseRepo.getInstance).toHaveBeenCalledTimes(1);
+      expect(MockedFirebaseExerciseRepo.getInstance).toHaveBeenCalledTimes(1);
     });
 
     test('returns same Supabase instance on multiple calls', () => {
@@ -151,7 +158,7 @@ describe('ExerciseRepoFactory', () => {
       const repo2 = ExerciseRepoFactory.getInstance();
       
       // Should only call getInstance once due to caching
-      expect(SupabaseExerciseRepo.getInstance).toHaveBeenCalledTimes(1);
+      expect(MockedSupabaseExerciseRepo.getInstance).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -193,12 +200,12 @@ describe('ExerciseRepoFactory', () => {
       
       // Get instance to cache it
       ExerciseRepoFactory.getInstance();
-      expect(FirebaseExerciseRepo.getInstance).toHaveBeenCalledTimes(1);
+      expect(MockedFirebaseExerciseRepo.getInstance).toHaveBeenCalledTimes(1);
       
       // Reset and get again
       ExerciseRepoFactory.resetInstances();
       ExerciseRepoFactory.getInstance();
-      expect(FirebaseExerciseRepo.getInstance).toHaveBeenCalledTimes(2);
+      expect(MockedFirebaseExerciseRepo.getInstance).toHaveBeenCalledTimes(2);
     });
   });
 
