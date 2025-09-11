@@ -1,64 +1,76 @@
-# Quickstart: Local First Storage with Backup
+# Quickstart: TypeScript Testing Infrastructure & Constitution Enhancement
+
+## 🚨 CRITICAL OBJECTIVE
+**Primary Goal**: Ensure `devbox run test` consistently passes with proper TypeScript validation, preventing the regression of compilation errors that block the entire test suite.
 
 ## Prerequisites
 - Devbox installed (`curl -fsSL https://get.jetpack.io/devbox | bash`)
-- Supabase project configured
-- Firebase project configured (for migration period)
+- Git hooks capability
+- IDE with TypeScript support
 
 ## Setup Instructions
 
-### 1. Initialize Development Environment
+### 1. Validate Current Testing Pipeline Status
+```bash
+# First, check current status of the critical test command
+devbox run test
+
+# Expected: Should pass completely, or identify specific TypeScript errors
+# If failing: This is the CRITICAL ISSUE we're solving
+```
+
+### 2. Initialize Enhanced Development Environment
 ```bash
 # Enter reproducible development shell
 devbox shell
 
-# Install dependencies (handled by devbox.json)
-# This ensures identical versions across all environments
-devbox run install
+# Verify TypeScript installation and configuration
+npx tsc --version
+cat tsconfig.json
+
+# Check current TypeScript compilation status
+npx tsc --noEmit --incremental false
 ```
 
-### 2. Environment Configuration
-Create or update `.env` file:
-```
-# Supabase configuration
-EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-EXPO_PUBLIC_USE_SUPABASE_EMULATOR=false
-EXPO_PUBLIC_SUPABASE_EMULATOR_HOST=127.0.0.1
-EXPO_PUBLIC_SUPABASE_EMULATOR_PORT=54321
+### 3. Configure Constitutional Enforcement
+Create pre-commit hook configuration:
+```bash
+# Install pre-commit hook that validates TypeScript
+npm install --save-dev husky
+npx husky install
 
-# Feature flag for data layer migration
-USE_SUPABASE_DATA=false
-
-# Development flags
-EXPO_PUBLIC_USE_EMULATOR=false
+# Add pre-commit TypeScript validation
+npx husky add .husky/pre-commit "npx tsc --noEmit"
+npx husky add .husky/pre-commit "devbox run test"
 ```
 
-### 3. Initialize Legend State Store
-```typescript
-import { observable } from "@legendapp/state"
-import { configureObservableSync } from "@legendapp/state/sync"
-
-// Initialize the exercise store
-export const exerciseStore = observable({
-  exercises: {},
-  user: null,
-  syncState: {
-    isOnline: true,
-    isSyncing: false,
-    pendingChanges: 0,
-    errors: []
-  }
-})
-
-// Feature flag reads from environment
-const useSupabaseData = process.env.USE_SUPABASE_DATA === 'true'
+### 4. Verify TypeScript Strict Mode Configuration
+Update `tsconfig.json` to enforce constitutional requirements:
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "skipLibCheck": false,
+    "noEmit": true
+  },
+  "include": [
+    "app/**/*",
+    "lib/**/*", 
+    "__tests__/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "coverage"
+  ]
+}
 ```
 
-## User Journey Validation
+## Constitutional Validation Journey
 
-### Scenario 1: Anonymous User Local-First Experience
-**Goal**: Verify immediate data operations without cloud dependency
+### Scenario 1: TypeScript Compilation Enforcement
+**Goal**: Verify TypeScript errors are caught before they reach the testing pipeline
 
 1. **Start app without internet connection**
    ```bash

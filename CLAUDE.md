@@ -10,9 +10,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run ios` - Run on iOS simulator/device  
 - `npm run web` - Run in web browser
 
-### Testing
-- `npm test` - Run unit tests with Jest
+### Testing (CONSTITUTIONAL REQUIREMENT)
+- `devbox run test` - **MANDATORY SUCCESS**: Must pass before any feature completion
+- `npm test` - Run unit tests with Jest  
 - `npm run test:watch` - Run tests in watch mode
+- `npx tsc --noEmit` - TypeScript compilation check (required before commit)
 
 ### Code Quality
 - `npm run lint` - Run ESLint
@@ -83,3 +85,10 @@ This is a React Native Expo app built with TypeScript, using file-based routing 
 - **Prettier**: Code formatting
 - **Storybook**: Component development and documentation
 - **Devbox (Nix)**: Reproducible development environment with lock file for CI/local parity
+
+## 🚨 CONSTITUTIONAL REQUIREMENTS (NON-NEGOTIABLE)
+- TypeScript compilation MUST succeed before test execution
+- `devbox run test` MUST pass completely before any commit  
+- Pre-commit hooks MUST validate TypeScript compilation
+- FORBIDDEN: Committing code that breaks TypeScript compilation
+- REQUIRED: Immediate fix of any TypeScript compilation errors

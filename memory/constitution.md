@@ -1,50 +1,54 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# Strength Assistant Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Library-First Architecture
+Every feature starts as a standalone library with clear boundaries. Libraries must be self-contained, independently testable, and well-documented. No organizational-only libraries without clear functional purpose.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. CLI Interface Standards
+Every library exposes functionality via CLI with consistent text I/O protocols: stdin/args → stdout, errors → stderr. Support both JSON and human-readable formats for maximum composability.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Test-First Development (NON-NEGOTIABLE)
+**TypeScript Compilation**: TypeScript compilation MUST succeed before test execution. `devbox run test` MUST pass completely before any commit. Pre-commit hooks MUST validate TypeScript compilation.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+**TDD Requirements**: Tests written → User approved → Tests fail → Then implement. Red-Green-Refactor cycle strictly enforced.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+**FORBIDDEN**: Committing code that breaks TypeScript compilation, implementation before test, skipping RED phase.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+**REQUIRED**: Immediate fix of any TypeScript compilation errors, all tests runnable at all times.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### IV. Integration Testing Standards
+Focus areas requiring integration tests: New library contract tests, contract changes, inter-service communication, shared schemas. Real dependencies required - no mocking for integration tests.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+### V. Observability Requirements  
+Structured logging required for all components. Text I/O ensures debuggability. Frontend logs must stream to backend for unified monitoring.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### VI. Versioning & Breaking Changes
+MAJOR.MINOR.BUILD format mandatory. BUILD increments on every change. Breaking changes require parallel testing and migration plans.
+
+### VII. Simplicity Principle
+Start simple, apply YAGNI principles. Maximum 3 projects per feature. Use frameworks directly without wrapper classes. Single data model without DTOs unless serialization differs.
+
+## TypeScript Quality Standards
+
+**Strict Mode Enforcement**: TypeScript strict mode must be enabled with noImplicitAny, noImplicitReturns, and comprehensive type checking.
+
+**Pre-commit Validation**: Git hooks must validate TypeScript compilation before allowing commits. No exceptions.
+
+**CI/CD Integration**: All pipelines must include TypeScript validation as a mandatory gate. Deployment blocked if TypeScript compilation fails.
+
+## Development Workflow
+
+**Code Quality Gates**: All PRs must pass TypeScript compilation, ESLint, Prettier, and Jest tests before merge approval.
+
+**Testing Requirements**: `devbox run test` success is mandatory for feature completion. Integration tests run in CI, unit tests must pass locally.
+
+**Error Resolution**: TypeScript compilation errors require immediate resolution - no deferring to "later" or "separate PR".
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+Constitution supersedes all other practices. Amendments require formal documentation, approval process, and migration plan. All PRs/reviews must verify constitutional compliance.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+Complexity must be justified against constitutional principles. Use CLAUDE.md for runtime development guidance aligned with constitutional requirements.
+
+**Version**: 2.2.0 | **Ratified**: 2025-01-15 | **Last Amended**: 2025-01-15

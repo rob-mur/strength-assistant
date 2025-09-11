@@ -1,14 +1,62 @@
-# Data Model: Local First Storage with Backup
+# Data Model: TypeScript Testing Infrastructure & Constitution Enhancement
 
-## ✅ Testability Requirements
+## 🚨 Critical Testing Infrastructure Requirements
 
-All data models must be designed for comprehensive testing:
-- **Unit Testable**: Models must have pure validation functions that can be tested in isolation
-- **Contract Testable**: Interfaces must be implementable by both Firebase and Supabase backends
-- **Integration Testable**: Models must work with both local Legend State and cloud sync
-- **`devbox run test` Compliance**: All model implementations must pass TypeScript, ESLint, and Jest validation
+All TypeScript and testing configurations must enforce strict validation:
+- **TypeScript Compilation**: Must succeed before any test execution (`devbox run test`)
+- **Pre-commit Validation**: TypeScript errors must be caught before commit
+- **Constitutional Compliance**: Testing requirements must be constitutionally mandated
+- **Multi-layered Enforcement**: IDE, pre-commit, and CI validation layers
 
-## Core Entities
+## ✅ Enhanced Testability Requirements
+
+All data models and configurations must support:
+- **TypeScript Strict Mode**: No implicit any types, strict null checks enabled
+- **Contract Testable**: Interfaces must be implementable with proper TypeScript types
+- **Integration Testable**: Configuration must work across development and CI environments  
+- **`devbox run test` Guaranteed Success**: All implementations must pass comprehensive validation pipeline
+
+## Core Entities for TypeScript Testing Infrastructure
+
+### TypeScript Configuration Entity
+**Purpose**: Centralized TypeScript compiler configuration for consistent validation
+**Fields**:
+- `compilerOptions`: object (TypeScript compiler settings)
+  - `strict`: boolean (required: true)
+  - `noImplicitAny`: boolean (required: true)  
+  - `noImplicitReturns`: boolean (required: true)
+  - `skipLibCheck`: boolean (required: false for thorough checking)
+- `include`: string[] (files/patterns to compile)
+- `exclude`: string[] (files/patterns to ignore)
+
+**Validation Rules**:
+- Strict mode must be enabled
+- No implicit any types allowed  
+- All included files must compile without errors
+
+### Pre-commit Hook Configuration Entity
+**Purpose**: Git hook configuration to validate TypeScript before commits
+**Fields**:
+- `hookType`: "pre-commit" (fixed value)
+- `commands`: ValidationCommand[]
+- `exitOnFailure`: boolean (required: true)
+
+**Validation Rules**:
+- Must execute TypeScript compilation before allowing commit
+- Must fail commit if compilation errors exist
+
+### Constitutional Amendment Entity
+**Purpose**: Formal update to project constitution for TypeScript requirements
+**Fields**:
+- `section`: "Testing (NON-NEGOTIABLE)"
+- `requirements`: string[] (new constitutional requirements)
+- `prohibitions`: string[] (newly forbidden actions)
+- `version`: string (constitutional version number)
+
+**State Transitions**:
+- Draft → Review → Approved → Enacted
+
+## Legacy Entities (Maintained for Original Feature)
 
 ### Exercise Record
 **Purpose**: Represents user's workout and exercise data

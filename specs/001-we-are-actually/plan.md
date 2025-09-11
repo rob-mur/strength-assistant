@@ -1,15 +1,7 @@
-# Implementation Plan: Local First Storage with Backup
+# Implementation Plan: TypeScript Testing Infrastructure & Constitution Update
 
-**Branch**: `001-we-are-actually` | **Date**: 2025-09-11 | **Spec**: [spec.md](./spec.md)
+**Branch**: `001-we-are-actually` | **Date**: 2025-01-15 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/home/rob/Documents/Github/strength-assistant/specs/001-we-are-actually/spec.md`
-
-## 🚨 CRITICAL SUCCESS CRITERIA 🚨
-
-**BEFORE ANY FEATURE IS CONSIDERED COMPLETE:**
-- **`devbox run test` MUST pass successfully**
-- This includes: Package lock validation, TypeScript checks, ESLint, Format checking, Jest tests
-- Integration tests can run in CI (due to speed), but all unit tests must pass locally
-- No implementation is complete until all code quality checks pass
 
 ## Execution Flow (/plan command scope)
 ```
@@ -37,62 +29,54 @@
 - Phase 3-4: Implementation execution (manual or via tools)
 
 ## Summary
-Migrate from Firebase to Supabase for both authentication and storage while maintaining local-first architecture with automatic backup capabilities. Implementation uses Legend State for automatic sync engine with Supabase backend, feature flags for gradual migration, and comprehensive testing to ensure functionality parity.
+Implement robust TypeScript testing infrastructure to prevent compilation errors in test pipeline and update the project constitution to mandate strict TypeScript validation as part of the testing requirements. The primary goal is ensuring `devbox run test` passes consistently with proper TypeScript compilation, addressing the critical issue where TypeScript errors prevent test execution.
 
 ## Technical Context
 **Language/Version**: TypeScript/JavaScript (React Native with Expo)  
-**Primary Dependencies**: Legend State (sync engine), Supabase (backend), React Native Paper (UI), Expo Router (navigation)  
-**Storage**: Supabase (PostgreSQL backend), Legend State (local persistence with sync)  
-**Testing**: Jest (unit tests), React Native Testing Library (component tests), Maestro (E2E tests)  
+**Primary Dependencies**: Jest (testing), TypeScript compiler (tsc), ESLint, Prettier, React Native Testing Library, Expo  
+**Storage**: Local file system (TypeScript config, Jest config, test files)  
+**Testing**: Jest with React Native Testing Library, `devbox run test` pipeline includes TypeScript compilation
 **Target Platform**: React Native cross-platform (iOS, Android, Web)
-**Dependency Management**: Devbox (Nix) for reproducible development environment with lock file for CI/local parity
-**Project Type**: mobile - React Native app with cloud backend  
-**Performance Goals**: Immediate UI responsiveness, no noticeable pauses for data operations  
-**Constraints**: Local-first operations, offline capability, data consistency across devices  
-**Scale/Scope**: Simple exercise data, small data footprint, single-user focused with cross-device sync
+**Project Type**: mobile - React Native app requiring strict TypeScript validation in CI/testing  
+**Performance Goals**: TypeScript compilation must complete without errors before test execution  
+**Constraints**: Must maintain backward compatibility with existing test files while enforcing strict TypeScript validation  
+**Scale/Scope**: ~373 existing tests across 30 test suites, prevent regression of TypeScript compilation issues
 
-**Migration Context**: Currently mid-migration from Firebase to Supabase. Completed: initial Supabase infra, data layer interfaces, Legend State offline persistence, feature flag foundation. Remaining: Supabase authentication with feature flagging, comprehensive testing, Firebase removal.
-
-**CRITICAL TEST REQUIREMENT**: All implementations must pass `devbox run test` before completion. This includes:
-- Package lock validation (`npm ci --dry-run`)
-- TypeScript compilation (`npx tsc`)
-- ESLint code quality (`npm run lint`)
-- Prettier formatting (`npm run format:check`)
-- Jest unit tests (`npx jest`)
+**Migration Context**: The issue is that `devbox run test` includes TypeScript compilation checks that are currently failing, blocking the entire test suite execution. This violates the fundamental testing principle that tests must be runnable at all times.
 
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
 **Simplicity**:
-- Projects: [#] (max 3 - e.g., api, cli, tests)
-- Using framework directly? (no wrapper classes)
-- Single data model? (no DTOs unless serialization differs)
-- Avoiding patterns? (no Repository/UoW without proven need)
+- Projects: 1 (single React Native app with testing infrastructure)
+- Using framework directly? Yes - using Jest, TypeScript, and ESLint directly without wrappers
+- Single data model? Yes - TypeScript configuration and test validation rules
+- Avoiding patterns? Yes - no complex testing abstractions, direct toolchain integration
 
 **Architecture**:
-- EVERY feature as library? (no direct app code)
-- Libraries listed: [name + purpose for each]
-- CLI per library: [commands with --help/--version/--format]
-- Library docs: llms.txt format planned?
+- EVERY feature as library? N/A - this is infrastructure/tooling update, not user features
+- Libraries listed: N/A - updating existing testing pipeline configuration
+- CLI per library: N/A - leveraging existing `devbox run test` command
+- Library docs: N/A - updating constitution and testing docs only
 
 **Testing (NON-NEGOTIABLE)**:
-- RED-GREEN-Refactor cycle enforced? (test MUST fail first)
-- `devbox run test` MUST pass before any feature is considered complete
-- Git commits show tests before implementation?
-- Order: Contract→Integration→E2E→Unit strictly followed?
-- Real dependencies used? (actual DBs, not mocks)
-- Integration tests for: new libraries, contract changes, shared schemas?
-- FORBIDDEN: Implementation before test, skipping RED phase, declaring completion without test success
+- RED-GREEN-Refactor cycle enforced? ✅ This plan addresses the critical issue: tests MUST be runnable
+- `devbox run test` MUST pass before any feature is considered complete? ✅ This is the core problem being solved
+- Git commits show tests before implementation? ✅ Will add pre-commit TypeScript validation
+- Order: Contract→Integration→E2E→Unit strictly followed? ✅ Maintained in updated pipeline
+- Real dependencies used? ✅ No mocking changes - fixing actual TypeScript compilation
+- Integration tests for: TypeScript validation, test pipeline integrity ✅ Will add validation tests
+- FORBIDDEN: Committing code that breaks `devbox run test` compilation ✅ Core constitutional addition
 
 **Observability**:
-- Structured logging included?
-- Frontend logs → backend? (unified stream)
-- Error context sufficient?
+- Structured logging included? ✅ TypeScript compiler provides detailed error reporting
+- Frontend logs → backend? N/A - this is development tooling
+- Error context sufficient? ✅ TypeScript errors provide file/line context
 
 **Versioning**:
-- Version number assigned? (MAJOR.MINOR.BUILD)
-- BUILD increments on every change?
-- Breaking changes handled? (parallel tests, migration plan)
+- Version number assigned? No version change needed - infrastructure fix
+- BUILD increments on every change? N/A - not changing user-facing functionality  
+- Breaking changes handled? ✅ Backward compatible TypeScript configuration updates
 
 ## Project Structure
 
@@ -144,7 +128,7 @@ ios/ or android/
 └── [platform-specific structure]
 ```
 
-**Structure Decision**: [DEFAULT to Option 1 unless Technical Context indicates web/mobile app]
+**Structure Decision**: Using existing React Native app structure with enhanced testing infrastructure configuration
 
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context** above:
@@ -205,24 +189,26 @@ ios/ or android/
 **Task Generation Strategy**:
 - Load `/templates/tasks-template.md` as base
 - Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
-- Each contract → contract test task [P]
-- Each entity → model creation task [P] 
-- Each user story → integration test task
-- Implementation tasks to make tests pass
+- TypeScript validation contract → contract test task [P]
+- Constitutional amendment contract → constitutional validation test task [P]
+- Pre-commit hook implementation → configuration task
+- Constitution update → formal amendment process task
 - **MANDATORY: Final task must be "Run `devbox run test` and fix all issues"**
 
 **Ordering Strategy**:
 - TDD order: Tests before implementation 
-- Dependency order: Models before services before UI
+- Constitutional amendment before technical implementation
+- Pre-commit hooks before final validation
+- All tasks must result in `devbox run test` passing
 - Mark [P] for parallel execution (independent files)
-- **All tasks must result in `devbox run test` passing**
 
 **Quality Gates**:
 - Each implementation task includes test success validation
 - No task is complete until its tests pass in `devbox run test`
 - Final validation task ensures entire test suite passes
+- Constitutional compliance verification at each stage
 
-**Estimated Output**: 25-30 numbered, ordered tasks in tasks.md + mandatory test validation
+**Estimated Output**: 15-20 numbered, ordered tasks in tasks.md + mandatory test validation
 
 **IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
 
@@ -257,48 +243,7 @@ ios/ or android/
 - [x] Initial Constitution Check: PASS
 - [x] Post-Design Constitution Check: PASS
 - [x] All NEEDS CLARIFICATION resolved
-- [ ] Complexity deviations documented
-
-**🚨 CRITICAL SUCCESS GATES**:
-- [ ] `devbox run test` passes after each implementation task
-- [ ] All TypeScript compilation errors resolved
-- [ ] All ESLint issues fixed
-- [ ] All formatting issues resolved with Prettier
-- [ ] All Jest unit tests passing
-- [ ] Package lock file properly synchronized
-- [ ] Final feature validation: `devbox run test` successful
-
-## Implementation Guidelines for Future Tasks
-
-### Test-First Development Process
-
-1. **Before Starting Implementation**:
-   - Ensure all contract tests are written and failing
-   - Validate that `devbox run test` runs without crashing (tests can fail, but build must work)
-
-2. **During Implementation**:
-   - Run `devbox run test` frequently to catch issues early  
-   - Fix TypeScript, ESLint, and formatting issues immediately
-   - Do not accumulate technical debt
-
-3. **Before Task Completion**:
-   - `devbox run test` MUST pass successfully
-   - All code quality checks must be green
-   - No implementation task is complete until this validation passes
-
-4. **Integration Test Strategy**:
-   - Unit tests run locally and must pass (`devbox run test`)
-   - Integration tests can be slower and run in CI
-   - E2E tests run in CI for full system validation
-
-### Debugging Test Failures
-
-When `devbox run test` fails:
-1. **Package Lock Issues**: Run `npm install` and commit lock file changes
-2. **TypeScript Errors**: Fix type errors, add proper interfaces
-3. **ESLint Issues**: Run `npm run lint:fix` and address remaining issues
-4. **Formatting**: Run `npm run format` to fix formatting
-5. **Jest Failures**: Debug test logic, fix implementation, or update test expectations
+- [x] Complexity deviations documented (none required)
 
 ---
-*Based on Constitution v2.1.1 - See `/memory/constitution.md`*
+*Based on Constitution v2.2.0 - See `/memory/constitution.md`*
