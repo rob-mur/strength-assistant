@@ -18,14 +18,10 @@ export class ExerciseRepoFactory {
     const useSupabase = this.shouldUseSupabase();
     
     if (useSupabase) {
-      if (this.supabaseInstance === null) {
-        this.supabaseInstance = SupabaseExerciseRepo.getInstance();
-      }
+      this.supabaseInstance ??= SupabaseExerciseRepo.getInstance();
       return this.supabaseInstance;
     } else {
-      if (this.firebaseInstance === null) {
-        this.firebaseInstance = FirebaseExerciseRepo.getInstance();
-      }
+      this.firebaseInstance ??= FirebaseExerciseRepo.getInstance();
       return this.firebaseInstance;
     }
   }

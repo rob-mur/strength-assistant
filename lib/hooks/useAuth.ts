@@ -131,7 +131,7 @@ export function useAuth() {
 			try {
 				unsubscribe();
 			} catch (error) {
-				// Silently handle cleanup errors
+				console.error("Error during auth listener cleanup:", error);
 			}
 		};
 	}, []);

@@ -7,8 +7,6 @@ import { RepositoryLogger } from "./utils/LoggingUtils";
 import { RepositoryUtils } from "./utils/RepositoryUtils";
 
 // Platform-specific Firebase types and functions - use runtime detection
-type QuerySnapshot = any;
-type QueryDocumentSnapshot = any;
 
 // Import modular Firestore functions for web
 const getFirebaseModule = () => {
@@ -119,7 +117,7 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 			const exercisesQuery = this.createExercisesQuery(userId);
 
 			// Set up real-time listener
-			const unsubscribe = exercisesQuery.onSnapshot((snapshot: QuerySnapshot) => {
+			const unsubscribe = exercisesQuery.onSnapshot((snapshot: any) => {
 				const exercises = this.processSnapshot(snapshot, userId);
 				exercises$.set(exercises);
 			});
@@ -154,13 +152,13 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 				}
 				
 				const { onSnapshot } = firebaseModule;
-				unsubscribe = onSnapshot(exercisesQuery, (snapshot: QuerySnapshot) => {
+				unsubscribe = onSnapshot(exercisesQuery, (snapshot: any) => {
 					const exercises = this.processSnapshot(snapshot, userId);
 					callback(exercises);
 				});
 			} else {
 				// Use React Native Firebase for native platforms
-				unsubscribe = exercisesQuery.onSnapshot((snapshot: QuerySnapshot) => {
+				unsubscribe = exercisesQuery.onSnapshot((snapshot: any) => {
 					const exercises = this.processSnapshot(snapshot, userId);
 					callback(exercises);
 				});
@@ -305,9 +303,9 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 	/**
 	 * Process snapshot data and convert to Exercise array
 	 */
-	private processSnapshot(snapshot: QuerySnapshot, userId: string): Exercise[] {
+	private processSnapshot(snapshot: any, userId: string): Exercise[] {
 		const exercises: Exercise[] = [];
-		snapshot.forEach((doc: QueryDocumentSnapshot) => {
+		snapshot.forEach((doc: any) => {
 			const data = doc.data();
 			if (RepositoryUtils.validateExerciseData(data)) {
 				exercises.push({
