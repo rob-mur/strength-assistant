@@ -151,7 +151,8 @@ describe("useAuth", () => {
   });
 
   test("createAccount calls correct platform function", async () => {
-    mockedAuthWeb.createAccountWeb.mockResolvedValue(undefined);
+    const mockUser = { uid: "test-uid", email: "test@example.com", isAnonymous: false } as any;
+    mockedAuthWeb.createAccountWeb.mockResolvedValue(mockUser);
     
     const { result } = renderHook(() => useAuth());
     
@@ -180,7 +181,8 @@ describe("useAuth", () => {
   });
 
   test("signIn calls correct platform function", async () => {
-    mockedAuthWeb.signInWeb.mockResolvedValue(undefined);
+    const mockUser = { uid: "test-uid", email: "test@example.com", isAnonymous: false } as any;
+    mockedAuthWeb.signInWeb.mockResolvedValue(mockUser);
     
     const { result } = renderHook(() => useAuth());
     
@@ -286,7 +288,8 @@ describe("useAuth", () => {
     });
 
     test("createAccount calls native function on iOS", async () => {
-      mockedAuthNative.createAccountNative.mockResolvedValue(undefined);
+      const mockUser = { uid: "test-uid", email: "test@example.com", isAnonymous: false } as any;
+      mockedAuthNative.createAccountNative.mockResolvedValue(mockUser);
       
       const { result } = renderHook(() => useAuth());
       
@@ -299,7 +302,8 @@ describe("useAuth", () => {
     });
 
     test("signIn calls native function on iOS", async () => {
-      mockedAuthNative.signInNative.mockResolvedValue(undefined);
+      const mockUser = { uid: "test-uid", email: "test@example.com", isAnonymous: false } as any;
+      mockedAuthNative.signInNative.mockResolvedValue(mockUser);
       
       const { result } = renderHook(() => useAuth());
       
@@ -325,7 +329,8 @@ describe("useAuth", () => {
     });
 
     test("signInAnonymously calls native function on iOS", async () => {
-      mockedAuthNative.signInAnonymouslyNative.mockResolvedValue(undefined);
+      const mockUser = { uid: "test-uid", email: null, isAnonymous: true } as any;
+      mockedAuthNative.signInAnonymouslyNative.mockResolvedValue(mockUser);
       
       const { result } = renderHook(() => useAuth());
       
@@ -367,7 +372,7 @@ describe("useAuth", () => {
 
     test("handles auth listener setup", async () => {
       const mockUnsubscribe = jest.fn();
-      mockedAuthWeb.initAuth.mockResolvedValue(undefined);
+      mockedAuthWeb.initAuth.mockReturnValue(undefined);
       mockedAuthWeb.onAuthStateChangedWeb.mockReturnValue(mockUnsubscribe);
       
       const { unmount } = renderHook(() => useAuth());
