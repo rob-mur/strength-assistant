@@ -13,5 +13,6 @@ module.exports = {
     "lib/**/*.{ts,tsx}",
     "!**/*.d.ts",
     "!**/*.stories.{ts,tsx}",
+    "!lib/repo/FirebaseExerciseRepo.ts",
   ],
 };
