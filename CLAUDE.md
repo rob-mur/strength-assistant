@@ -49,9 +49,11 @@ This is a React Native Expo app built with TypeScript, using file-based routing 
 
 ### Data Layer
 - **Repository Pattern**: `ExerciseRepo` class provides data access abstraction
-- **Firebase Integration**: Uses Firestore for data persistence with platform-specific configs
+- **Dual Backend Support**: Firebase (current) and Supabase (migration target) with feature flag control
+- **Legend State Integration**: Local-first persistence with automatic sync engine for Supabase
 - **Models**: Simple `Exercise` interface with id and name fields
-- **Real-time Updates**: Uses Firebase `onSnapshot` for live data synchronization
+- **Real-time Updates**: Uses Firebase `onSnapshot` and Supabase real-time subscriptions
+- **Feature Flags**: Runtime switching between Firebase and Supabase implementations
 
 ### State Management
 - Custom hooks pattern (e.g., `useExercises`, `useAddExercise`)
@@ -80,3 +82,4 @@ This is a React Native Expo app built with TypeScript, using file-based routing 
 - **ESLint**: Expo config with additional plugins for unused imports, Storybook, Jest, and Testing Library
 - **Prettier**: Code formatting
 - **Storybook**: Component development and documentation
+- **Devbox (Nix)**: Reproducible development environment with lock file for CI/local parity
