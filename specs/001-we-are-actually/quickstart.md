@@ -164,17 +164,31 @@ const useSupabaseData = process.env.USE_SUPABASE_DATA === 'true'
 
 ## Testing Commands
 
+### 🚨 MANDATORY SUCCESS CRITERIA
+
+**BEFORE DECLARING IMPLEMENTATION COMPLETE:**
+```bash
+# This command MUST pass successfully
+devbox run test
+```
+
+This comprehensive test suite includes:
+- ✅ Package lock validation
+- ✅ TypeScript compilation  
+- ✅ ESLint code quality
+- ✅ Prettier formatting
+- ✅ Jest unit tests
+
+### Additional Test Commands
+
 ```bash
 # All commands run within devbox for consistency
 devbox shell
 
-# Unit tests
-devbox run test
-
-# Integration tests  
+# Integration tests (can be run in CI due to speed)
 devbox run test:integration
 
-# E2E tests
+# E2E tests (can be run in CI due to speed)
 devbox run test:e2e
 
 # Feature flag specific tests
@@ -186,6 +200,14 @@ devbox run test -- --testNamePattern="migration"
 # CI simulation (exact same environment as CI)
 devbox run ci
 ```
+
+### Test Success Validation
+
+After each implementation phase:
+1. Run `devbox run test`
+2. Fix any failures immediately
+3. Do not proceed to next phase until all tests pass
+4. Integration tests can be slower and run in CI, but unit tests must pass locally
 
 ## Performance Validation
 

@@ -1,5 +1,13 @@
 # Data Model: Local First Storage with Backup
 
+## ✅ Testability Requirements
+
+All data models must be designed for comprehensive testing:
+- **Unit Testable**: Models must have pure validation functions that can be tested in isolation
+- **Contract Testable**: Interfaces must be implementable by both Firebase and Supabase backends
+- **Integration Testable**: Models must work with both local Legend State and cloud sync
+- **`devbox run test` Compliance**: All model implementations must pass TypeScript, ESLint, and Jest validation
+
 ## Core Entities
 
 ### Exercise Record

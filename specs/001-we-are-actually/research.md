@@ -1,5 +1,20 @@
 # Research: Local First Storage with Backup
 
+## 🧪 Testing Strategy for Migration
+
+**Decision**: All implementations must pass `devbox run test` before completion
+**Rationale**:
+- Ensures code quality, TypeScript compliance, and formatting consistency
+- Validates that unit tests pass locally before any feature is considered complete
+- Prevents broken implementations from being committed
+- Integration tests can be slower and run in CI, but unit tests must be fast and reliable locally
+**Test Command Components**:
+- Package lock validation: Ensures dependencies are properly locked
+- TypeScript compilation: Catches type errors before runtime
+- ESLint: Enforces code quality and consistency standards
+- Prettier: Ensures consistent code formatting
+- Jest unit tests: Validates functionality and prevents regressions
+
 ## Legend State + Supabase Integration
 
 **Decision**: Use Legend State as the primary sync engine with Supabase backend

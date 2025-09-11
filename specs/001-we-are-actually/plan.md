@@ -3,6 +3,14 @@
 **Branch**: `001-we-are-actually` | **Date**: 2025-09-11 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/home/rob/Documents/Github/strength-assistant/specs/001-we-are-actually/spec.md`
 
+## 🚨 CRITICAL SUCCESS CRITERIA 🚨
+
+**BEFORE ANY FEATURE IS CONSIDERED COMPLETE:**
+- **`devbox run test` MUST pass successfully**
+- This includes: Package lock validation, TypeScript checks, ESLint, Format checking, Jest tests
+- Integration tests can run in CI (due to speed), but all unit tests must pass locally
+- No implementation is complete until all code quality checks pass
+
 ## Execution Flow (/plan command scope)
 ```
 1. Load feature spec from Input path
@@ -29,7 +37,7 @@
 - Phase 3-4: Implementation execution (manual or via tools)
 
 ## Summary
-Migrate from Firebase to Supabase for both authentication and storage while maintaining local-first architecture with automatic backup capabilities. Users can access and modify exercise data instantly on device with changes persisted locally first, then synced to cloud for cross-device availability. Implementation uses Legend State for automatic sync engine with Supabase backend, feature flags for gradual migration, and comprehensive testing to ensure functionality parity.
+Migrate from Firebase to Supabase for both authentication and storage while maintaining local-first architecture with automatic backup capabilities. Implementation uses Legend State for automatic sync engine with Supabase backend, feature flags for gradual migration, and comprehensive testing to ensure functionality parity.
 
 ## Technical Context
 **Language/Version**: TypeScript/JavaScript (React Native with Expo)  
@@ -44,6 +52,13 @@ Migrate from Firebase to Supabase for both authentication and storage while main
 **Scale/Scope**: Simple exercise data, small data footprint, single-user focused with cross-device sync
 
 **Migration Context**: Currently mid-migration from Firebase to Supabase. Completed: initial Supabase infra, data layer interfaces, Legend State offline persistence, feature flag foundation. Remaining: Supabase authentication with feature flagging, comprehensive testing, Firebase removal.
+
+**CRITICAL TEST REQUIREMENT**: All implementations must pass `devbox run test` before completion. This includes:
+- Package lock validation (`npm ci --dry-run`)
+- TypeScript compilation (`npx tsc`)
+- ESLint code quality (`npm run lint`)
+- Prettier formatting (`npm run format:check`)
+- Jest unit tests (`npx jest`)
 
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
@@ -62,11 +77,12 @@ Migrate from Firebase to Supabase for both authentication and storage while main
 
 **Testing (NON-NEGOTIABLE)**:
 - RED-GREEN-Refactor cycle enforced? (test MUST fail first)
+- `devbox run test` MUST pass before any feature is considered complete
 - Git commits show tests before implementation?
 - Order: Contract→Integration→E2E→Unit strictly followed?
 - Real dependencies used? (actual DBs, not mocks)
 - Integration tests for: new libraries, contract changes, shared schemas?
-- FORBIDDEN: Implementation before test, skipping RED phase
+- FORBIDDEN: Implementation before test, skipping RED phase, declaring completion without test success
 
 **Observability**:
 - Structured logging included?
@@ -128,7 +144,7 @@ ios/ or android/
 └── [platform-specific structure]
 ```
 
-**Structure Decision**: Option 3 (Mobile + API) - React Native app with Supabase backend
+**Structure Decision**: [DEFAULT to Option 1 unless Technical Context indicates web/mobile app]
 
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context** above:
@@ -193,13 +209,20 @@ ios/ or android/
 - Each entity → model creation task [P] 
 - Each user story → integration test task
 - Implementation tasks to make tests pass
+- **MANDATORY: Final task must be "Run `devbox run test` and fix all issues"**
 
 **Ordering Strategy**:
 - TDD order: Tests before implementation 
 - Dependency order: Models before services before UI
 - Mark [P] for parallel execution (independent files)
+- **All tasks must result in `devbox run test` passing**
 
-**Estimated Output**: 25-30 numbered, ordered tasks in tasks.md
+**Quality Gates**:
+- Each implementation task includes test success validation
+- No task is complete until its tests pass in `devbox run test`
+- Final validation task ensures entire test suite passes
+
+**Estimated Output**: 25-30 numbered, ordered tasks in tasks.md + mandatory test validation
 
 **IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
 
@@ -235,6 +258,47 @@ ios/ or android/
 - [x] Post-Design Constitution Check: PASS
 - [x] All NEEDS CLARIFICATION resolved
 - [ ] Complexity deviations documented
+
+**🚨 CRITICAL SUCCESS GATES**:
+- [ ] `devbox run test` passes after each implementation task
+- [ ] All TypeScript compilation errors resolved
+- [ ] All ESLint issues fixed
+- [ ] All formatting issues resolved with Prettier
+- [ ] All Jest unit tests passing
+- [ ] Package lock file properly synchronized
+- [ ] Final feature validation: `devbox run test` successful
+
+## Implementation Guidelines for Future Tasks
+
+### Test-First Development Process
+
+1. **Before Starting Implementation**:
+   - Ensure all contract tests are written and failing
+   - Validate that `devbox run test` runs without crashing (tests can fail, but build must work)
+
+2. **During Implementation**:
+   - Run `devbox run test` frequently to catch issues early  
+   - Fix TypeScript, ESLint, and formatting issues immediately
+   - Do not accumulate technical debt
+
+3. **Before Task Completion**:
+   - `devbox run test` MUST pass successfully
+   - All code quality checks must be green
+   - No implementation task is complete until this validation passes
+
+4. **Integration Test Strategy**:
+   - Unit tests run locally and must pass (`devbox run test`)
+   - Integration tests can be slower and run in CI
+   - E2E tests run in CI for full system validation
+
+### Debugging Test Failures
+
+When `devbox run test` fails:
+1. **Package Lock Issues**: Run `npm install` and commit lock file changes
+2. **TypeScript Errors**: Fix type errors, add proper interfaces
+3. **ESLint Issues**: Run `npm run lint:fix` and address remaining issues
+4. **Formatting**: Run `npm run format` to fix formatting
+5. **Jest Failures**: Debug test logic, fix implementation, or update test expectations
 
 ---
 *Based on Constitution v2.1.1 - See `/memory/constitution.md`*
