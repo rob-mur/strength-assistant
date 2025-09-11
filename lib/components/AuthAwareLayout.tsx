@@ -14,21 +14,24 @@ export function AuthAwareLayout({ children }: AuthAwareLayoutProps) {
 
 	// Show auth screen appropriately for different environments
 	useEffect(() => {
-		if (loading) {
-			// In Chrome test environment, no need to force - auth hook already handles this
-			if (process.env.CHROME_TEST === 'true' || process.env.CI === 'true') {
-				console.warn("Chrome test environment - auth state should be managed by useAuth hook");
-				// Let the useAuth hook handle the state, don't force anything here
-			} else {
-				// Normal timeout for other environments
-				const timeout = setTimeout(() => {
-					console.warn("Auth loading timeout - forcing auth screen display");
-					setForceShowAuth(true);
-				}, 5000); // 5 seconds timeout
-
-				return () => clearTimeout(timeout);
-			}
+		if (!loading) {
+			return;
 		}
+
+		// In Chrome test environment, no need to force - auth hook already handles this
+		if (process.env.CHROME_TEST === 'true' || process.env.CI === 'true') {
+			console.warn("Chrome test environment - auth state should be managed by useAuth hook");
+			// Let the useAuth hook handle the state, don't force anything here
+			return;
+		}
+
+		// Normal timeout for other environments
+		const timeout = setTimeout(() => {
+			console.warn("Auth loading timeout - forcing auth screen display");
+			setForceShowAuth(true);
+		}, 5000); // 5 seconds timeout
+
+		return () => clearTimeout(timeout);
 	}, [loading]);
 
 	if (loading && !forceShowAuth) {

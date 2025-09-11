@@ -16,7 +16,7 @@ export class SupabaseAuth {
   constructor() {
     // Get the client - handle both real and mocked cases
     try {
-      this.client = supabaseClient?.getClient?.() || supabaseClient;
+      this.client = supabaseClient?.getSupabaseClient?.() || supabaseClient;
     } catch (error) {
       // In test environment, create a mock client
       if (process.env.NODE_ENV === 'test') {

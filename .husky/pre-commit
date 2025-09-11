@@ -1,0 +1,42 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# TypeScript Testing Infrastructure Pre-commit Hook
+# Constitutional Requirement: TypeScript compilation MUST succeed before any commit
+
+echo "🔍 Pre-commit validation: TypeScript Testing Infrastructure"
+echo "Constitutional Requirement: devbox run test MUST pass before any commit"
+
+# Validate TypeScript compilation first
+echo "📝 Validating TypeScript compilation..."
+if ! npx tsc --noEmit; then
+    echo "❌ CONSTITUTIONAL VIOLATION: TypeScript compilation failed"
+    echo "🚫 Commit blocked - fix TypeScript errors before committing"
+    echo ""
+    echo "Required actions:"
+    echo "1. Run 'npx tsc --noEmit' to see all errors"
+    echo "2. Fix all TypeScript compilation errors"
+    echo "3. Ensure 'devbox run test' passes"
+    echo "4. Try committing again"
+    exit 1
+fi
+
+echo "✅ TypeScript compilation successful"
+
+# Run full test suite validation
+echo "🧪 Running complete test suite validation..."
+if ! devbox run test; then
+    echo "❌ CONSTITUTIONAL VIOLATION: devbox run test failed"
+    echo "🚫 Commit blocked - all tests must pass before committing"
+    echo ""
+    echo "Required actions:"
+    echo "1. Run 'devbox run test' to see failures"
+    echo "2. Fix all failing tests"
+    echo "3. Ensure TypeScript compilation still passes"
+    echo "4. Try committing again"
+    exit 1
+fi
+
+echo "✅ All tests passing"
+echo "✅ Pre-commit validation successful - Constitutional requirements met"
+echo "🎉 Commit approved"

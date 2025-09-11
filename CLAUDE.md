@@ -87,8 +87,32 @@ This is a React Native Expo app built with TypeScript, using file-based routing 
 - **Devbox (Nix)**: Reproducible development environment with lock file for CI/local parity
 
 ## 🚨 CONSTITUTIONAL REQUIREMENTS (NON-NEGOTIABLE)
-- TypeScript compilation MUST succeed before test execution
-- `devbox run test` MUST pass completely before any commit  
-- Pre-commit hooks MUST validate TypeScript compilation
-- FORBIDDEN: Committing code that breaks TypeScript compilation
-- REQUIRED: Immediate fix of any TypeScript compilation errors
+
+### TypeScript Testing Infrastructure (Amendment v2.2.0)
+- **TypeScript Compilation**: MUST succeed before test execution (`npx tsc --noEmit`)
+- **devbox run test**: MUST pass completely before any commit
+- **Pre-commit Hooks**: Automatically validate TypeScript compilation and block violating commits
+- **Zero Tolerance**: No exceptions for TypeScript compilation failures
+- **FORBIDDEN**: Committing code that breaks TypeScript compilation
+- **REQUIRED**: Immediate fix of any TypeScript compilation errors
+
+### TypeScript Validation Workflow
+1. **Before Starting Work**: Run `devbox run test` to ensure clean baseline
+2. **During Development**: Run `npx tsc --noEmit` frequently to catch errors early
+3. **Before Committing**: Pre-commit hook automatically validates TypeScript + tests
+4. **CI/CD Validation**: `scripts/validate-typescript.sh` enforces constitutional compliance
+
+### TypeScript Error Resolution Protocol
+- **Immediate Action**: Fix TypeScript errors as soon as they appear
+- **No Deferring**: Cannot push/merge code with TypeScript compilation errors
+- **Validation Tools**:
+  - `npx tsc --noEmit` - Quick compilation check
+  - `scripts/validate-typescript.sh` - Full constitutional compliance validation
+  - Jest global setup - Validates TypeScript before test execution
+  - Pre-commit hooks - Blocks commits with TypeScript errors
+
+### Constitutional Amendment Infrastructure
+- **Amendment Manager**: `src/constitution/ConstitutionalAmendmentManager.ts`
+- **TypeScript Validator**: `src/typescript/TypeScriptValidator.ts`
+- **Compliance Validation**: Automated constitutional requirement checking
+- **Enforcement Mechanisms**: Pre-commit hooks, CI pipelines, Jest global setup
