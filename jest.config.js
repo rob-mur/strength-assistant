@@ -1,36 +1,31 @@
 module.exports = {
   preset: "jest-expo",
-  
+
   // PERFORMANCE OPTIMIZATION: <60 second target (T003a)
   maxWorkers: 1, // Single-threaded for memory safety
   workerIdleMemoryLimit: "256MB", // Aggressive memory limit
   cache: true, // Enable Jest caching for faster subsequent runs
   cacheDirectory: ".jest-cache", // Explicit cache directory
-  
+
   // Speed optimization: Disable expensive features
   detectLeaks: false, // Disabled - was blocking and slow
   forceExit: true, // Force exit after tests complete
   collectCoverage: false, // Disable coverage collection for speed (enable only for CI)
-  
+
   // Faster test discovery and execution
-  testPathIgnorePatterns: [
-    "/node_modules/",
-    "__tests__/integration/", // Skip slow integration tests for basic validation
-    "__tests__/contracts/", // Skip contract tests for basic validation
-    "__tests__/components/AuthAwareLayout-test.tsx", // Skip 60+ second timeout test  
-  ],
-  
+  testPathIgnorePatterns: ["/node_modules/"],
+
   // Minimal transforms for speed - only essential modules
   transformIgnorePatterns: [
     "node_modules/(?!(react-native|@react-native|expo|@expo|uuid))",
   ],
-  
+
   // Use default jest-expo transforms for compatibility
   setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
-  
+
   // Constitutional Requirement: TypeScript validation before test execution
   globalSetup: "<rootDir>/jest.global-setup.js",
-  
+
   collectCoverageFrom: [
     "app/**/*.{ts,tsx}",
     "lib/**/*.{ts,tsx}",
@@ -43,7 +38,7 @@ module.exports = {
     "!**/*.test.{ts,tsx}",
     "!**/*.spec.{ts,tsx}",
   ],
-  
+
   // Coverage thresholds aligned with constitutional quality requirements
   coverageThreshold: {
     global: {
@@ -73,47 +68,42 @@ module.exports = {
     //   statements: 95,
     // },
   },
-  
+
   // Test environment configuration for constitutional compliance
   testEnvironment: "jsdom",
   testEnvironmentOptions: {
     // Ensure TypeScript strict mode compliance in test environment
     pretendToBeVisual: true,
   },
-  
+
   // Aggressive timeout settings for speed (T003a: <60 second target)
   testTimeout: 5000, // 5 seconds max per test (aggressive timeout for speed)
-  
+
   // Test result processors for constitutional reporting
-  reporters: [
-    "default",
-  ],
-  
+  reporters: ["default"],
+
   // Ensure tests run in TypeScript-validated environment
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json"],
-  testMatch: [
-    "**/__tests__/**/*.(ts|tsx|js)",
-    "**/*.(test|spec).(ts|tsx|js)",
-  ],
-  
+  testMatch: ["**/__tests__/**/*.(ts|tsx|js)", "**/*.(test|spec).(ts|tsx|js)"],
+
   // Module name mapping for path aliases and test infrastructure
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/$1",
     "^../../lib/test-utils/TestDevice$": "<rootDir>/lib/test-utils/TestDevice",
     "^../lib/test-utils/(.*)$": "<rootDir>/lib/test-utils/$1",
   },
-  
+
   // Setup files for test environment
   // setupFiles: [
   //   "<rootDir>/jest.polyfills.js"
   // ],
-  
+
   // Module resolution configuration
   resolver: undefined, // Use default Jest resolver
-  
+
   // Ensure proper handling of ES modules
-  extensionsToTreatAsEsm: ['.ts', '.tsx'],
-  
+  extensionsToTreatAsEsm: [".ts", ".tsx"],
+
   // Enhanced error handling - minimal output for speed
   verbose: false, // Disable verbose output for speed
   errorOnDeprecated: false, // Allow deprecated warnings to not slow down tests

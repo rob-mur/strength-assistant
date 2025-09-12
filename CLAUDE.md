@@ -230,3 +230,49 @@ Constitutional compliance achieved when:
 - **CI/CD Pipeline**: Fail builds when test command exit code is non-zero
 - **Development Validation**: Always check exit code before proceeding with implementation
 - **Constitutional Compliance**: Exit code validation is mandatory for all test governance
+
+### Amendment v2.6.0: Task Completion Validation (ACTIVE)
+**Enacted**: 2025-09-12 | **Effective Immediately**
+
+#### Task Completion Validation Requirements
+- **Mandatory Test Expectation Declaration**: EVERY task completion MUST include explicit prediction of test outcome (PASS/FAIL) with detailed reasoning
+- **Post-Task Validation Execution**: MUST execute `devbox run test; echo "Exit code: $?"` and document results
+- **Rapid Test Performance**: Test suite MUST complete in <60 seconds for constitutional compliance
+- **Skip Pattern Prohibition**: Test skipping FORBIDDEN without explicit constitutional justification
+
+#### Task Completion Protocol
+1. **Pre-Completion Declaration**:
+   ```markdown
+   ## Task Completion Validation (Amendment v2.6.0)
+   **Expected Test Outcome**: [PASS/FAIL] - [Detailed reasoning]
+   **Reasoning**: [Why tests will pass/fail based on changes made]
+   ```
+
+2. **Validation Execution**:
+   ```bash
+   devbox run test
+   echo "Exit code: $?"
+   ```
+
+3. **Results Documentation**:
+   ```markdown
+   **Actual Result**: [PASS/FAIL] - Exit code: [0/1]
+   **Performance**: [X seconds] (Target: <60s)
+   **Prediction Accuracy**: [CORRECT/INCORRECT]
+   ```
+
+#### Enforcement Mechanisms
+- **Task Completion Blocking**: Tasks cannot be marked complete without proper validation format
+- **Performance Monitoring**: Test execution time tracked and optimized
+- **Learning Loop**: Prediction accuracy tracked for continuous improvement
+- **Constitutional Integration**: Extends Amendment v2.5.0 binary exit code framework
+
+#### Success Validation
+Constitutional compliance achieved when:
+- ✅ All task completions include test expectation declarations
+- ✅ Post-task test validation consistently executed with results documented
+- ✅ Test suite performance meets <60 second target consistently
+- ✅ Zero test skips without constitutional justification
+- ✅ Prediction accuracy improves through learning feedback loop
+
+**ENFORCEMENT STATUS**: ACTIVE - All task completion validation requirements in effect immediately
