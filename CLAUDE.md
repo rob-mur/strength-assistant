@@ -116,3 +116,33 @@ This is a React Native Expo app built with TypeScript, using file-based routing 
 - **TypeScript Validator**: `src/typescript/TypeScriptValidator.ts`
 - **Compliance Validation**: Automated constitutional requirement checking
 - **Enforcement Mechanisms**: Pre-commit hooks, CI pipelines, Jest global setup
+
+## 🚨 CURRENT CRITICAL STATUS (Amendment v2.3.0)
+
+### Test Suite Constitutional Violation
+**CRITICAL ISSUE**: `devbox run test` is NOT passing, violating the constitutional requirement that "devbox run test MUST pass completely before any commit"
+
+**Current Status**:
+- ✅ TypeScript compilation validation working (constitutional check passes)
+- ❌ **80+ Jest tests failing** - this blocks all constitutional compliance
+- ❌ Missing test infrastructure: `TestDevice` and `TestApp` classes
+- ❌ Component test timeouts in `AuthAwareLayout` tests
+- 🚨 **Cannot commit until all tests pass**
+
+**Required Actions**:
+1. **Priority 1**: Implement missing `lib/test-utils/TestDevice.ts`
+2. **Priority 1**: Implement missing `lib/test-utils/TestApp.ts`  
+3. **Priority 2**: Fix component test timeout issues
+4. **Priority 3**: Ensure `devbox run test` passes 100%
+
+**Test Infrastructure Contracts**: Available in `specs/001-we-are-actually/contracts/`
+- `test-infrastructure.ts` - TestDevice interface specification
+- `jest-validation.ts` - Jest validation requirements
+- `test-repair.ts` - Systematic test repair tracking
+
+### Amendment v2.3.0: Enhanced Test Governance
+Extends constitutional requirements to include:
+- **Jest Test Passage**: All Jest tests MUST pass before commits
+- **Test Infrastructure Requirements**: Missing test utilities must be implemented before dependent tests
+- **Systematic Repair Tracking**: All failing tests must be catalogued and systematically repaired
+- **Zero Test Regressions**: No new failing tests allowed in main branch

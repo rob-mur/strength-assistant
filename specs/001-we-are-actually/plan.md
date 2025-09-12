@@ -1,7 +1,9 @@
-# Implementation Plan: Jest Test Suite Repair & Constitutional Enhancement
+# Implementation Plan: Test Infrastructure Repair & Constitutional Compliance
 
 **Branch**: `001-we-are-actually` | **Date**: 2025-01-15 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/home/rob/Documents/Github/strength-assistant/specs/001-we-are-actually/spec.md`
+
+**CRITICAL STATUS UPDATE**: User has identified that `devbox run test` is NOT passing, violating constitutional requirement. Current failing tests include missing TestDevice/TestApp infrastructure and timeout issues. The constitutional amendment for TypeScript validation is working, but tests must pass completely for constitutional compliance.
 
 ## Execution Flow (/plan command scope)
 ```
@@ -29,54 +31,58 @@
 - Phase 3-4: Implementation execution (manual or via tools)
 
 ## Summary
-Fix failing Jest tests in the test suite and enhance the constitution to prevent regression. While the TypeScript constitutional amendment successfully enforced TypeScript compilation, 80 failing Jest tests remain that need repair. Additionally, update the constitution to include Jest test success validation to prevent future test failures from being overlooked.
+**PRIMARY CONSTITUTIONAL CRISIS**: The test suite is failing with 80+ tests requiring immediate repair to meet constitutional requirement that "devbox run test MUST pass completely before any commit". The failing tests need missing test infrastructure (TestDevice, TestApp) and timeout issue resolution. While TypeScript constitutional validation is working, full test passage is required for constitutional compliance.
+
+**SECONDARY FEATURE**: Migrate from Firebase to Supabase for offline-first storage with automatic cloud sync, maintaining existing functionality while fixing test infrastructure.
 
 ## Technical Context
 **Language/Version**: TypeScript/JavaScript (React Native with Expo)  
-**Primary Dependencies**: Jest (testing), React Native Testing Library, TypeScript compiler (tsc), ESLint, Prettier, Expo  
-**Storage**: Local file system (test files, Jest configuration, constitutional amendments)  
-**Testing**: Jest with React Native Testing Library, `devbox run test` pipeline includes TypeScript + Jest validation  
+**Primary Dependencies**: Jest (testing), React Native Testing Library, TypeScript compiler (tsc), ESLint, Prettier, Expo, Firebase (current), Supabase (migration target)  
+**Storage**: Firebase (current) → Supabase (target), local-first persistence with Legend State, AsyncStorage for device storage  
+**Testing**: Jest with React Native Testing Library, `devbox run test` pipeline, contract/integration/unit test structure  
 **Target Platform**: React Native cross-platform (iOS, Android, Web) + CI/CD pipeline  
-**Project Type**: mobile - React Native app requiring comprehensive test suite validation  
-**Performance Goals**: All tests must pass consistently, Jest execution time <2 minutes  
-**Constraints**: Must maintain backward compatibility with existing test files while ensuring 100% test passage  
-**Scale/Scope**: ~373 existing tests across 30 test suites, with 80 currently failing that need immediate repair  
+**Project Type**: mobile - React Native app with comprehensive test infrastructure requirements  
+**Performance Goals**: All tests must pass consistently, Jest execution time <2 minutes, immediate UI responsiveness for local operations  
+**Constraints**: Must maintain backward compatibility with existing app functionality, zero data loss during migration, offline-capable with automatic sync  
+**Scale/Scope**: ~373 existing tests across 30 test suites, currently 80+ failing tests requiring immediate repair to meet constitutional requirements
 
-**Current Issue**: The constitutional amendment for TypeScript compilation succeeded but left 80 failing Jest tests. These failures violate the constitutional principle that "`devbox run test` MUST pass completely before any commit" and need immediate resolution.
+**Current Issue**: The constitutional amendment for TypeScript compilation succeeded but left 80+ failing Jest tests. These failures violate the constitutional principle that "`devbox run test` MUST pass completely before any commit" and need immediate resolution.
 
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
 **Simplicity**:
 - Projects: 1 (single React Native app with test infrastructure repair)
-- Using framework directly? Yes - using Jest, TypeScript, and React Native Testing Library directly
-- Single data model? Yes - Test repair entities and constitutional amendment tracking
-- Avoiding patterns? Yes - no complex testing abstractions, direct test fixes
+- Using framework directly? ✅ Yes - using Jest, TypeScript, and React Native Testing Library directly
+- Single data model? ✅ Yes - Test repair entities and Exercise/User data models
+- Avoiding patterns? ✅ Yes - no complex testing abstractions, direct test fixes
 
 **Architecture**:
 - EVERY feature as library? N/A - this is infrastructure/testing repair, not user features
 - Libraries listed: N/A - repairing existing test infrastructure
 - CLI per library: N/A - leveraging existing `devbox run test` command
-- Library docs: N/A - updating constitution and testing docs only
+- Library docs: N/A - updating CLAUDE.md and constitutional documentation only
 
 **Testing (NON-NEGOTIABLE)**:
-- RED-GREEN-Refactor cycle enforced? ✅ This plan addresses the critical issue: ALL tests MUST pass
-- `devbox run test` MUST pass completely before any commit? ✅ This is the core problem being solved
-- Git commits show tests before implementation? ✅ Will fix failing tests before any new features
-- Order: Contract→Integration→E2E→Unit strictly followed? ✅ Maintained in repair approach
-- Real dependencies used? ✅ No mocking changes - fixing actual test failures
-- Integration tests for: Jest validation, test pipeline integrity ✅ Will add validation infrastructure
-- FORBIDDEN: Committing code with failing tests ✅ Core constitutional enhancement
+- ❌ **CRITICAL FAILURE**: `devbox run test` is NOT passing (80+ failing tests)
+- ✅ TypeScript compilation enforced (constitutional amendment working)
+- ❌ Tests failing due to missing infrastructure (TestDevice, TestApp)
+- ❌ Component tests timing out, violating execution requirements
+- 🚨 **CONSTITUTIONAL VIOLATION**: Cannot commit with failing tests
+- ✅ RED-GREEN-Refactor cycle will be enforced during repair
+- ✅ Order: Contract→Integration→E2E→Unit maintained in repair approach
+- ✅ Real dependencies used - no mocking changes, fixing actual test failures
+- ✅ Integration tests for: Jest validation, test pipeline integrity
 
 **Observability**:
-- Structured logging included? ✅ Jest provides detailed test failure reporting
-- Frontend logs → backend? N/A - this is development/testing tooling
-- Error context sufficient? ✅ Jest failures provide file/line context
+- ✅ Structured logging included - Jest provides detailed test failure reporting
+- N/A Frontend logs → backend (this is development/testing tooling)
+- ✅ Error context sufficient - Jest failures provide file/line context
 
 **Versioning**:
-- Version number assigned? Constitutional amendment v2.3.0 (adding Jest validation)
-- BUILD increments on every change? N/A - not changing user-facing functionality  
-- Breaking changes handled? ✅ Backward compatible test repairs and constitutional updates
+- ✅ Version number assigned: Constitutional amendment v2.3.0 (adding Jest validation)
+- N/A BUILD increments (not changing user-facing functionality)  
+- ✅ Breaking changes handled - backward compatible test repairs and constitutional updates
 
 ## Project Structure
 
@@ -187,19 +193,29 @@ ios/ or android/
 *This section describes what the /tasks command will do - DO NOT execute during /plan*
 
 **Task Generation Strategy**:
-- Load `/templates/tasks-template.md` as base
-- Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
-- Each contract → contract test task [P]
-- Each entity → model creation task [P] 
-- Each user story → integration test task
-- Implementation tasks to make tests pass
+- **CRITICAL PATH**: Prioritize tasks to fix the 80+ failing tests and achieve constitutional compliance
+- Generate tasks from contract interfaces and data model entities
+- TestDevice implementation → highest priority (blocks most tests)
+- TestApp implementation → high priority (integration tests)
+- Component test timeout fixes → medium priority (specific component failures)
+- Constitutional enforcement enhancement → lower priority (once tests pass)
 
 **Ordering Strategy**:
-- TDD order: Tests before implementation 
-- Dependency order: Models before services before UI
-- Mark [P] for parallel execution (independent files)
+- **Emergency Repair Order**: Constitutional violations first (failing tests must pass)
+- **TDD Order**: Implement test infrastructure before dependent tests run
+- **Dependency Order**: TestDevice → TestApp → Component fixes → Constitutional enhancements
+- **Parallel Execution**: Mark independent infrastructure tasks with [P]
+- **Validation Gates**: Each task must result in fewer failing tests
 
-**Estimated Output**: 25-30 numbered, ordered tasks in tasks.md
+**Critical Task Categories**:
+1. **Test Infrastructure Implementation** (Tasks 1-10): Implement missing TestDevice/TestApp
+2. **Component Test Fixes** (Tasks 11-15): Fix timeout issues in existing tests  
+3. **Constitutional Compliance** (Tasks 16-20): Enhance Jest validation and enforcement
+4. **Validation & Cleanup** (Tasks 21-25): Ensure `devbox run test` passes completely
+
+**Estimated Output**: 20-25 numbered, ordered tasks with emergency repair focus
+
+**SUCCESS CRITERION**: `devbox run test` must pass 100% by task completion
 
 **IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
 
@@ -223,18 +239,18 @@ ios/ or android/
 *This checklist is updated during execution flow*
 
 **Phase Status**:
-- [ ] Phase 0: Research complete (/plan command)
-- [ ] Phase 1: Design complete (/plan command)
-- [ ] Phase 2: Task planning complete (/plan command - describe approach only)
+- [x] Phase 0: Research complete (/plan command)
+- [x] Phase 1: Design complete (/plan command)
+- [x] Phase 2: Task planning complete (/plan command - describe approach only)
 - [ ] Phase 3: Tasks generated (/tasks command)
 - [ ] Phase 4: Implementation complete
 - [ ] Phase 5: Validation passed
 
 **Gate Status**:
-- [ ] Initial Constitution Check: PASS
-- [ ] Post-Design Constitution Check: PASS
-- [ ] All NEEDS CLARIFICATION resolved
-- [ ] Complexity deviations documented
+- [x] Initial Constitution Check: PASS (with noted violations requiring repair)
+- [x] Post-Design Constitution Check: PASS (constitutional violations documented and prioritized)
+- [x] All NEEDS CLARIFICATION resolved
+- [x] Complexity deviations documented
 
 ---
 *Based on Constitution v2.1.1 - See `/memory/constitution.md`*
