@@ -1,7 +1,7 @@
-# Implementation Plan: Local First Storage with Backup
+# Implementation Plan: [FEATURE]
 
-**Branch**: `001-we-are-actually` | **Date**: 2025-09-12 | **Spec**: [spec.md](./spec.md)
-**Input**: Feature specification from `/specs/001-we-are-actually/spec.md`
+**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
+**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
 
 ## Execution Flow (/plan command scope)
 ```
@@ -29,56 +29,51 @@
 - Phase 3-4: Implementation execution (manual or via tools)
 
 ## Summary
-Migrate from Firebase to Supabase while maintaining local-first storage patterns for the strength assistant app. Focus on addressing test suite memory leaks and ensuring constitutional compliance where `devbox run test` returns binary 0/1 status for complete pass/fail verification.
+[Extract from feature spec: primary requirement + technical approach from research]
 
 ## Technical Context
-**Language/Version**: TypeScript 5.8.3, React Native 0.79.5, Node.js latest (via devbox), Expo 53.0.22  
-**Primary Dependencies**: React Native, Expo Router, Firebase (current), Supabase (migration target), Legend State, React Native Paper  
-**Storage**: Migration from Firebase Firestore to Supabase PostgreSQL with Legend State local-first sync engine  
-**Testing**: Jest 29.7.0 with React Native Testing Library, devbox test runner with memory leak detection, constitutional TypeScript validation  
-**Target Platform**: Cross-platform (iOS, Android, Web) with React Native/Expo  
-**Project Type**: mobile - React Native app with offline-first architecture  
-**Performance Goals**: Immediate local operations, background sync, 80+ passing Jest tests, memory leak elimination, **devbox run test <60 seconds execution**  
-**Constraints**: Memory leaks in test suite causing failures, constitutional requirement for binary 0/1 test status, offline-first user experience  
-**Scale/Scope**: Simple exercise data model, focus on migration infrastructure and test suite stabilization
-
-**User Feedback Integration**: 
-1. Test suite memory leaks detected by Jest leak detection
-2. `devbox run test` constitutional compliance requires binary 0/1 exit status
-3. Test constitution needs updating to validate complete pass/fail scenarios
+**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
+**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
+**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
+**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
+**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
+**Project Type**: [single/web/mobile - determines source structure]  
+**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
+**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
+**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
 
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
 **Simplicity**:
-- Projects: 1 (React Native app - mobile architecture - PASS)
-- Using framework directly? Yes (Expo, React Native, Firebase, Supabase direct usage - PASS)
-- Single data model? Yes (Exercise entity without DTOs - PASS)
-- Avoiding patterns? Yes (existing ExerciseRepo pattern justified for data layer abstraction - PASS)
+- Projects: [#] (max 3 - e.g., api, cli, tests)
+- Using framework directly? (no wrapper classes)
+- Single data model? (no DTOs unless serialization differs)
+- Avoiding patterns? (no Repository/UoW without proven need)
 
 **Architecture**:
-- EVERY feature as library? VIOLATION - This is primarily infrastructure/migration work within existing app
-- Libraries listed: Test infrastructure utilities (TestDevice, TestApp), constitutional validation
-- CLI per library: N/A for this migration feature
-- Library docs: N/A for internal migration work
+- EVERY feature as library? (no direct app code)
+- Libraries listed: [name + purpose for each]
+- CLI per library: [commands with --help/--version/--format]
+- Library docs: llms.txt format planned?
 
 **Testing (NON-NEGOTIABLE)**:
-- RED-GREEN-Refactor cycle enforced? YES - tests currently failing, need fixing before implementation
-- Git commits show tests before implementation? YES - constitutional requirement active
-- Order: Contract→Integration→E2E→Unit strictly followed? YES - will follow for new test infrastructure
-- Real dependencies used? YES - existing Firebase/Supabase real connections in tests
-- Integration tests for: YES - migration requires contract testing between storage layers
-- FORBIDDEN: Implementation before test, skipping RED phase - ENFORCED
+- RED-GREEN-Refactor cycle enforced? (test MUST fail first)
+- Git commits show tests before implementation?
+- Order: Contract→Integration→E2E→Unit strictly followed?
+- Real dependencies used? (actual DBs, not mocks)
+- Integration tests for: new libraries, contract changes, shared schemas?
+- FORBIDDEN: Implementation before test, skipping RED phase
 
 **Observability**:
-- Structured logging included? EXISTING - React Native exception handler and logging present
-- Frontend logs → backend? N/A - mobile app with cloud sync
-- Error context sufficient? YES - existing error handling patterns
+- Structured logging included?
+- Frontend logs → backend? (unified stream)
+- Error context sufficient?
 
 **Versioning**:
-- Version number assigned? 1.0.0 (MAJOR.MINOR.BUILD format - PASS)
-- BUILD increments on every change? NEEDS IMPLEMENTATION
-- Breaking changes handled? YES - this IS the migration plan for breaking changes
+- Version number assigned? (MAJOR.MINOR.BUILD)
+- BUILD increments on every change?
+- Breaking changes handled? (parallel tests, migration plan)
 
 ## Project Structure
 
@@ -130,7 +125,7 @@ ios/ or android/
 └── [platform-specific structure]
 ```
 
-**Structure Decision**: Option 3 (Mobile + API) - React Native Expo app with existing architecture - preserving current structure
+**Structure Decision**: [DEFAULT to Option 1 unless Technical Context indicates web/mobile app]
 
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context** above:
@@ -190,25 +185,18 @@ ios/ or android/
 
 **Task Generation Strategy**:
 - Load `/templates/tasks-template.md` as base
-- **Priority 1**: Fix test suite memory leaks and binary exit code enforcement
-- **Priority 2**: Implement missing test infrastructure (TestDevice, TestApp)
-- **Priority 3**: Update scripts/test.sh for constitutional compliance
-- Each failing test → systematic repair task with memory constraints
-- Each missing contract → implementation task with sequential processing
-- Constitutional enforcement → validation and amendment tasks
+- Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
+- Each contract → contract test task [P]
+- Each entity → model creation task [P] 
+- Each user story → integration test task
+- Implementation tasks to make tests pass
 
 **Ordering Strategy**:
-- **Sequential Processing**: All tasks must run sequentially to prevent memory exhaustion
-- **Constitutional Order**: Test infrastructure before test fixes before feature work
-- **Memory-Safe Implementation**: Tasks designed to work within 32GB memory limits
-- **Binary Validation**: Every phase must validate `devbox run test` returns 0 (pass) or 1 (fail)
+- TDD order: Tests before implementation 
+- Dependency order: Models before services before UI
+- Mark [P] for parallel execution (independent files)
 
-**User Feedback Integration**:
-1. **Binary Exit Code Task**: Update test script to return proper exit codes for constitutional validation
-2. **Memory Leak Resolution**: Implement systematic test cleanup and memory management
-3. **Constitutional Compliance**: Tasks that only complete when `devbox run test` returns 0
-
-**Estimated Output**: 15-20 numbered, sequential tasks in tasks.md focusing on test infrastructure and constitutional compliance
+**Estimated Output**: 25-30 numbered, ordered tasks in tasks.md
 
 **IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
 
@@ -224,25 +212,26 @@ ios/ or android/
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
-| Library-first architecture | Infrastructure/migration work within existing React Native app | Creating separate libraries for migration scripts would add unnecessary complexity and deviate from React Native architectural patterns |
+| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
+| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
 
 
 ## Progress Tracking
 *This checklist is updated during execution flow*
 
 **Phase Status**:
-- [x] Phase 0: Research complete (/plan command)
-- [x] Phase 1: Design complete (/plan command)
-- [x] Phase 2: Task planning complete (/plan command - describe approach only)
+- [ ] Phase 0: Research complete (/plan command)
+- [ ] Phase 1: Design complete (/plan command)
+- [ ] Phase 2: Task planning complete (/plan command - describe approach only)
 - [ ] Phase 3: Tasks generated (/tasks command)
 - [ ] Phase 4: Implementation complete
 - [ ] Phase 5: Validation passed
 
 **Gate Status**:
-- [x] Initial Constitution Check: PASS (with justified complexity deviation)
-- [x] Post-Design Constitution Check: PASS
-- [x] All NEEDS CLARIFICATION resolved
-- [x] Complexity deviations documented
+- [ ] Initial Constitution Check: PASS
+- [ ] Post-Design Constitution Check: PASS
+- [ ] All NEEDS CLARIFICATION resolved
+- [ ] Complexity deviations documented
 
 ---
 *Based on Constitution v2.1.1 - See `/memory/constitution.md`*
