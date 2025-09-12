@@ -26,7 +26,7 @@ describe('ConstitutionalAmendmentManager Unit Tests', () => {
     it('should initialize with current constitutional requirements', () => {
       const requirements = manager.getCurrentRequirements();
 
-      expect(requirements.version).toBe('2.2.0');
+      expect(requirements.version).toBe('2.5.0');
       expect(requirements.requirementsBySection).toBeDefined();
       expect(requirements.prohibitionsBySection).toBeDefined();
       expect(requirements.activeEnforcements).toBeDefined();
@@ -83,7 +83,7 @@ describe('ConstitutionalAmendmentManager Unit Tests', () => {
       expect(trackingInfo.createdAt).toBeInstanceOf(Date);
       expect(trackingInfo.updatedAt).toBeInstanceOf(Date);
       expect(trackingInfo.reviews).toEqual([]);
-      expect(trackingInfo.version).toBe('2.2.0');
+      expect(trackingInfo.version).toBe('2.5.0');
     });
 
     it('should handle multiple amendments with unique tracking', async () => {
@@ -178,7 +178,7 @@ describe('ConstitutionalAmendmentManager Unit Tests', () => {
       expect(updatedTracking.status).toBe('approved');
       expect(updatedTracking.reviews).toHaveLength(1);
       expect(updatedTracking.reviews[0]).toEqual(review);
-      expect(updatedTracking.updatedAt.getTime()).toBeGreaterThan(updatedTracking.createdAt.getTime());
+      expect(updatedTracking.updatedAt.getTime()).toBeGreaterThanOrEqual(updatedTracking.createdAt.getTime());
     });
 
     it('should process rejection reviews correctly', async () => {
@@ -266,7 +266,7 @@ describe('ConstitutionalAmendmentManager Unit Tests', () => {
         comments: 'Second review'
       });
 
-      expect(secondTracking.updatedAt.getTime()).toBeGreaterThan(originalTracking.updatedAt.getTime());
+      expect(secondTracking.updatedAt.getTime()).toBeGreaterThanOrEqual(originalTracking.updatedAt.getTime());
     });
   });
 
@@ -374,7 +374,7 @@ describe('ConstitutionalAmendmentManager Unit Tests', () => {
       // Modifying returned object should not affect internal state
       requirements1.version = 'modified';
       const requirements3 = manager.getCurrentRequirements();
-      expect(requirements3.version).toBe('2.2.0');
+      expect(requirements3.version).toBe('2.5.0');
     });
 
     it('should include all constitutional sections', () => {

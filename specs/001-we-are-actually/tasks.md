@@ -1,317 +1,177 @@
-# Tasks: Local First Storage with Backup Migration
+# Tasks: Local First Storage with Backup
 
 **Branch**: `001-we-are-actually` | **Generated**: 2025-09-12 | **Source**: [plan.md](./plan.md)
 **Input**: Design documents from `/home/rob/Documents/Github/strength-assistant/specs/001-we-are-actually/`
 **Prerequisites**: plan.md ✅, research.md ✅, data-model.md ✅, contracts/ ✅, quickstart.md ✅
 
 ## Tech Stack Summary
-- **Language**: TypeScript with React Native Expo
-- **Storage**: Supabase (PostgreSQL) + Legend State (local-first sync)
-- **Testing**: Jest with React Native Testing Library
-- **Architecture**: Mobile app with dual Firebase/Supabase backend support
-- **Critical**: Memory optimization required for `devbox run test` execution
+- **Language**: TypeScript 5.8.3, React Native 0.79.5, Expo 53.0.22
+- **Storage**: Firebase (current) → Supabase PostgreSQL + Legend State (local-first)
+- **Testing**: Jest 29.7.0, React Native Testing Library, Constitutional enforcement
+- **Architecture**: Mobile app with dual backend support and offline-first patterns
+- **Critical**: Sequential execution only (memory management), binary exit code validation
 
-## 🚨 PHASE 0: CRITICAL MEMORY OPTIMIZATION (Priority 0)
-**MUST COMPLETE FIRST** - These tasks address the memory crash in `devbox run test`
+## 🚨 CONSTITUTIONAL PRIORITY: Amendment v2.5.0 Compliance
+**MANDATORY**: All test validation must use exit code verification, not log parsing
 
-### Memory Analysis & Optimization
-- [ ] **T001** [P] Analyze AuthAwareLayout test memory usage in `__tests__/components/AuthAwareLayout.test.ts`
-- [ ] **T002** [P] Profile TypeScript integration pipeline memory in Jest configuration
-- [ ] **T003** [P] Optimize Jest configuration for single-threaded execution in `jest.config.js`
-- [ ] **T004** [P] Implement test cleanup protocols in `jest.setup.js`
+## Format: `[ID] Description` (Sequential Execution Only)
+- **Sequential processing**: All tasks run one at a time for memory safety
+- **Exit code validation**: Always verify `devbox run test` returns 0 or non-zero
+- Include exact file paths in descriptions
 
-### Test Infrastructure Foundation
-- [ ] **T005** [P] Create TestDevice class in `lib/test-utils/TestDevice.ts`
-- [ ] **T006** [P] Create TestApp class in `lib/test-utils/TestApp.ts`  
-- [ ] **T007** [P] Create test utilities directory structure `lib/test-utils/`
-- [ ] **T008** [P] Implement memory-optimized TestDevicePool in `lib/test-utils/TestDevicePool.ts`
+## Phase 3.1: Constitutional Compliance & Test Infrastructure
 
-## Critical Objective
-**Primary Goal**: Migrate from Firebase to Supabase with local-first storage architecture while maintaining constitutional test compliance and preventing memory exhaustion through sequential processing.
+### Setup Tasks
+- [ ] **T001** Update scripts/test.sh to properly propagate binary exit codes for constitutional compliance
+- [ ] **T002** Create lib/test-utils/ directory structure for missing test infrastructure components
+- [ ] **T003** Configure Jest for memory-optimized sequential test execution in jest.config.js
 
-## 🚨 MEMORY MANAGEMENT REQUIREMENTS
-- **SEQUENTIAL EXECUTION ONLY**: Tasks must NEVER run in parallel to prevent memory exhaustion
-- **Memory Budget**: Maximum 8GB per task, 32GB total system usage
-- **Task Isolation**: Complete one task before starting the next
-- **Garbage Collection**: Force GC between memory-intensive tasks
-- **Monitoring**: Log memory usage and warn at 6GB threshold
+### Performance Optimization (Critical <60 second target)
+- [ ] **T003a** Optimize Jest for speed: disable sourcemaps, reduce transformIgnorePatterns, cache optimization
+- [ ] **T003b** Implement smart test filtering: skip slow component tests for basic validation runs
+- [ ] **T003c** Optimize package.json scripts: parallel linting, faster TypeScript checks, cache npm ci
+- [ ] **T003d** Create fast-test mode: core validation only (TS + lint + critical tests < 30 seconds)
 
-## Execution Strategy
-- **Constitutional Compliance First**: Ensure all tests pass before feature work
-- **Sequential Processing**: Execute tasks one by one, never in parallel
-- **Local-First Foundation**: Implement offline-first architecture with Legend State
-- **Gradual Migration**: Feature flag approach for safe Firebase to Supabase transition
-- **Memory Safe**: Monitor and manage memory usage throughout implementation
+### Test Infrastructure Implementation (TDD) ⚠️ MUST COMPLETE BEFORE IMPLEMENTATION
+**CRITICAL: These components MUST exist before tests can run**
 
-## Task List (Sequential Execution Required)
+- [ ] **T004** Create TestDevice class implementation in lib/test-utils/TestDevice.ts
+- [ ] **T005** Create TestApp utility class in lib/test-utils/TestApp.ts
+- [ ] **T006** Create MockFactories collection in lib/test-utils/mocks/MockFactories.ts
+- [ ] **T007** Create TestDataBuilders in lib/test-utils/builders/TestDataBuilders.ts
+- [ ] **T008** Create Firebase service mocks in lib/test-utils/mocks/FirebaseMocks.ts
+- [ ] **T009** Create Supabase service mocks in lib/test-utils/mocks/SupabaseMocks.ts
 
-**⚠️ CRITICAL**: Execute tasks ONE AT A TIME. Never run tasks in parallel to prevent memory exhaustion.
+## Phase 3.2: Contract Tests (ONLY after infrastructure exists)
 
-## Phase 1: Constitutional Compliance (Memory: ~6GB total)
+- [ ] **T010** Contract test for TestDevice interface in __tests__/contracts/test-infrastructure.test.ts
+- [ ] **T011** Contract test for storage backend interface in __tests__/contracts/storage-interface.test.ts
+- [ ] **T012** Contract test for constitutional amendment in __tests__/contracts/constitutional-amendment.test.ts
+- [ ] **T013** Contract test for TypeScript validation in __tests__/contracts/typescript-validation.test.ts
+- [ ] **T014** Contract test for Jest validation in __tests__/contracts/jest-validation.test.ts
+- [ ] **T015** Contract test for test repair interface in __tests__/contracts/test-repair.test.ts
+- [ ] **T016** Contract test for Legend State config in __tests__/contracts/legend-state-config.test.ts
 
-### T001 - Fix Test Infrastructure - TestDevice Implementation
-**Status**: pending  
-**Estimated Duration**: 2 hours  
-**Memory Estimate**: ~3GB
-**Priority**: Critical (blocking 80 failing tests)  
-**Description**: Implement missing TestDevice class to unblock constitutional test failures
-**Path**: `lib/test-utils/TestDevice.ts`
-**Dependencies**: None
-**Contract**: Based on `contracts/test-infrastructure.ts`
-**Acceptance Criteria**:
-- Create `lib/test-utils/` directory if not exists
-- Implement complete TestDevice class with device simulation
-- Support network status control and authentication state management
-- Include exercise CRUD operations and sync status tracking
-- Add proper cleanup and initialization methods
-- Ensure TypeScript strict mode compliance
+## Phase 3.3: Integration Tests (ONLY after contracts exist)
 
-### T002 - Fix Test Infrastructure - TestApp Implementation  
-**Status**: pending  
-**Estimated Duration**: 1.5 hours
-**Memory Estimate**: ~2GB
-**Priority**: Critical (blocking 80 failing tests)
-**Description**: Implement missing TestApp class for app context mocking
-**Path**: `lib/test-utils/TestApp.ts`
-**Dependencies**: T001
-**Contract**: Based on `contracts/test-infrastructure.ts`
-**Acceptance Criteria**:
-- Implement TestApp class with app context simulation
-- Support mock navigation and theme providers
-- Include authentication context mocking
-- Add proper setup and teardown methods
-- Ensure compatibility with existing test files
+- [ ] **T017** Integration test for anonymous local-first storage in __tests__/integration/anonymous-local-first.test.ts
+- [ ] **T018** Integration test for authenticated cross-device sync in __tests__/integration/auth-cross-device-sync.test.ts
+- [ ] **T019** Integration test for offline-to-online sync in __tests__/integration/offline-to-online-sync.test.ts
+- [ ] **T020** Integration test for Firebase to Supabase migration in __tests__/integration/firebase-supabase-migration.test.ts
 
-### T003 - Validate Constitutional Compliance
-**Status**: pending  
-**Estimated Duration**: 30 minutes
-**Memory Estimate**: ~6GB (test execution)
-**Priority**: Critical (constitutional gate)
-**Description**: Ensure all tests pass before proceeding with feature implementation
-**Command**: `devbox run test`
-**Dependencies**: T001, T002
-**Acceptance Criteria**:
-- All 80 tests must pass without failures
-- TypeScript compilation must succeed (`npx tsc --noEmit`)
-- No test timeouts or infrastructure errors
-- Constitutional requirement satisfied before feature work
+## Phase 3.4: Constitutional Validation Gate
+**MANDATORY GATE: Must pass before ANY feature implementation**
 
-## Phase 2: Local-First Storage Foundation (Memory: ~12GB total)
+- [ ] **T021** Validate constitutional compliance with exit code verification: `devbox run test; echo "Exit code: $?"`
 
-### T004 - Install and Configure Legend State
-**Status**: pending  
-**Estimated Duration**: 45 minutes
-**Memory Estimate**: ~2GB
-**Priority**: High (local-first foundation)
-**Description**: Install Legend State and configure for local-first data persistence
-**Path**: `package.json`, `lib/data/legend-state/config.ts`
-**Dependencies**: T003 (constitutional gate passed)
-**Contract**: Based on `contracts/legend-state-config.ts`
-**Acceptance Criteria**:
-- Install @legendapp/state and related dependencies
-- Configure Legend State for React Native with persistence
-- Set up basic store configuration with sync capabilities
-- Configure TypeScript types for Legend State
-- Ensure compatibility with existing Firebase data layer
+## Phase 3.5: Core Implementation (ONLY after tests are failing)
 
-### T005 - Implement Enhanced Exercise Model
-**Status**: pending  
-**Estimated Duration**: 1 hour
-**Memory Estimate**: ~2GB
-**Priority**: High (core data model)
-**Description**: Enhance existing Exercise model with local-first and sync capabilities
-**Path**: `lib/models/Exercise.ts`
-**Dependencies**: T004
-**Contract**: Based on `data-model.md` Exercise Entity specification
-**Acceptance Criteria**:
-- Add syncStatus, syncedAt, deviceOrigin, userId fields to Exercise interface
-- Implement validation rules for new fields
-- Add state transition logic for sync states
-- Ensure backward compatibility with existing Exercise usage
-- Update TypeScript types throughout codebase
+### Models and Data Layer
+- [ ] **T022** Enhance Exercise model with sync capabilities in lib/models/Exercise.ts
+- [ ] **T023** Create SyncOperation model in lib/models/SyncOperation.ts
+- [ ] **T024** Create UserAccount model enhancements in lib/models/UserAccount.ts
 
-### T006 - Implement Sync Operation Tracking
-**Status**: pending  
-**Estimated Duration**: 1.5 hours
-**Memory Estimate**: ~3GB
-**Priority**: High (sync management)
-**Description**: Create sync operation tracking system for conflict resolution
-**Path**: `lib/models/SyncOperation.ts`, `lib/services/SyncManager.ts`
-**Dependencies**: T005
-**Contract**: Based on `data-model.md` Sync Operation Entity specification
-**Acceptance Criteria**:
-- Implement SyncOperation interface with all fields and validation
-- Create SyncManager service for tracking and resolving conflicts
-- Implement last-write-wins conflict resolution strategy
-- Add retry logic with exponential backoff
-- Include sync queue management with persistence
+### Services and Storage
+- [ ] **T025** Install and configure Legend State in package.json and lib/data/legend-state/config.ts
+- [ ] **T026** Implement SupabaseStorage backend in lib/data/supabase/SupabaseStorage.ts
+- [ ] **T027** Implement SyncManager service in lib/services/SyncManager.ts
+- [ ] **T028** Update ExerciseRepo with dual backend support in lib/repo/ExerciseRepo.ts
 
-### T007 - Implement Local-First Exercise Operations
-**Status**: pending  
-**Estimated Duration**: 2 hours
-**Memory Estimate**: ~4GB
-**Priority**: High (core functionality)
-**Description**: Implement offline-first exercise CRUD operations with immediate UI feedback
-**Path**: `lib/services/ExerciseService.ts`, `lib/hooks/useExercises.ts`
-**Dependencies**: T006
-**Acceptance Criteria**:
-- Modify ExerciseService to prioritize local operations
-- Implement immediate local persistence with Legend State
-- Queue sync operations for background processing
-- Update useExercises hook to use local-first data
-- Ensure <50ms response time for local operations
-- Maintain compatibility with existing UI components
+### Feature Flag System
+- [ ] **T029** Implement FeatureFlagService in lib/services/FeatureFlagService.ts
+- [ ] **T030** Create StorageManager with backend delegation in lib/data/StorageManager.ts
 
-## Phase 3: Supabase Backend Integration (Memory: ~10GB total)
+## Phase 3.6: Constitutional Framework Implementation
 
-### T008 - Setup Supabase Client Configuration
-**Status**: pending  
-**Estimated Duration**: 1 hour
-**Memory Estimate**: ~2GB
-**Priority**: High (cloud backend)
-**Description**: Configure Supabase client for React Native with proper authentication
-**Path**: `lib/data/supabase/client.ts`, `lib/data/supabase/config.ts`
-**Dependencies**: T007
-**Acceptance Criteria**:
-- Install @supabase/supabase-js for React Native
-- Configure Supabase client with environment variables
-- Set up authentication with email/password and anonymous modes
-- Configure real-time subscriptions for exercise data
-- Implement proper error handling and retry logic
+- [ ] **T031** Implement ConstitutionalAmendmentManager in lib/constitution/ConstitutionalAmendmentManager.ts
+- [ ] **T032** Implement TypeScriptValidator in lib/typescript/TypeScriptValidator.ts
+- [ ] **T033** Update pre-commit hooks for exit code validation in .husky/pre-commit
+- [ ] **T034** Create TestRepairManager for systematic test fixing in lib/test-utils/TestRepairManager.ts
 
-### T009 - Implement Supabase Storage Backend
-**Status**: pending  
-**Estimated Duration**: 2.5 hours
-**Memory Estimate**: ~4GB
-**Priority**: High (backend implementation)
-**Description**: Implement complete Supabase backend following storage interface contract
-**Path**: `lib/data/supabase/SupabaseStorage.ts`
-**Dependencies**: T008
-**Contract**: Based on `contracts/storage-interface.ts`
-**Acceptance Criteria**:
-- Implement all StorageBackend interface methods for Supabase
-- Support exercise CRUD operations with proper error handling
-- Implement user authentication methods (email, anonymous)
-- Add real-time subscription support for exercises
-- Include sync state management and conflict resolution
-- Ensure TypeScript strict compliance
+## Phase 3.7: UI Integration and Sync Status
 
-### T010 - Implement Feature Flag System
-**Status**: pending  
-**Estimated Duration**: 1.5 hours
-**Memory Estimate**: ~2GB
-**Priority**: High (migration safety)
-**Description**: Implement feature flag system for safely switching between Firebase and Supabase
-**Path**: `lib/services/FeatureFlagService.ts`, `lib/data/StorageManager.ts`
-**Dependencies**: T009
-**Contract**: Based on `contracts/storage-interface.ts` FeatureFlags interface
-**Acceptance Criteria**:
-- Implement feature flag service with USE_SUPABASE_DATA environment variable
-- Create StorageManager that delegates to active backend
-- Ensure seamless switching between Firebase and Supabase
-- Add data consistency validation methods
-- Implement runtime backend switching without app restart
+- [ ] **T035** Create SyncStatusIcon component in lib/components/SyncStatusIcon.tsx
+- [ ] **T036** Update exercise list UI with sync indicators in app/(tabs)/exercises/index.tsx
+- [ ] **T037** Update useExercises hook for local-first operations in lib/hooks/useExercises.ts
 
-### T011 - Implement Data Migration Utilities
-**Status**: pending  
-**Estimated Duration**: 2 hours
-**Memory Estimate**: ~5GB
-**Priority**: Medium (migration support)
-**Description**: Create utilities for migrating user data from Firebase to Supabase
-**Path**: `lib/services/MigrationService.ts`
-**Dependencies**: T010
-**Acceptance Criteria**:
-- Implement user data export from Firebase
-- Create Supabase data import with validation
-- Add data consistency checking between backends
-- Implement incremental migration for large datasets
-- Include rollback capabilities for failed migrations
-- Add progress tracking and error reporting
+## Phase 3.8: Migration and Performance
 
-## Phase 4: Sync Status and Polish (Memory: ~8GB total)
+- [ ] **T038** Implement MigrationService for Firebase to Supabase data transfer in lib/services/MigrationService.ts
+- [ ] **T039** Add performance monitoring in lib/utils/PerformanceMonitor.ts
+- [ ] **T040** Implement memory management utilities in lib/test-utils/MemoryMonitor.ts
 
-### T012 - Implement Sync Status Indicator
-**Status**: pending  
-**Estimated Duration**: 1 hour
-**Memory Estimate**: ~2GB
-**Priority**: Medium (user experience)
-**Description**: Add visual sync status indicator to show sync progress to users
-**Path**: `lib/components/SyncStatusIcon.tsx`, `app/(tabs)/exercises/index.tsx`
-**Dependencies**: T011
-**Acceptance Criteria**:
-- Create SyncStatusIcon component with pending/synced/error states
-- Integrate sync status into exercise list UI
-- Show real-time sync progress without blocking UI
-- Add accessibility support for sync status
-- Ensure consistent design with app theme
+## Phase 3.9: Final Validation and Polish
 
-### T013 - Performance Optimization and Testing
-**Status**: pending  
-**Estimated Duration**: 2 hours
-**Memory Estimate**: ~4GB
-**Priority**: Medium (performance goals)
-**Description**: Optimize performance and validate response time requirements
-**Path**: Various performance-critical files
-**Dependencies**: T012
-**Acceptance Criteria**:
-- Validate <50ms response time for local operations
-- Optimize Legend State configuration for performance
-- Implement efficient sync queue processing
-- Add performance monitoring and metrics
-- Validate memory usage stays within constitutional limits
+- [ ] **T041** Run comprehensive quickstart scenario validation from quickstart.md
+- [ ] **T042** Final constitutional compliance validation with exit code verification: `devbox run test; echo "Exit code: $?"`
+- [ ] **T043** Performance validation: verify <50ms local operations, <2s sync operations
+- [ ] **T044** Update project documentation with constitutional requirements
+- [ ] **T045** Create regression prevention monitoring script in scripts/monitor-test-regressions.sh
 
-### T014 - Integration Testing and Validation
-**Status**: pending  
-**Estimated Duration**: 1.5 hours
-**Memory Estimate**: ~6GB
-**Priority**: Medium (quality assurance)
-**Description**: Run comprehensive integration tests and validate quickstart scenarios
-**Command**: `devbox run test`, validate quickstart scenarios from `quickstart.md`
-**Dependencies**: T013
-**Acceptance Criteria**:
-- All constitutional tests must pass (`devbox run test`)
-- Execute all quickstart scenarios successfully
-- Validate offline/online functionality
-- Test multi-device sync scenarios
-- Verify feature flag switching works correctly
-- Confirm data migration utilities function properly
+## Dependencies (Sequential Chain)
+```
+Setup: T001 → T002 → T003
+Infrastructure: T003 → T004 → T005 → T006 → T007 → T008 → T009
+Contracts: T009 → T010 → T011 → T012 → T013 → T014 → T015 → T016
+Integration: T016 → T017 → T018 → T019 → T020
+Gate: T020 → T021 (MANDATORY PASS)
+Models: T021 → T022 → T023 → T024
+Services: T024 → T025 → T026 → T027 → T028
+Features: T028 → T029 → T030
+Constitution: T030 → T031 → T032 → T033 → T034
+UI: T034 → T035 → T036 → T037
+Migration: T037 → T038 → T039 → T040
+Validation: T040 → T041 → T042 → T043 → T044 → T045
+```
 
-## Memory Management Guidelines
+## Sequential Execution Example
+```bash
+# NEVER parallel - memory safety first
+# Task T001: Fix test script exit codes
+Task: "Update scripts/test.sh to properly propagate binary exit codes"
+# Wait for completion, verify success
+echo "Exit code: $?"
+# Continue to T002 only if T001 succeeded
+```
 
-**Before Starting Each Task**:
-1. Check available memory: `free -h`
-2. Close unnecessary applications
-3. Ensure previous task completed and GC ran
+## Critical Success Criteria
+- [ ] `devbox run test` returns exit code 0 (verified with `echo "Exit code: $?"`)
+- [ ] **`devbox run test` completes in <60 seconds** (performance requirement)
+- [ ] All 80+ tests pass consistently without memory issues
+- [ ] Constitutional Amendment v2.5.0 fully implemented and enforced
+- [ ] Local-first operations respond in <50ms
+- [ ] Seamless Firebase to Supabase migration capability
+- [ ] Zero test regressions in main branch
 
-**During Task Execution**:
-1. Monitor memory usage: `top` or `htop`
-2. Stop task if memory usage exceeds 8GB
-3. Force garbage collection if available
+## Constitutional Amendment v2.5.0 Compliance
+**Binary Exit Code Enforcement**:
+- **T001, T021, T042**: Implement and validate exit code checking
+- **ALL test validation**: Must check exit codes, never parse logs
+- **Constitutional gate**: T021 blocks all feature work until exit code 0
+- **Final validation**: T042 ensures complete compliance
 
-**After Completing Each Task**:
-1. Run garbage collection if applicable
-2. Verify task completion criteria met
-3. Update task status before proceeding
+## Memory Management Protocol
+- **Sequential execution only**: No parallel tasks to prevent memory exhaustion
+- **Memory monitoring**: Check usage before/after each task
+- **Emergency protocol**: Stop if approaching 32GB system limit
+- **Garbage collection**: Force GC between memory-intensive tasks
 
-**Emergency Memory Protocol**:
-If memory usage approaches 32GB:
-1. Stop current task immediately
-2. Save progress and close development tools
-3. Restart development environment
-4. Resume from last completed task
+## Task Generation Rules Applied
+1. **From Contracts**: 7 contract files → 7 contract test tasks (T010-T016)
+2. **From Data Model**: 3 entities → 3 model tasks + services (T022-T024, T025-T028)
+3. **From Research**: Memory/constitution decisions → infrastructure tasks (T001-T009)
+4. **From Quickstart**: User scenarios → integration tests (T017-T020)
 
----
+## Validation Checklist
+- [x] All contracts have corresponding tests (T010-T016)
+- [x] All entities have model implementation tasks (T022-T024)
+- [x] All tests come before implementation (Phase 3.2-3.3 → 3.5+)
+- [x] Sequential execution enforced (no parallel markers)
+- [x] Exit code validation mandatory (T001, T021, T042)
+- [x] Constitutional compliance prioritized (Amendment v2.5.0)
+- [x] Memory constraints addressed throughout
+- [x] Each task specifies exact file path
 
-## Task Execution Summary
-
-**Total Tasks**: 14 tasks across 4 phases
-**Estimated Duration**: ~20 hours total
-**Memory Budget**: Maximum 8GB per task, 32GB system limit
-**Critical Path**: T001 → T002 → T003 (constitutional compliance) → T004-T014 (sequential feature implementation)
-
-**Success Criteria**:
-- All 80 tests pass before feature work begins
-- Local-first storage with <50ms response times
-- Seamless Firebase to Supabase migration
-- Memory usage stays within constitutional limits
-- Sequential execution prevents memory exhaustion
+**TOTAL TASKS**: 45 sequential tasks
+**ESTIMATED DURATION**: 25-30 hours
+**CRITICAL PATH**: T001→T021 (constitutional gate)→T042 (final validation)

@@ -1,0 +1,44 @@
+ca07ab1ec1b08e3ef1cad5f67ffe325c
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = exports.ToggleButtonGroupContext = exports.ToggleButtonGroup = void 0;
+var React = _interopRequireWildcard(require("react"));
+function _interopRequireWildcard(e, t) {
+  if ("function" == typeof WeakMap) var r = new WeakMap(),
+    n = new WeakMap();
+  return (_interopRequireWildcard = function _interopRequireWildcard(e, t) {
+    if (!t && e && e.__esModule) return e;
+    var o,
+      i,
+      f = {
+        __proto__: null,
+        default: e
+      };
+    if (null === e || "object" != typeof e && "function" != typeof e) return f;
+    if (o = t ? n : r) {
+      if (o.has(e)) return o.get(e);
+      o.set(e, f);
+    }
+    for (var _t in e) "default" !== _t && {}.hasOwnProperty.call(e, _t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, _t)) && (i.get || i.set) ? o(f, _t, i) : f[_t] = e[_t]);
+    return f;
+  })(e, t);
+}
+var ToggleButtonGroupContext = exports.ToggleButtonGroupContext = React.createContext(null);
+var ToggleButtonGroup = function ToggleButtonGroup(_ref) {
+  var value = _ref.value,
+    onValueChange = _ref.onValueChange,
+    children = _ref.children;
+  return React.createElement(ToggleButtonGroupContext.Provider, {
+    value: {
+      value: value,
+      onValueChange: onValueChange
+    }
+  }, children);
+};
+exports.ToggleButtonGroup = ToggleButtonGroup;
+ToggleButtonGroup.displayName = 'ToggleButton.Group';
+var _default = exports.default = ToggleButtonGroup;
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJSZWFjdCIsIl9pbnRlcm9wUmVxdWlyZVdpbGRjYXJkIiwicmVxdWlyZSIsImUiLCJ0IiwiV2Vha01hcCIsInIiLCJuIiwiX19lc01vZHVsZSIsIm8iLCJpIiwiZiIsIl9fcHJvdG9fXyIsImRlZmF1bHQiLCJoYXMiLCJnZXQiLCJzZXQiLCJoYXNPd25Qcm9wZXJ0eSIsImNhbGwiLCJPYmplY3QiLCJkZWZpbmVQcm9wZXJ0eSIsImdldE93blByb3BlcnR5RGVzY3JpcHRvciIsIlRvZ2dsZUJ1dHRvbkdyb3VwQ29udGV4dCIsImV4cG9ydHMiLCJjcmVhdGVDb250ZXh0IiwiVG9nZ2xlQnV0dG9uR3JvdXAiLCJfcmVmIiwidmFsdWUiLCJvblZhbHVlQ2hhbmdlIiwiY2hpbGRyZW4iLCJjcmVhdGVFbGVtZW50IiwiUHJvdmlkZXIiLCJkaXNwbGF5TmFtZSIsIl9kZWZhdWx0Il0sInNvdXJjZXMiOlsiLi4vLi4vLi4vLi4vc3JjL2NvbXBvbmVudHMvVG9nZ2xlQnV0dG9uL1RvZ2dsZUJ1dHRvbkdyb3VwLnRzeCJdLCJzb3VyY2VzQ29udGVudCI6W251bGxdLCJtYXBwaW5ncyI6Ijs7Ozs7O0FBQUEsSUFBQUEsS0FBQSxHQUFBQyx1QkFBQSxDQUFBQyxPQUFBO0FBQStCLFNBQUFELHdCQUFBRSxDQUFBLEVBQUFDLENBQUE7RUFBQSx5QkFBQUMsT0FBQSxNQUFBQyxDQUFBLE9BQUFELE9BQUE7SUFBQUUsQ0FBQSxPQUFBRixPQUFBO0VBQUEsUUFBQUosdUJBQUEsWUFBQUEsd0JBQUFFLENBQUEsRUFBQUMsQ0FBQTtJQUFBLEtBQUFBLENBQUEsSUFBQUQsQ0FBQSxJQUFBQSxDQUFBLENBQUFLLFVBQUEsU0FBQUwsQ0FBQTtJQUFBLElBQUFNLENBQUE7TUFBQUMsQ0FBQTtNQUFBQyxDQUFBO1FBQUFDLFNBQUE7UUFBQUMsT0FBQSxFQUFBVjtNQUFBO0lBQUEsYUFBQUEsQ0FBQSx1QkFBQUEsQ0FBQSx5QkFBQUEsQ0FBQSxTQUFBUSxDQUFBO0lBQUEsSUFBQUYsQ0FBQSxHQUFBTCxDQUFBLEdBQUFHLENBQUEsR0FBQUQsQ0FBQTtNQUFBLElBQUFHLENBQUEsQ0FBQUssR0FBQSxDQUFBWCxDQUFBLFVBQUFNLENBQUEsQ0FBQU0sR0FBQSxDQUFBWixDQUFBO01BQUFNLENBQUEsQ0FBQU8sR0FBQSxDQUFBYixDQUFBLEVBQUFRLENBQUE7SUFBQTtJQUFBLFNBQUFQLEVBQUEsSUFBQUQsQ0FBQSxnQkFBQUMsRUFBQSxPQUFBYSxjQUFBLENBQUFDLElBQUEsQ0FBQWYsQ0FBQSxFQUFBQyxFQUFBLE9BQUFNLENBQUEsSUFBQUQsQ0FBQSxHQUFBVSxNQUFBLENBQUFDLGNBQUEsS0FBQUQsTUFBQSxDQUFBRSx3QkFBQSxDQUFBbEIsQ0FBQSxFQUFBQyxFQUFBLE9BQUFNLENBQUEsQ0FBQUssR0FBQSxJQUFBTCxDQUFBLENBQUFNLEdBQUEsSUFBQVAsQ0FBQSxDQUFBRSxDQUFBLEVBQUFQLEVBQUEsRUFBQU0sQ0FBQSxJQUFBQyxDQUFBLENBQUFQLEVBQUEsSUFBQUQsQ0FBQSxDQUFBQyxFQUFBO0lBQUEsT0FBQU8sQ0FBQTtFQUFBLEdBQUFSLENBQUEsRUFBQUMsQ0FBQTtBQUFBO0FBc0J4QixJQUFNa0Isd0JBQXdCLEdBQUFDLE9BQUEsQ0FBQUQsd0JBQUEsR0FFbkN0QixLQUFLLENBQUN3QixhQUFhLENBQTBCLElBQVcsQ0FBQztBQTJCM0QsSUFBTUMsaUJBQWlCLEdBQUcsU0FBcEJBLGlCQUFpQkEsQ0FBQUMsSUFBQTtFQUFBLElBQ3JCQyxLQUFLLEdBQUFELElBQUEsQ0FBTEMsS0FBSztJQUNMQyxhQUFhLEdBQUFGLElBQUEsQ0FBYkUsYUFBYTtJQUNiQyxRQUFBLEdBQUFILElBQUEsQ0FBQUcsUUFBQTtFQUFBLE9BRUE3QixLQUFBLENBQUE4QixhQUFBLENBQUNSLHdCQUF3QixDQUFDUyxRQUFRO0lBQ2hDSixLQUFLLEVBQUU7TUFDTEEsS0FBSyxFQUFMQSxLQUFLO01BQ0xDLGFBQUEsRUFBQUE7SUFDRjtFQUFFLEdBRURDLFFBQ2dDLENBQ3BDO0FBQUE7QUFBQ04sT0FBQSxDQUFBRSxpQkFBQSxHQUFBQSxpQkFBQTtBQUVGQSxpQkFBaUIsQ0FBQ08sV0FBVyxHQUFHLG9CQUFvQjtBQUFDLElBQUFDLFFBQUEsR0FBQVYsT0FBQSxDQUFBVixPQUFBLEdBRXRDWSxpQkFBaUIiLCJpZ25vcmVMaXN0IjpbXX0=

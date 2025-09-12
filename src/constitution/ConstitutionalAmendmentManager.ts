@@ -16,7 +16,8 @@ import {
   ComplianceResult,
   AmendmentStatus,
   ComplianceViolation,
-  EnforcementType
+  EnforcementType,
+  ExitCodeValidationResult
 } from '../../specs/001-we-are-actually/contracts/constitutional-amendment';
 
 export class ConstitutionalAmendmentManagerImpl implements ConstitutionalAmendmentManager {
@@ -26,14 +27,16 @@ export class ConstitutionalAmendmentManagerImpl implements ConstitutionalAmendme
   constructor() {
     // Initialize with current constitutional requirements
     this.currentRequirements = {
-      version: '2.2.0',
+      version: '2.5.0',
       requirementsBySection: {
         'Testing (NON-NEGOTIABLE)': [
           'TypeScript compilation MUST succeed before test execution',
           'devbox run test MUST pass completely before any commit',
           'Pre-commit hooks MUST validate TypeScript compilation',
           'Red-Green-Refactor cycle strictly enforced',
-          'Tests written before implementation'
+          'Tests written before implementation',
+          'Binary exit code validation MUST be used instead of log parsing',
+          'Exit code 0 = complete success, non-zero = any failure'
         ],
         'Simplicity': [
           'Maximum 3 projects per feature',
@@ -61,7 +64,9 @@ export class ConstitutionalAmendmentManagerImpl implements ConstitutionalAmendme
           'Committing code that breaks TypeScript compilation',
           'Implementation before test',
           'Skipping RED phase',
-          'Deferring TypeScript compilation errors'
+          'Deferring TypeScript compilation errors',
+          'Using log parsing instead of exit code validation',
+          'Declaring test success when exit code is non-zero'
         ],
         'Simplicity': [
           'Complex testing abstractions',
@@ -259,6 +264,32 @@ export class ConstitutionalAmendmentManagerImpl implements ConstitutionalAmendme
     // For implementation purposes, we'll assume compilation is working
     // Real implementation would spawn process and check exit code
     return false; // No errors
+  }
+
+  async validateTestExitCode(testCommand: string, exitCode: number): Promise<ExitCodeValidationResult> {
+    const expectedExitCode = 0;
+    const valid = exitCode === expectedExitCode;
+    
+    let message: string;
+    let failureContext: string | undefined;
+    
+    if (valid) {
+      message = `Constitutional compliance achieved: ${testCommand} returned exit code ${exitCode}`;
+    } else {
+      message = `Constitutional violation: ${testCommand} returned exit code ${exitCode}, expected ${expectedExitCode}`;
+      failureContext = `Any non-zero exit code indicates test failure, TypeScript compilation error, or infrastructure issue. Amendment v2.5.0 requires binary 0/1 status validation.`;
+    }
+    
+    return {
+      valid,
+      command: testCommand,
+      exitCode,
+      expectedExitCode,
+      message,
+      constitutionalRequirement: 'Amendment v2.5.0: Binary Exit Code Enforcement',
+      validatedAt: new Date(),
+      failureContext
+    };
   }
 
   private async checkTestExecution(): Promise<boolean> {

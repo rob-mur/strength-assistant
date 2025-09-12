@@ -118,8 +118,11 @@ global.testUtils = {
   testDataBuilders: undefined, // Will be loaded on demand
 };
 
-// Ensure test timeouts are appropriate (not too short to cause timeouts)
-jest.setTimeout(30000); // 30 seconds for integration tests
+// Memory optimization settings
+const isMemoryOptimizationEnabled = true;
+
+// T003a Performance Optimization: Aggressive timeout for <60 second target
+jest.setTimeout(5000); // 5 seconds max - aggressive timeout for speed
 
 // Setup global error handling for better test failure reporting
 const originalConsoleError = console.error;
@@ -130,6 +133,28 @@ console.error = (...args) => {
   }
   originalConsoleError.apply(console, args);
 };
+
+// T003a Performance Optimization: Minimal cleanup for speed
+beforeEach(() => {
+  if (isMemoryOptimizationEnabled) {
+    // Clear timers only (skip expensive GC operations)
+    jest.clearAllTimers();
+    
+    // Skip module cache clearing for speed - causes slower test execution
+  }
+});
+
+afterEach(async () => {
+  if (isMemoryOptimizationEnabled) {
+    // T003a: Minimal cleanup for speed - skip expensive operations
+    
+    // Only clear mocks (fast operation)
+    jest.clearAllMocks();
+    
+    // Skip: resetModules, GC, AsyncStorage clearing (slow operations)
+    // Skip: TestDevice cleanup (can be expensive)
+  }
+});
 
 // Constitutional Compliance: Ensure test infrastructure contracts are available
 // This helps with the missing TestDevice imports that are causing test failures

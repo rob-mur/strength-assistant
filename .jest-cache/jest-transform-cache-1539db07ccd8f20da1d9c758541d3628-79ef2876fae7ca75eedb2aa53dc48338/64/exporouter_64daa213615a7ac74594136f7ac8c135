@@ -1,0 +1,14 @@
+d2f9efc41b5b9c24f8f325ba001676c7
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.useRouter = exports.useLocalSearchParams = void 0;
+var _globals = require("@jest/globals");
+var _jestMockExtended = require("jest-mock-extended");
+var useRouter = exports.useRouter = _globals.jest.fn(function () {
+  return (0, _jestMockExtended.mock)();
+});
+var useLocalSearchParams = exports.useLocalSearchParams = _globals.jest.fn(function () {
+  return (0, _jestMockExtended.mock)();
+});
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJfZ2xvYmFscyIsInJlcXVpcmUiLCJfamVzdE1vY2tFeHRlbmRlZCIsInVzZVJvdXRlciIsImV4cG9ydHMiLCJqZXN0IiwiZm4iLCJtb2NrIiwidXNlTG9jYWxTZWFyY2hQYXJhbXMiXSwic291cmNlcyI6WyJleHBvLXJvdXRlci50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBqZXN0IH0gZnJvbSBcIkBqZXN0L2dsb2JhbHNcIjtcbmltcG9ydCB7IG1vY2sgfSBmcm9tIFwiamVzdC1tb2NrLWV4dGVuZGVkXCI7XG5pbXBvcnQgeyBSb3V0ZXIsIFVua25vd25PdXRwdXRQYXJhbXMgfSBmcm9tIFwiZXhwby1yb3V0ZXJcIjtcblxuZXhwb3J0IGNvbnN0IHVzZVJvdXRlciA9IGplc3QuZm4oKCkgPT4gbW9jazxSb3V0ZXI+KCkpO1xuZXhwb3J0IGNvbnN0IHVzZUxvY2FsU2VhcmNoUGFyYW1zID0gamVzdC5mbigoKSA9PiBtb2NrPFVua25vd25PdXRwdXRQYXJhbXM+KCkpO1xuIl0sIm1hcHBpbmdzIjoiOzs7O0FBQUEsSUFBQUEsUUFBQSxHQUFBQyxPQUFBO0FBQ0EsSUFBQUMsaUJBQUEsR0FBQUQsT0FBQTtBQUdPLElBQU1FLFNBQVMsR0FBQUMsT0FBQSxDQUFBRCxTQUFBLEdBQUdFLGFBQUksQ0FBQ0MsRUFBRSxDQUFDO0VBQUEsT0FBTSxJQUFBQyxzQkFBSSxFQUFTLENBQUM7QUFBQSxFQUFDO0FBQy9DLElBQU1DLG9CQUFvQixHQUFBSixPQUFBLENBQUFJLG9CQUFBLEdBQUdILGFBQUksQ0FBQ0MsRUFBRSxDQUFDO0VBQUEsT0FBTSxJQUFBQyxzQkFBSSxFQUFzQixDQUFDO0FBQUEsRUFBQyIsImlnbm9yZUxpc3QiOltdfQ==

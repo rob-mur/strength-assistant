@@ -40,6 +40,14 @@ export interface ConstitutionalAmendmentManager {
    * @returns Promise resolving to compliance status
    */
   validateCompliance(target: ComplianceTarget): Promise<ComplianceResult>;
+  
+  /**
+   * Validates test execution status using binary exit codes (Amendment v2.5.0)
+   * @param testCommand Command that was executed (e.g., 'devbox run test')
+   * @param exitCode Process exit code (0 = success, non-zero = failure)
+   * @returns Promise resolving to exit code validation result
+   */
+  validateTestExitCode(testCommand: string, exitCode: number): Promise<ExitCodeValidationResult>;
 }
 
 export interface ConstitutionalAmendment {
@@ -250,4 +258,30 @@ export interface ComplianceViolation {
   
   /** Suggested resolution */
   resolution: string;
+}
+
+export interface ExitCodeValidationResult {
+  /** Whether exit code validation passed */
+  valid: boolean;
+  
+  /** Command that was validated */
+  command: string;
+  
+  /** Exit code that was checked */
+  exitCode: number;
+  
+  /** Expected exit code (0 for success) */
+  expectedExitCode: number;
+  
+  /** Validation message */
+  message: string;
+  
+  /** Constitutional requirement this validates */
+  constitutionalRequirement: string;
+  
+  /** Validation timestamp */
+  validatedAt: Date;
+  
+  /** Additional context if validation failed */
+  failureContext?: string;
 }

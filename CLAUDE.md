@@ -198,3 +198,35 @@ Constitutional compliance achieved when:
 - ✅ Systematic repair tracking operational and maintained
 
 **ENFORCEMENT STATUS**: ACTIVE - All constitutional requirements in effect immediately
+
+### Amendment v2.5.0: Binary Exit Code Enforcement (ACTIVE)
+**Enacted**: 2025-09-12 | **Effective Immediately**
+
+#### Binary Exit Code Validation Requirements
+- **Exit Code Verification**: ALL test validation MUST check process exit codes rather than parsing output logs
+- **Binary Status**: `devbox run test` MUST return exit code 0 (complete success) or non-zero (any failure)
+- **No Partial Success**: Exit code non-zero indicates ANY test failure, infrastructure issue, or constitutional violation
+- **Validation Protocol**: Before declaring test success, ALWAYS verify exit code equals 0
+
+#### Mandatory Exit Code Checking Protocol
+1. **Command Execution with Exit Code Capture**:
+   ```bash
+   devbox run test
+   echo "Exit code: $?"
+   ```
+
+2. **Constitutional Validation**:
+   - Exit code 0 = Full constitutional compliance, all tests passed
+   - Exit code non-zero = Constitutional violation, any test failure or infrastructure issue
+   - NO reliance on log parsing for pass/fail determination
+
+3. **Script Enhancement Requirements**:
+   - `scripts/test.sh` MUST propagate final exit status correctly
+   - All test phases must contribute to final binary result
+   - Intermediate failures MUST bubble up to final exit code
+
+#### Exit Code Enforcement Mechanisms
+- **Pre-commit Hooks**: Block commits when `devbox run test` returns non-zero exit code
+- **CI/CD Pipeline**: Fail builds when test command exit code is non-zero
+- **Development Validation**: Always check exit code before proceeding with implementation
+- **Constitutional Compliance**: Exit code validation is mandatory for all test governance
