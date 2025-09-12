@@ -69,6 +69,16 @@ export interface PerformanceReport {
   reportTimestamp: Date;
 }
 
+export interface OptimizationRecommendation {
+  type: 'JEST_CONFIG' | 'WORKER_CONFIG' | 'TEST_EXECUTION' | 'MEMORY_USAGE' | 'CACHING' | 'MOCK_SETUP';
+  description: string;
+  estimatedImpact: {
+    timeReduction?: number;
+    memoryReduction?: number;
+  };
+  implementationEffort: 'LOW' | 'MEDIUM' | 'HIGH';
+}
+
 export interface ExecutionMetrics {
   command: string;
   executionTime: number;
@@ -76,6 +86,16 @@ export interface ExecutionMetrics {
   memoryMetrics: MemoryMetrics;
   performanceMetrics: PerformanceMetrics;
   constitutionalCompliance: boolean;
+}
+
+export interface MemoryMetrics {
+  heapUsedMB: number;
+  heapTotalMB: number;
+  externalMB: number;
+  arrayBuffersMB: number;
+  peakMemoryUsage: number;
+  memoryLeaks: string[];
+  timestamp: Date;
 }
 
 export interface MemoryTrackingSession {

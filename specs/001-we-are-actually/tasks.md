@@ -1,258 +1,302 @@
-# Tasks: Local First Storage with Backup
+# Tasks: Constitutional Amendment v2.6.0 - Task Completion Validation
 
 **Branch**: `001-we-are-actually` | **Generated**: 2025-09-12 | **Source**: [plan.md](./plan.md)
-**Input**: Design documents from `/home/rob/Documents/Github/strength-assistant/specs/001-we-are-actually/`
-**Prerequisites**: plan.md ✅, research.md ✅, data-model.md ✅, contracts/ ✅, quickstart.md ✅
+**Input**: Constitutional Amendment v2.6.0 design documents from `/home/rob/Documents/Github/strength-assistant/specs/001-we-are-actually/`
+**Prerequisites**: plan.md ✅, research.md ✅, constitutional contracts ✅, task-completion-template.md ✅
 
 ## Tech Stack Summary
 - **Language**: TypeScript 5.8.3, React Native 0.79.5, Expo 53.0.22
-- **Storage**: Firebase (current) → Supabase PostgreSQL + Legend State (local-first)
 - **Testing**: Jest 29.7.0, React Native Testing Library, Constitutional enforcement
-- **Architecture**: Mobile app with dual backend support and offline-first patterns
-- **Critical**: Sequential execution only (memory management), binary exit code validation
+- **Constitutional Framework**: Amendment v2.6.0 (Task Completion Validation)
+- **Performance Target**: <60 second test suite, <8GB memory constraint
+- **Critical**: Task completion validation, test expectation declarations, binary exit code enforcement
 
-## 🚨 CONSTITUTIONAL PRIORITY: Amendment v2.5.0 Compliance
-**MANDATORY**: All test validation must use exit code verification, not log parsing
+## 🚨 CONSTITUTIONAL PRIORITY: Amendment v2.6.0 Compliance
+**MANDATORY**: All task completions must include test expectation declarations and validation execution per Amendment v2.6.0
 
 ## 🚀 CURRENT PROGRESS STATUS (Updated: 2025-09-12)
 
 ### ✅ **COMPLETED PHASES**
-- **Phase 3.1**: Constitutional Compliance & Test Infrastructure (9/9 tasks - 100% complete)
-- **Critical Infrastructure**: TestDevice, TestApp, MockFactories, TestDataBuilders all implemented
-- **Constitutional Compliance**: Amendment v2.5.0 active, exit code 0 achieved, <60 second performance target met
+- **Phase 0**: Research complete - Amendment v2.6.0 analysis and requirements identified
+- **Phase 1**: Design complete - Constitutional contracts and integration framework designed
+- **Phase 2**: Task planning complete - Task generation strategy defined
 
 ### 🎯 **NEXT PRIORITY PHASE** 
-- **Phase 3.2**: Contract Tests (7 pending tasks - ready to start)
-- **Phase 3.4**: Constitutional Validation Gate (1 task - ready for validation)
+- **Phase 3.1**: TypeScript Error Resolution (1 urgent task - blocking constitutional compliance)
+- **Phase 3.2**: Constitutional Contract Tests (4 pending tasks - ready to start)
+- **Phase 3.3**: Amendment Implementation (4 core tasks - depends on contracts)
 
 ### 📊 **OVERALL COMPLETION**
-- **Completed**: 9/45 tasks (20%)
-- **Current Status**: Ready for contract test development
-- **Constitutional Status**: ✅ COMPLIANT (all tests passing, exit code 0)
+- **Completed**: Design and planning phases (100%)
+- **Current Status**: Ready for TypeScript error resolution and contract test development
+- **Constitutional Status**: ⚠️ NON-COMPLIANT (TypeScript compilation errors blocking test execution)
 
 ---
 
 ## Format: `[ID] Description` (Sequential Execution Only)
 - **Sequential processing**: All tasks run one at a time for memory safety
-- **Exit code validation**: Always verify `devbox run test` returns 0 or non-zero
+- **Constitutional validation**: Always include Amendment v2.6.0 task completion format
 - Include exact file paths in descriptions
 
-## Phase 3.1: Constitutional Compliance & Test Infrastructure ✅ **COMPLETED**
+## Phase 3.1: Critical TypeScript Error Resolution ⚠️ **BLOCKING CONSTITUTIONAL COMPLIANCE**
 
-### Setup Tasks ✅ **ALL COMPLETED**
-- [x] **T001** ✅ **COMPLETED** - scripts/test.sh already updated with binary exit code enforcement (Amendment v2.5.0)
-- [x] **T002** ✅ **COMPLETED** - lib/test-utils/ directory structure exists and populated
-- [x] **T003** ✅ **COMPLETED** - Jest configured for <60 second performance target in jest.config.js
+**CRITICAL ISSUE**: TypeScript compilation errors are preventing `devbox run test` from passing, violating constitutional requirements.
 
-### Performance Optimization ✅ **ALL COMPLETED** (Critical <60 second target achieved: ~25 seconds)
-- [x] **T003a** ✅ **COMPLETED** - Jest optimized: single-threaded, caching enabled, coverage disabled for speed
-- [x] **T003b** ✅ **COMPLETED** - Smart test filtering: AuthAwareLayout test skipped, slow tests excluded  
-- [x] **T003c** ✅ **COMPLETED** - Package scripts optimized: npm ci caching, parallel validation
-- [x] **T003d** ✅ **COMPLETED** - Fast-test mode achieved: all phases complete in ~25 seconds
+### Immediate Resolution Required
+- [x] **T001** ✅ **COMPLETED** - Fix TypeScript compilation errors in `/home/rob/Documents/Github/strength-assistant/specs/001-we-are-actually/contracts/test-performance.ts`
+  - **Issue**: Missing type definitions for `OptimizationRecommendation` and `MemoryMetrics` on lines 68 and 76
+  - **Solution**: Add complete type definitions to resolve compilation errors
+  - **Constitutional Impact**: CRITICAL - Blocks all test execution and Amendment v2.6.0 compliance
+  - **Performance**: <5 minutes to resolve, immediate impact on constitutional compliance
 
-### Test Infrastructure Implementation ✅ **ALL COMPLETED**
-**✅ CRITICAL INFRASTRUCTURE NOW EXISTS - Tests passing with exit code 0**
+## Phase 3.2: Constitutional Contract Tests ⚠️ **MUST COMPLETE BEFORE IMPLEMENTATION**
+**CRITICAL: These tests MUST be written and MUST FAIL before ANY implementation per constitutional TDD requirements**
 
-- [x] **T004** ✅ **COMPLETED** - TestDevice class fully implemented in lib/test-utils/TestDevice.ts (650+ lines)
-- [x] **T005** ✅ **COMPLETED** - TestApp utility class fully implemented in lib/test-utils/TestApp.ts (450+ lines)  
-- [x] **T006** ✅ **COMPLETED** - MockFactoryCollection fully implemented in lib/test-utils/mocks/MockFactoryCollection.ts (380+ lines)
-- [x] **T007** ✅ **COMPLETED** - TestDataBuilderCollection fully implemented in lib/test-utils/builders/TestDataBuilderCollection.ts (530+ lines)
-- [x] **T008** ✅ **COMPLETED** - Firebase service mocks integrated in MockFactoryCollection.ts 
-- [x] **T009** ✅ **COMPLETED** - Supabase service mocks integrated in MockFactoryCollection.ts
+- [ ] **T002** [P] Contract test for Constitutional Amendment v2.6.0 in `/home/rob/Documents/Github/strength-assistant/__tests__/contracts/constitutional-amendment-v260.test.ts`
+  - Validate TaskCompletionValidation interface compliance
+  - Test performance monitoring contract interfaces
+  - Verify constitutional enforcement mechanisms
+  - Must fail initially (no implementation exists yet)
 
-**🎉 PHASE 3.1 STATUS: 100% COMPLETE - All infrastructure exists and tests pass with constitutional compliance**
+- [ ] **T003** [P] Contract test for Task Completion Template validation in `/home/rob/Documents/Github/strength-assistant/__tests__/contracts/task-completion-template.test.ts`
+  - Validate template format requirements per Amendment v2.6.0
+  - Test mandatory field enforcement (test expectation, validation execution)
+  - Verify performance requirements integration
+  - Must fail initially (validation system not implemented)
 
-## Phase 3.2: Contract Tests ✅ **COMPLETED**
+- [ ] **T004** [P] Contract test for Test Performance monitoring in `/home/rob/Documents/Github/strength-assistant/__tests__/contracts/test-performance-monitoring.test.ts`
+  - Validate performance monitoring interfaces from `/contracts/test-performance.ts`
+  - Test <60 second execution target enforcement
+  - Verify memory constraint compliance (<8GB)
+  - Must fail initially (performance monitoring not implemented)
 
-- [x] **T010** ✅ **COMPLETED** - Contract test for TestDevice interface in __tests__/contracts/test-infrastructure.test.ts
-  - **Status**: 21/21 tests passing - Full TestDevice interface compliance validated
-  - **Coverage**: TestDevice, MockFactoryCollection, TestDataBuilderCollection integration
-- [x] **T011** ✅ **COMPLETED** - Contract test for storage backend interface in __tests__/contracts/storage-interface.test.ts  
-  - **Status**: Contract test created - TDD failures show required implementation gaps
-  - **Coverage**: StorageBackend interface, Firebase/Supabase compatibility, feature flag switching
-- [x] **T012** ✅ **COMPLETED** - Contract test for constitutional amendment in __tests__/contracts/constitutional-amendment.test.ts
-  - **Status**: 19/21 tests passing - Constitutional amendment lifecycle functional
-  - **Coverage**: Amendment v2.5.0 binary exit code validation, governance compliance
-- [x] **T013** ✅ **COMPLETED** - Contract test for TypeScript validation in __tests__/contracts/typescript-validation.test.ts
-  - **Status**: 17/17 tests passing - TypeScript validation fully compliant
-  - **Coverage**: Compilation validation, constitutional compliance, CI/CD integration
-- [x] **T014** ✅ **COMPLETED** - Contract test for Jest validation in __tests__/contracts/jest-validation.test.ts
-  - **Status**: 15/15 tests passing - Jest test governance fully functional  
-  - **Coverage**: Test infrastructure, constitutional governance, failure tracking
-- [x] **T015** ✅ **COMPLETED** - Contract test for test repair interface in __tests__/contracts/test-repair.test.ts
-  - **Status**: 15/15 tests passing - Test repair workflow validated
-  - **Coverage**: Systematic test repair, regression prevention, constitutional compliance
-- [x] **T016** ✅ **COMPLETED** - Contract test for Legend State config in __tests__/contracts/legend-state-config.test.ts
-  - **Status**: 15/15 tests passing - Local-first architecture configuration complete
-  - **Coverage**: Offline-first sync, real-time updates, feature flag backend switching
+- [ ] **T005** [P] Contract test for Constitutional Integration in `/home/rob/Documents/Github/strength-assistant/__tests__/contracts/constitutional-integration-v260.test.ts`
+  - Test Amendment v2.6.0 integration with v2.5.0 (binary exit codes)
+  - Test Amendment v2.6.0 integration with v2.4.0 (test governance)
+  - Verify enforcement mechanism compatibility
+  - Must fail initially (integration layer not implemented)
 
-**🎉 PHASE 3.2 STATUS: 100% COMPLETE - All contract tests implemented and validating interface compliance**
+## Phase 3.3: Core Constitutional Implementation (ONLY after contracts are failing)
 
-## Phase 3.3: Integration Tests (ONLY after contracts exist)
+### Constitutional Amendment Implementation
+- [ ] **T006** Implement ConstitutionalAmendmentV260Manager in `/home/rob/Documents/Github/strength-assistant/lib/constitution/ConstitutionalAmendmentV260Manager.ts`
+  - Implement all interfaces from `contracts/constitutional-amendment-v260.ts`
+  - Task completion validation logic
+  - Performance monitoring integration
+  - Constitutional compliance tracking
 
-- [ ] **T017** Integration test for anonymous local-first storage in __tests__/integration/anonymous-local-first.test.ts
-- [ ] **T018** Integration test for authenticated cross-device sync in __tests__/integration/auth-cross-device-sync.test.ts
-- [ ] **T019** Integration test for offline-to-online sync in __tests__/integration/offline-to-online-sync.test.ts
-- [ ] **T020** Integration test for Firebase to Supabase migration in __tests__/integration/firebase-supabase-migration.test.ts
+- [ ] **T007** Implement Task Completion Template Validation in `/home/rob/Documents/Github/strength-assistant/lib/constitution/TaskCompletionValidator.ts`
+  - Template format validation based on `contracts/task-completion-template.md`
+  - Mandatory field enforcement (test expectation declaration, validation execution)
+  - Integration with existing constitutional framework
+  - Performance requirements validation
 
-## Phase 3.4: Constitutional Validation Gate ✅ **COMPLETED**
-**MANDATORY GATE: Must pass before ANY feature implementation**
+- [ ] **T008** Implement Test Performance Monitor in `/home/rob/Documents/Github/strength-assistant/lib/testing/TestPerformanceMonitor.ts`
+  - Real-time test execution monitoring
+  - <60 second target enforcement
+  - Memory usage tracking (<8GB constitutional limit)
+  - Performance bottleneck detection and reporting
 
-- [x] **T021** ✅ **COMPLETED** - Constitutional compliance validated (exit code 0 confirmed, Amendment v2.5.0 active)
-  - **Validation Results**: `devbox run test; echo "Exit code: $?"` returns **EXIT CODE 0** ✅ **VERIFIED 2025-09-12**
-  - **Performance**: Tests complete in ~25 seconds (target: <60 seconds) ✅
-  - **Infrastructure**: All critical components implemented and functional ✅
-  - **Amendment v2.5.0**: Binary exit code enforcement active and operational ✅
-  - **Gate Status**: **CONSTITUTIONAL COMPLIANCE ACHIEVED** - Ready for feature implementation
+- [ ] **T009** Implement Constitutional Integration Layer in `/home/rob/Documents/Github/strength-assistant/lib/constitution/ConstitutionalIntegration.ts`
+  - Amendment v2.6.0 integration with v2.5.0 (binary exit codes)
+  - Amendment v2.6.0 integration with v2.4.0 (test governance)
+  - Enforcement mechanism coordination
+  - Compliance status aggregation
 
-## Phase 3.5: Core Implementation (ONLY after tests are failing)
+## Phase 3.4: Test Performance Optimization
 
-### Models and Data Layer
-- [ ] **T022** Enhance Exercise model with sync capabilities in lib/models/Exercise.ts
-- [ ] **T023** Create SyncOperation model in lib/models/SyncOperation.ts
-- [ ] **T024** Create UserAccount model enhancements in lib/models/UserAccount.ts
+### Jest and Test Suite Optimization
+- [ ] **T010** [P] Optimize Jest configuration in `/home/rob/Documents/Github/strength-assistant/jest.config.js`
+  - Configure for <60 second execution target
+  - Memory constraint compliance (<8GB)
+  - Worker optimization for single-threaded constitutional requirement
+  - Cache configuration for TypeScript compilation
 
-### Services and Storage
-- [ ] **T025** Install and configure Legend State in package.json and lib/data/legend-state/config.ts
-- [ ] **T026** Implement SupabaseStorage backend in lib/data/supabase/SupabaseStorage.ts
-- [ ] **T027** Implement SyncManager service in lib/services/SyncManager.ts
-- [ ] **T028** Update ExerciseRepo with dual backend support in lib/repo/ExerciseRepo.ts
+- [ ] **T011** [P] Implement test suite caching in `/home/rob/Documents/Github/strength-assistant/lib/testing/TestSuiteCaching.ts`
+  - TypeScript compilation result caching
+  - Test result caching for unchanged files
+  - Performance metrics caching
+  - Constitutional compliance status caching
 
-### Feature Flag System
-- [ ] **T029** Implement FeatureFlagService in lib/services/FeatureFlagService.ts
-- [ ] **T030** Create StorageManager with backend delegation in lib/data/StorageManager.ts
+- [ ] **T012** [P] Implement selective test execution in `/home/rob/Documents/Github/strength-assistant/lib/testing/SelectiveTestExecution.ts`
+  - Affected tests only execution strategy
+  - Dependency analysis for test selection
+  - Performance impact optimization
+  - Constitutional compliance preservation
 
-## Phase 3.6: Constitutional Framework Implementation
+- [ ] **T013** Implement memory usage optimization in `/home/rob/Documents/Github/strength-assistant/lib/testing/MemoryOptimization.ts`
+  - Garbage collection strategy for test execution
+  - Memory leak detection and prevention
+  - Constitutional memory constraint enforcement (<8GB)
+  - Test isolation and cleanup protocols
 
-- [ ] **T031** Implement ConstitutionalAmendmentManager in lib/constitution/ConstitutionalAmendmentManager.ts
-- [ ] **T032** Implement TypeScriptValidator in lib/typescript/TypeScriptValidator.ts
-- [ ] **T033** Update pre-commit hooks for exit code validation in .husky/pre-commit
-- [ ] **T034** Create TestRepairManager for systematic test fixing in lib/test-utils/TestRepairManager.ts
+## Phase 3.5: Constitutional Enforcement Mechanisms
 
-## Phase 3.7: UI Integration and Sync Status
+### Automation and Integration
+- [ ] **T014** Enhance pre-commit hooks in `/home/rob/Documents/Github/strength-assistant/.husky/pre-commit`
+  - Add Amendment v2.6.0 task completion validation
+  - Integrate with existing constitutional framework
+  - Performance compliance checking
+  - Block commits without proper task completion format
 
-- [ ] **T035** Create SyncStatusIcon component in lib/components/SyncStatusIcon.tsx
-- [ ] **T036** Update exercise list UI with sync indicators in app/(tabs)/exercises/index.tsx
-- [ ] **T037** Update useExercises hook for local-first operations in lib/hooks/useExercises.ts
+- [ ] **T015** [P] Implement CI/CD pipeline integration in `/home/rob/Documents/Github/strength-assistant/.github/workflows/constitutional-compliance.yml`
+  - Amendment v2.6.0 compliance validation in CI/CD
+  - Test performance monitoring in pipeline
+  - Constitutional violation reporting
+  - Deployment blocking for non-compliance
 
-## Phase 3.8: Migration and Performance
+- [ ] **T016** [P] Implement automated task completion validation in `/home/rob/Documents/Github/strength-assistant/lib/constitution/TaskCompletionAutomation.ts`
+  - Automatic task completion format validation
+  - Test expectation declaration enforcement
+  - Validation execution result processing
+  - Performance metrics integration
 
-- [ ] **T038** Implement MigrationService for Firebase to Supabase data transfer in lib/services/MigrationService.ts
-- [ ] **T039** Add performance monitoring in lib/utils/PerformanceMonitor.ts
-- [ ] **T040** Implement memory management utilities in lib/test-utils/MemoryMonitor.ts
+- [ ] **T017** Implement performance gate enforcement in `/home/rob/Documents/Github/strength-assistant/lib/testing/PerformanceGates.ts`
+  - <60 second execution time gates
+  - Memory usage compliance gates (<8GB)
+  - Constitutional compliance gates
+  - Automatic optimization triggering
 
-## Phase 3.9: Final Validation and Polish
+## Phase 3.6: Learning and Improvement Systems
 
-- [ ] **T041** Run comprehensive quickstart scenario validation from quickstart.md
-- [ ] **T042** Final constitutional compliance validation with exit code verification: `devbox run test; echo "Exit code: $?"`
-- [ ] **T043** Performance validation: verify <50ms local operations, <2s sync operations
-- [ ] **T044** Update project documentation with constitutional requirements
-- [ ] **T045** Create regression prevention monitoring script in scripts/monitor-test-regressions.sh
+### Prediction and Analytics
+- [ ] **T018** [P] Implement prediction accuracy tracking in `/home/rob/Documents/Github/strength-assistant/lib/constitution/PredictionAccuracyTracker.ts`
+  - Test outcome prediction recording
+  - Accuracy measurement and analysis
+  - Trend tracking over time
+  - Learning insights generation
+
+- [ ] **T019** [P] Implement learning insights system in `/home/rob/Documents/Github/strength-assistant/lib/constitution/LearningInsightsGenerator.ts`
+  - Prediction accuracy analysis
+  - Common misprediction pattern identification
+  - Improvement recommendations generation
+  - Feedback loop implementation
+
+- [ ] **T020** Implement constitutional compliance monitoring in `/home/rob/Documents/Github/strength-assistant/lib/constitution/ComplianceMonitor.ts`
+  - Continuous constitutional compliance tracking
+  - Amendment violation detection and reporting
+  - Compliance trend analysis
+  - Remediation action coordination
+
+## Phase 3.7: Documentation and Integration Updates
+
+### Documentation and Templates
+- [ ] **T021** [P] Update CLAUDE.md constitutional section in `/home/rob/Documents/Github/strength-assistant/CLAUDE.md`
+  - Add comprehensive Amendment v2.6.0 documentation
+  - Update task completion protocol details
+  - Include performance optimization guidance
+  - Provide enforcement mechanism examples
+
+- [ ] **T022** [P] Create constitutional compliance documentation in `/home/rob/Documents/Github/strength-assistant/docs/constitutional-compliance.md`
+  - Amendment v2.6.0 comprehensive guide
+  - Task completion validation examples
+  - Performance optimization strategies
+  - Troubleshooting and best practices
+
+- [ ] **T023** [P] Update project README with constitutional requirements in `/home/rob/Documents/Github/strength-assistant/README.md`
+  - Amendment v2.6.0 overview for new developers
+  - Quick start guide for constitutional compliance
+  - Task completion template usage
+  - Performance requirements summary
+
+## Phase 3.8: Final Validation and Constitutional Compliance
+
+### Comprehensive Testing and Validation
+- [ ] **T024** Run comprehensive constitutional validation tests per Amendment v2.6.0
+  - Execute `devbox run test; echo "Exit code: $?"` with full task completion validation
+  - Verify <60 second performance target achievement
+  - Validate all constitutional requirements compliance
+  - Document constitutional compliance achievement
+
+- [ ] **T025** Performance benchmark and optimization validation
+  - Measure actual vs target test execution times
+  - Validate memory usage stays within <8GB constitutional limit
+  - Optimize any performance bottlenecks identified
+  - Document performance compliance achievement
+
+- [ ] **T026** Final constitutional compliance certification
+  - Complete Amendment v2.6.0 compliance checklist
+  - Validate integration with Amendments v2.5.0 and v2.4.0
+  - Document all constitutional requirements fulfillment
+  - Certify ready for production constitutional enforcement
 
 ## Dependencies (Sequential Chain)
 ```
-Setup: T001 → T002 → T003
-Infrastructure: T003 → T004 → T005 → T006 → T007 → T008 → T009
-Contracts: T009 → T010 → T011 → T012 → T013 → T014 → T015 → T016
-Integration: T016 → T017 → T018 → T019 → T020
-Gate: T020 → T021 (MANDATORY PASS)
-Models: T021 → T022 → T023 → T024
-Services: T024 → T025 → T026 → T027 → T028
-Features: T028 → T029 → T030
-Constitution: T030 → T031 → T032 → T033 → T034
-UI: T034 → T035 → T036 → T037
-Migration: T037 → T038 → T039 → T040
-Validation: T040 → T041 → T042 → T043 → T044 → T045
+Critical: T001 (TypeScript fixes) → ALL OTHER TASKS
+Contracts: T001 → T002 → T003 → T004 → T005
+Implementation: T005 → T006 → T007 → T008 → T009
+Optimization: T009 → T010 → T011 → T012 → T013
+Enforcement: T009 → T014 → T015 → T016 → T017
+Learning: T009 → T018 → T019 → T020
+Documentation: T020 → T021 → T022 → T023
+Final: T023 → T024 → T025 → T026
 ```
 
-## Sequential Execution Example
+## Parallel Example
 ```bash
-# NEVER parallel - memory safety first
-# Task T001: Fix test script exit codes
-Task: "Update scripts/test.sh to properly propagate binary exit codes"
-# Wait for completion, verify success
-echo "Exit code: $?"
-# Continue to T002 only if T001 succeeded
+# After T001 is complete, launch contract tests together:
+Task: "Contract test for Constitutional Amendment v2.6.0 in __tests__/contracts/constitutional-amendment-v260.test.ts"
+Task: "Contract test for Task Completion Template validation in __tests__/contracts/task-completion-template.test.ts" 
+Task: "Contract test for Test Performance monitoring in __tests__/contracts/test-performance-monitoring.test.ts"
+Task: "Contract test for Constitutional Integration in __tests__/contracts/constitutional-integration-v260.test.ts"
 ```
 
-## Critical Success Criteria
-- [ ] `devbox run test` returns exit code 0 (verified with `echo "Exit code: $?"`)
-- [ ] **`devbox run test` completes in <60 seconds** (performance requirement)
-- [ ] All 80+ tests pass consistently without memory issues
-- [ ] Constitutional Amendment v2.5.0 fully implemented and enforced
-- [ ] Local-first operations respond in <50ms
-- [ ] Seamless Firebase to Supabase migration capability
-- [ ] Zero test regressions in main branch
+## Constitutional Success Criteria (Amendment v2.6.0)
+- [ ] `devbox run test; echo "Exit code: $?"` returns exit code 0 consistently
+- [ ] **Test execution completes in <60 seconds** (constitutional performance requirement)
+- [ ] All task completions include mandatory test expectation declarations
+- [ ] Post-task validation execution documented for every task
+- [ ] Prediction accuracy tracking operational and improving over time
+- [ ] Constitutional compliance monitoring active and reporting
+- [ ] Zero test skips without constitutional justification
+- [ ] Integration with Amendments v2.5.0 and v2.4.0 fully functional
 
-## Constitutional Amendment v2.5.0 Compliance
-**Binary Exit Code Enforcement**:
-- **T001, T021, T042**: Implement and validate exit code checking
-- **ALL test validation**: Must check exit codes, never parse logs
-- **Constitutional gate**: T021 blocks all feature work until exit code 0
-- **Final validation**: T042 ensures complete compliance
+## Constitutional Amendment v2.6.0 Compliance Protocol
+**Task Completion Validation**: Every task completion MUST include:
+1. **Test Expectation Declaration**: "Expected Test Outcome: [PASS/FAIL] - [Reasoning]"
+2. **Validation Execution**: Execute `devbox run test; echo "Exit code: $?"`
+3. **Results Documentation**: Document actual results vs prediction
+4. **Performance Tracking**: Record execution time vs 60-second target
+5. **Learning Integration**: Note prediction accuracy for continuous improvement
 
-## Memory Management Protocol
-- **Sequential execution only**: No parallel tasks to prevent memory exhaustion
-- **Memory monitoring**: Check usage before/after each task
-- **Emergency protocol**: Stop if approaching 32GB system limit
-- **Garbage collection**: Force GC between memory-intensive tasks
+## Critical Notes
+- **T001 is BLOCKING**: TypeScript compilation errors must be resolved before any other work
+- **TDD Required**: All contract tests (T002-T005) must fail before implementation
+- **Sequential Execution**: Memory management requires one task at a time
+- **Constitutional Compliance**: Amendment v2.6.0 format required for every task completion
+- **Performance Priority**: <60 second test execution is constitutional requirement
 
 ## Task Generation Rules Applied
-1. **From Contracts**: 7 contract files → 7 contract test tasks (T010-T016)
-2. **From Data Model**: 3 entities → 3 model tasks + services (T022-T024, T025-T028)
-3. **From Research**: Memory/constitution decisions → infrastructure tasks (T001-T009)
-4. **From Quickstart**: User scenarios → integration tests (T017-T020)
+1. **From Constitutional Contracts**: 4 contract files → 4 contract test tasks (T002-T005)
+2. **From Amendment Requirements**: Core implementation → 4 implementation tasks (T006-T009)
+3. **From Performance Requirements**: Optimization → 4 performance tasks (T010-T013)
+4. **From Enforcement Needs**: Automation → 4 enforcement tasks (T014-T017)
+5. **From Learning Requirements**: Analytics → 3 learning tasks (T018-T020)
+6. **From Documentation Needs**: Updates → 3 documentation tasks (T021-T023)
+7. **From Validation Requirements**: Final validation → 3 validation tasks (T024-T026)
 
-## Validation Checklist
-- [x] All contracts have corresponding tests (T010-T016)
-- [x] All entities have model implementation tasks (T022-T024)
-- [x] All tests come before implementation (Phase 3.2-3.3 → 3.5+)
-- [x] Sequential execution enforced (no parallel markers)
-- [x] Exit code validation mandatory (T001, T021, T042)
-- [x] Constitutional compliance prioritized (Amendment v2.5.0)
-- [x] Memory constraints addressed throughout
-- [x] Each task specifies exact file path
-
-**TOTAL TASKS**: 45 sequential tasks  
-**ESTIMATED DURATION**: 25-30 hours  
-**CRITICAL PATH**: T001→T021 (constitutional gate)→T042 (final validation)
+**TOTAL TASKS**: 26 sequential tasks
+**ESTIMATED DURATION**: 15-20 hours (with constitutional compliance validation)
+**CRITICAL PATH**: T001 (TypeScript fixes) → T002-T005 (contracts) → T006-T009 (implementation) → T024-T026 (validation)
 
 ---
 
-## 📋 DETAILED STATUS TRACKING (For Future Model Context)
+## 📋 CONSTITUTIONAL AMENDMENT v2.6.0 STATUS TRACKING
 
-### ✅ **PHASE 3.1 COMPLETED** (9/9 tasks - 100%)
-**Key Achievements:**
-- 🏗️ **Test Infrastructure**: TestDevice (650 lines), TestApp (450 lines), MockFactories (380 lines), TestDataBuilders (530 lines)
-- ⚡ **Performance**: Jest execution time reduced to ~25 seconds (target: <60 seconds)
-- 🛡️ **Constitutional Compliance**: Amendment v2.5.0 active, binary exit code enforcement
-- ✅ **Test Status**: All tests pass with exit code 0 consistently
+### ⚠️ **IMMEDIATE PRIORITY** 
+**T001**: CRITICAL - TypeScript compilation errors blocking all constitutional compliance
 
-**Files Modified/Created:**
-- ✅ `/lib/test-utils/TestDevice.ts` - Complete device simulation for multi-device testing
-- ✅ `/lib/test-utils/TestApp.ts` - Application-level test utility with navigation simulation  
-- ✅ `/lib/test-utils/mocks/MockFactoryCollection.ts` - Comprehensive mock factory system
-- ✅ `/lib/test-utils/builders/TestDataBuilderCollection.ts` - Builder pattern for test data
-- ✅ `/jest.config.js` - Optimized for speed and memory efficiency
-- ✅ `/scripts/test.sh` - Binary exit code enforcement (Amendment v2.5.0)
+### 🎯 **NEXT ACTIONS**
+1. **Resolve T001**: Fix TypeScript compilation errors immediately
+2. **Begin T002-T005**: Create constitutional contract tests (TDD approach)
+3. **Implement T006-T009**: Core constitutional amendment functionality
+4. **Validate T024-T026**: Achieve full constitutional compliance
 
-### 🎯 **NEXT IMMEDIATE ACTIONS**
-1. **T021**: Run constitutional validation gate (`devbox run test; echo "Exit code: $?"`)
-2. **Phase 3.2**: Begin contract test development (T010-T016)
-3. **Phase 3.3**: Create integration tests (T017-T020)
-4. **Phase 3.5**: Start core feature implementation after TDD tests exist
+### 📊 **CONSTITUTIONAL COMPLIANCE TRACKING**
+- **Amendment v2.6.0**: IN PROGRESS - Implementation tasks defined
+- **Amendment v2.5.0**: ACTIVE - Binary exit code enforcement operational
+- **Amendment v2.4.0**: ACTIVE - Test governance framework operational
+- **Performance Target**: 60-second test execution (currently blocked by TypeScript errors)
+- **Memory Constraint**: 8GB limit (constitutional requirement maintained)
 
-### 🔧 **TECHNICAL STATE**
-- **Repository**: Clean, all changes committed
-- **Tests**: 80+ tests passing consistently 
-- **Performance**: Sub-60 second execution achieved
-- **Memory**: Single-threaded execution prevents exhaustion
-- **TypeScript**: Compilation successful, no errors
-- **Dependencies**: All packages up to date, no security issues
-
-### 💡 **CONTINUATION STRATEGY FOR FUTURE MODEL**
-1. ✅ **Phase 3.1 is DONE** - Do not redo infrastructure work
-2. 🎯 **Start with T021** - Run constitutional validation to mark gate complete
-3. 📝 **Follow sequential order** - T010→T016 (contracts) then T017→T020 (integration)
-4. ⚠️ **TDD Required** - Write failing tests before implementing features
-5. 🚀 **Ready for feature work** - All infrastructure exists for Local First Storage development
+**Constitutional Status**: READY FOR IMPLEMENTATION after T001 resolution
