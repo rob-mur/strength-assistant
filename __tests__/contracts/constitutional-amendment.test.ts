@@ -416,4 +416,65 @@ describe('Constitutional Amendment Management Contract', () => {
       expect(enforcement.monitoring.alertThresholds.violationCount).toBe(1);
     });
   });
+
+  describe('Amendment v2.5.0: Binary Exit Code Validation', () => {
+    it('should validate successful test exit codes', async () => {
+      const result = await manager.validateTestExitCode('devbox run test', 0);
+      
+      expect(result).toBeDefined();
+      expect(result.valid).toBe(true);
+      expect(result.command).toBe('devbox run test');
+      expect(result.exitCode).toBe(0);
+      expect(result.expectedExitCode).toBe(0);
+      expect(typeof result.message).toBe('string');
+      expect(result.constitutionalRequirement).toContain('Amendment v2.5.0');
+      expect(result.validatedAt).toBeInstanceOf(Date);
+      expect(result.failureContext).toBeUndefined();
+    });
+
+    it('should validate failed test exit codes', async () => {
+      const result = await manager.validateTestExitCode('devbox run test', 1);
+      
+      expect(result).toBeDefined();
+      expect(result.valid).toBe(false);
+      expect(result.command).toBe('devbox run test');
+      expect(result.exitCode).toBe(1);
+      expect(result.expectedExitCode).toBe(0);
+      expect(typeof result.message).toBe('string');
+      expect(result.constitutionalRequirement).toContain('Amendment v2.5.0');
+      expect(result.validatedAt).toBeInstanceOf(Date);
+      expect(typeof result.failureContext).toBe('string');
+      expect(result.failureContext!.length).toBeGreaterThan(0);
+    });
+
+    it('should validate different test commands with exit codes', async () => {
+      const testCases = [
+        { command: 'npm test', exitCode: 0, expectedValid: true },
+        { command: 'jest', exitCode: 0, expectedValid: true },
+        { command: 'npm test', exitCode: 2, expectedValid: false },
+        { command: 'jest', exitCode: 130, expectedValid: false }
+      ];
+
+      for (const testCase of testCases) {
+        const result = await manager.validateTestExitCode(testCase.command, testCase.exitCode);
+        
+        expect(result.valid).toBe(testCase.expectedValid);
+        expect(result.command).toBe(testCase.command);
+        expect(result.exitCode).toBe(testCase.exitCode);
+        expect(result.expectedExitCode).toBe(0);
+        
+        if (!testCase.expectedValid) {
+          expect(result.failureContext).toBeDefined();
+        }
+      }
+    });
+
+    it('should enforce binary exit code validation in constitutional requirements', () => {
+      const requirements = manager.getCurrentRequirements();
+      const testingRequirements = requirements.requirementsBySection['Testing (NON-NEGOTIABLE)'];
+      
+      expect(testingRequirements.some(req => req.includes('Binary exit code validation'))).toBe(true);
+      expect(testingRequirements.some(req => req.includes('Exit code 0 = complete success'))).toBe(true);
+    });
+  });
 });
