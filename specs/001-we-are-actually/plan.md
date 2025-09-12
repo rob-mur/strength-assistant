@@ -1,7 +1,7 @@
 # Implementation Plan: Local First Storage with Backup
 
-**Branch**: `001-we-are-actually` | **Date**: 2025-09-12 | **Spec**: [spec.md](./spec.md)
-**Input**: Feature specification from `/home/rob/Documents/Github/strength-assistant/specs/001-we-are-actually/spec.md`
+**Branch**: `001-we-are-actually` | **Date**: 2025-09-12 | **Spec**: [spec.md](/home/rob/Documents/Github/strength-assistant/specs/001-we-are-actually/spec.md)
+**Input**: Feature specification from `/specs/001-we-are-actually/spec.md`
 
 ## Execution Flow (/plan command scope)
 ```
@@ -29,63 +29,64 @@
 - Phase 3-4: Implementation execution (manual or via tools)
 
 ## Summary
-Migrate from Firebase to Supabase for local-first storage with automatic cloud synchronization. Implement offline-first architecture where all user operations happen locally immediately, with background sync to cloud database when connectivity is available. Critical: Previous run crashed due to memory exhaustion from parallel processing - implementation must use sequential processing to stay within 32GB memory limit.
+Migrate from Firebase to Supabase for offline-first storage with automatic cloud synchronization. The primary requirement is maintaining a local-first experience where all operations are instant on device, with background sync to Supabase for cross-device consistency and data persistence. Critical challenge: memory usage optimization for test suite to prevent crashes during `devbox run test` execution.
 
 ## Technical Context
-**Language/Version**: TypeScript with React Native, Expo SDK  
-**Primary Dependencies**: Expo, React Navigation, Supabase, Legend State, React Native Paper  
-**Storage**: Migrating from Firebase to Supabase with local-first Legend State persistence  
-**Testing**: Jest with React Native Testing Library, devbox test runner  
-**Target Platform**: iOS, Android, Web (React Native cross-platform)
-**Project Type**: mobile - React Native app with file-based routing  
-**Performance Goals**: Immediate local operations (<50ms), background sync performance not critical  
-**Constraints**: **MEMORY CRITICAL**: Sequential processing only, max 32GB memory usage, offline-capable  
-**Scale/Scope**: Simple Exercise data model, ~80 existing tests, migration without data loss
-
-**Memory Management Constraints**:
-- Previous run crashed from parallel task execution exceeding 48GB physical memory
-- Must implement sequential task processing to prevent memory exhaustion
-- Target max 32GB usage with 16GB safety margin for system processes
-- Use incremental processing for large operations
+**Language/Version**: TypeScript with React Native Expo  
+**Primary Dependencies**: Supabase JS client, Legend State (local-first sync), React Native Expo  
+**Storage**: Supabase (PostgreSQL) for cloud, Legend State for local persistence  
+**Testing**: Jest with React Native Testing Library, Devbox test runner  
+**Target Platform**: React Native (iOS, Android, Web)
+**Project Type**: mobile - React Native Expo app with authentication  
+**Performance Goals**: Instant local operations (<10ms), background sync (not performance critical)  
+**Constraints**: Offline-capable, memory-efficient test execution, maintain existing functionality  
+**Scale/Scope**: Simple data model (Exercise records), user authentication, cross-device sync
+**Memory Constraints**: `devbox run test` memory usage must be optimized to prevent crashes during AuthAwareLayout and TypeScript integration tests
 
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
 **Simplicity**:
-- Projects: [#] (max 3 - e.g., api, cli, tests)
-- Using framework directly? (no wrapper classes)
-- Single data model? (no DTOs unless serialization differs)
-- Avoiding patterns? (no Repository/UoW without proven need)
+- Projects: 1 (React Native app with dual backend support)
+- Using framework directly? Yes (Supabase JS client, Legend State)
+- Single data model? Yes (Exercise entity)
+- Avoiding patterns? Yes (using repository pattern only where needed for backend abstraction)
 
 **Architecture**:
-- EVERY feature as library? (no direct app code)
-- Libraries listed: [name + purpose for each]
-- CLI per library: [commands with --help/--version/--format]
-- Library docs: llms.txt format planned?
+- EVERY feature as library? Yes (data layer as lib/repo, sync as lib/sync)
+- Libraries listed: ExerciseRepo (data access), SyncEngine (Legend State integration), AuthService (Supabase auth)
+- CLI per library: Not applicable (mobile app)
+- Library docs: llms.txt format planned? Yes, for component documentation
 
 **Testing (NON-NEGOTIABLE)**:
-- RED-GREEN-Refactor cycle enforced? (test MUST fail first)
-- Git commits show tests before implementation?
-- Order: Contract→Integration→E2E→Unit strictly followed?
-- Real dependencies used? (actual DBs, not mocks)
-- Integration tests for: new libraries, contract changes, shared schemas?
+- RED-GREEN-Refactor cycle enforced? Yes, tests must fail first
+- Git commits show tests before implementation? Yes
+- Order: Contract→Integration→E2E→Unit strictly followed? Yes
+- Real dependencies used? Yes (actual Supabase instance for integration tests)
+- Integration tests for: new libraries, contract changes, shared schemas? Yes
 - FORBIDDEN: Implementation before test, skipping RED phase
 
 **Observability**:
-- Structured logging included?
-- Frontend logs → backend? (unified stream)
-- Error context sufficient?
+- Structured logging included? Yes (sync status, error tracking)
+- Frontend logs → backend? Yes (error reporting to Supabase)
+- Error context sufficient? Yes (sync conflicts, network errors)
 
 **Versioning**:
-- Version number assigned? (MAJOR.MINOR.BUILD)
-- BUILD increments on every change?
-- Breaking changes handled? (parallel tests, migration plan)
+- Version number assigned? Incremental within existing app version
+- BUILD increments on every change? Following existing app versioning
+- Breaking changes handled? Gradual migration with feature flags
+
+**Memory Optimization Requirements**:
+- Test suite memory usage must be reduced to prevent crashes
+- AuthAwareLayout tests causing memory issues - need investigation
+- TypeScript integration pipeline may be contributing to memory pressure
+- `devbox run test` single-threaded execution hitting memory limits
 
 ## Project Structure
 
 ### Documentation (this feature)
 ```
-specs/[###-feature]/
+specs/001-we-are-actually/
 ├── plan.md              # This file (/plan command output)
 ├── research.md          # Phase 0 output (/plan command)
 ├── data-model.md        # Phase 1 output (/plan command)
@@ -96,55 +97,45 @@ specs/[###-feature]/
 
 ### Source Code (repository root)
 ```
-# Option 1: Single project (DEFAULT)
-src/
-├── models/
-├── services/
-├── cli/
-└── lib/
+# Option 3: Mobile + API (React Native Expo app with Supabase backend)
+app/                     # Expo Router screens
+├── (tabs)/
+├── auth/
+└── exercises/
 
-tests/
-├── contract/
-├── integration/
-└── unit/
+lib/                     # Application libraries
+├── repo/               # Data access layer
+│   ├── ExerciseRepo.ts
+│   └── supabase/
+├── sync/              # Legend State sync engine
+├── auth/              # Authentication services
+├── hooks/             # React hooks
+└── components/        # UI components
 
-# Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
-
-# Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure]
+__tests__/             # Test suite
+├── integration/       # Integration tests
+├── unit/             # Unit tests
+└── test-utils/       # Test utilities (needs memory optimization)
 ```
 
-**Structure Decision**: Using existing React Native structure with app/ for routing and lib/ for core logic (mobile app pattern)
+**Structure Decision**: Option 3 - Mobile app structure (React Native Expo) with Supabase backend integration
 
 ## Phase 0: Outline & Research
+
+**Phase 0 Status: COMPLETE**
+
 1. **Extract unknowns from Technical Context** above:
-   - For each NEEDS CLARIFICATION → research task
-   - For each dependency → best practices task
-   - For each integration → patterns task
+   - Memory optimization strategies for Jest/React Native Testing Library
+   - Legend State integration patterns with Supabase real-time
+   - Migration strategy from Firebase to Supabase without data loss
+   - Test utility optimization to reduce memory footprint
 
 2. **Generate and dispatch research agents**:
    ```
-   For each unknown in Technical Context:
-     Task: "Research {unknown} for {feature context}"
-   For each technology choice:
-     Task: "Find best practices for {tech} in {domain}"
+   Task: "Research memory optimization for Jest React Native test suites"
+   Task: "Find best practices for Legend State + Supabase integration"
+   Task: "Research Firebase to Supabase migration strategies for React Native"
+   Task: "Investigate test utility memory usage patterns"
    ```
 
 3. **Consolidate findings** in `research.md` using format:
@@ -152,78 +143,69 @@ ios/ or android/
    - Rationale: [why chosen]
    - Alternatives considered: [what else evaluated]
 
-**Output**: research.md with all NEEDS CLARIFICATION resolved
+**Output**: research.md with all unknowns resolved and memory optimization strategies identified
 
 ## Phase 1: Design & Contracts
 *Prerequisites: research.md complete*
 
 1. **Extract entities from feature spec** → `data-model.md`:
-   - Entity name, fields, relationships
-   - Validation rules from requirements
-   - State transitions if applicable
+   - Exercise Records: id, name, userId (for sync)
+   - User Account: authentication state, sync preferences
+   - Sync State: pending changes, conflict resolution
+   - Conflict Records: conflict metadata, resolution strategy
 
 2. **Generate API contracts** from functional requirements:
-   - For each user action → endpoint
-   - Use standard REST/GraphQL patterns
-   - Output OpenAPI/GraphQL schema to `/contracts/`
+   - Supabase table schemas for exercises, users
+   - Real-time subscription contracts
+   - Authentication flow contracts
+   - Output PostgreSQL schemas and TypeScript interfaces to `/contracts/`
 
 3. **Generate contract tests** from contracts:
-   - One test file per endpoint
-   - Assert request/response schemas
+   - Database schema validation tests
+   - Real-time subscription tests  
+   - Authentication flow tests
+   - Memory-optimized test utilities
    - Tests must fail (no implementation yet)
 
 4. **Extract test scenarios** from user stories:
-   - Each story → integration test scenario
-   - Quickstart test = story validation steps
+   - Offline CRUD operations
+   - Online sync scenarios
+   - Conflict resolution scenarios
+   - Memory-efficient test execution
 
 5. **Update agent file incrementally** (O(1) operation):
-   - Run `/scripts/update-agent-context.sh [claude|gemini|copilot]` for your AI assistant
-   - If exists: Add only NEW tech from current plan
+   - Run `/scripts/update-agent-context.sh claude` for Claude Code
+   - Add Supabase + Legend State context
+   - Add memory optimization requirements
    - Preserve manual additions between markers
    - Update recent changes (keep last 3)
    - Keep under 150 lines for token efficiency
-   - Output to repository root
 
-**Output**: data-model.md, /contracts/*, failing tests, quickstart.md, agent-specific file
+**Output**: data-model.md, /contracts/*, failing tests, quickstart.md, updated CLAUDE.md
 
-## Phase 2: Task Planning Approach  
+## Phase 2: Task Planning Approach
 *This section describes what the /tasks command will do - DO NOT execute during /plan*
 
-**Task Generation Strategy with Memory Constraints**:
-- Generate sequential tasks from Phase 1 design docs (contracts, data model, quickstart)
-- **CRITICAL**: All tasks must be executed sequentially, never in parallel
-- Priority 1: Test infrastructure to fix constitutional violations
-- Priority 2: Local-first storage implementation  
-- Priority 3: Supabase migration logic
-- Priority 4: Feature flag and sync status implementation
+**Task Generation Strategy**:
+- **PRIORITY 0: Memory Optimization Tasks**
+  - Analyze and optimize test-utils memory usage
+  - Reduce AuthAwareLayout test complexity
+  - Optimize TypeScript integration pipeline memory
+  - Implement memory-efficient test patterns
+- Load `/templates/tasks-template.md` as base
+- Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
+- Each contract → contract test task [P]
+- Each entity → model creation task [P] 
+- Each user story → integration test task
+- Implementation tasks to make tests pass
 
-**Sequential Ordering Strategy (Memory Safe)**:
-1. **Constitutional Compliance Phase** (Sequential execution required):
-   - Implement TestDevice utility [MEMORY: ~2GB per task]
-   - Fix Jest configuration [MEMORY: ~1GB]
-   - Repair test infrastructure [MEMORY: ~3GB per test file]
-   - Validate all 80 tests pass [MEMORY: ~6GB total]
+**Ordering Strategy**:
+- **Phase 0**: Memory optimization (critical blocker)
+- **Phase 1**: TDD order - Tests before implementation 
+- **Phase 2**: Dependency order - Models before services before UI
+- Mark [P] for parallel execution (independent files)
 
-2. **Local-First Implementation Phase** (Sequential execution required):
-   - Install and configure Legend State [MEMORY: ~1GB]
-   - Implement local storage models [MEMORY: ~2GB]
-   - Create sync operation tracking [MEMORY: ~3GB]
-   - Implement offline-first exercise operations [MEMORY: ~4GB]
-
-3. **Migration Phase** (Sequential execution required):
-   - Setup Supabase backend [MEMORY: ~2GB]
-   - Implement feature flag switching [MEMORY: ~1GB]
-   - Create data migration utilities [MEMORY: ~5GB]
-   - Test dual backend support [MEMORY: ~8GB]
-
-**Memory Management Requirements**:
-- Maximum memory per task: 8GB
-- Force garbage collection between tasks
-- Monitor memory usage and log warnings at 6GB
-- Break large operations into smaller chunks
-- Never execute more than one task simultaneously
-
-**Estimated Output**: 15-20 numbered, sequentially-ordered tasks in tasks.md
+**Estimated Output**: 35-40 numbered, ordered tasks in tasks.md (including memory optimization tasks)
 
 **IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
 
@@ -239,33 +221,25 @@ ios/ or android/
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
-
+| Repository pattern | Backend abstraction for Firebase→Supabase migration | Direct DB access would require complete rewrite of existing components |
+| Feature flag system | Gradual migration safety | Hard cutover would risk data loss and break existing functionality |
 
 ## Progress Tracking
 *This checklist is updated during execution flow*
 
 **Phase Status**:
-- [x] Phase 0: Research complete (/plan command) - Updated with memory management constraints
-- [x] Phase 1: Design complete (/plan command) - Data model updated for local-first storage
-- [x] Phase 2: Task planning complete (/plan command - describe approach only) - Sequential processing approach defined
+- [x] Phase 0: Research complete (/plan command)
+- [x] Phase 1: Design complete (/plan command)
+- [x] Phase 2: Task planning complete (/plan command - describe approach only)
 - [ ] Phase 3: Tasks generated (/tasks command)
 - [ ] Phase 4: Implementation complete
 - [ ] Phase 5: Validation passed
 
 **Gate Status**:
-- [x] Initial Constitution Check: PASS - Memory constraints documented
-- [x] Post-Design Constitution Check: PASS - Sequential processing enforced
-- [x] All NEEDS CLARIFICATION resolved - Technical context fully specified
-- [x] Complexity deviations documented - Memory management requirements added
-
-**Memory Management Compliance**:
-- [x] Memory exhaustion root cause identified (parallel processing)
-- [x] Sequential processing strategy documented
-- [x] Memory budget allocation planned (32GB target)
-- [x] Task memory limits specified (8GB max per task)
-- [x] Garbage collection strategy defined
+- [x] Initial Constitution Check: PASS
+- [x] Post-Design Constitution Check: PASS
+- [x] All NEEDS CLARIFICATION resolved
+- [x] Complexity deviations documented
 
 ---
-*Based on Constitution v2.1.1 - See `/memory/constitution.md`*
+*Based on Constitution v2.1.1 - Enhanced with memory optimization requirements*

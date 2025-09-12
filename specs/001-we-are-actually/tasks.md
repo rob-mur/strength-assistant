@@ -1,8 +1,30 @@
-# Tasks: Local First Storage with Backup
+# Tasks: Local First Storage with Backup Migration
 
 **Branch**: `001-we-are-actually` | **Generated**: 2025-09-12 | **Source**: [plan.md](./plan.md)
 **Input**: Design documents from `/home/rob/Documents/Github/strength-assistant/specs/001-we-are-actually/`
-**Prerequisites**: research.md (required), data-model.md, contracts/, quickstart.md
+**Prerequisites**: plan.md ✅, research.md ✅, data-model.md ✅, contracts/ ✅, quickstart.md ✅
+
+## Tech Stack Summary
+- **Language**: TypeScript with React Native Expo
+- **Storage**: Supabase (PostgreSQL) + Legend State (local-first sync)
+- **Testing**: Jest with React Native Testing Library
+- **Architecture**: Mobile app with dual Firebase/Supabase backend support
+- **Critical**: Memory optimization required for `devbox run test` execution
+
+## 🚨 PHASE 0: CRITICAL MEMORY OPTIMIZATION (Priority 0)
+**MUST COMPLETE FIRST** - These tasks address the memory crash in `devbox run test`
+
+### Memory Analysis & Optimization
+- [ ] **T001** [P] Analyze AuthAwareLayout test memory usage in `__tests__/components/AuthAwareLayout.test.ts`
+- [ ] **T002** [P] Profile TypeScript integration pipeline memory in Jest configuration
+- [ ] **T003** [P] Optimize Jest configuration for single-threaded execution in `jest.config.js`
+- [ ] **T004** [P] Implement test cleanup protocols in `jest.setup.js`
+
+### Test Infrastructure Foundation
+- [ ] **T005** [P] Create TestDevice class in `lib/test-utils/TestDevice.ts`
+- [ ] **T006** [P] Create TestApp class in `lib/test-utils/TestApp.ts`  
+- [ ] **T007** [P] Create test utilities directory structure `lib/test-utils/`
+- [ ] **T008** [P] Implement memory-optimized TestDevicePool in `lib/test-utils/TestDevicePool.ts`
 
 ## Critical Objective
 **Primary Goal**: Migrate from Firebase to Supabase with local-first storage architecture while maintaining constitutional test compliance and preventing memory exhaustion through sequential processing.

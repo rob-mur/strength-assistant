@@ -230,22 +230,35 @@ export class TestDevice {
 ## Memory Management Research (Critical Update)
 
 ### Memory Exhaustion Root Cause Analysis
-**Issue**: Previous implementation run crashed due to memory exhaustion exceeding 48GB physical RAM
-**Root Cause**: Parallel task execution created multiple concurrent processes that accumulated memory usage
+**Issue**: `devbox run test` crashes due to memory exhaustion during single-threaded execution
+**Root Cause**: Memory usage too high for the test script itself, specifically:
+- **AuthAwareLayout tests**: Causing timeouts and memory accumulation
+- **TypeScript integration pipeline**: Contributing to memory pressure during test execution
+- **Single-threaded devbox process**: Hitting memory limits without parallel execution benefit
 
 ### Memory Usage Patterns in React Native/Node.js Projects
 - **Jest Test Execution**: Each test process can use 100-500MB depending on mocks and test data
+- **AuthAwareLayout Component Tests**: Complex React Native component rendering uses 200-800MB per test
 - **TypeScript Compilation**: `tsc` can use 1-2GB for large codebases with strict checking
+- **React Native Testing Library**: DOM simulation and component trees accumulate memory
 - **Build Processes**: Expo/Metro bundler can use 2-4GB during asset processing
-- **Concurrent Tool Execution**: Multiple tools running simultaneously multiply memory usage
 
-### Sequential Processing Strategy
-**Decision**: Implement strict sequential processing to prevent memory accumulation
+### Devbox Test Memory Profile Analysis
+**Single-threaded execution characteristics**:
+- **No parallel memory distribution**: All memory usage concentrated in one process
+- **Test accumulation**: Memory from previous tests not properly released
+- **Component rendering overhead**: React Native components create heavy memory footprints
+- **Mock object persistence**: Test mocks accumulating across test suite execution
+
+### Memory Optimization Strategy for Devbox Test
+**Decision**: Optimize test execution to reduce single-threaded memory usage
 **Implementation Approach**:
-- Execute one task at a time with explicit await/yield patterns
-- Implement memory monitoring between tasks
-- Add garbage collection triggers after memory-intensive operations
-- Break large operations into smaller, memory-bounded chunks
+- **Test file isolation**: Run tests in separate processes with explicit cleanup
+- **Component test optimization**: Reduce AuthAwareLayout test complexity and rendering overhead
+- **Mock management**: Aggressive cleanup of test mocks between test files
+- **Incremental test execution**: Break test suite into smaller chunks
+- **Memory monitoring**: Add explicit garbage collection between heavy tests
+- **Jest configuration**: Optimize worker memory limits for single-threaded execution
 
 ### Memory Budget Allocation (32GB Target)
 - **System/OS**: 8GB reserved
@@ -264,13 +277,20 @@ export class TestDevice {
 
 ## Updated Priority Matrix with Memory Constraints
 
-| Priority | Category | Memory Impact | Sequential Processing Required |
-|----------|----------|---------------|-------------------------------|
-| 1 | Missing Test Infrastructure | Medium | Yes - one test file at a time |
-| 2 | Jest Configuration | Low | No - configuration only |
-| 3 | TypeScript Compilation | High | Yes - incremental compilation |
-| 4 | Backend Implementation | Medium | Yes - sequential module implementation |
-| 5 | Constitutional Framework | Low | No - metadata operations |
+| Priority | Category | Memory Impact | Action Required |
+|----------|----------|---------------|-----------------|
+| 0 | **Memory Optimization** | **Critical** | **Reduce devbox test memory usage immediately** |
+| 1 | Missing Test Infrastructure | Medium | Implement TestDevice/TestApp classes |
+| 2 | Jest Configuration | Low | Optimize worker memory limits |
+| 3 | TypeScript Compilation | High | Incremental compilation with GC |
+| 4 | Backend Implementation | Medium | Sequential module implementation |
+| 5 | Constitutional Framework | Low | Metadata operations only |
+
+### Priority 0: Critical Memory Optimization Tasks
+1. **Analyze AuthAwareLayout test complexity** - Identify memory-heavy rendering patterns
+2. **Optimize Jest configuration for single-threaded execution** - Configure memory limits
+3. **Implement test cleanup protocols** - Force GC between test files
+4. **Break test suite into smaller chunks** - Prevent memory accumulation
 
 ## Conclusion
 
