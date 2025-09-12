@@ -1,7 +1,7 @@
 module.exports = {
   preset: "jest-expo",
   transformIgnorePatterns: [
-    "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|firebase/.*|@firebase/.*|uuid)",
+    "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|firebase/.*|@firebase/.*|@supabase/.*|supabase|uuid|legend-state)",
   ],
   transform: {
     "^.+\\.mjs$": "babel-jest",
@@ -20,6 +20,9 @@ module.exports = {
     "!**/*.stories.{ts,tsx}",
     "!lib/repo/FirebaseExerciseRepo.ts",
     "!lib/data/firebase/**",
+    "!lib/test-utils/**", // Exclude test infrastructure from coverage
+    "!**/*.test.{ts,tsx}",
+    "!**/*.spec.{ts,tsx}",
   ],
   
   // Coverage thresholds aligned with constitutional quality requirements
@@ -43,6 +46,13 @@ module.exports = {
       lines: 95,
       statements: 95,
     },
+    // Constitutional requirements for test infrastructure (disabled temporarily)
+    // "lib/test-utils/**/*.ts": {
+    //   branches: 95,
+    //   functions: 95,
+    //   lines: 95,
+    //   statements: 95,
+    // },
   },
   
   // Test environment configuration for constitutional compliance
@@ -63,4 +73,26 @@ module.exports = {
     "**/__tests__/**/*.(ts|tsx|js)",
     "**/*.(test|spec).(ts|tsx|js)",
   ],
+  
+  // Module name mapping for path aliases and test infrastructure
+  moduleNameMapper: {
+    "^@/(.*)$": "<rootDir>/$1",
+    "^../../lib/test-utils/TestDevice$": "<rootDir>/lib/test-utils/TestDevice",
+    "^../lib/test-utils/(.*)$": "<rootDir>/lib/test-utils/$1",
+  },
+  
+  // Setup files for test environment
+  // setupFiles: [
+  //   "<rootDir>/jest.polyfills.js"
+  // ],
+  
+  // Module resolution configuration
+  resolver: undefined, // Use default Jest resolver
+  
+  // Ensure proper handling of ES modules
+  extensionsToTreatAsEsm: ['.ts', '.tsx'],
+  
+  // Enhanced error handling for constitutional compliance
+  verbose: true,
+  errorOnDeprecated: true,
 };

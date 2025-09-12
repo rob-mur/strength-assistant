@@ -1,262 +1,456 @@
-# Tasks: TypeScript Testing Infrastructure & Constitution Update
+# Tasks: Jest Test Suite Repair & Constitutional Enhancement
 
 **Branch**: `001-we-are-actually` | **Generated**: 2025-01-15 | **Source**: [plan.md](./plan.md)
 **Input**: Design documents from `/home/rob/Documents/Github/strength-assistant/specs/001-we-are-actually/`
-**Prerequisites**: plan.md (required), research.md, data-model.md, contracts/
+**Prerequisites**: research.md (required), data-model.md, contracts/, quickstart.md
+
+## Critical Objective
+**Primary Goal**: Fix all 80 failing Jest tests by implementing missing test infrastructure and enforcing constitutional compliance that prevents future test regressions.
 
 ## Execution Strategy
-- **TDD Order**: Constitutional requirements → Tests → Implementation
-- **Parallel Tasks**: Marked with [P] can run simultaneously
-- **Quality Gate**: Each task must result in `devbox run test` passing
-- **Final Validation**: Task T020 ensures complete test suite success
+- **Emergency Infrastructure First**: Build missing TestDevice and mock factories to unblock tests
+- **Constitutional Enforcement**: Implement governance to ensure `devbox run test` always passes
+- **Systematic Repair**: Fix failing tests by category with dependency tracking
+- **Parallel Tasks**: Marked with [P] can run simultaneously on different files
+- **Quality Gate**: Each phase must achieve its success criteria before proceeding
 
 ## Task List
 
-### T001: Constitutional Amendment Implementation [P]
-**Status**: pending  
-**Estimated Duration**: 30 minutes  
-**Description**: Implement the ConstitutionalAmendmentManager interface to formalize TypeScript testing requirements
-**Acceptance Criteria**:
-- Create `src/constitution/ConstitutionalAmendmentManager.ts` implementing the contract interface
-- Support amendment proposal, review, and enactment workflow
-- Include compliance validation for TypeScript testing requirements
-- Must compile without TypeScript errors
+## Phase 1: Emergency Infrastructure Setup
 
-### T002: TypeScript Validator Implementation [P]  
+### T001 - Constitutional Amendment for Test Governance
 **Status**: pending  
 **Estimated Duration**: 45 minutes  
-**Description**: Implement the TypeScriptValidator interface for compilation validation
+**Priority**: Critical (blocks all commits until tests pass)
+**Description**: Create constitutional amendment to enforce test passing requirements
+**Path**: `CLAUDE.md` (constitutional requirement section)
+**Dependencies**: None
 **Acceptance Criteria**:
-- Create `src/typescript/TypeScriptValidator.ts` implementing the contract interface
-- Support full codebase and selective file validation
-- Provide detailed error reporting with file/line context
-- Include configuration compliance checking
-- Must compile without TypeScript errors
+- Amend constitutional requirements to mandate `devbox run test` passes before any commit
+- Define enforcement mechanisms (pre-commit hooks, CI blocking)
+- Specify test infrastructure requirements and governance policies
+- Document exemption process for emergency situations
 
-### T003: Pre-commit Hook Configuration
-**Status**: pending  
-**Estimated Duration**: 20 minutes  
-**Description**: Configure Git pre-commit hooks to validate TypeScript compilation
-**Dependencies**: T002
-**Acceptance Criteria**:
-- Create `.husky/pre-commit` hook script
-- Execute TypeScript compilation validation before commits
-- Block commits if TypeScript errors exist
-- Provide clear error messages for developers
-
-### T004: TypeScript Configuration Validation
+### T002 [P] - Core Test Infrastructure Directory Setup
 **Status**: pending  
 **Estimated Duration**: 15 minutes  
-**Description**: Enhance tsconfig.json to meet constitutional requirements
+**Description**: Create missing test infrastructure directory structure
+**Path**: `lib/test-utils/` directory and subdirectories
+**Dependencies**: None
 **Acceptance Criteria**:
-- Enable strict mode with required compiler options
-- Set noImplicitAny: true, noImplicitReturns: true
-- Configure proper include/exclude patterns
-- Validate configuration meets constitutional standards
+- Create `lib/test-utils/` directory
+- Create subdirectories: `mocks/`, `builders/`, `fixtures/`
+- Set up proper TypeScript module exports
+- Initialize index.ts files for clean imports
 
-### T005: Contract Test - TypeScript Validation [P]
+### T003 [P] - TestDevice Core Implementation  
 **Status**: pending  
-**Estimated Duration**: 30 minutes  
-**Description**: Create contract tests for TypeScript validation functionality
+**Estimated Duration**: 2 hours  
+**Priority**: Critical (blocking 80 tests)
+**Description**: Implement the missing TestDevice class that's blocking 80 tests
+**Path**: `lib/test-utils/TestDevice.ts`
+**Dependencies**: T002
+**Interface**: Based on `contracts/test-infrastructure.ts`
 **Acceptance Criteria**:
-- Create `__tests__/contracts/typescript-validation.test.ts`
-- Test validateCompilation() method behavior
-- Test validateFiles() method with specific file paths
-- Test configuration validation against constitutional requirements
-- Tests must initially fail (no implementation yet)
+- Implement complete TestDevice interface with all required methods
+- Support device simulation with network status control
+- Implement authentication state management (anonymous/authenticated)
+- Support exercise CRUD operations with sync status tracking
+- Provide real-time subscription management
+- Include proper cleanup and initialization methods
 
-### T006: Contract Test - Constitutional Amendment [P]
+### T004 [P] - Mock Factory Collection Implementation
 **Status**: pending  
-**Estimated Duration**: 30 minutes  
-**Description**: Create contract tests for constitutional amendment functionality  
+**Estimated Duration**: 1.5 hours  
+**Description**: Implement mock factories for exercise, user, sync state, and service mocks
+**Path**: `lib/test-utils/mocks/MockFactoryCollection.ts`
+**Dependencies**: T002
+**Interface**: Based on `contracts/test-infrastructure.ts`
 **Acceptance Criteria**:
-- Create `__tests__/contracts/constitutional-amendment.test.ts`
-- Test amendment proposal workflow
-- Test compliance validation process
-- Test enforcement configuration
-- Tests must initially fail (no implementation yet)
+- Implement ExerciseMockFactory, UserMockFactory, SyncStateMockFactory
+- Implement AuthMockFactory and ServiceMockFactory
+- Support deterministic test data generation
+- Provide fluent API for test data creation
+- Include performance test data generation capabilities
 
-### T007: Integration Test - TypeScript Pipeline
+### T005 [P] - Test Data Builder Collection
+**Status**: pending  
+**Estimated Duration**: 1 hour  
+**Description**: Implement test data builders for creating complex test scenarios
+**Path**: `lib/test-utils/builders/TestDataBuilderCollection.ts`
+**Dependencies**: T002
+**Interface**: Based on `contracts/test-infrastructure.ts`
+**Acceptance Criteria**:
+- Implement ScenarioBuilder, ExerciseBuilder, UserBuilder, SyncDataBuilder
+- Support fluent API pattern with method chaining
+- Provide pre-built scenarios (anonymous, authenticated, multi-device)
+- Include scenario validation and execution capabilities
+
+## Phase 2: Jest Configuration and Mock Enhancement
+
+### T006 - Enhanced Jest Configuration
 **Status**: pending  
 **Estimated Duration**: 45 minutes  
-**Description**: Create integration tests for complete TypeScript validation pipeline
-**Dependencies**: T003, T004
+**Description**: Update Jest configuration to support React Native Expo and fix module resolution
+**Path**: `jest.config.js`
+**Dependencies**: T001-T005
 **Acceptance Criteria**:
-- Create `__tests__/integration/typescript-pipeline.test.ts`
-- Test end-to-end TypeScript validation workflow
-- Test pre-commit hook integration
-- Test CI pipeline compatibility
-- Verify `devbox run test` includes TypeScript validation
+- Update transformIgnorePatterns to include all required modules (Supabase, Firebase, React Native)
+- Configure proper setupFilesAfterEnv with test infrastructure initialization
+- Integrate constitutional compliance validation in global setup
+- Configure proper TypeScript support and module resolution
+- Set coverage thresholds per constitutional requirements
 
-### T008: Unit Tests - TypeScript Validator
+### T007 [P] - Firebase Service Mocks
+**Status**: pending  
+**Estimated Duration**: 1 hour  
+**Description**: Implement comprehensive Firebase service mocks
+**Path**: `lib/test-utils/mocks/FirebaseServiceMocks.ts`
+**Dependencies**: T004
+**Acceptance Criteria**:
+- Implement complete Firebase Auth mock with proper interface matching
+- Implement Firestore mock with collection/document simulation
+- Provide realistic async behavior and error simulation
+- Support both authenticated and anonymous user scenarios
+- Include proper TypeScript type definitions
+
+### T008 [P] - Supabase Service Mocks
+**Status**: pending  
+**Estimated Duration**: 1 hour  
+**Description**: Implement comprehensive Supabase service mocks
+**Path**: `lib/test-utils/mocks/SupabaseServiceMocks.ts`
+**Dependencies**: T004
+**Requirements**: Fix `this.client.auth.getSession is not a function` errors
+**Acceptance Criteria**:
+- Implement complete Supabase client mock with proper auth interface
+- Fix getSession() method and other missing auth methods
+- Implement database mock with proper query simulation
+- Support real-time subscription mocking
+- Include proper error handling and session management
+
+### T009 [P] - React Native Module Mocks
+**Status**: pending  
+**Estimated Duration**: 45 minutes  
+**Description**: Implement React Native module mocks (AsyncStorage, navigation, etc.)
+**Path**: `lib/test-utils/mocks/ReactNativeModuleMocks.ts`
+**Dependencies**: T004
+**Acceptance Criteria**:
+- Implement AsyncStorage mock with persistent storage simulation
+- Implement navigation mocks for React Navigation
+- Mock other React Native modules used in tests
+- Provide realistic async storage behavior
+- Support test isolation and cleanup
+
+## Phase 3: Test Infrastructure Integration
+
+### T010 - Test Infrastructure Manager
+**Status**: pending  
+**Estimated Duration**: 1 hour  
+**Description**: Implement the main orchestrator for test infrastructure
+**Path**: `lib/test-utils/TestInfrastructureManager.ts`
+**Dependencies**: T003, T004, T005
+**Interface**: Based on `contracts/test-infrastructure.ts`
+**Acceptance Criteria**:
+- Implement complete TestInfrastructureManager interface
+- Coordinate TestDevice creation and lifecycle management
+- Manage mock factory and test data builder provisioning
+- Provide infrastructure validation and cleanup capabilities
+- Include proper error handling and resource management
+
+### T011 - Test Failure Analysis System
+**Status**: pending  
+**Estimated Duration**: 1.5 hours  
+**Description**: Implement systematic tracking and analysis of test failures
+**Path**: `lib/test-utils/TestFailureTracker.ts`
+**Dependencies**: T006
+**Interface**: Based on `contracts/jest-validation.ts` and `contracts/test-repair.ts`
+**Acceptance Criteria**:
+- Catalog all 80 failing tests with detailed failure analysis
+- Categorize failures (MISSING_INFRASTRUCTURE, MOCK_CONFIGURATION, etc.)
+- Track repair status and dependencies between failing tests
+- Provide repair strategy recommendations and effort estimation
+- Generate repair progress reports and metrics
+
+### T012 - Constitutional Test Validator
+**Status**: pending  
+**Estimated Duration**: 45 minutes  
+**Description**: Implement constitutional compliance validation for test governance
+**Path**: `lib/test-utils/ConstitutionalTestValidator.ts`
+**Dependencies**: T001, T011
+**Interface**: Based on `contracts/jest-validation.ts`
+**Acceptance Criteria**:
+- Validate test suite compliance with constitutional requirements
+- Enforce test passing requirements before commits
+- Provide detailed compliance reporting and violation detection
+- Integrate with pre-commit hooks and CI/CD pipeline
+- Support governance policy enforcement and exemption handling
+
+## Phase 4: Test Repair Execution
+
+### T013 - Fix Missing Infrastructure Tests (Category 1)
+**Status**: pending  
+**Estimated Duration**: 2 hours  
+**Description**: Repair tests failing due to missing TestDevice and related utilities
+**Affected Tests**: ~30 tests in integration/, contracts/ directories
+**Dependencies**: T003, T010
+**Acceptance Criteria**:
+- Identify all tests failing due to missing TestDevice import
+- Update test imports to use implemented TestDevice
+- Validate that tests can instantiate and use TestDevice
+- Ensure all TestDevice-dependent tests pass
+- Document any additional infrastructure needs discovered
+
+### T014 - Fix Jest Configuration Tests (Category 2)
+**Status**: pending  
+**Estimated Duration**: 1.5 hours  
+**Description**: Repair tests failing due to Jest configuration and module resolution
+**Affected Tests**: ~20 tests with module resolution errors
+**Dependencies**: T006, T007-T009
+**Acceptance Criteria**:
+- Fix module resolution errors for Supabase, Firebase, React Native imports
+- Update transformIgnorePatterns to handle all required dependencies
+- Validate that all previously failing imports now resolve correctly
+- Ensure test environment properly simulates React Native Expo environment
+- Confirm all module resolution tests pass
+
+### T015 - Fix Mock Implementation Tests (Category 3)
+**Status**: pending  
+**Estimated Duration**: 1.5 hours  
+**Description**: Repair tests failing due to incomplete or incorrect mock implementations
+**Affected Tests**: ~15 tests with mock-related failures
+**Dependencies**: T007-T009
+**Acceptance Criteria**:
+- Fix Supabase auth.getSession() method implementation
+- Complete Firebase and React Native mock implementations
+- Validate mock behavior matches real service interfaces
+- Ensure all mock-dependent tests pass with realistic behavior
+- Update mock configurations based on actual test requirements
+
+### T016 - Fix TypeScript Compilation Tests (Category 4)
+**Status**: pending  
+**Estimated Duration**: 1 hour  
+**Description**: Repair tests failing due to TypeScript compilation errors
+**Affected Tests**: ~10 tests with type safety issues
+**Dependencies**: T012
+**Acceptance Criteria**:
+- Fix TypeScript compilation errors in test files
+- Update type definitions for mock objects and test utilities
+- Ensure strict TypeScript compliance across all test files
+- Validate constitutional TypeScript requirements are met
+- Confirm all TypeScript-related test failures are resolved
+
+### T017 - Fix Constitutional Framework Tests (Category 5)
+**Status**: pending  
+**Estimated Duration**: 45 minutes  
+**Description**: Repair tests failing due to constitutional testing framework requirements
+**Affected Tests**: ~5 tests related to constitutional compliance
+**Dependencies**: T001, T012
+**Acceptance Criteria**:
+- Implement constitutional testing framework integration
+- Fix tests that validate constitutional compliance
+- Ensure governance enforcement mechanisms work correctly
+- Validate constitutional amendment functionality
+- Confirm constitutional framework tests pass
+
+## Phase 5: Validation and Governance
+
+### T018 - Complete Test Suite Validation (CRITICAL GATE)
+**Status**: pending  
+**Estimated Duration**: 45 minutes  
+**Description**: Validate that all 80 tests now pass consistently
+**Path**: Validation across all test files
+**Dependencies**: T013-T017
+**Success Criteria**: `devbox run test` passes 100%
+**Acceptance Criteria**:
+- Execute full test suite and achieve 100% pass rate
+- Validate test consistency across multiple runs
+- Confirm no flaky or intermittent test failures
+- Document any remaining issues or edge cases
+- **MANDATORY**: Feature cannot complete until this passes
+
+### T019 - Pre-commit Hook Implementation
 **Status**: pending  
 **Estimated Duration**: 30 minutes  
-**Description**: Create comprehensive unit tests for TypeScript validator
-**Dependencies**: T002, T005
+**Description**: Implement pre-commit hooks to prevent test regressions
+**Path**: `.husky/pre-commit`, scripts/
+**Dependencies**: T001, T018
 **Acceptance Criteria**:
-- Create `__tests__/unit/TypeScriptValidator.test.ts` 
-- Test error detection and reporting
-- Test configuration validation
-- Test file filtering and selection
-- Achieve 100% code coverage
+- Install and configure Husky pre-commit hooks
+- Create pre-commit script that runs `devbox run test`
+- Block commits when tests fail with clear error messaging
+- Provide instructions for developers on fixing test failures
+- Test pre-commit hook functionality with failing test scenario
 
-### T009: Unit Tests - Constitutional Amendment Manager
+### T020 - CI/CD Pipeline Integration
 **Status**: pending  
 **Estimated Duration**: 30 minutes  
-**Description**: Create comprehensive unit tests for constitutional amendment manager
-**Dependencies**: T001, T006
+**Description**: Configure CI/CD pipeline to enforce constitutional test requirements
+**Path**: `.github/workflows/` or equivalent CI configuration
+**Dependencies**: T019
 **Acceptance Criteria**:
-- Create `__tests__/unit/ConstitutionalAmendmentManager.test.ts`
-- Test amendment lifecycle (propose → review → enact)
-- Test compliance validation
-- Test enforcement mechanism configuration
-- Achieve 100% code coverage
+- Update CI pipeline to run `devbox run test` as mandatory step
+- Block deployments and merges when tests fail
+- Provide detailed test failure reporting in CI
+- Configure proper test environment for CI execution
+- Validate CI integration with test infrastructure
 
-### T010: Documentation Update - Constitutional Requirements
+## Phase 6: Monitoring and Documentation
+
+### T021 [P] - Test Infrastructure Documentation
 **Status**: pending  
-**Estimated Duration**: 20 minutes  
-**Description**: Update project documentation to reflect new TypeScript requirements
+**Estimated Duration**: 45 minutes  
+**Description**: Document the implemented test infrastructure and usage patterns
+**Path**: `docs/testing-infrastructure.md`
+**Dependencies**: T003-T005, T010
 **Acceptance Criteria**:
-- Update `memory/constitution.md` with finalized TypeScript testing requirements
-- Document enforcement mechanisms and compliance procedures
-- Include examples of compliant TypeScript configuration
-- Add troubleshooting guide for common TypeScript issues
+- Document TestDevice usage patterns and API
+- Provide examples of mock factory usage
+- Document test data builder patterns
+- Include troubleshooting guide for common test issues
+- Create developer onboarding guide for test infrastructure
 
-### T011: ESLint Configuration Enhancement
-**Status**: pending  
-**Estimated Duration**: 15 minutes  
-**Description**: Update ESLint configuration to enforce TypeScript best practices
-**Acceptance Criteria**:
-- Enable TypeScript-specific ESLint rules
-- Configure strict type checking rules
-- Add rules for consistent import/export patterns
-- Ensure configuration aligns with constitutional requirements
-
-### T012: Jest Configuration Enhancement
-**Status**: pending  
-**Estimated Duration**: 20 minutes  
-**Description**: Update Jest configuration to ensure TypeScript compilation before test execution
-**Acceptance Criteria**:
-- Configure Jest to validate TypeScript compilation
-- Set up proper TypeScript transformers
-- Ensure test files follow strict TypeScript rules
-- Integrate with existing `devbox run test` pipeline
-
-### T013: CI Pipeline Validation Script
-**Status**: pending  
-**Estimated Duration**: 25 minutes  
-**Description**: Create CI validation script for TypeScript compilation
-**Dependencies**: T002, T003
-**Acceptance Criteria**:
-- Create `scripts/validate-typescript.sh`
-- Include in CI pipeline configuration
-- Provide detailed error reporting for CI failures
-- Support both local and CI execution environments
-
-### T014: Developer Workflow Documentation
-**Status**: pending  
-**Estimated Duration**: 20 minutes  
-**Description**: Update developer documentation with new TypeScript workflow
-**Acceptance Criteria**:
-- Update `CLAUDE.md` with TypeScript validation requirements
-- Document pre-commit hook setup process
-- Provide troubleshooting guide for common issues
-- Include examples of fixing TypeScript errors
-
-### T015: Error Reporting Enhancement
-**Status**: pending  
-**Estimated Duration**: 25 minutes  
-**Description**: Enhance error reporting for TypeScript validation failures
-**Dependencies**: T002
-**Acceptance Criteria**:
-- Provide clear, actionable error messages
-- Include file context and suggested fixes
-- Support both terminal and IDE integration
-- Generate structured error reports for CI
-
-### T016: Performance Optimization
+### T022 [P] - Constitutional Test Governance Documentation
 **Status**: pending  
 **Estimated Duration**: 30 minutes  
-**Description**: Optimize TypeScript validation performance for large codebases
-**Dependencies**: T002, T007
+**Description**: Document the constitutional amendments and governance procedures
+**Path**: `docs/constitutional-test-governance.md`
+**Dependencies**: T001, T012
 **Acceptance Criteria**:
-- Implement incremental compilation checks
-- Add file watching for development mode
-- Optimize validation for changed files only
-- Maintain sub-5-second validation times
+- Document constitutional test requirements and rationale
+- Explain enforcement mechanisms and compliance procedures
+- Provide guidance on exemption process and emergency procedures
+- Document governance framework and amendment process
+- Include examples of constitutional compliance validation
 
-### T017: Rollback Strategy Implementation
-**Status**: pending  
-**Estimated Duration**: 20 minutes  
-**Description**: Implement rollback strategy for TypeScript configuration changes
-**Acceptance Criteria**:
-- Create backup of current TypeScript configuration
-- Document rollback procedures
-- Test rollback process in isolated environment
-- Ensure backward compatibility during transition
-
-### T018: Final Integration Validation
+### T023 [P] - Test Repair Runbook
 **Status**: pending  
 **Estimated Duration**: 30 minutes  
-**Description**: Validate complete TypeScript testing infrastructure integration
-**Dependencies**: T001-T017
+**Description**: Create operational runbook for systematic test repair
+**Path**: `docs/test-repair-runbook.md`
+**Dependencies**: T011
 **Acceptance Criteria**:
-- Verify all components work together seamlessly
-- Test end-to-end developer workflow
-- Validate CI pipeline integration
-- Confirm constitutional compliance
+- Document test failure analysis and categorization process
+- Provide step-by-step repair procedures for each failure category
+- Include troubleshooting guide for common test issues
+- Document repair tracking and progress monitoring procedures
+- Create template for future test failure analysis
 
-### T019: Performance Benchmarking
-**Status**: pending  
-**Estimated Duration**: 20 minutes  
-**Description**: Benchmark TypeScript validation performance
-**Dependencies**: T016, T018
-**Acceptance Criteria**:
-- Measure validation times for full codebase
-- Compare performance before/after implementation
-- Document performance characteristics
-- Ensure validation doesn't slow development workflow
+## Dependencies and Execution Order
 
-### T020: Final Test Suite Validation (MANDATORY)
-**Status**: pending  
-**Estimated Duration**: 15 minutes  
-**Description**: Execute complete test suite and fix any remaining issues
-**Dependencies**: T001-T019
-**Acceptance Criteria**:
-- Run `devbox run test` and ensure 100% success
-- Fix any remaining TypeScript compilation errors
-- Verify all tests pass with new TypeScript validation
-- Confirm constitutional compliance across entire codebase
-- **GATE**: This task blocks feature completion
+### Phase Dependencies
+- **Phase 1 (T001-T005)** must complete before Phase 2 - Core infrastructure blocks everything
+- **Phase 2 (T006-T009)** must complete before Phase 3 - Configuration and mocks needed for integration
+- **T011** blocks T013-T017 - Need failure analysis before systematic repair
+- **T018** blocks T019-T020 - Tests must pass before governance implementation
+- **All implementation phases** must complete before Phase 6 documentation
+
+### Critical Path
+**T001 → T002 → T003 → T006 → T011 → T013 → T018 → T019**
+This represents the minimum viable sequence to achieve constitutional compliance with passing tests.
+
+### Parallel Execution Examples
+
+#### Phase 1 Infrastructure (T002-T005)
+```bash
+# Can run in parallel - different files:
+Task: "Core Test Infrastructure Directory Setup in lib/test-utils/"
+Task: "TestDevice Core Implementation in lib/test-utils/TestDevice.ts"  
+Task: "Mock Factory Collection in lib/test-utils/mocks/MockFactoryCollection.ts"
+Task: "Test Data Builder Collection in lib/test-utils/builders/TestDataBuilderCollection.ts"
+```
+
+#### Phase 2 Mock Services (T007-T009)
+```bash
+# Can run in parallel - different mock files:
+Task: "Firebase Service Mocks in lib/test-utils/mocks/FirebaseServiceMocks.ts"
+Task: "Supabase Service Mocks in lib/test-utils/mocks/SupabaseServiceMocks.ts"
+Task: "React Native Module Mocks in lib/test-utils/mocks/ReactNativeModuleMocks.ts"
+```
+
+#### Phase 6 Documentation (T021-T023)
+```bash
+# Can run in parallel - different documentation files:
+Task: "Test Infrastructure Documentation in docs/testing-infrastructure.md"
+Task: "Constitutional Test Governance Documentation in docs/constitutional-test-governance.md"
+Task: "Test Repair Runbook in docs/test-repair-runbook.md"
+```
 
 ## Quality Gates
 
-### TypeScript Compilation Gate
-- All tasks T001-T019 must result in successful TypeScript compilation
-- No task is complete until its implementation passes `tsc --noEmit`
-- Pre-commit hooks must validate before any commit
+### Constitutional Compliance Gate (All Phases)
+- All implementations must align with constitutional test requirements
+- `devbox run test` must pass before any commit can be made
+- Pre-commit hooks must block failing test commits
+- CI/CD pipeline must enforce test passing requirements
 
-### Test Execution Gate  
-- Each implementation task must include verification via `devbox run test`
-- Tests must pass in both local and CI environments
-- No failing tests allowed in any intermediate state
+### Test Infrastructure Gate (Phase 1-3)
+- TestDevice implementation must be complete and functional before test repairs
+- Mock services must fully implement expected interfaces
+- All test infrastructure must support both local and CI environments
+- TypeScript compilation must succeed for all infrastructure components
 
-### Constitutional Compliance Gate
-- All implementations must align with constitutional requirements
-- TypeScript strict mode must be maintained throughout
-- Pre-commit validation must be active and functional
+### Test Repair Gate (Phase 4)
+- Each category of test failures must be systematically addressed
+- Repair validation must confirm tests pass consistently
+- No test repair is complete until affected tests pass multiple runs
+- **CRITICAL**: T018 must achieve 100% test pass rate (80/80 tests)
 
-## Execution Notes
+### Governance Implementation Gate (Phase 5)
+- Pre-commit hooks must successfully block commits with failing tests
+- CI/CD integration must enforce test requirements
+- Constitutional compliance validation must be automated and functional
 
-### Parallel Execution
-Tasks marked with [P] can be executed simultaneously as they operate on independent files and components.
+## Success Metrics
 
-### Dependency Management
-Tasks with dependencies must wait for prerequisite completion before starting. Use dependency chain: Constitutional → Tests → Implementation → Validation.
+### Primary Success Criteria
+- **`devbox run test` passes 100%** (80/80 tests passing)
+- **Constitutional compliance enforced** (pre-commit hooks active)
+- **CI/CD integration functional** (pipeline blocks on test failures)
+- **Test infrastructure documented** (developer onboarding ready)
 
-### Error Handling
-Any task that cannot achieve its acceptance criteria must immediately escalate for constitutional review and potential plan adjustment.
+### Performance Requirements
+- Test suite execution time < 5 minutes (acceptable for CI)
+- Pre-commit validation < 30 seconds (acceptable for developer workflow)
+- Infrastructure setup/teardown < 10 seconds per test
+- Mock services response time < 100ms (realistic simulation)
 
-### Success Criteria
-Feature is complete only when T020 passes and `devbox run test` succeeds with 100% test passing rate and full TypeScript compilation success.
+### Maintenance Requirements
+- Test failure analysis system operational
+- Regression prevention monitoring active
+- Documentation up-to-date and comprehensive
+- Constitutional governance framework enforced
+
+## Risk Mitigation
+
+### High-Risk Dependencies
+- **T003 (TestDevice)**: Critical path bottleneck - allocate senior developer
+- **T006 (Jest Config)**: Complex configuration - validate thoroughly before proceeding
+- **T018 (Test Validation)**: Final gate - must have contingency plan for partial failures
+
+### Rollback Strategy
+- **Configuration Changes**: Backup existing jest.config.js before modifications
+- **Constitutional Changes**: Document current requirements before amendments
+- **Infrastructure Changes**: Maintain ability to disable new infrastructure if needed
+
+## Validation Checklist
+
+*GATE: Must be verified before feature completion*
+
+- [ ] All 80 tests pass consistently (`devbox run test`)
+- [ ] Pre-commit hooks prevent failing test commits
+- [ ] CI/CD pipeline blocks deployments on test failures
+- [ ] TestDevice and mock infrastructure fully functional
+- [ ] Constitutional test requirements documented and enforced
+- [ ] Test failure analysis system operational
+- [ ] Developer documentation complete and accurate
+- [ ] Performance requirements met across all environments
+
+## Notes
+
+- **Constitutional Requirement**: All tests MUST pass before any commits
+- **Infrastructure First**: Core test infrastructure blocks all test repairs
+- **Systematic Approach**: Fix tests by failure category for maximum efficiency
+- **Parallel Execution**: Marked [P] tasks can run concurrently for faster completion
+- **Quality Gates**: Each phase has specific success criteria that must be met
+- **Final Validation**: T018 is the mandatory gate - feature cannot complete until all tests pass
 

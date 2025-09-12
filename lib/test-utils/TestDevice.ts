@@ -1,0 +1,550 @@
+/**
+ * TestDevice Implementation
+ * 
+ * Critical test infrastructure class that was missing and blocking 80 failing tests.
+ * Provides device simulation for multi-device testing scenarios with full authentication,
+ * exercise CRUD operations, sync status tracking, and real-time subscription management.
+ */
+
+import { v4 as uuidv4 } from 'uuid';
+import { Exercise } from '../models/Exercise';
+import { UserAccount, createAnonymousUser, createAuthenticatedUser } from '../models/UserAccount';
+import type {
+  TestAuthenticationState,
+  NetworkSimulationConfig,
+  SyncStatus,
+  SyncOperation,
+  TestDeviceState
+} from '../../specs/001-we-are-actually/contracts/test-infrastructure';
+
+/**
+ * TestDevice class implementing the full contract interface
+ * 
+ * This class was identified as the primary blocker for test failures.
+ * It simulates a device for testing cross-device sync, authentication,
+ * and exercise management scenarios.
+ */
+export class TestDevice {
+  private _deviceId: string;
+  private _deviceName: string;
+  private _initialized: boolean = false;
+  private _networkStatus: boolean = true;
+  private _authState: TestAuthenticationState;
+  private _exercises: Exercise[] = [];
+  private _syncQueue: SyncOperation[] = [];
+  private _subscriptions: Set<(exercises: Exercise[]) => void> = new Set();
+  private _networkSimulation: {
+    enabled: boolean;
+    latencyMs: number;
+    failureRate: number;
+    intermittentConnectivity: boolean;
+  } = {
+    enabled: false,
+    latencyMs: 0,
+    failureRate: 0,
+    intermittentConnectivity: false
+  };
+
+  constructor(deviceName: string) {
+    this._deviceId = uuidv4();
+    this._deviceName = deviceName;
+    this._authState = {
+      authenticated: false,
+      currentUser: undefined,
+      session: undefined
+    };
+  }
+
+  // Readonly Properties
+  get deviceId(): string {
+    return this._deviceId;
+  }
+
+  get deviceName(): string {
+    return this._deviceName;
+  }
+
+  get initialized(): boolean {
+    return this._initialized;
+  }
+
+  get networkStatus(): boolean {
+    return this._networkStatus;
+  }
+
+  get authState(): TestAuthenticationState {
+    return { ...this._authState };
+  }
+
+  // Core Device Lifecycle
+  async init(): Promise<void> {
+    if (this._initialized) {
+      throw new Error('TestDevice is already initialized');
+    }
+
+    // Reset state to clean baseline
+    this._exercises = [];
+    this._syncQueue = [];
+    this._subscriptions.clear();
+    this._authState = {
+      authenticated: false,
+      currentUser: undefined,
+      session: undefined
+    };
+    this._networkStatus = true;
+    this._networkSimulation.enabled = false;
+
+    this._initialized = true;
+    
+    // Simulate initialization delay
+    await this._simulateNetworkDelay();
+  }
+
+  async cleanup(): Promise<void> {
+    if (!this._initialized) {
+      return; // Already cleaned up or never initialized
+    }
+
+    // Sign out all users
+    await this.signOutAll();
+
+    // Clear all data
+    this._exercises = [];
+    this._syncQueue = [];
+    
+    // Clean up subscriptions
+    this._subscriptions.clear();
+
+    // Reset network simulation
+    this._networkSimulation = {
+      enabled: false,
+      latencyMs: 0,
+      failureRate: 0,
+      intermittentConnectivity: false
+    };
+
+    this._initialized = false;
+
+    // Simulate cleanup delay
+    await this._simulateNetworkDelay();
+  }
+
+  // Network Simulation
+  async setNetworkStatus(online: boolean): Promise<void> {
+    this._ensureInitialized();
+    this._networkStatus = online;
+    
+    // If going offline, mark pending sync operations
+    if (!online) {
+      this._syncQueue.forEach(op => {
+        if (op.status === 'pending') {
+          op.status = 'error';
+          op.lastError = 'Network offline';
+        }
+      });
+    }
+
+    await this._simulateNetworkDelay();
+  }
+
+  async simulateNetworkIssues(enabled: boolean, config?: NetworkSimulationConfig): Promise<void> {
+    this._ensureInitialized();
+    
+    this._networkSimulation.enabled = enabled;
+    if (enabled && config) {
+      this._networkSimulation.latencyMs = config.latencyMs || 100;
+      this._networkSimulation.failureRate = config.failureRate || 0.1;
+      this._networkSimulation.intermittentConnectivity = config.intermittentConnectivity || false;
+    }
+
+    await this._simulateNetworkDelay();
+  }
+
+  // Authentication Methods
+  async signUp(email: string, password: string): Promise<UserAccount> {
+    this._ensureInitialized();
+    this._ensureNetworkConnected();
+
+    // Simulate sign up delay and potential failure
+    await this._simulateNetworkDelay();
+    this._simulateNetworkFailure();
+
+    // Create authenticated user
+    const user = createAuthenticatedUser(email);
+    
+    // Update auth state
+    this._authState = {
+      authenticated: true,
+      currentUser: user,
+      session: {
+        sessionId: uuidv4(),
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+        accessToken: `access_${uuidv4()}`,
+        refreshToken: `refresh_${uuidv4()}`
+      }
+    };
+
+    return user;
+  }
+
+  async signIn(email: string, password: string): Promise<UserAccount> {
+    this._ensureInitialized();
+    this._ensureNetworkConnected();
+
+    // Simulate sign in delay and potential failure
+    await this._simulateNetworkDelay();
+    this._simulateNetworkFailure();
+
+    // Create authenticated user (in real implementation, would validate credentials)
+    const user = createAuthenticatedUser(email);
+    
+    // Update auth state
+    this._authState = {
+      authenticated: true,
+      currentUser: user,
+      session: {
+        sessionId: uuidv4(),
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        accessToken: `access_${uuidv4()}`,
+        refreshToken: `refresh_${uuidv4()}`
+      }
+    };
+
+    return user;
+  }
+
+  async signOut(): Promise<void> {
+    this._ensureInitialized();
+    
+    // Simulate sign out delay
+    await this._simulateNetworkDelay();
+
+    // Reset to anonymous state
+    this._authState = {
+      authenticated: false,
+      currentUser: createAnonymousUser(),
+      session: undefined
+    };
+  }
+
+  async signOutAll(): Promise<void> {
+    this._ensureInitialized();
+    
+    // Simulate sign out all delay
+    await this._simulateNetworkDelay();
+
+    // Reset to completely unauthenticated state
+    this._authState = {
+      authenticated: false,
+      currentUser: undefined,
+      session: undefined
+    };
+
+    // Clear user-specific data
+    this._exercises = [];
+    this._syncQueue = [];
+  }
+
+  // Exercise CRUD Operations
+  async addExercise(name: string): Promise<Exercise> {
+    this._ensureInitialized();
+    
+    // Simulate add delay
+    await this._simulateNetworkDelay();
+
+    const exercise: Exercise = {
+      id: uuidv4(),
+      name: name.trim(),
+      user_id: this._authState.currentUser?.id || 'anonymous',
+      created_at: new Date().toISOString()
+    };
+
+    this._exercises.push(exercise);
+    
+    // Add to sync queue if user is authenticated and network is available
+    if (this._authState.authenticated && this._networkStatus) {
+      this._addToSyncQueue('create', exercise.id, 'exercise', exercise);
+    }
+
+    // Notify subscribers
+    this._notifySubscribers();
+
+    return exercise;
+  }
+
+  async updateExercise(id: string, name: string): Promise<Exercise> {
+    this._ensureInitialized();
+    
+    // Simulate update delay
+    await this._simulateNetworkDelay();
+
+    const exerciseIndex = this._exercises.findIndex(e => e.id === id);
+    if (exerciseIndex === -1) {
+      throw new Error(`Exercise with id ${id} not found`);
+    }
+
+    const updatedExercise = {
+      ...this._exercises[exerciseIndex],
+      name: name.trim()
+    };
+
+    this._exercises[exerciseIndex] = updatedExercise;
+
+    // Add to sync queue if user is authenticated and network is available
+    if (this._authState.authenticated && this._networkStatus) {
+      this._addToSyncQueue('update', updatedExercise.id, 'exercise', updatedExercise);
+    }
+
+    // Notify subscribers
+    this._notifySubscribers();
+
+    return updatedExercise;
+  }
+
+  async deleteExercise(id: string): Promise<void> {
+    this._ensureInitialized();
+    
+    // Simulate delete delay
+    await this._simulateNetworkDelay();
+
+    const exerciseIndex = this._exercises.findIndex(e => e.id === id);
+    if (exerciseIndex === -1) {
+      throw new Error(`Exercise with id ${id} not found`);
+    }
+
+    this._exercises.splice(exerciseIndex, 1);
+
+    // Add to sync queue if user is authenticated and network is available
+    if (this._authState.authenticated && this._networkStatus) {
+      this._addToSyncQueue('delete', id, 'exercise', null);
+    }
+
+    // Notify subscribers
+    this._notifySubscribers();
+  }
+
+  async getExercises(): Promise<Exercise[]> {
+    this._ensureInitialized();
+    
+    // Simulate get delay
+    await this._simulateNetworkDelay();
+
+    return [...this._exercises];
+  }
+
+  async getExercise(id: string): Promise<Exercise | null> {
+    this._ensureInitialized();
+    
+    // Simulate get delay
+    await this._simulateNetworkDelay();
+
+    return this._exercises.find(e => e.id === id) || null;
+  }
+
+  // Sync Operations
+  async getSyncStatus(exerciseId: string): Promise<SyncStatus> {
+    this._ensureInitialized();
+    
+    // Find most recent sync operation for this exercise
+    const syncOp = this._syncQueue
+      .filter(op => op.recordId === exerciseId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
+
+    if (!syncOp) {
+      return 'synced'; // No pending operations
+    }
+
+    return syncOp.status;
+  }
+
+  async waitForSyncComplete(timeoutMs: number = 10000): Promise<void> {
+    this._ensureInitialized();
+    
+    const startTime = Date.now();
+    
+    while (Date.now() - startTime < timeoutMs) {
+      const pendingOps = this._syncQueue.filter(op => 
+        op.status === 'pending' || op.status === 'retrying'
+      );
+      
+      if (pendingOps.length === 0) {
+        return; // All sync operations complete
+      }
+      
+      await this.waitFor(100); // Check every 100ms
+    }
+    
+    throw new Error('Timeout waiting for sync to complete');
+  }
+
+  subscribeToExerciseChanges(callback: (exercises: Exercise[]) => void): () => void {
+    this._ensureInitialized();
+    
+    this._subscriptions.add(callback);
+    
+    // Return unsubscribe function
+    return () => {
+      this._subscriptions.delete(callback);
+    };
+  }
+
+  async retryFailedSyncs(): Promise<void> {
+    this._ensureInitialized();
+    
+    if (!this._networkStatus) {
+      throw new Error('Cannot retry syncs while offline');
+    }
+
+    // Find failed sync operations and retry them
+    const failedOps = this._syncQueue.filter(op => op.status === 'error');
+    
+    for (const op of failedOps) {
+      op.status = 'retrying';
+      op.retryCount += 1;
+      op.lastAttemptAt = new Date();
+      
+      // Simulate retry delay
+      await this._simulateNetworkDelay();
+      
+      // Simulate retry success/failure
+      if (Math.random() < 0.8) { // 80% success rate for retries
+        op.status = 'synced';
+      } else {
+        op.status = 'error';
+        op.lastError = 'Retry failed';
+      }
+    }
+  }
+
+  async getPendingSyncOperations(): Promise<SyncOperation[]> {
+    this._ensureInitialized();
+    
+    return this._syncQueue.filter(op => 
+      op.status === 'pending' || op.status === 'retrying'
+    );
+  }
+
+  // Utility Methods
+  async waitFor(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  getDeviceState(): TestDeviceState {
+    return {
+      device: {
+        id: this._deviceId,
+        name: this._deviceName,
+        initialized: this._initialized
+      },
+      network: {
+        online: this._networkStatus,
+        simulatingIssues: this._networkSimulation.enabled
+      },
+      auth: this._authState,
+      data: {
+        exercises: [...this._exercises],
+        pendingSyncOperations: [...this._syncQueue]
+      },
+      sync: {
+        inProgress: this._syncQueue.some(op => op.status === 'pending' || op.status === 'retrying'),
+        lastSyncAt: this._getLastSyncTime(),
+        failedOperations: this._syncQueue.filter(op => op.status === 'error').length
+      }
+    };
+  }
+
+  // Private Helper Methods
+  private _ensureInitialized(): void {
+    if (!this._initialized) {
+      throw new Error('TestDevice must be initialized before use. Call init() first.');
+    }
+  }
+
+  private _ensureNetworkConnected(): void {
+    if (!this._networkStatus) {
+      throw new Error('Network is offline. Cannot perform network operations.');
+    }
+  }
+
+  private async _simulateNetworkDelay(): Promise<void> {
+    if (!this._networkSimulation.enabled) {
+      return;
+    }
+
+    const delay = this._networkSimulation.latencyMs || 0;
+    if (delay > 0) {
+      await this.waitFor(delay);
+    }
+  }
+
+  private _simulateNetworkFailure(): void {
+    if (!this._networkSimulation.enabled) {
+      return;
+    }
+
+    if (Math.random() < this._networkSimulation.failureRate) {
+      throw new Error('Simulated network failure');
+    }
+  }
+
+  private _addToSyncQueue(
+    operation: 'create' | 'update' | 'delete',
+    recordId: string,
+    recordType: string,
+    data: any
+  ): void {
+    const syncOperation: SyncOperation = {
+      id: uuidv4(),
+      type: operation,
+      recordId,
+      recordType,
+      data,
+      status: 'pending',
+      retryCount: 0,
+      createdAt: new Date(),
+      lastAttemptAt: new Date()
+    };
+
+    this._syncQueue.push(syncOperation);
+
+    // Simulate async sync processing
+    setTimeout(() => {
+      const op = this._syncQueue.find(o => o.id === syncOperation.id);
+      if (op && op.status === 'pending') {
+        if (this._networkStatus && Math.random() < 0.9) { // 90% success rate
+          op.status = 'synced';
+        } else {
+          op.status = 'error';
+          op.lastError = this._networkStatus ? 'Server error' : 'Network offline';
+        }
+      }
+    }, 500); // Simulate 500ms sync delay
+  }
+
+  private _notifySubscribers(): void {
+    const exercises = [...this._exercises];
+    this._subscriptions.forEach(callback => {
+      try {
+        callback(exercises);
+      } catch (error) {
+        console.error('Error in exercise change subscription callback:', error);
+      }
+    });
+  }
+
+  private _getLastSyncTime(): Date | undefined {
+    const syncedOps = this._syncQueue.filter(op => op.status === 'synced');
+    if (syncedOps.length === 0) {
+      return undefined;
+    }
+
+    return syncedOps
+      .sort((a, b) => b.lastAttemptAt!.getTime() - a.lastAttemptAt!.getTime())[0]
+      .lastAttemptAt!;
+  }
+}
+
+// Export for tests
+export default TestDevice;

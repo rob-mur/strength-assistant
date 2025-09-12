@@ -146,3 +146,55 @@ Extends constitutional requirements to include:
 - **Test Infrastructure Requirements**: Missing test utilities must be implemented before dependent tests
 - **Systematic Repair Tracking**: All failing tests must be catalogued and systematically repaired
 - **Zero Test Regressions**: No new failing tests allowed in main branch
+
+### Amendment v2.4.0: Comprehensive Test Governance & Enforcement (ACTIVE)
+**Enacted**: 2025-01-15 | **Effective Immediately**
+
+#### Mandatory Test Governance Requirements
+- **Complete Test Suite Success**: `devbox run test` MUST achieve 100% pass rate (80/80 tests) before ANY commit to main branch
+- **Pre-commit Enforcement**: Git pre-commit hooks MUST block commits when any test fails
+- **CI/CD Pipeline Blocking**: Continuous integration MUST block deployments and merges on test failures
+- **Test Infrastructure Completeness**: All test utilities (`TestDevice`, mock factories, test builders) MUST be fully implemented and functional
+- **Systematic Repair Protocol**: Test failures MUST be catalogued, categorized, and repaired using tracked, prioritized approach
+
+#### Constitutional Enforcement Mechanisms
+1. **Pre-commit Validation**:
+   - Husky pre-commit hooks execute `devbox run test` before allowing commits
+   - Commits blocked with clear error messaging when tests fail
+   - Developers MUST fix failing tests before commit proceeds
+
+2. **CI/CD Integration**:
+   - GitHub Actions (or equivalent) pipeline runs `devbox run test` as mandatory gate
+   - Deployments blocked when test suite fails
+   - Pull requests cannot be merged until all tests pass
+
+3. **Test Infrastructure Validation**:
+   - Missing test utilities (TestDevice, mock factories) trigger immediate implementation requirement
+   - Test infrastructure MUST support both local and CI environments
+   - All mocks MUST implement complete interfaces with TypeScript validation
+
+4. **Regression Prevention**:
+   - Automated monitoring for new test failures
+   - Constitutional violation reporting for governance breaches
+   - Zero tolerance policy for test regressions in main branch
+
+#### Exemption Process (Emergency Use Only)
+- **Authority**: Only repository maintainers can grant test exemptions
+- **Duration**: Maximum 24-hour exemption periods
+- **Justification**: MUST include critical business justification and repair timeline
+- **Documentation**: All exemptions MUST be logged with constitutional violation reports
+
+#### Constitutional Violation Consequences
+- **Level 1** (Test Failure): Immediate commit blocking, repair required before proceeding
+- **Level 2** (Infrastructure Missing): Development blocked until infrastructure implemented
+- **Level 3** (Governance Bypass): Constitutional review and potential policy updates required
+
+#### Success Validation
+Constitutional compliance achieved when:
+- ✅ All 80 tests pass consistently (`devbox run test` = 100% success)
+- ✅ Pre-commit hooks actively prevent failing test commits
+- ✅ CI/CD pipeline blocks deployments on test failures  
+- ✅ Test infrastructure fully implemented and documented
+- ✅ Systematic repair tracking operational and maintained
+
+**ENFORCEMENT STATUS**: ACTIVE - All constitutional requirements in effect immediately
