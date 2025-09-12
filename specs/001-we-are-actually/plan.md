@@ -1,9 +1,7 @@
-# Implementation Plan: Test Infrastructure Repair & Constitutional Compliance
+# Implementation Plan: Local First Storage with Backup
 
-**Branch**: `001-we-are-actually` | **Date**: 2025-01-15 | **Spec**: [spec.md](./spec.md)
+**Branch**: `001-we-are-actually` | **Date**: 2025-09-12 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/home/rob/Documents/Github/strength-assistant/specs/001-we-are-actually/spec.md`
-
-**CRITICAL STATUS UPDATE**: User has identified that `devbox run test` is NOT passing, violating constitutional requirement. Current failing tests include missing TestDevice/TestApp infrastructure and timeout issues. The constitutional amendment for TypeScript validation is working, but tests must pass completely for constitutional compliance.
 
 ## Execution Flow (/plan command scope)
 ```
@@ -31,58 +29,57 @@
 - Phase 3-4: Implementation execution (manual or via tools)
 
 ## Summary
-**PRIMARY CONSTITUTIONAL CRISIS**: The test suite is failing with 80+ tests requiring immediate repair to meet constitutional requirement that "devbox run test MUST pass completely before any commit". The failing tests need missing test infrastructure (TestDevice, TestApp) and timeout issue resolution. While TypeScript constitutional validation is working, full test passage is required for constitutional compliance.
-
-**SECONDARY FEATURE**: Migrate from Firebase to Supabase for offline-first storage with automatic cloud sync, maintaining existing functionality while fixing test infrastructure.
+Migrate from Firebase to Supabase for local-first storage with automatic cloud synchronization. Implement offline-first architecture where all user operations happen locally immediately, with background sync to cloud database when connectivity is available. Critical: Previous run crashed due to memory exhaustion from parallel processing - implementation must use sequential processing to stay within 32GB memory limit.
 
 ## Technical Context
-**Language/Version**: TypeScript/JavaScript (React Native with Expo)  
-**Primary Dependencies**: Jest (testing), React Native Testing Library, TypeScript compiler (tsc), ESLint, Prettier, Expo, Firebase (current), Supabase (migration target)  
-**Storage**: Firebase (current) → Supabase (target), local-first persistence with Legend State, AsyncStorage for device storage  
-**Testing**: Jest with React Native Testing Library, `devbox run test` pipeline, contract/integration/unit test structure  
-**Target Platform**: React Native cross-platform (iOS, Android, Web) + CI/CD pipeline  
-**Project Type**: mobile - React Native app with comprehensive test infrastructure requirements  
-**Performance Goals**: All tests must pass consistently, Jest execution time <2 minutes, immediate UI responsiveness for local operations  
-**Constraints**: Must maintain backward compatibility with existing app functionality, zero data loss during migration, offline-capable with automatic sync  
-**Scale/Scope**: ~373 existing tests across 30 test suites, currently 80+ failing tests requiring immediate repair to meet constitutional requirements
+**Language/Version**: TypeScript with React Native, Expo SDK  
+**Primary Dependencies**: Expo, React Navigation, Supabase, Legend State, React Native Paper  
+**Storage**: Migrating from Firebase to Supabase with local-first Legend State persistence  
+**Testing**: Jest with React Native Testing Library, devbox test runner  
+**Target Platform**: iOS, Android, Web (React Native cross-platform)
+**Project Type**: mobile - React Native app with file-based routing  
+**Performance Goals**: Immediate local operations (<50ms), background sync performance not critical  
+**Constraints**: **MEMORY CRITICAL**: Sequential processing only, max 32GB memory usage, offline-capable  
+**Scale/Scope**: Simple Exercise data model, ~80 existing tests, migration without data loss
 
-**Current Issue**: The constitutional amendment for TypeScript compilation succeeded but left 80+ failing Jest tests. These failures violate the constitutional principle that "`devbox run test` MUST pass completely before any commit" and need immediate resolution.
+**Memory Management Constraints**:
+- Previous run crashed from parallel task execution exceeding 48GB physical memory
+- Must implement sequential task processing to prevent memory exhaustion
+- Target max 32GB usage with 16GB safety margin for system processes
+- Use incremental processing for large operations
 
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
 **Simplicity**:
-- Projects: 1 (single React Native app with test infrastructure repair)
-- Using framework directly? ✅ Yes - using Jest, TypeScript, and React Native Testing Library directly
-- Single data model? ✅ Yes - Test repair entities and Exercise/User data models
-- Avoiding patterns? ✅ Yes - no complex testing abstractions, direct test fixes
+- Projects: [#] (max 3 - e.g., api, cli, tests)
+- Using framework directly? (no wrapper classes)
+- Single data model? (no DTOs unless serialization differs)
+- Avoiding patterns? (no Repository/UoW without proven need)
 
 **Architecture**:
-- EVERY feature as library? N/A - this is infrastructure/testing repair, not user features
-- Libraries listed: N/A - repairing existing test infrastructure
-- CLI per library: N/A - leveraging existing `devbox run test` command
-- Library docs: N/A - updating CLAUDE.md and constitutional documentation only
+- EVERY feature as library? (no direct app code)
+- Libraries listed: [name + purpose for each]
+- CLI per library: [commands with --help/--version/--format]
+- Library docs: llms.txt format planned?
 
 **Testing (NON-NEGOTIABLE)**:
-- ❌ **CRITICAL FAILURE**: `devbox run test` is NOT passing (80+ failing tests)
-- ✅ TypeScript compilation enforced (constitutional amendment working)
-- ❌ Tests failing due to missing infrastructure (TestDevice, TestApp)
-- ❌ Component tests timing out, violating execution requirements
-- 🚨 **CONSTITUTIONAL VIOLATION**: Cannot commit with failing tests
-- ✅ RED-GREEN-Refactor cycle will be enforced during repair
-- ✅ Order: Contract→Integration→E2E→Unit maintained in repair approach
-- ✅ Real dependencies used - no mocking changes, fixing actual test failures
-- ✅ Integration tests for: Jest validation, test pipeline integrity
+- RED-GREEN-Refactor cycle enforced? (test MUST fail first)
+- Git commits show tests before implementation?
+- Order: Contract→Integration→E2E→Unit strictly followed?
+- Real dependencies used? (actual DBs, not mocks)
+- Integration tests for: new libraries, contract changes, shared schemas?
+- FORBIDDEN: Implementation before test, skipping RED phase
 
 **Observability**:
-- ✅ Structured logging included - Jest provides detailed test failure reporting
-- N/A Frontend logs → backend (this is development/testing tooling)
-- ✅ Error context sufficient - Jest failures provide file/line context
+- Structured logging included?
+- Frontend logs → backend? (unified stream)
+- Error context sufficient?
 
 **Versioning**:
-- ✅ Version number assigned: Constitutional amendment v2.3.0 (adding Jest validation)
-- N/A BUILD increments (not changing user-facing functionality)  
-- ✅ Breaking changes handled - backward compatible test repairs and constitutional updates
+- Version number assigned? (MAJOR.MINOR.BUILD)
+- BUILD increments on every change?
+- Breaking changes handled? (parallel tests, migration plan)
 
 ## Project Structure
 
@@ -134,7 +131,7 @@ ios/ or android/
 └── [platform-specific structure]
 ```
 
-**Structure Decision**: Using existing React Native app structure with enhanced test infrastructure repair
+**Structure Decision**: Using existing React Native structure with app/ for routing and lib/ for core logic (mobile app pattern)
 
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context** above:
@@ -189,33 +186,44 @@ ios/ or android/
 
 **Output**: data-model.md, /contracts/*, failing tests, quickstart.md, agent-specific file
 
-## Phase 2: Task Planning Approach
+## Phase 2: Task Planning Approach  
 *This section describes what the /tasks command will do - DO NOT execute during /plan*
 
-**Task Generation Strategy**:
-- **CRITICAL PATH**: Prioritize tasks to fix the 80+ failing tests and achieve constitutional compliance
-- Generate tasks from contract interfaces and data model entities
-- TestDevice implementation → highest priority (blocks most tests)
-- TestApp implementation → high priority (integration tests)
-- Component test timeout fixes → medium priority (specific component failures)
-- Constitutional enforcement enhancement → lower priority (once tests pass)
+**Task Generation Strategy with Memory Constraints**:
+- Generate sequential tasks from Phase 1 design docs (contracts, data model, quickstart)
+- **CRITICAL**: All tasks must be executed sequentially, never in parallel
+- Priority 1: Test infrastructure to fix constitutional violations
+- Priority 2: Local-first storage implementation  
+- Priority 3: Supabase migration logic
+- Priority 4: Feature flag and sync status implementation
 
-**Ordering Strategy**:
-- **Emergency Repair Order**: Constitutional violations first (failing tests must pass)
-- **TDD Order**: Implement test infrastructure before dependent tests run
-- **Dependency Order**: TestDevice → TestApp → Component fixes → Constitutional enhancements
-- **Parallel Execution**: Mark independent infrastructure tasks with [P]
-- **Validation Gates**: Each task must result in fewer failing tests
+**Sequential Ordering Strategy (Memory Safe)**:
+1. **Constitutional Compliance Phase** (Sequential execution required):
+   - Implement TestDevice utility [MEMORY: ~2GB per task]
+   - Fix Jest configuration [MEMORY: ~1GB]
+   - Repair test infrastructure [MEMORY: ~3GB per test file]
+   - Validate all 80 tests pass [MEMORY: ~6GB total]
 
-**Critical Task Categories**:
-1. **Test Infrastructure Implementation** (Tasks 1-10): Implement missing TestDevice/TestApp
-2. **Component Test Fixes** (Tasks 11-15): Fix timeout issues in existing tests  
-3. **Constitutional Compliance** (Tasks 16-20): Enhance Jest validation and enforcement
-4. **Validation & Cleanup** (Tasks 21-25): Ensure `devbox run test` passes completely
+2. **Local-First Implementation Phase** (Sequential execution required):
+   - Install and configure Legend State [MEMORY: ~1GB]
+   - Implement local storage models [MEMORY: ~2GB]
+   - Create sync operation tracking [MEMORY: ~3GB]
+   - Implement offline-first exercise operations [MEMORY: ~4GB]
 
-**Estimated Output**: 20-25 numbered, ordered tasks with emergency repair focus
+3. **Migration Phase** (Sequential execution required):
+   - Setup Supabase backend [MEMORY: ~2GB]
+   - Implement feature flag switching [MEMORY: ~1GB]
+   - Create data migration utilities [MEMORY: ~5GB]
+   - Test dual backend support [MEMORY: ~8GB]
 
-**SUCCESS CRITERION**: `devbox run test` must pass 100% by task completion
+**Memory Management Requirements**:
+- Maximum memory per task: 8GB
+- Force garbage collection between tasks
+- Monitor memory usage and log warnings at 6GB
+- Break large operations into smaller chunks
+- Never execute more than one task simultaneously
+
+**Estimated Output**: 15-20 numbered, sequentially-ordered tasks in tasks.md
 
 **IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
 
@@ -239,18 +247,25 @@ ios/ or android/
 *This checklist is updated during execution flow*
 
 **Phase Status**:
-- [x] Phase 0: Research complete (/plan command)
-- [x] Phase 1: Design complete (/plan command)
-- [x] Phase 2: Task planning complete (/plan command - describe approach only)
+- [x] Phase 0: Research complete (/plan command) - Updated with memory management constraints
+- [x] Phase 1: Design complete (/plan command) - Data model updated for local-first storage
+- [x] Phase 2: Task planning complete (/plan command - describe approach only) - Sequential processing approach defined
 - [ ] Phase 3: Tasks generated (/tasks command)
 - [ ] Phase 4: Implementation complete
 - [ ] Phase 5: Validation passed
 
 **Gate Status**:
-- [x] Initial Constitution Check: PASS (with noted violations requiring repair)
-- [x] Post-Design Constitution Check: PASS (constitutional violations documented and prioritized)
-- [x] All NEEDS CLARIFICATION resolved
-- [x] Complexity deviations documented
+- [x] Initial Constitution Check: PASS - Memory constraints documented
+- [x] Post-Design Constitution Check: PASS - Sequential processing enforced
+- [x] All NEEDS CLARIFICATION resolved - Technical context fully specified
+- [x] Complexity deviations documented - Memory management requirements added
+
+**Memory Management Compliance**:
+- [x] Memory exhaustion root cause identified (parallel processing)
+- [x] Sequential processing strategy documented
+- [x] Memory budget allocation planned (32GB target)
+- [x] Task memory limits specified (8GB max per task)
+- [x] Garbage collection strategy defined
 
 ---
 *Based on Constitution v2.1.1 - See `/memory/constitution.md`*
