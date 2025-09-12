@@ -1,1 +1,0 @@
-{"version":3,"names":["registerWebGlobals"],"sources":["index.ts"],"sourcesContent":["export function registerWebGlobals() {}\n"],"mappings":";;;;AAAO,SAASA,kBAAkBA,CAAA,EAAG,CAAC","ignoreList":[]}

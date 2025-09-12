@@ -1,7 +1,0 @@
-e6dfb86d4d8e35a81ff9324541fe4255
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.registerWebGlobals = registerWebGlobals;
-function registerWebGlobals() {}
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJyZWdpc3RlcldlYkdsb2JhbHMiXSwic291cmNlcyI6WyJpbmRleC50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJleHBvcnQgZnVuY3Rpb24gcmVnaXN0ZXJXZWJHbG9iYWxzKCkge31cbiJdLCJtYXBwaW5ncyI6Ijs7OztBQUFPLFNBQVNBLGtCQUFrQkEsQ0FBQSxFQUFHLENBQUMiLCJpZ25vcmVMaXN0IjpbXX0=
