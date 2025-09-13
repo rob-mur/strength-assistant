@@ -26,6 +26,7 @@
 		}
 	},
 	"env": {
+		"EXPO_PUBLIC_USE_SUPABASE": "false",
 		"USE_SUPABASE_DATA": "false"
 	}
 }

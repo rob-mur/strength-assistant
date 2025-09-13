@@ -6,7 +6,7 @@ This document lists the executable tasks to complete the implementation of the l
 
 ## Phase 1: Configuration & Review
 
-- **T001: Configure Feature Flag in Devbox**
+- ~~**T001: Configure Feature Flag in Devbox**~~ ✅ **COMPLETED**
   - **Files**: `devbox/minimal/devbox.json`, `devbox/android-testing/devbox.json`, and the root `devbox.json`.
   - **Action**: Ensure `"EXPO_PUBLIC_USE_SUPABASE": "false"` is present in the `env` block of each of the specified `devbox.json` files. This will be toggled to `true` to test the Supabase implementation.
 
