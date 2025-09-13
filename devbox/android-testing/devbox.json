@@ -20,9 +20,8 @@
 	},
 	"env": {
 		"ANDROID_HOME": "$PWD/.devbox/nix/profile/default/libexec/android-sdk/",
-		    "GRADLE_OPTS": "-Dorg.gradle.project.android.aapt2FromMavenOverride=$PWD/.devbox/nix/profile/default/bin/aapt2",
+		"GRADLE_OPTS": "-Dorg.gradle.project.android.aapt2FromMavenOverride=$PWD/.devbox/nix/profile/default/bin/aapt2",
 		"EXPO_PUBLIC_USE_SUPABASE": "false",
-    "USE_SUPABASE_DATA": "false"
-  }
+		"USE_SUPABASE_DATA": "false"
 	}
 }

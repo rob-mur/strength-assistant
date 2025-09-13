@@ -9,6 +9,29 @@
 import type { ExerciseRecord } from '../../models/ExerciseRecord';
 import type { UserAccount } from '../../models/UserAccount';  
 import type { SyncStateRecord } from '../../models/SyncStateRecord';
+import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
+import { getSupabaseUrl, getSupabaseEnvConfig } from '../../config/supabase-env';
+import { 
+  createExerciseRecord, 
+  updateExerciseRecord, 
+  validateExerciseRecord,
+  ExerciseRecordInput,
+  ExerciseRecordUpdate,
+  toDbFormat as exerciseToDb,
+  fromDbFormat as exerciseFromDb
+} from '../../models/ExerciseRecord';
+import {
+  createAnonymousUser,
+  createAuthenticatedUser,
+  validateCredentials
+} from '../../models/UserAccount';
+import {
+  createSyncState,
+  recordSyncFailure,
+  isReadyForRetry,
+  toDbFormat as syncToDb,
+  fromDbFormat as syncFromDb
+} from '../../models/SyncStateRecord';
 
 // StorageBackend interface definition (matches contract)
 export interface StorageBackend {
@@ -34,29 +57,6 @@ export interface StorageBackend {
   subscribeToExercises(userId: string, callback: (exercises: ExerciseRecord[]) => void): () => void;
   subscribeToAuthState(callback: (user: UserAccount | null) => void): () => void;
 }
-import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
-import { getSupabaseUrl, getSupabaseEnvConfig } from '../../config/supabase-env';
-import { 
-  createExerciseRecord, 
-  updateExerciseRecord, 
-  validateExerciseRecord,
-  ExerciseRecordInput,
-  ExerciseRecordUpdate,
-  toDbFormat as exerciseToDb,
-  fromDbFormat as exerciseFromDb
-} from '../../models/ExerciseRecord';
-import {
-  createAnonymousUser,
-  createAuthenticatedUser,
-  validateCredentials
-} from '../../models/UserAccount';
-import {
-  createSyncState,
-  recordSyncFailure,
-  isReadyForRetry,
-  toDbFormat as syncToDb,
-  fromDbFormat as syncFromDb
-} from '../../models/SyncStateRecord';
 
 export class SupabaseStorage implements StorageBackend {
   private client: SupabaseClient;

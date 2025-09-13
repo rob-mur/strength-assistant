@@ -317,7 +317,9 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 					id: doc.id,
 					name: data.name,
 					user_id: userId,
-					created_at: data.created_at
+					created_at: data.created_at,
+					updated_at: new Date().toISOString(),
+					deleted: false
 				});
 			}
 		});

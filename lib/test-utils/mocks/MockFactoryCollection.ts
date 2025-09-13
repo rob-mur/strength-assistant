@@ -43,7 +43,9 @@ export class ExerciseMockFactoryImpl implements ExerciseMockFactory {
       id: uuidv4(),
       name: `Test Exercise ${Math.floor(Math.random() * 1000)}`,
       user_id: 'test-user-id',
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      deleted: false
     };
 
     return { ...defaultExercise, ...overrides };
@@ -76,7 +78,9 @@ export class ExerciseMockFactoryImpl implements ExerciseMockFactory {
       id: `perf-exercise-${index.toString().padStart(6, '0')}`,
       name: `Performance Test Exercise ${index + 1}`,
       user_id: 'performance-test-user',
-      created_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString()
+      created_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+      updated_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+      deleted: false
     }));
   }
 }

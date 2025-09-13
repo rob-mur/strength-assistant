@@ -7,12 +7,7 @@
 
 import { TestDevice } from '../TestDevice';
 import type { 
-  TestDeviceConfig,
-  MockServiceConfig,
-  TestDataConfig,
-  FirebaseMockConfig,
-  SupabaseMockConfig,
-  ReactNativeMockConfig
+  TestDeviceConfig
 } from '../../../specs/001-we-are-actually/contracts/jest-validation';
 
 interface PooledDevice {

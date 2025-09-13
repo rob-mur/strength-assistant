@@ -6,12 +6,8 @@
  */
 
 import { observable } from '@legendapp/state';
-import { ObservablePersistMMKV } from '@legendapp/state/persist-plugins/mmkv';
 import { ObservablePersistAsyncStorage } from '@legendapp/state/persist-plugins/async-storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { storageManager } from '../StorageManager';
-import type { ExerciseRecord } from '../../models/ExerciseRecord';
-import type { UserAccount } from '../../models/UserAccount';
 import { isSupabaseDataEnabled } from '../../config/supabase-env';
 
 /**

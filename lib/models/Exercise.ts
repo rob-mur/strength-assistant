@@ -3,6 +3,8 @@ export interface Exercise {
   name: string;
   user_id: string;
   created_at: string;
+  updated_at: string;
+  deleted: boolean;
 }
 
 export interface ExerciseInput {

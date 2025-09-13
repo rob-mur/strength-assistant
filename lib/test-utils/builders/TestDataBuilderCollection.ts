@@ -15,9 +15,6 @@ import type {
   UserBuilder,
   SyncDataBuilder,
   TestScenario,
-  ScenarioStep,
-  ScenarioAction,
-  ActionType,
   TestDeviceConfig,
   SyncStatus,
   SyncState,
@@ -66,7 +63,9 @@ export class ExerciseBuilderImpl implements ExerciseBuilder {
       id: this.exercise.id || uuidv4(),
       name: this.exercise.name || 'Default Exercise',
       user_id: this.exercise.user_id || 'default-user',
-      created_at: this.exercise.created_at || new Date().toISOString()
+      created_at: this.exercise.created_at || new Date().toISOString(),
+      updated_at: this.exercise.updated_at || new Date().toISOString(),
+      deleted: this.exercise.deleted || false
     };
 
     return { ...defaultExercise, ...this.exercise } as Exercise;

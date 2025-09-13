@@ -21,7 +21,6 @@ import {
 } from '../../models/ExerciseRecord';
 
 import {
-  createAnonymousUser,
   createAuthenticatedUser,
   validateCredentials
 } from '../../models/UserAccount';
@@ -36,8 +35,8 @@ import {
 
 // Firebase imports (using existing Firebase setup)
 import { initFirebase, getDb } from './index';
-import { getFirestore, collection, doc, getDocs, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy } from 'firebase/firestore';
-import { getAuth, signInAnonymously as firebaseSignInAnonymously, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as firebaseSignOut, onAuthStateChanged, User } from 'firebase/auth';
+import { collection, doc, getDocs, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy } from 'firebase/firestore';
+import { signInAnonymously as firebaseSignInAnonymously, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as firebaseSignOut, onAuthStateChanged, User } from 'firebase/auth';
 
 export class FirebaseStorage implements StorageBackend {
   private firestore: any;

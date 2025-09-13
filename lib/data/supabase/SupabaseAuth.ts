@@ -10,7 +10,7 @@ import type { UserAccount } from '../../models/UserAccount';
 import { createAnonymousUser, createAuthenticatedUser } from '../../models/UserAccount';
 
 export class SupabaseAuth {
-  private authStateListeners: Array<(user: UserAccount | null) => void> = [];
+  private authStateListeners: ((user: UserAccount | null) => void)[] = [];
   private client: any;
 
   constructor() {

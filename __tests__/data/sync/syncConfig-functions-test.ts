@@ -116,7 +116,7 @@ describe("syncConfig functions", () => {
 
     test("handles initial data loading", async () => {
       const testExercises = [
-        { id: "1", name: "Push-ups", user_id: mockSupabaseUser.id, created_at: "2023-01-01T00:00:00Z" },
+        { id: "1", name: "Push-ups", user_id: mockSupabaseUser.id, created_at: "2023-01-01T00:00:00Z", updated_at: "2023-01-01T00:00:00Z", deleted: false },
       ];
       
       mockTableReference.eq.mockResolvedValue({ data: testExercises, error: null });
@@ -194,6 +194,8 @@ describe("syncConfig functions", () => {
       name: "Push-ups",
       user_id: mockSupabaseUser.id,
       created_at: "2023-01-01T00:00:00Z",
+      updated_at: "2023-01-01T00:00:00Z",
+      deleted: false,
     };
 
     test("successfully syncs exercise to Supabase", async () => {
@@ -273,7 +275,7 @@ describe("syncConfig functions", () => {
       });
       
       const existingExercises = [
-        { id: "existing-1", name: "Squats", user_id: mockSupabaseUser.id, created_at: "2023-01-01T00:00:00Z" }
+        { id: "existing-1", name: "Squats", user_id: mockSupabaseUser.id, created_at: "2023-01-01T00:00:00Z", updated_at: "2023-01-01T00:00:00Z", deleted: false }
       ];
       mockExercises$.get.mockReturnValue(existingExercises);
       
@@ -286,7 +288,7 @@ describe("syncConfig functions", () => {
       expect(onChangeCallback).toBeDefined();
       
       // Simulate INSERT event
-      const newExercise = { id: "new-1", name: "Push-ups", user_id: mockSupabaseUser.id, created_at: "2023-01-01T01:00:00Z" };
+      const newExercise = { id: "new-1", name: "Push-ups", user_id: mockSupabaseUser.id, created_at: "2023-01-01T01:00:00Z", updated_at: "2023-01-01T00:00:00Z", deleted: false };
       if (onChangeCallback) {
         onChangeCallback({
           eventType: 'INSERT',
@@ -309,8 +311,8 @@ describe("syncConfig functions", () => {
       });
       
       const existingExercises = [
-        { id: "existing-1", name: "Squats", user_id: mockSupabaseUser.id, created_at: "2023-01-01T00:00:00Z" },
-        { id: "existing-2", name: "Push-ups", user_id: mockSupabaseUser.id, created_at: "2023-01-01T01:00:00Z" }
+        { id: "existing-1", name: "Squats", user_id: mockSupabaseUser.id, created_at: "2023-01-01T00:00:00Z", updated_at: "2023-01-01T00:00:00Z", deleted: false },
+        { id: "existing-2", name: "Push-ups", user_id: mockSupabaseUser.id, created_at: "2023-01-01T01:00:00Z", updated_at: "2023-01-01T00:00:00Z", deleted: false }
       ];
       mockExercises$.get.mockReturnValue(existingExercises);
       
@@ -343,7 +345,7 @@ describe("syncConfig functions", () => {
       });
       
       const existingExercises = [
-        { id: "existing-1", name: "Squats", user_id: mockSupabaseUser.id, created_at: "2023-01-01T00:00:00Z" }
+        { id: "existing-1", name: "Squats", user_id: mockSupabaseUser.id, created_at: "2023-01-01T00:00:00Z", updated_at: "2023-01-01T00:00:00Z", deleted: false }
       ];
       mockExercises$.get.mockReturnValue(existingExercises);
       
@@ -357,7 +359,7 @@ describe("syncConfig functions", () => {
       await new Promise(resolve => setTimeout(resolve, 10));
       
       // Simulate UPDATE event
-      const updatedExercise = { id: "existing-1", name: "Updated Squats", user_id: mockSupabaseUser.id, created_at: "2023-01-01T00:00:00Z" };
+      const updatedExercise = { id: "existing-1", name: "Updated Squats", user_id: mockSupabaseUser.id, created_at: "2023-01-01T00:00:00Z", updated_at: "2023-01-01T00:00:00Z", deleted: false };
       if (onChangeCallback) {
         onChangeCallback({
           eventType: 'UPDATE',
@@ -385,7 +387,7 @@ describe("syncConfig functions", () => {
       await new Promise(resolve => setTimeout(resolve, 10));
       
       // Simulate INSERT event for different user
-      const newExercise = { id: "new-1", name: "Push-ups", user_id: "different-user", created_at: "2023-01-01T01:00:00Z" };
+      const newExercise = { id: "new-1", name: "Push-ups", user_id: "different-user", created_at: "2023-01-01T01:00:00Z", updated_at: "2023-01-01T00:00:00Z", deleted: false };
       if (onChangeCallback) {
         onChangeCallback({
           eventType: 'INSERT',
@@ -408,7 +410,7 @@ describe("syncConfig functions", () => {
       });
       
       const existingExercises = [
-        { id: "existing-1", name: "Squats", user_id: mockSupabaseUser.id, created_at: "2023-01-01T00:00:00Z" }
+        { id: "existing-1", name: "Squats", user_id: mockSupabaseUser.id, created_at: "2023-01-01T00:00:00Z", updated_at: "2023-01-01T00:00:00Z", deleted: false }
       ];
       mockExercises$.get.mockReturnValue(existingExercises);
       
@@ -422,7 +424,7 @@ describe("syncConfig functions", () => {
       await new Promise(resolve => setTimeout(resolve, 10));
       
       // Simulate UPDATE event for different user
-      const updatedExercise = { id: "existing-1", name: "Updated Squats", user_id: "different-user", created_at: "2023-01-01T00:00:00Z" };
+      const updatedExercise = { id: "existing-1", name: "Updated Squats", user_id: "different-user", created_at: "2023-01-01T00:00:00Z", updated_at: "2023-01-01T00:00:00Z", deleted: false };
       if (onChangeCallback) {
         onChangeCallback({
           eventType: 'UPDATE',
@@ -461,7 +463,7 @@ describe("syncConfig functions", () => {
   describe("loadInitialData", () => {
     test("loads initial data successfully when user authenticated", async () => {
       const testExercises = [
-        { id: "1", name: "Push-ups", user_id: mockSupabaseUser.id, created_at: "2023-01-01T00:00:00Z" },
+        { id: "1", name: "Push-ups", user_id: mockSupabaseUser.id, created_at: "2023-01-01T00:00:00Z", updated_at: "2023-01-01T00:00:00Z", deleted: false },
       ];
       
       mockTableReference.eq.mockResolvedValue({ data: testExercises, error: null });

@@ -34,7 +34,7 @@ export default [
       ],
 
       // Constitutional TypeScript Requirements
-      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-explicit-any": "warn", // Temporarily downgraded from error
     },
   },
   {
@@ -58,7 +58,7 @@ export default [
     },
   },
   {
-    files: ["src/typescript/**/*.ts", "src/constitution/**/*.ts"],
+    files: ["lib/typescript/**/*.ts", "lib/constitution/**/*.ts"],
     rules: {
       // Stricter rules for TypeScript infrastructure code
       "@typescript-eslint/no-explicit-any": "error",

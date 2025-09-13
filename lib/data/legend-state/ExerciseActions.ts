@@ -7,7 +7,6 @@
 
 import { exerciseStore, reinitializeSync } from './ExerciseStore';
 import { storageManager } from '../StorageManager';
-import type { ExerciseRecord } from '../../models/ExerciseRecord';
 import type { UserAccount } from '../../models/UserAccount';
 
 /**

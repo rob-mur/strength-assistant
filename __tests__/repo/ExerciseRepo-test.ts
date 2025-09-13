@@ -85,7 +85,9 @@ describe('ExerciseRepo', () => {
     id: testExerciseId,
     name: 'Test Exercise',
     user_id: testUserId,
-    created_at: '2023-01-01T00:00:00.000Z'
+    created_at: '2023-01-01T00:00:00.000Z',
+    updated_at: '2023-01-01T00:00:00.000Z',
+    deleted: false
   };
   const testExerciseInput: ExerciseInput = { name: 'Test Exercise' };
 
@@ -94,6 +96,7 @@ describe('ExerciseRepo', () => {
     
     // Create mock delegate with all required methods
     mockDelegate = {
+      initialize: jest.fn(),
       addExercise: jest.fn(),
       getExercises: jest.fn(),
       deleteExercise: jest.fn(),

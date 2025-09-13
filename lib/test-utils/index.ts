@@ -24,7 +24,6 @@ export * from './fixtures';
 
 // Core Types (re-exported from contracts for what exists)
 export type {
-  TestDevice,
   TestInfrastructureManager,
   MockFactoryCollection,
   TestDataBuilderCollection

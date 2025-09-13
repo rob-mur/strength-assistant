@@ -37,7 +37,9 @@ describe('SupabaseExerciseRepo', () => {
     name: 'Test Exercise',
     user_id: testUserId,
     created_at: '2023-01-01T00:00:00.000Z'
-  };
+  ,
+      updated_at: new Date().toISOString(),
+      deleted: false};
 
   const mockUser = { id: testUserId, email: 'test@example.com' };
   const mockExercises = [testExercise];

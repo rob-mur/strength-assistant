@@ -12,18 +12,24 @@ export interface Database {
           name: string;
           user_id: string;
           created_at: string;
+          updated_at: string;
+          deleted: boolean;
         };
         Insert: {
           id?: string;
           name: string;
           user_id: string;
           created_at?: string;
+          updated_at?: string;
+          deleted?: boolean;
         };
         Update: {
           id?: string;
           name?: string;
           user_id?: string;
           created_at?: string;
+          updated_at?: string;
+          deleted?: boolean;
         };
       };
     };

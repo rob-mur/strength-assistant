@@ -6,9 +6,6 @@
  * the USE_SUPABASE_DATA environment variable.
  */
 
-import type { ExerciseRecord } from '../models/ExerciseRecord';
-import type { UserAccount } from '../models/UserAccount';
-import type { SyncStateRecord } from '../models/SyncStateRecord';
 import { isSupabaseDataEnabled } from '../config/supabase-env';
 
 // Import storage backend implementations

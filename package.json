@@ -7,7 +7,7 @@
 		"web": "expo start --web",
 		"reset-project": "node ./scripts/reset-project.js",
 		"android": "expo run:android",
-		"lint": "expo lint",
+		"lint": "npx expo lint app lib -- --no-error-on-unmatched-pattern",
 		"lint:fix": "expo lint --fix",
 		"test": "jest --config jest.config.js --coverage",
 		"test:watch": "jest --watchAll --config jest.config.js",

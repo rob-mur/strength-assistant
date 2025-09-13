@@ -110,16 +110,24 @@ describe("useExercises", () => {
     // Simulate the repo calling back with updated exercise list
     act(() => {
       subscriptionCallback([
-        { id: "1", name: "Squats", user_id: testUid, created_at: "2023-01-01T00:00:00Z" }, 
-        { id: "2", name: "Push-ups", user_id: testUid, created_at: "2023-01-01T00:00:00Z" }
+        { id: "1", name: "Squats", user_id: testUid, created_at: "2023-01-01T00:00:00Z" ,
+      updated_at: new Date().toISOString(),
+      deleted: false}, 
+        { id: "2", name: "Push-ups", user_id: testUid, created_at: "2023-01-01T00:00:00Z" ,
+      updated_at: new Date().toISOString(),
+      deleted: false}
       ]);
     });
 
     // Verify the exercises list was updated
     await waitFor(() => {
       expect(result.current.exercises.exercises).toEqual([
-        { id: "1", name: "Squats", user_id: testUid, created_at: "2023-01-01T00:00:00Z" },
-        { id: "2", name: "Push-ups", user_id: testUid, created_at: "2023-01-01T00:00:00Z" },
+        { id: "1", name: "Squats", user_id: testUid, created_at: "2023-01-01T00:00:00Z" ,
+      updated_at: new Date().toISOString(),
+      deleted: false},
+        { id: "2", name: "Push-ups", user_id: testUid, created_at: "2023-01-01T00:00:00Z" ,
+      updated_at: new Date().toISOString(),
+      deleted: false},
       ]);
     });
   });

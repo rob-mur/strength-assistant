@@ -27,6 +27,13 @@ export class ExerciseRepo implements IExerciseRepo {
 	}
 
 	/**
+	 * Initialize the repository - delegates to the configured implementation
+	 */
+	async initialize(): Promise<void> {
+		return this.delegate.initialize();
+	}
+
+	/**
 	 * Add a new exercise - delegates to the configured implementation
 	 */
 	async addExercise(userId: string, exercise: import("../models/Exercise").ExerciseInput): Promise<void> {

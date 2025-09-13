@@ -258,7 +258,9 @@ export class TestDevice {
       id: uuidv4(),
       name: name.trim(),
       user_id: this._authState.currentUser?.id || 'anonymous',
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      deleted: false
     };
 
     this._exercises.push(exercise);
