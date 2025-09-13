@@ -332,6 +332,7 @@ export class ConstitutionalIntegrationLayerImpl {
       conflictsResolved,
       amendmentPrecedence,
       constitutionalIntegrity,
+      constitutionalCompliance: constitutionalIntegrity,
       precedenceRationale: `Latest amendment (${amendmentPrecedence[0]}) takes precedence`,
       resolutionActions
     };

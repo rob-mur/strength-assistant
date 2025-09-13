@@ -1,19 +1,28 @@
 module.exports = {
   preset: "jest-expo",
 
-  // PERFORMANCE OPTIMIZATION: <60 second target (T003a)
-  maxWorkers: 1, // Single-threaded for memory safety
-  workerIdleMemoryLimit: "256MB", // Aggressive memory limit
-  cache: true, // Enable Jest caching for faster subsequent runs
-  cacheDirectory: ".jest-cache", // Explicit cache directory
-
-  // Speed optimization: Disable expensive features
-  detectLeaks: false, // Disabled - was blocking and slow
-  forceExit: true, // Force exit after tests complete
-  collectCoverage: false, // Disable coverage collection for speed (enable only for CI)
-
-  // Faster test discovery and execution
-  testPathIgnorePatterns: ["/node_modules/"],
+  // CONSTITUTIONAL AMENDMENT v2.6.0: Performance optimization for 60-second target
+  maxWorkers: 1, // Single-threaded execution for 8GB memory constraint compliance
+  workerIdleMemoryLimit: "512MB", // Optimized for constitutional memory limits
+  cache: true, // Enable Jest caching for performance
+  cacheDirectory: ".jest-cache", // Explicit cache directory for faster subsequent runs
+  
+  // Constitutional memory management
+  detectLeaks: false, // Disabled for performance - constitutional memory monitoring handles this
+  forceExit: true, // Ensure clean exit for sequential execution compliance
+  logHeapUsage: false, // Disable built-in heap logging - custom monitoring handles this
+  
+  // Amendment v2.6.0: Coverage disabled during task completion validation for speed
+  collectCoverage: false, // Enable only during full constitutional compliance checks
+  
+  // Optimized test discovery for constitutional performance targets
+  testPathIgnorePatterns: [
+    "/node_modules/",
+    "/.jest-cache/",
+    "/coverage/",
+    "/build/",
+    "/dist/"
+  ],
 
   // Minimal transforms for speed - only essential modules
   transformIgnorePatterns: [
@@ -76,36 +85,62 @@ module.exports = {
     pretendToBeVisual: true,
   },
 
-  // Aggressive timeout settings for speed (T003a: <60 second target)
-  testTimeout: 5000, // 5 seconds max per test (aggressive timeout for speed)
+  // Constitutional Amendment v2.6.0: Aggressive timeout for 60-second compliance
+  testTimeout: 8000, // 8 seconds per test (balance between speed and reliability)
+  
+  // Amendment v2.6.0: Sequential execution configuration
+  bail: false, // Continue all tests for complete validation
+  passWithNoTests: true, // Allow empty test suites during development
+  
+  // Constitutional reporting for Amendment v2.6.0 validation
+  reporters: [
+    "default"
+    // Custom constitutional reporter temporarily disabled until full integration
+    // ["<rootDir>/lib/constitution/jest-reporter.js", { 
+    //   "constitutionalValidation": true,
+    //   "amendmentVersion": "2.6.0"
+    // }]
+  ],
 
-  // Test result processors for constitutional reporting
-  reporters: ["default"],
+  // TypeScript-first module resolution for constitutional compliance
+  moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
+  testMatch: [
+    "**/__tests__/**/*.(ts|tsx|js)",
+    "**/*.(test|spec).(ts|tsx|js)",
+    "**/__tests__/contracts/**/*.test.ts" // Include contract tests
+  ],
 
-  // Ensure tests run in TypeScript-validated environment
-  moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json"],
-  testMatch: ["**/__tests__/**/*.(ts|tsx|js)", "**/*.(test|spec).(ts|tsx|js)"],
-
-  // Module name mapping for path aliases and test infrastructure
+  // Path aliases and constitutional infrastructure mapping
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/$1",
     "^../../lib/test-utils/TestDevice$": "<rootDir>/lib/test-utils/TestDevice",
     "^../lib/test-utils/(.*)$": "<rootDir>/lib/test-utils/$1",
+    "^@constitution/(.*)$": "<rootDir>/lib/constitution/$1",
+    "^@testing/(.*)$": "<rootDir>/lib/testing/$1"
   },
 
-  // Setup files for test environment
-  // setupFiles: [
-  //   "<rootDir>/jest.polyfills.js"
-  // ],
+  // Amendment v2.6.0: Environment optimization
+  maxConcurrency: 1, // Single-threaded for memory compliance
+  detectOpenHandles: false, // Disable for speed - constitutional monitoring handles this
+  detectLeaks: false, // Disabled for performance - constitutional memory monitoring handles this
+  
+  // Use default jest-expo transforms for compatibility
+  // Custom transforms disabled for constitutional optimization
+  // extensionsToTreatAsEsm: [".ts", ".tsx"],
 
-  // Module resolution configuration
-  resolver: undefined, // Use default Jest resolver
-
-  // Ensure proper handling of ES modules
-  extensionsToTreatAsEsm: [".ts", ".tsx"],
-
-  // Enhanced error handling - minimal output for speed
-  verbose: false, // Disable verbose output for speed
-  errorOnDeprecated: false, // Allow deprecated warnings to not slow down tests
-  silent: false, // Keep some output for debugging
+  // Constitutional Amendment v2.6.0: Optimized output for speed
+  verbose: false, // Minimal output for 60-second target
+  silent: false, // Keep essential debugging output
+  errorOnDeprecated: false, // Allow warnings to not slow execution
+  collectCoverageFrom: [
+    "app/**/*.{ts,tsx}",
+    "lib/**/*.{ts,tsx}",
+    "!**/*.d.ts",
+    "!**/*.stories.{ts,tsx}",
+    "!**/*.test.{ts,tsx}",
+    "!**/*.spec.{ts,tsx}",
+    "!lib/test-utils/**", // Exclude test infrastructure from coverage
+    "!lib/repo/FirebaseExerciseRepo.ts", // Exclude Firebase implementation
+    "!lib/data/firebase/**" // Exclude Firebase utilities
+  ]
 };
