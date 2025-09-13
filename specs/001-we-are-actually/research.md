@@ -1,31 +1,92 @@
-# Phase 0: Research & Decisions
+# Phase 0: Research & Production Test Readiness
 
-**Date**: 2025-09-13
+**Date**: 2025-09-13  
+**Focus**: Constitutional compliance through systematic test repair
 
-## 1. Local-First Sync with `legend-state` and Supabase
-
-### Research Task
-Investigate the built-in Supabase support in `legend-state`, focusing on configuration for automatic sync and conflict resolution.
-
-### Findings
-- `legend-state` provides a dedicated plugin, `@legendapp/state/sync/supabase`, for integration with Supabase.
-- The plugin supports real-time, local-first synchronization.
-- **Automatic Sync**: This is enabled by setting the `realtime: true` option in the `syncedSupabase` configuration.
-- **Conflict Resolution**: The library does not provide an explicit "last-write-wins" default. However, it provides the tools to implement this strategy. By using `updated_at` timestamps and potentially custom `actions`, we can ensure that the most recent write is honored. We will proceed with the assumption that we can configure the plugin to achieve this, as per the user's preference to rely on the library.
-
-### Decision
-We will use the `@legendapp/state/sync/supabase` plugin. The implementation will include adding the required timestamp columns (`created_at`, `updated_at`, `deleted`) to the Supabase tables and configuring the plugin to enforce a "last-write-wins" conflict resolution strategy.
-
-## 2. Feature Flag Implementation
+## 1. Test Failure Analysis & Categorization
 
 ### Research Task
-Research how to manage environment variables for the feature flag in the relevant `devbox.json` files and EAS.
+Analyze the 122/420 failing Jest tests to identify root causes and create systematic repair strategy.
 
-### Findings
-- **Local/CI Development**: Environment variables for local development and CI are managed in `devbox.json` files. The user has identified the relevant configurations as `minimal` and `android-testing`, which are used by the `Integration Test Chrome.yml` and `Integration Test Android.yml` workflows respectively.
-- **`devbox.json` Structure**: The `devbox.json` files have an `env` block where environment variables can be set. I will add the `EXPO_PUBLIC_USE_SUPABASE` variable to this block in all relevant `devbox.json` files.
-- **Production/Preview Builds**: For builds deployed via EAS, environment variables are managed in the EAS cloud service. The user has confirmed that they have set the `EXPO_PUBLIC_USE_SUPABASE` variable for the `preview` and `production` environments as requested.
+### Critical Findings
+- **Jest Worker Instability**: Child process exceptions causing cascading failures
+- **Supabase Test Environment**: Mock client initialization not matching production patterns
+- **React Native Component Tests**: Async operations not properly wrapped in act()
+- **Mock Factory Inconsistencies**: Feature flag switching affects test determinism
 
-### Decision
-- For local and CI testing, the feature flag will be managed by adding `"EXPO_PUBLIC_USE_SUPABASE": "false"` (or `true` for testing the new backend) to the `env` block of the relevant `devbox.json` files.
-- For production and preview builds, we will rely on the environment variables set in the EAS service.
+### Constitutional Impact
+- **Amendment v2.6.0 Violation**: Binary exit code requirement (must return 0)
+- **Amendment v2.4.0 Violation**: Zero test failure tolerance exceeded
+- **CI/CD Blocking**: Cannot deploy with failing test suite
+
+## 2. Local-First Sync Implementation Status
+
+### Current State (Already Implemented)
+- `legend-state` integration with manual Supabase sync (not using plugin)
+- Real-time subscription setup with channel management
+- Feature flag switching between Firebase and Supabase backends
+- Database migrations for sync columns (created_at, updated_at, deleted)
+
+### Testing Gaps Identified
+- Mock factories don't handle dual backend switching consistently
+- Test environment initialization differs from production setup
+- Integration tests assume stable backend but feature flags create variability
+
+## 3. Test Infrastructure Repair Strategy
+
+### Research Task
+Identify systematic approach to fix 122 failing tests with minimal disruption and maximum stability.
+
+### Repair Prioritization Matrix
+
+#### P0: Foundation Stability (Blocks All Testing)
+- **Jest Worker Configuration**: Fix child process exceptions
+- **Memory Management**: Resolve resource exhaustion issues
+- **Test Environment Setup**: Stable initialization per test run
+
+#### P1: Backend Integration (Blocks Core Features)
+- **Supabase Client Mocking**: Fix test environment initialization
+- **Feature Flag Test Behavior**: Consistent mock responses regardless of flags
+- **Database Connection Mocking**: Proper cleanup between tests
+
+#### P2: Component Reliability (Blocks UI Coverage)
+- **React Native Act Wrapping**: All async operations properly handled
+- **Component Test Timeouts**: AuthAwareLayout and similar complex components
+- **Animation Mocking**: Disable/mock animations in test environment
+
+#### P3: Test Quality (Improves Reliability)
+- **Mock Factory Consistency**: Single source of truth per backend
+- **Assertion Accuracy**: Expected vs actual value alignment
+- **Test Data Builders**: Consistent test data generation
+
+### Technical Solutions Research
+
+#### Jest Configuration Optimization
+- **Decision**: Single worker mode with increased timeout
+- **Rationale**: React Native + dual backend requires sequential test execution
+- **Implementation**: `maxWorkers: 1, testTimeout: 30000, detectOpenHandles: true`
+
+#### Supabase Test Client Factory
+- **Decision**: Dedicated test client wrapper with controlled mocking
+- **Rationale**: Production vs test initialization paths must be isolated
+- **Implementation**: `TestSupabaseClient` class with deterministic mock behavior
+
+#### Component Test Helper
+- **Decision**: Custom render wrapper with automatic act() handling
+- **Rationale**: React Native Testing Library requires explicit async wrapping
+- **Implementation**: `renderWithAct()` helper with built-in cleanup
+
+## 4. Constitutional Compliance Plan
+
+### Amendment v2.6.0 Requirements
+1. **Task Completion Validation**: Each repair tracked with expected outcome
+2. **Binary Exit Code**: Validate `devbox run test` returns 0
+3. **Performance Monitoring**: Maintain <60s execution time
+4. **Learning Loop**: Document prediction accuracy per fix
+
+### Success Metrics
+- ✅ 0/420 failing tests (100% pass rate)
+- ✅ Exit code 0 from test command
+- ✅ <60s total execution time
+- ✅ Zero Jest worker exceptions
+- ✅ CI/CD pipeline readiness

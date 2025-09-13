@@ -117,28 +117,30 @@ This is a React Native Expo app built with TypeScript, using file-based routing 
 - **Compliance Validation**: Automated constitutional requirement checking
 - **Enforcement Mechanisms**: Pre-commit hooks, CI pipelines, Jest global setup
 
-## 🚨 CURRENT CRITICAL STATUS (Amendment v2.3.0)
+## 🚨 CURRENT CRITICAL STATUS (Amendment v2.6.0 - Production Test Readiness)
 
-### Test Suite Constitutional Violation
-**CRITICAL ISSUE**: `devbox run test` is NOT passing, violating the constitutional requirement that "devbox run test MUST pass completely before any commit"
+### Production Readiness Blocking Issue
+**CRITICAL ISSUE**: 122/420 Jest tests failing, preventing CI production deployment per constitutional requirements
 
 **Current Status**:
-- ✅ TypeScript compilation validation working (constitutional check passes)
-- ❌ **80+ Jest tests failing** - this blocks all constitutional compliance
-- ❌ Missing test infrastructure: `TestDevice` and `TestApp` classes
-- ❌ Component test timeouts in `AuthAwareLayout` tests
-- 🚨 **Cannot commit until all tests pass**
+- ✅ TypeScript compilation validation working (npx tsc --noEmit passes)
+- ✅ Local-first storage feature implementation complete (Firebase ↔ Supabase migration)
+- ❌ **122 Jest tests failing** - constitutional violation (exit code 1, requires 0)
+- ❌ Jest worker child process exceptions causing cascade failures
+- ❌ Supabase client mock initialization mismatches in test environment
+- ❌ React Native component timeout issues (AuthAwareLayout, others)
+- 🚨 **Cannot deploy to production until 100% test pass rate achieved**
 
-**Required Actions**:
-1. **Priority 1**: Implement missing `lib/test-utils/TestDevice.ts`
-2. **Priority 1**: Implement missing `lib/test-utils/TestApp.ts`  
-3. **Priority 2**: Fix component test timeout issues
-4. **Priority 3**: Ensure `devbox run test` passes 100%
+**Production Readiness Plan**: Available in `specs/001-we-are-actually/plan.md`
+- **Phase 0**: Research complete - test failure analysis and systematic repair strategy
+- **Phase 1**: Design complete - test infrastructure models and constitutional compliance framework
+- **Phase 2**: Ready for /tasks command - will generate 15-20 systematic repair tasks
 
-**Test Infrastructure Contracts**: Available in `specs/001-we-are-actually/contracts/`
-- `test-infrastructure.ts` - TestDevice interface specification
-- `jest-validation.ts` - Jest validation requirements
-- `test-repair.ts` - Systematic test repair tracking
+**Systematic Repair Priorities**:
+1. **P0 Foundation**: Jest worker stability, resource management, test environment setup
+2. **P1 Backend**: Supabase client mocking, feature flag behavior consistency
+3. **P2 Components**: React Native act() wrapping, timeout resolution  
+4. **P3 Quality**: Mock factory consistency, assertion accuracy
 
 ### Amendment v2.3.0: Enhanced Test Governance
 Extends constitutional requirements to include:
