@@ -38,6 +38,11 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 		return FirebaseExerciseRepo.instance;
 	}
 
+	async initialize(): Promise<void> {
+		this.ensureInitialized();
+		return Promise.resolve();
+	}
+
 	private ensureInitialized(): void {
 		if (!this.initialized) {
 			try {

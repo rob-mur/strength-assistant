@@ -1,102 +1,44 @@
-# Data Model: Local First Storage with Backup
+# Phase 1: Data Model
 
-## 🚨 Critical Requirements
+**Date**: 2025-09-13
 
-All data model changes must support:
-- **Local-First Architecture**: All data operations immediate on device
-- **Automatic Cloud Sync**: Background synchronization when online
-- **Sequential Processing**: Memory-safe implementation within 32GB limit
-- **Constitutional Compliance**: All tests must pass before any commit
-- **Migration Safety**: Zero data loss during Firebase to Supabase migration
+This document defines the data structures for the entities involved in this feature, as they will be represented in `legend-state` and synchronized with the Supabase backend.
 
-## ✅ Enhanced Test Infrastructure Requirements
+## 1. Exercise
 
-All test entities and configurations must support:
-- **TypeScript Strict Mode**: Full type safety in test infrastructure
-- **Mock-First Development**: Complete mock implementations before real functionality
-- **Incremental Repair**: Systematic approach to fixing test failures
-- **Constitutional Governance**: Formal governance to prevent future test regressions
+Represents a single exercise record created by a user.
 
-## Core Entities for Local-First Storage Migration
+| Field         | Type      | Description                                          | Constraints      |
+|---------------|-----------|------------------------------------------------------|------------------|
+| `id`          | `string`  | Unique identifier (client-generated)                 | Required, Unique |
+| `name`        | `string`  | Name of the exercise (e.g., "Bench Press")           | Required         |
+| `reps`        | `number`  | Number of repetitions performed                      | Optional         |
+| `sets`        | `number`  | Number of sets performed                             | Optional         |
+| `weight`      | `number`  | Weight used for the exercise (in kg)                 | Optional         |
+| `created_at`  | `string`  | ISO 8601 timestamp of when the record was created    | Required         |
+| `updated_at`  | `string`  | ISO 8601 timestamp of the last modification          | Required         |
+| `deleted`     | `boolean` | Flag for soft deletes                                | Required         |
+| `user_id`     | `string`  | Foreign key linking to the User who owns this record | Required         |
 
-### Exercise Entity (Enhanced)
-**Purpose**: Primary data model with local-first and sync capabilities
-**Fields**:
-- `id`: string (unique identifier, consistent across devices)
-- `name`: string (exercise name, user-defined)
-- `createdAt`: timestamp (local creation time)
-- `updatedAt`: timestamp (last modification time)
-- `syncedAt`: timestamp (last successful sync to cloud)
-- `syncStatus`: SyncStatus (current sync state)
-- `deviceOrigin`: string (device ID where created)
-- `userId`: string | null (user ID if authenticated, null for anonymous)
+## 2. User
 
-**Validation Rules**:
-- `id` must be globally unique (UUID v4)
-- `name` cannot be empty
-- `updatedAt` must be >= `createdAt`
-- `syncedAt` should be <= `updatedAt`
+Represents an application user.
 
-**State Transitions**:
-- Creation: syncStatus = 'pending'
-- Successful sync: syncStatus = 'synced', syncedAt = current time
-- Failed sync: syncStatus = 'error'
-- Offline edit: syncStatus = 'pending', updatedAt = current time
+| Field      | Type     | Description                                | Constraints      |
+|------------|----------|--------------------------------------------|------------------|
+| `id`       | `string` | Unique identifier from Supabase Auth       | Required, Unique |
+| `email`    | `string` | User's email address (for signed-in users) | Optional, Unique |
+| `is_anonymous` | `boolean`| True if the user is an anonymous user      | Required         |
 
-### User Account Entity
-**Purpose**: User authentication and cross-device synchronization
-**Fields**:
-- `id`: string (unique user identifier)
-- `email`: string (authentication email)
-- `isAnonymous`: boolean (anonymous vs authenticated user)
-- `createdAt`: timestamp (account creation time)
-- `devices`: DeviceInfo[] (registered devices)
-- `syncPreferences`: SyncPreferences (user sync settings)
+## 3. SyncState
 
-**Validation Rules**:
-- `email` must be valid format for authenticated users
-- `isAnonymous` users have limited cross-device sync
-- At least one device must be registered
+(Conceptual) - This entity represents the state managed internally by the `@legendapp/state/sync/supabase` plugin. It tracks which records have been synchronized and when the last sync occurred. We do not need to model this ourselves, but we must ensure our Supabase tables have the necessary columns for the plugin to manage this state.
 
-### Sync Operation Entity
-**Purpose**: Track sync operations and conflict resolution
-**Fields**:
-- `id`: string (unique operation identifier)
-- `entityType`: string ('exercise', 'user')
-- `entityId`: string (ID of entity being synced)
-- `operation`: SyncOperationType ('create', 'update', 'delete')
-- `localData`: any (local version of data)
-- `remoteData`: any (remote version of data, if conflict)
-- `status`: SyncOperationStatus ('pending', 'success', 'error', 'conflict')
-- `retryCount`: number (number of retry attempts)
-- `lastAttempt`: timestamp (last sync attempt time)
-- `resolvedAt`: timestamp (when conflict was resolved)
-- `resolutionStrategy`: ConflictResolutionStrategy ('last-write-wins', 'manual')
+**Required Columns in Supabase Tables:**
+- `created_at`
+- `updated_at`
+- `deleted`
 
-**Validation Rules**:
-- `retryCount` must be >= 0 and <= max retry limit
-- `resolvedAt` must be set when status is 'success'
-- `remoteData` required when status is 'conflict'
+## 4. Conflict
 
-### Device Info Entity
-**Purpose**: Track devices for multi-device sync
-**Fields**:
-- `deviceId`: string (unique device identifier)
-- `deviceName`: string (user-friendly device name)
-- `platform`: Platform ('ios', 'android', 'web')
-- `lastSeen`: timestamp (last activity time)
-- `isActive`: boolean (currently active device)
-- `syncEnabled`: boolean (sync allowed on this device)
-
-### Sync Status Enum
-**Values**:
-- `pending`: Local changes need to be synced
-- `synced`: Data is synchronized with cloud
-- `error`: Sync failed, retry needed
-- `conflict`: Conflict detected, resolution needed
-
-### Conflict Resolution Strategy Enum
-**Values**:
-- `last-write-wins`: Use most recent timestamp
-- `manual`: Require user intervention
-
+(Conceptual) - This entity represents a conflict that may occur during synchronization. The `legend-state` sync engine handles this, and the chosen strategy is "last-write-wins" based on the `updated_at` timestamp. We do not need to model a separate `Conflict` entity.

@@ -24,5 +24,8 @@
 				"cd ../.. && npm run build_web"
 			]
 		}
+	},
+	"env": {
+		"USE_SUPABASE_DATA": "false"
 	}
 }
