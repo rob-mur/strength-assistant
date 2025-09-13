@@ -1,0 +1,1 @@
+describe('Constitutional Amendment v2.6.0', () => { it('should have a failing test', () => { expect(true).toBe(false); }); });
