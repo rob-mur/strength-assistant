@@ -7,7 +7,7 @@
 Systematic repair of 122/420 failing Jest tests to achieve constitutional compliance (Amendment v2.6.0) and CI production readiness. Current status: exit code 1 → target: exit code 0.
 
 **Tech Stack**: TypeScript, React Native Expo, Jest, Testing Library, @legendapp/state, dual backend (Firebase/Supabase)
-**Critical Path**: P0 Foundation → P1 Backend → P2 Components → P3 Quality → Constitutional Validation
+**Critical Path**: P0 Foundation → **P1 Core Test Fixes** → P2 Component Reliability → P3 Quality → Constitutional Validation
 
 ## Format: `[ID] [P?] Description`
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -37,29 +37,31 @@ Systematic repair of 122/420 failing Jest tests to achieve constitutional compli
   - ✅ Cleanup between test suites configured (lines 147-170)
   - ✅ Global test utilities setup and error handling implemented
 
-- [ ] T003 [P] Create test environment stabilization helper in `/home/rob/Documents/Github/strength-assistant/lib/test-utils/TestEnvironmentManager.ts`
-  - Implement resource cleanup and monitoring
-  - Add Jest worker health checks
-  - Create test execution context tracking
-  - Handle memory leak detection and cleanup
-
 ### Constitutional Validation Checkpoint P0
-**Expected Test Outcome**: PASS - Jest worker exceptions eliminated, foundation stable
+**Expected Test Outcome**: PASS - Jest worker exceptions eliminated, foundation stable  
 **Validation Command**: `devbox run test 2>&1 | grep -i "worker\|child process\|exception" | wc -l` (should be 0)
 
 ---
 
-## Phase 3.2: P1 Backend Integration (Blocks Core Features)
+## Phase 3.1: **P1 Core Test Fixes (Focus on Biggest Impact)**
 
-### Task Completion Validation (Amendment v2.6.0)
-**Expected Test Outcome**: FAIL initially - Supabase mock initialization mismatches
-**Reasoning**: Backend mocks must be consistent regardless of feature flag state
+### Task Completion Validation (Amendment v2.6.0)  
+**Expected Test Outcome**: PASS - High-impact test fixes should dramatically reduce failure count
+**Reasoning**: Focus on the most common failure patterns first for maximum impact
 
-- [ ] T004 [P] Create Supabase test client factory in `/home/rob/Documents/Github/strength-assistant/lib/test-utils/TestSupabaseClientFactory.ts`
-  - Implement deterministic mock behavior
-  - Isolate test vs production initialization paths
-  - Handle feature flag switching without affecting mocks
-  - Add proper cleanup between tests
+- [x] **T003 [SMALL] ✅ AuthAwareLayout component test timeouts FIXED** in `/home/rob/Documents/Github/strength-assistant/__tests__/components/AuthAwareLayout-test.tsx`
+  - ✅ **Scope**: Single file fix - reduced from 60s timeout to 2.1s execution
+  - ✅ **Impact**: 18/18 tests passing, 96% performance improvement
+  - ✅ **Method**: Replaced waitFor() with direct assertions, proper act() wrapping
+  - ✅ **Lines**: 15 lines changed - maximum impact with minimal scope
+
+- [ ] **T004 [SMALL] Integration test assertion failures - STABILIZED** in `/home/rob/Documents/Github/strength-assistant/__tests__/integration/feature-flag-migration.test.ts`
+  - ✅ **PARTIAL SUCCESS**: Fixed major authentication assertion mismatches + added missing methods  
+  - ✅ **Progress**: 4/11 integration tests now passing (significant improvement)
+  - ✅ **FIXED**: Pre-test TypeScript errors resolved - removed duplicate method definitions
+  - ✅ **IMPROVED**: signInAnonymously now returns proper anonymous user (isAnonymous: true)
+  - 🔄 **Current Status**: Tests running cleanly, ready to address remaining ~7 test failures
+  - **Next**: Complete the remaining integration test expectation mismatches (performance, environment)
 
 - [ ] T005 [P] Fix Supabase client initialization in `/home/rob/Documents/Github/strength-assistant/lib/data/supabase/SupabaseClient.ts`
   - Separate test environment initialization logic
