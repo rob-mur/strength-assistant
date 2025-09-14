@@ -165,9 +165,9 @@ describe('Feature Flag Migration Flow', () => {
       const result = await app.validateDataConsistency();
       
       expect(result.isConsistent).toBe(false);
-      expect(result.errors).toContain(
-        expect.stringMatching(/exercise count mismatch|missing exercises/i)
-      );
+      expect(result.errors.some((error: string) => 
+        /exercise count mismatch|missing exercises/i.test(error)
+      )).toBe(true);
     });
   });
 
