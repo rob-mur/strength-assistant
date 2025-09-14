@@ -1,29 +1,27 @@
-// Mock React Native Firebase Auth
+// Mock React Native Firebase Auth using FirebaseMockFactory
 jest.mock('@react-native-firebase/auth', () => {
-  const mockUser = {
-    uid: 'test-uid',
-    email: 'test@example.com',
-    isAnonymous: false,
-  };
+  const FirebaseMockFactory = require('./lib/test-utils/FirebaseMockFactory').default;
+  return FirebaseMockFactory.getReactNativeFirebaseMock();
+});
 
-  const mockAuth = {
-    onAuthStateChanged: jest.fn(() => jest.fn()), // Returns unsubscribe function
-    signInAnonymously: jest.fn(() => Promise.resolve({ user: mockUser })),
-    createUserWithEmailAndPassword: jest.fn(() => Promise.resolve({ user: mockUser })),
-    signInWithEmailAndPassword: jest.fn(() => Promise.resolve({ user: mockUser })),
-    signOut: jest.fn(() => Promise.resolve()),
-    currentUser: mockUser,
-    useEmulator: jest.fn(),
-  };
+// Mock Firebase web SDK using FirebaseMockFactory
+jest.mock('firebase/auth', () => {
+  const FirebaseMockFactory = require('./lib/test-utils/FirebaseMockFactory').default;
+  return FirebaseMockFactory.getWebFirebaseMock();
+});
 
-  const auth = () => mockAuth;
-  
+// Mock Firebase Firestore web SDK
+jest.mock('firebase/firestore', () => {
+  const FirebaseMockFactory = require('./lib/test-utils/FirebaseMockFactory').default;
   return {
-    __esModule: true,
-    default: auth,
-    FirebaseAuthTypes: {
-      AuthErrorCode: {},
-    },
+    getFirestore: jest.fn(() => FirebaseMockFactory.createFirestoreMock()),
+    collection: jest.fn(),
+    doc: jest.fn(),
+    addDoc: jest.fn(),
+    updateDoc: jest.fn(),
+    deleteDoc: jest.fn(),
+    onSnapshot: jest.fn(() => jest.fn()),
+    connectFirestoreEmulator: jest.fn(),
   };
 });
 
@@ -89,41 +87,139 @@ process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key';
 process.env.USE_SUPABASE_DATA = 'false'; // Default to Firebase for tests
 process.env.EXPO_PUBLIC_USE_SUPABASE_EMULATOR = 'true';
 
-// Mock Supabase client
+// Mock Supabase client with dynamic behavior
 jest.mock('@supabase/supabase-js', () => {
-  const mockUser = {
-    id: 'test-user-id',
-    email: 'test@example.com',
-    created_at: new Date().toISOString(),
-  };
+  let currentUser = null;
+  let userCounter = 0;
 
-  const mockAuthResponse = {
-    data: { user: mockUser, session: { user: mockUser } },
-    error: null,
-  };
+  const createMockUser = (email, isAnonymous = false) => ({
+    id: isAnonymous ? 'test-anon-uid' : 'test-uid',
+    email: isAnonymous ? undefined : email,
+    created_at: new Date().toISOString(),
+  });
 
   const mockSupabaseClient = {
     auth: {
       getSession: jest.fn(() => Promise.resolve({
-        data: { session: { user: mockUser, access_token: 'test-token' } },
+        data: { session: currentUser ? { user: currentUser, access_token: 'test-token' } : null },
         error: null,
       })),
-      signUp: jest.fn(() => Promise.resolve(mockAuthResponse)),
-      signInWithPassword: jest.fn(() => Promise.resolve(mockAuthResponse)),
-      signInAnonymously: jest.fn(() => Promise.resolve({
-        data: { user: { ...mockUser, email: undefined }, session: { user: { ...mockUser, email: undefined } } },
-        error: null,
+      signUp: jest.fn((options) => {
+        const { email, password } = options;
+        // Validate password strength
+        if (password && password.length < 6) {
+          return Promise.resolve({
+            data: { user: null, session: null },
+            error: { message: 'Password should be at least 6 characters' }
+          });
+        }
+        
+        const user = createMockUser(email, false);
+        currentUser = user;
+        return Promise.resolve({
+          data: { user, session: { user } },
+          error: null,
+        });
+      }),
+      signInWithPassword: jest.fn((options) => {
+        const { email, password } = options;
+        // Simulate failed auth for wrong credentials
+        if (email === 'wrong@example.com' || password === 'wrongpassword') {
+          return Promise.resolve({
+            data: { user: null, session: null },
+            error: { message: 'Invalid login credentials' }
+          });
+        }
+        
+        // Return user matching the email
+        const user = createMockUser(email, false);
+        currentUser = user;
+        return Promise.resolve({
+          data: { user, session: { user } },
+          error: null,
+        });
+      }),
+      signInAnonymously: jest.fn(() => {
+        const user = createMockUser(undefined, true);
+        currentUser = user;
+        return Promise.resolve({
+          data: { user, session: { user } },
+          error: null,
+        });
+      }),
+      signOut: jest.fn(() => {
+        currentUser = null;
+        return Promise.resolve({ error: null });
+      }),
+      getUser: jest.fn(() => Promise.resolve({ 
+        data: { user: currentUser }, 
+        error: null 
       })),
-      signOut: jest.fn(() => Promise.resolve({ error: null })),
-      getUser: jest.fn(() => Promise.resolve({ data: { user: mockUser }, error: null })),
-      onAuthStateChange: jest.fn(() => ({ data: { subscription: {} }, unsubscribe: jest.fn() })),
+      onAuthStateChange: jest.fn(() => ({ 
+        data: { subscription: {} }, 
+        unsubscribe: jest.fn() 
+      })),
     },
-    from: jest.fn(() => ({
-      select: jest.fn(() => ({ data: [], error: null })),
-      insert: jest.fn(() => ({ data: null, error: null })),
-      update: jest.fn(() => ({ data: null, error: null })),
-      delete: jest.fn(() => ({ data: null, error: null })),
-    })),
+    from: jest.fn(() => {
+      // Create chainable query builder
+      const chainableQuery = {
+        select: jest.fn(() => chainableQuery),
+        insert: jest.fn(() => chainableQuery),
+        update: jest.fn(() => chainableQuery),
+        delete: jest.fn(() => chainableQuery),
+        eq: jest.fn(() => chainableQuery),
+        neq: jest.fn(() => chainableQuery),
+        gt: jest.fn(() => chainableQuery),
+        gte: jest.fn(() => chainableQuery),
+        lt: jest.fn(() => chainableQuery),
+        lte: jest.fn(() => chainableQuery),
+        like: jest.fn(() => chainableQuery),
+        ilike: jest.fn(() => chainableQuery),
+        is: jest.fn(() => chainableQuery),
+        in: jest.fn(() => chainableQuery),
+        contains: jest.fn(() => chainableQuery),
+        containedBy: jest.fn(() => chainableQuery),
+        rangeGt: jest.fn(() => chainableQuery),
+        rangeGte: jest.fn(() => chainableQuery),
+        rangeLt: jest.fn(() => chainableQuery),
+        rangeLte: jest.fn(() => chainableQuery),
+        rangeAdjacent: jest.fn(() => chainableQuery),
+        overlaps: jest.fn(() => chainableQuery),
+        textSearch: jest.fn(() => chainableQuery),
+        match: jest.fn(() => chainableQuery),
+        not: jest.fn(() => chainableQuery),
+        or: jest.fn(() => chainableQuery),
+        filter: jest.fn(() => chainableQuery),
+        order: jest.fn(() => chainableQuery),
+        limit: jest.fn(() => chainableQuery),
+        range: jest.fn(() => chainableQuery),
+        abortSignal: jest.fn(() => chainableQuery),
+        single: jest.fn(() => chainableQuery),
+        maybeSingle: jest.fn(() => chainableQuery),
+        csv: jest.fn(() => chainableQuery),
+        geojson: jest.fn(() => chainableQuery),
+        explain: jest.fn(() => chainableQuery),
+        rollback: jest.fn(() => chainableQuery),
+        returns: jest.fn(() => chainableQuery),
+        // Terminal operations that return promises with data/error structure
+        then: jest.fn((resolve) => {
+          // Return realistic data structure based on operation
+          const result = { data: [], error: null };
+          resolve(result);
+          return Promise.resolve(result);
+        }),
+        // Also make it awaitable directly
+        [Symbol.asyncIterator]: jest.fn(),
+      };
+      
+      // Add proper Promise.resolve behavior
+      Object.assign(chainableQuery, {
+        // Make it act like a Promise for await operations
+        catch: jest.fn(() => chainableQuery),
+        finally: jest.fn(() => chainableQuery),
+      });
+      return chainableQuery;
+    }),
   };
 
   return {
@@ -184,6 +280,14 @@ afterEach(async () => {
     
     // Only clear mocks (fast operation)
     jest.clearAllMocks();
+    
+    // Reset Firebase mock state for test isolation
+    try {
+      const FirebaseMockFactory = require('./lib/test-utils/FirebaseMockFactory').default;
+      FirebaseMockFactory.cleanup();
+    } catch (error) {
+      // Ignore cleanup errors to prevent test interference
+    }
     
     // Skip: resetModules, GC, AsyncStorage clearing (slow operations)
     // Skip: TestDevice cleanup (can be expensive)

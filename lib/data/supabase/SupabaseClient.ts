@@ -11,11 +11,30 @@ export class SupabaseClient {
 
 	private getClient(): BaseSupabaseClient<Database> {
 		if (!this.client) {
-			const client = getSupabaseClient();
-			if (!client || typeof client.from !== 'function') {
-				throw new Error('Invalid Supabase client: missing required methods');
+			try {
+				const client = getSupabaseClient();
+				if (!client || typeof client.from !== 'function') {
+					throw new Error('Invalid Supabase client: missing required methods');
+				}
+				this.client = client;
+			} catch (error) {
+				// In test environment, initialize Supabase if not already done
+				if (process.env.NODE_ENV === 'test') {
+					try {
+						const { initSupabase } = require('./supabase');
+						initSupabase();
+						const client = getSupabaseClient();
+						if (!client || typeof client.from !== 'function') {
+							throw new Error('Invalid Supabase client: missing required methods');
+						}
+						this.client = client;
+					} catch (initError) {
+						throw new Error(`Failed to initialize Supabase in test environment: ${initError instanceof Error ? initError.message : String(initError)}`);
+					}
+				} else {
+					throw error;
+				}
 			}
-			this.client = client;
 		}
 		return this.client;
 	}

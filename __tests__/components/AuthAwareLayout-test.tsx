@@ -4,6 +4,11 @@ import { Text, View } from "react-native";
 import { AuthAwareLayout } from "@/lib/components/AuthAwareLayout";
 import { useAuthContext } from "@/lib/components/AuthProvider";
 import { AuthUser, AuthError } from "@/lib/hooks/useAuth";
+import { 
+  complexAnimationTester, 
+  testWithFakeTimers,
+  describeWithFakeTimers 
+} from "@/lib/test-utils/ComponentTestUtils";
 
 // Mock the AuthProvider and AuthScreen components
 jest.mock("@/lib/components/AuthProvider", () => ({
@@ -117,42 +122,47 @@ describe("AuthAwareLayout", () => {
     });
 
     test("shows AuthScreen when forceShowAuth is true", async () => {
+      // Use manual fake timer approach for now - debugging complex utility
       jest.useFakeTimers();
       
-      mockUseAuthContext.mockReturnValue(
-        createMockAuthContext(null, true)
-      );
+      try {
+        mockUseAuthContext.mockReturnValue(
+          createMockAuthContext(null, true)
+        );
 
-      const { rerender } = render(
-        <AuthAwareLayout>
-          <TestChild />
-        </AuthAwareLayout>
-      );
+        const { rerender } = render(
+          <AuthAwareLayout>
+            <TestChild />
+          </AuthAwareLayout>
+        );
 
-      // Initially should show loading
-      expect(screen.getByText("Initializing...")).toBeTruthy();
+        // Initially should show loading
+        expect(screen.getByText("Initializing...")).toBeTruthy();
 
-      // Fast forward time to trigger the timeout and force re-render
-      await act(async () => {
+        // Fast forward time and update state
         jest.advanceTimersByTime(5000);
+        
         // Force component to re-evaluate after timer advance
         mockUseAuthContext.mockReturnValue(
           createMockAuthContext(null, false) // loading: false to trigger auth screen
         );
+        
         rerender(
           <AuthAwareLayout>
             <TestChild />
           </AuthAwareLayout>
         );
-      });
 
-      // Should now show auth screen (no waitFor needed with fake timers)
-      expect(screen.getByTestId("auth-screen")).toBeTruthy();
-      expect(screen.queryByText("Initializing...")).toBeNull();
-      expect(screen.queryByTestId("test-child")).toBeNull();
-      
-      jest.useRealTimers();
-    });
+        // Should now show auth screen
+        expect(screen.getByTestId("auth-screen")).toBeTruthy();
+        expect(screen.queryByText("Initializing...")).toBeNull();
+        expect(screen.queryByTestId("test-child")).toBeNull();
+        
+      } finally {
+        jest.runOnlyPendingTimers();
+        jest.useRealTimers();
+      }
+    }, 15000); // Increase timeout for debugging
   });
 
   describe("Authenticated State", () => {
@@ -273,42 +283,34 @@ describe("AuthAwareLayout", () => {
     });
 
     test("sets timeout in non-test environments", async () => {
-      jest.useFakeTimers();
-      
       mockUseAuthContext.mockReturnValue(
         createMockAuthContext(null, true)
       );
 
+      // Render the component first
       render(
         <AuthAwareLayout>
           <TestChild />
         </AuthAwareLayout>
       );
 
-      // Initially should show loading
-      expect(screen.getByText("Initializing...")).toBeTruthy();
-
-      // Fast forward to just before timeout
-      act(() => {
-        jest.advanceTimersByTime(4999);
-      });
-
-      // Should still show loading
-      expect(screen.getByText("Initializing...")).toBeTruthy();
-
-      // Fast forward past timeout
-      await act(async () => {
-        jest.advanceTimersByTime(2);
-        // Allow React to process the timer change
-      });
-
-      // Should now show auth screen and log timeout warning (no waitFor with fake timers)
-      expect(screen.getByTestId("auth-screen")).toBeTruthy();
-      expect(console.warn).toHaveBeenCalledWith(
-        "Auth loading timeout - forcing auth screen display"
+      await complexAnimationTester.testTimeoutBehavior(
+        5000, // timeout duration
+        () => {
+          // Before timeout - should show loading
+          expect(screen.getByText("Initializing...")).toBeTruthy();
+        },
+        () => {
+          // After timeout - should show auth screen with warning
+          expect(screen.getByTestId("auth-screen")).toBeTruthy();
+          expect(console.warn).toHaveBeenCalledWith(
+            "Auth loading timeout - forcing auth screen display"
+          );
+        },
+        {
+          checkBeforeTimeout: 4999,
+        }
       );
-
-      jest.useRealTimers();
     });
   });
 

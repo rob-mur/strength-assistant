@@ -3,6 +3,7 @@ import { useAuth } from "@/lib/hooks/useAuth";
 import { render, screen, waitFor } from "@testing-library/react-native";
 import { CommonTestState } from "../../__test_utils__/utils";
 import AddExerciseForm from "@/lib/components/Forms/AddExerciseForm";
+import { testHelper, actWithAnimations } from "@/lib/test-utils/ReactNativeTestHelper";
 
 // Mock dependencies first
 jest.mock('@legendapp/state', () => ({
@@ -93,10 +94,15 @@ describe("<AddExerciseForm/>", () => {
 
   test("When the user enters a name and pressed submit the callback is executed", async () => {
     // Given
-    render(<AddExerciseForm />);
+    const renderResult = render(<AddExerciseForm />);
+    await testHelper.waitForRender(renderResult);
+    
     // When
-    await state.user.type(screen.getByTestId("name"), "Exercise Name");
-    await state.user.press(screen.getByTestId("submit"));
+    await testHelper.performUserFlow([
+      async () => await testHelper.typeText(screen.getByTestId("name"), "Exercise Name"),
+      async () => await testHelper.pressButton(screen.getByTestId("submit")),
+    ]);
+    
     // Then
     expect(mockUseAddExercise.mock.lastCall).not.toBeNull();
   });
@@ -111,22 +117,30 @@ describe("<AddExerciseForm/>", () => {
       await addExercisePromise;
     }));
     
-    render(<AddExerciseForm />);
+    const renderResult = render(<AddExerciseForm />);
+    await testHelper.waitForRender(renderResult);
     const submitButton = screen.getByTestId("submit");
     
-    // When
-    await state.user.type(screen.getByTestId("name"), "Exercise Name");
-    await state.user.press(submitButton);
-    
-    // Then - button should be disabled during loading
-    expect(submitButton.props.accessibilityState?.disabled).toBe(true);
-    
-    // Resolve the promise to complete the operation
-    resolveAddExercise!();
+    // When & Then - Use helper to test loading state
+    await testHelper.testLoadingState(
+      async () => {
+        await testHelper.performUserFlow([
+          async () => await testHelper.typeText(screen.getByTestId("name"), "Exercise Name"),
+          async () => await testHelper.pressButton(submitButton),
+        ]);
+        
+        // Resolve the promise to complete the operation
+        resolveAddExercise!();
+        await addExercisePromise;
+      },
+      () => submitButton.props.accessibilityState?.disabled === true
+    );
     
     // Wait for the loading state to clear
-    await waitFor(() => {
-      expect(submitButton.props.accessibilityState?.disabled).toBe(false);
+    await actWithAnimations(async () => {
+      await waitFor(() => {
+        expect(submitButton.props.accessibilityState?.disabled).toBe(false);
+      });
     });
   });
 });
