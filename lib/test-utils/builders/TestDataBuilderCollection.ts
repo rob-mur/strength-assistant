@@ -39,16 +39,14 @@ export class ExerciseBuilderImpl implements ExerciseBuilder {
 
   withSyncStatus(status: SyncStatus): ExerciseBuilder {
     // Store sync status as metadata for testing
-    (this.exercise as any).syncStatus = status;
+    (this.exercise as Exercise & { syncStatus: SyncStatus }).syncStatus = status;
     return this;
   }
 
   withTimestamps(createdAt: Date, updatedAt?: Date): ExerciseBuilder {
     this.exercise.created_at = createdAt.toISOString();
-    // Note: Exercise model doesn't have updatedAt, but we can store it as metadata
-    if (updatedAt) {
-      (this.exercise as any).updatedAt = updatedAt.toISOString();
-    }
+    // Exercise model has updated_at field for sync tracking
+    this.exercise.updated_at = updatedAt ? updatedAt.toISOString() : createdAt.toISOString();
     return this;
   }
 
@@ -58,13 +56,14 @@ export class ExerciseBuilderImpl implements ExerciseBuilder {
   }
 
   build(): Exercise {
-    // Provide defaults for required fields
+    // Provide defaults for required fields with proper sync field consistency
+    const now = new Date().toISOString();
     const defaultExercise: Exercise = {
       id: this.exercise.id || uuidv4(),
       name: this.exercise.name || 'Default Exercise',
       user_id: this.exercise.user_id || 'default-user',
-      created_at: this.exercise.created_at || new Date().toISOString(),
-      updated_at: this.exercise.updated_at || new Date().toISOString(),
+      created_at: this.exercise.created_at || now,
+      updated_at: this.exercise.updated_at || now,
       deleted: this.exercise.deleted || false
     };
 
