@@ -27,7 +27,7 @@ jest.mock('@react-native-firebase/auth', () => {
   };
 });
 
-// Mock platform detection to avoid requiring native Firebase
+// Mock platform detection and React Native animations
 jest.mock('react-native', () => {
   const RN = jest.requireActual('react-native');
   
@@ -36,6 +36,40 @@ jest.mock('react-native', () => {
     RN.Platform = {};
   }
   RN.Platform.OS = 'web'; // Default to web for most tests
+  
+  // Mock Animated to prevent act() warnings in component tests (T002 requirement)
+  RN.Animated = {
+    ...RN.Animated,
+    timing: jest.fn(() => ({
+      start: jest.fn((callback) => callback && callback({ finished: true })),
+      stop: jest.fn(),
+      reset: jest.fn(),
+    })),
+    spring: jest.fn(() => ({
+      start: jest.fn((callback) => callback && callback({ finished: true })),
+      stop: jest.fn(),
+      reset: jest.fn(),
+    })),
+    decay: jest.fn(() => ({
+      start: jest.fn((callback) => callback && callback({ finished: true })),
+      stop: jest.fn(),
+      reset: jest.fn(),
+    })),
+    Value: jest.fn(() => ({
+      setValue: jest.fn(),
+      setOffset: jest.fn(),
+      flattenOffset: jest.fn(),
+      extractOffset: jest.fn(),
+      addListener: jest.fn(() => 'mock-listener-id'),
+      removeListener: jest.fn(),
+      removeAllListeners: jest.fn(),
+      stopAnimation: jest.fn(),
+      resetAnimation: jest.fn(),
+      interpolate: jest.fn(() => ({ setValue: jest.fn() })),
+    })),
+    View: RN.View,
+    Text: RN.Text,
+  };
   
   return RN;
 });
