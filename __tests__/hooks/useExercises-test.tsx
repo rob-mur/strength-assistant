@@ -88,6 +88,8 @@ describe("useExercises", () => {
 
   test("adding an exercise refreshes the exercise list", async () => {
     const testUid = "test-user-uid";
+    // Use fixed timestamp to prevent timing-related test failures
+    const fixedTimestamp = "2023-01-01T12:00:00.000Z";
     
     // Mock the subscription method
     mockRepo.subscribeToExercises.mockReturnValue(jest.fn());
@@ -111,10 +113,10 @@ describe("useExercises", () => {
     act(() => {
       subscriptionCallback([
         { id: "1", name: "Squats", user_id: testUid, created_at: "2023-01-01T00:00:00Z" ,
-      updated_at: new Date().toISOString(),
+      updated_at: fixedTimestamp,
       deleted: false}, 
         { id: "2", name: "Push-ups", user_id: testUid, created_at: "2023-01-01T00:00:00Z" ,
-      updated_at: new Date().toISOString(),
+      updated_at: fixedTimestamp,
       deleted: false}
       ]);
     });
@@ -123,10 +125,10 @@ describe("useExercises", () => {
     await waitFor(() => {
       expect(result.current.exercises.exercises).toEqual([
         { id: "1", name: "Squats", user_id: testUid, created_at: "2023-01-01T00:00:00Z" ,
-      updated_at: new Date().toISOString(),
+      updated_at: fixedTimestamp,
       deleted: false},
         { id: "2", name: "Push-ups", user_id: testUid, created_at: "2023-01-01T00:00:00Z" ,
-      updated_at: new Date().toISOString(),
+      updated_at: fixedTimestamp,
       deleted: false},
       ]);
     });

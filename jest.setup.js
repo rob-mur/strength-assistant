@@ -140,7 +140,10 @@ jest.mock('@supabase/supabase-js', () => {
         });
       }),
       signInAnonymously: jest.fn(() => {
+        userCounter++;
         const user = createMockUser(undefined, true);
+        // Generate unique IDs for multiple anonymous users
+        user.id = `test-anon-uid-${userCounter}`;
         currentUser = user;
         return Promise.resolve({
           data: { user, session: { user } },
@@ -156,17 +159,36 @@ jest.mock('@supabase/supabase-js', () => {
         error: null 
       })),
       onAuthStateChange: jest.fn(() => ({ 
-        data: { subscription: {} }, 
-        unsubscribe: jest.fn() 
+        data: { subscription: { unsubscribe: jest.fn() } }
       })),
+      // Missing methods needed for auth contract tests
+      linkEmailPassword: jest.fn((email, password) => {
+        if (currentUser && currentUser.isAnonymous !== false) {
+          const upgradedUser = { ...currentUser, email, isAnonymous: false };
+          currentUser = upgradedUser;
+          return Promise.resolve({
+            data: { user: upgradedUser },
+            error: null
+          });
+        }
+        return Promise.resolve({
+          data: { user: null },
+          error: { message: 'No anonymous user to upgrade' }
+        });
+      }),
+      forceSessionExpiry: jest.fn(() => {
+        currentUser = null;
+        return Promise.resolve({ error: null });
+      }),
     },
-    from: jest.fn(() => {
-      // Create chainable query builder
+    from: jest.fn((tableName) => {
+      // Create chainable query builder with operation tracking
+      const operationContext = { tableName, operation: null, insertData: null, isSelect: false, isSingle: false };
       const chainableQuery = {
-        select: jest.fn(() => chainableQuery),
-        insert: jest.fn(() => chainableQuery),
-        update: jest.fn(() => chainableQuery),
-        delete: jest.fn(() => chainableQuery),
+        select: jest.fn(() => { operationContext.isSelect = true; return chainableQuery; }),
+        insert: jest.fn((data) => { operationContext.operation = 'insert'; operationContext.insertData = data; return chainableQuery; }),
+        update: jest.fn((data) => { operationContext.operation = 'update'; operationContext.insertData = data; return chainableQuery; }),
+        delete: jest.fn(() => { operationContext.operation = 'delete'; return chainableQuery; }),
         eq: jest.fn(() => chainableQuery),
         neq: jest.fn(() => chainableQuery),
         gt: jest.fn(() => chainableQuery),
@@ -200,11 +222,50 @@ jest.mock('@supabase/supabase-js', () => {
         geojson: jest.fn(() => chainableQuery),
         explain: jest.fn(() => chainableQuery),
         rollback: jest.fn(() => chainableQuery),
+        single: jest.fn(() => { operationContext.isSingle = true; return chainableQuery; }),
+        maybeSingle: jest.fn(() => { operationContext.isSingle = true; return chainableQuery; }),
         returns: jest.fn(() => chainableQuery),
         // Terminal operations that return promises with data/error structure
         then: jest.fn((resolve) => {
-          // Return realistic data structure based on operation
-          const result = { data: [], error: null };
+          // Return realistic data based on operation context
+          let result;
+          
+          if (operationContext.operation === 'insert' && operationContext.insertData && operationContext.isSelect) {
+            // For insert with select, return the inserted data with an ID
+            const insertedRecord = {
+              ...operationContext.insertData,
+              id: operationContext.insertData.id || 'mock-insert-id-' + Date.now()
+            };
+            result = operationContext.isSingle 
+              ? { data: insertedRecord, error: null }
+              : { data: [insertedRecord], error: null };
+          } else if (operationContext.operation === 'update' && operationContext.insertData && operationContext.isSelect) {
+            // For update with select, return the updated data
+            const updatedRecord = {
+              ...operationContext.insertData,
+              id: operationContext.insertData.id || 'mock-update-id-' + Date.now()
+            };
+            result = operationContext.isSingle 
+              ? { data: updatedRecord, error: null }
+              : { data: [updatedRecord], error: null };
+          } else if (operationContext.isSelect && !operationContext.operation) {
+            // For standalone SELECT queries (like fetching existing exercise), return a mock exercise record
+            const mockExerciseRecord = {
+              id: 'mock-existing-exercise-' + Date.now(),
+              name: 'Mock Exercise',
+              user_id: 'test-user-id',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              deleted: false
+            };
+            result = operationContext.isSingle 
+              ? { data: mockExerciseRecord, error: null }
+              : { data: [mockExerciseRecord], error: null };
+          } else {
+            // Default behavior for other operations
+            result = { data: operationContext.isSingle ? {} : [], error: null };
+          }
+          
           resolve(result);
           return Promise.resolve(result);
         }),
@@ -220,10 +281,163 @@ jest.mock('@supabase/supabase-js', () => {
       });
       return chainableQuery;
     }),
+    // Add real-time channel support for subscriptions
+    channel: jest.fn((channelName) => {
+      const mockChannel = {
+        on: jest.fn(() => mockChannel), // Allow chaining
+        subscribe: jest.fn(() => mockChannel),
+        unsubscribe: jest.fn(() => Promise.resolve({ error: null }))
+      };
+      return mockChannel;
+    }),
+    // Add exercises table mock
+    exercises: {
+      insert: jest.fn(() => Promise.resolve({ data: {}, error: null })),
+      select: jest.fn(() => ({
+        eq: jest.fn(() => Promise.resolve({ data: [], error: null })),
+        neq: jest.fn(() => Promise.resolve({ data: [], error: null })),
+      })),
+      update: jest.fn(() => ({
+        eq: jest.fn(() => Promise.resolve({ data: {}, error: null })),
+        match: jest.fn(() => Promise.resolve({ data: {}, error: null })),
+      })),
+      delete: jest.fn(() => ({
+        eq: jest.fn(() => Promise.resolve({ data: {}, error: null })),
+        match: jest.fn(() => Promise.resolve({ data: {}, error: null })),
+      })),
+    },
   };
 
   return {
     createClient: jest.fn(() => mockSupabaseClient),
+  };
+});
+
+// Mock the SupabaseClient wrapper class
+jest.mock('./lib/data/supabase/SupabaseClient', () => {
+  const mockSupabaseClient = {
+    auth: {
+      getSession: jest.fn(() => Promise.resolve({
+        data: { session: null },
+        error: null,
+      })),
+      signUp: jest.fn(() => Promise.resolve({ data: { user: null }, error: null })),
+      signInWithPassword: jest.fn(() => Promise.resolve({ data: { user: null }, error: null })),
+      signInAnonymously: jest.fn(() => Promise.resolve({ data: { user: null }, error: null })),
+      signOut: jest.fn(() => Promise.resolve({ error: null })),
+      getUser: jest.fn(() => Promise.resolve({ data: { user: null }, error: null })),
+      onAuthStateChange: jest.fn(() => ({ 
+        data: { subscription: { unsubscribe: jest.fn() } }
+      })),
+    },
+    from: jest.fn((tableName) => {
+      // Create chainable query builder with operation tracking (duplicate from primary mock)
+      const operationContext = { tableName, operation: null, insertData: null, isSelect: false, isSingle: false };
+      const chainableQuery = {
+        select: jest.fn(() => { operationContext.isSelect = true; return chainableQuery; }),
+        insert: jest.fn((data) => { operationContext.operation = 'insert'; operationContext.insertData = data; return chainableQuery; }),
+        update: jest.fn((data) => { operationContext.operation = 'update'; operationContext.insertData = data; return chainableQuery; }),
+        delete: jest.fn(() => { operationContext.operation = 'delete'; return chainableQuery; }),
+        eq: jest.fn(() => chainableQuery),
+        neq: jest.fn(() => chainableQuery),
+        gt: jest.fn(() => chainableQuery),
+        gte: jest.fn(() => chainableQuery),
+        lt: jest.fn(() => chainableQuery),
+        lte: jest.fn(() => chainableQuery),
+        like: jest.fn(() => chainableQuery),
+        ilike: jest.fn(() => chainableQuery),
+        is: jest.fn(() => chainableQuery),
+        in: jest.fn(() => chainableQuery),
+        contains: jest.fn(() => chainableQuery),
+        containedBy: jest.fn(() => chainableQuery),
+        rangeGt: jest.fn(() => chainableQuery),
+        rangeGte: jest.fn(() => chainableQuery),
+        rangeLt: jest.fn(() => chainableQuery),
+        rangeLte: jest.fn(() => chainableQuery),
+        rangeAdjacent: jest.fn(() => chainableQuery),
+        overlaps: jest.fn(() => chainableQuery),
+        textSearch: jest.fn(() => chainableQuery),
+        match: jest.fn(() => chainableQuery),
+        order: jest.fn(() => chainableQuery),
+        limit: jest.fn(() => chainableQuery),
+        range: jest.fn(() => chainableQuery),
+        abortSignal: jest.fn(() => chainableQuery),
+        single: jest.fn(() => chainableQuery),
+        maybeSingle: jest.fn(() => chainableQuery),
+        csv: jest.fn(() => chainableQuery),
+        geojson: jest.fn(() => chainableQuery),
+        explain: jest.fn(() => chainableQuery),
+        rollback: jest.fn(() => chainableQuery),
+        returns: jest.fn(() => chainableQuery),
+        // Terminal operations that return promises with data/error structure
+        single: jest.fn(() => { operationContext.isSingle = true; return chainableQuery; }),
+        maybeSingle: jest.fn(() => { operationContext.isSingle = true; return chainableQuery; }),
+        then: jest.fn((resolve) => {
+          // Return realistic data based on operation context (duplicate from primary mock)
+          let result;
+          
+          if (operationContext.operation === 'insert' && operationContext.insertData && operationContext.isSelect) {
+            // For insert with select, return the inserted data with an ID
+            const insertedRecord = {
+              ...operationContext.insertData,
+              id: operationContext.insertData.id || 'mock-insert-id-' + Date.now()
+            };
+            result = operationContext.isSingle 
+              ? { data: insertedRecord, error: null }
+              : { data: [insertedRecord], error: null };
+          } else if (operationContext.operation === 'update' && operationContext.insertData && operationContext.isSelect) {
+            // For update with select, return the updated data
+            const updatedRecord = {
+              ...operationContext.insertData,
+              id: operationContext.insertData.id || 'mock-update-id-' + Date.now()
+            };
+            result = operationContext.isSingle 
+              ? { data: updatedRecord, error: null }
+              : { data: [updatedRecord], error: null };
+          } else if (operationContext.isSelect && !operationContext.operation) {
+            // For standalone SELECT queries (like fetching existing exercise), return a mock exercise record
+            const mockExerciseRecord = {
+              id: 'mock-existing-exercise-' + Date.now(),
+              name: 'Mock Exercise',
+              user_id: 'test-user-id',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              deleted: false
+            };
+            result = operationContext.isSingle 
+              ? { data: mockExerciseRecord, error: null }
+              : { data: [mockExerciseRecord], error: null };
+          } else {
+            // Default behavior for other operations
+            result = { data: operationContext.isSingle ? {} : [], error: null };
+          }
+          
+          resolve(result);
+          return Promise.resolve(result);
+        }),
+      };
+      return chainableQuery;
+    }),
+    // Add real-time channel support for subscriptions (duplicate from primary mock)
+    channel: jest.fn((channelName) => {
+      const mockChannel = {
+        on: jest.fn(() => mockChannel), // Allow chaining
+        subscribe: jest.fn(() => mockChannel),
+        unsubscribe: jest.fn(() => Promise.resolve({ error: null }))
+      };
+      return mockChannel;
+    }),
+  };
+
+  return {
+    SupabaseClient: jest.fn().mockImplementation(() => ({
+      getSupabaseClient: jest.fn(() => mockSupabaseClient),
+      getCurrentUser: jest.fn(() => Promise.resolve(null)),
+    })),
+    supabaseClient: {
+      getSupabaseClient: jest.fn(() => mockSupabaseClient),
+      getCurrentUser: jest.fn(() => Promise.resolve(null)),
+    }
   };
 });
 

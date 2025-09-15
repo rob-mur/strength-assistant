@@ -45,8 +45,8 @@ describe('Anonymous Local-First Storage Integration', () => {
       anonymous: true
     });
 
-    await testDevice.initialize();
-    await testApp.initialize();
+    await testDevice.init();
+    await testApp.init();
   });
 
   afterEach(async () => {
@@ -61,12 +61,11 @@ describe('Anonymous Local-First Storage Integration', () => {
       
       expect(userState).toMatchObject({
         isAnonymous: true,
-        isAuthenticated: false,
         id: expect.any(String),
         email: undefined
       });
 
-      expect(userState.id).toMatch(/^anonymous-/);
+      expect(userState.id).toMatch(/^[a-f0-9-]{36}$/); // UUID format
     });
 
     it('should persist anonymous user state locally', async () => {
@@ -79,7 +78,6 @@ describe('Anonymous Local-First Storage Integration', () => {
       
       expect(persistedUser.id).toBe(initialUser.id);
       expect(persistedUser.isAnonymous).toBe(true);
-      expect(persistedUser.isAuthenticated).toBe(false);
     });
 
     it('should maintain unique anonymous identity across sessions', async () => {
@@ -97,8 +95,8 @@ describe('Anonymous Local-First Storage Integration', () => {
         device: secondDevice
       });
 
-      await secondDevice.initialize();
-      await secondApp.initialize();
+      await secondDevice.init();
+      await secondApp.init();
       
       const user2 = await secondApp.getCurrentUser();
       

@@ -287,7 +287,7 @@ export class ScenarioBuilderImpl implements ScenarioBuilder {
       .withTimestamps(new Date(Date.now() - 48 * 60 * 60 * 1000))
       .build();
 
-    const devices: TestDeviceConfig[] = Array.from({ length: deviceCount }, (_, i) => ({
+    const devices: TestDeviceConfig[] = Array.from({ length: deviceCount }, () => ({
       defaultNetworkStatus: true,
       defaultAuthState: {
         authenticated: true,
@@ -350,13 +350,7 @@ export class ScenarioBuilderImpl implements ScenarioBuilder {
       .withEmail('offline.user@example.com')
       .build();
 
-    const offlineExercises = Array.from({ length: offlineActionsCount }, (_, i) => 
-      new ExerciseBuilderImpl()
-        .withName(`Offline Exercise ${i + 1}`)
-        .withUserId(user.id)
-        .withSyncStatus('pending')
-        .build()
-    );
+    // Note: Offline exercises are generated on-demand during test execution for better memory management
 
     return {
       name: 'Offline to Online Scenario',

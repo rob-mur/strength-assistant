@@ -3,6 +3,7 @@ import { IExerciseRepo } from "./IExerciseRepo";
 import { Observable, observe, computed } from "@legendapp/state";
 import { exercises$, user$ } from "../data/store";
 import { supabaseClient } from "../data/supabase/SupabaseClient";
+import { syncExerciseToSupabase, deleteExerciseFromSupabase, syncHelpers } from "../data/sync/syncConfig";
 import { v4 as uuidv4 } from 'uuid';
 import { RepositoryUtils } from "./utils/RepositoryUtils";
 // Note: Using basic legend-state without sync for now
@@ -85,28 +86,18 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
 		const authenticatedUser = await this.validateUserAuthentication(userId);
 		const newExercise = this.createNewExercise(sanitizedName, authenticatedUser.id);
 
+		// Store original state for rollback
+		const originalExercises = exercises$.get();
+
 		// Optimistic update
 		exercises$.set(current => [...current, newExercise]);
 
 		try {
-			// Save to Supabase
-			const { error } = await (supabaseClient.exercises as any).insert({
-				id: newExercise.id,
-				name: newExercise.name,
-				user_id: newExercise.user_id,
-				created_at: newExercise.created_at,
-				updated_at: newExercise.updated_at,
-				deleted: false
-			});
-
-			if (error) {
-				// Revert optimistic update on error
-				exercises$.set(current => current.filter(ex => ex.id !== newExercise.id));
-				throw error;
-			}
+			// Use sync function instead of direct Supabase client
+			await syncExerciseToSupabase(newExercise);
 		} catch (error) {
 			// Revert optimistic update on error
-			exercises$.set(current => current.filter(ex => ex.id !== newExercise.id));
+			exercises$.set(originalExercises);
 			throw error;
 		}
 	}
@@ -182,36 +173,18 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
 		RepositoryUtils.validateExerciseId(exerciseId);
 		const authenticatedUser = await this.validateUserAuthentication(userId);
 
-		// Find the exercise in the array and mark as deleted
-		const exercises = exercises$.get();
-		const exerciseIndex = exercises.findIndex(ex => ex.id === exerciseId);
-		
-		if (exerciseIndex === -1) {
-			throw new Error('Exercise not found');
-		}
-
-		const originalExercise = exercises[exerciseIndex];
+		// Store original state for rollback
+		const originalExercises = exercises$.get();
 
 		// Optimistic delete - remove from local list
-		exercises$.set(current => current.filter(ex => ex.id !== exerciseId));
+		exercises$.set(current => current.filter(ex => ex.id !== exerciseId && ex.user_id === authenticatedUser.id));
 
 		try {
-			// Soft delete in Supabase
-			const { error } = await (supabaseClient.exercises as any)
-				.update({ 
-					deleted: true, 
-					updated_at: new Date().toISOString() 
-				})
-				.eq('id', exerciseId);
-
-			if (error) {
-				// Revert optimistic update on error
-				exercises$.set(current => [...current, originalExercise]);
-				throw error;
-			}
+			// Use sync function instead of direct Supabase client
+			await deleteExerciseFromSupabase(exerciseId, authenticatedUser.id);
 		} catch (error) {
 			// Revert optimistic update on error
-			exercises$.set(current => [...current, originalExercise]);
+			exercises$.set(originalExercises);
 			throw error;
 		}
 	}
@@ -248,49 +221,41 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
 	 * Check if we're currently online and syncing
 	 */
 	isSyncing(): boolean {
-		if (!this.syncInstance) return false;
-		return this.syncInstance.isLoading?.get() || false;
+		return syncHelpers.isSyncing();
 	}
 
 	/**
 	 * Check online status
 	 */
 	isOnline(): boolean {
-		if (!this.syncInstance) return false;
-		return this.syncInstance.isConnected?.get() || false;
+		return syncHelpers.isOnline();
 	}
 
 	/**
 	 * Get count of pending changes waiting to sync
 	 */
 	getPendingChangesCount(): number {
-		if (!this.syncInstance) return 0;
-		return this.syncInstance.getPendingCount?.() || 0;
+		return syncHelpers.getPendingChangesCount();
 	}
 
 	/**
 	 * Force manual sync (useful for pull-to-refresh)
 	 */
 	async forceSync(): Promise<void> {
-		if (!this.syncInstance) return;
-		return this.syncInstance.sync?.();
+		return syncHelpers.forceSync();
 	}
 
 	/**
 	 * Check if there are sync errors
 	 */
 	hasErrors(): boolean {
-		if (!this.syncInstance) return false;
-		const error = this.syncInstance.error?.get();
-		return error != null;
+		return syncHelpers.hasErrors();
 	}
 
 	/**
 	 * Get current sync error message
 	 */
 	getErrorMessage(): string | null {
-		if (!this.syncInstance) return null;
-		const error = this.syncInstance.error?.get();
-		return error ? error.message || String(error) : null;
+		return syncHelpers.getErrorMessage() || null;
 	}
 }

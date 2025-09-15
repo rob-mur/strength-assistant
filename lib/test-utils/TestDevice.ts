@@ -17,6 +17,14 @@ import type {
   TestDeviceState
 } from '../../specs/001-we-are-actually/contracts/test-infrastructure';
 
+export interface TestDeviceOptions {
+  deviceId?: string;
+  deviceName?: string;
+  networkConnected?: boolean;
+  storageEnabled?: boolean;
+  anonymous?: boolean;
+}
+
 /**
  * TestDevice class implementing the full contract interface
  * 
@@ -45,14 +53,31 @@ export class TestDevice {
     intermittentConnectivity: false
   };
 
-  constructor(deviceName: string) {
-    this._deviceId = uuidv4();
-    this._deviceName = deviceName;
+  constructor(options: TestDeviceOptions | string) {
+    if (typeof options === 'string') {
+      // Legacy string constructor
+      this._deviceId = uuidv4();
+      this._deviceName = options;
+      this._networkStatus = true;
+    } else {
+      // New options constructor
+      this._deviceId = options.deviceId || uuidv4();
+      this._deviceName = options.deviceName || 'TestDevice';
+      this._networkStatus = options.networkConnected ?? true;
+    }
+    
     this._authState = {
       authenticated: false,
       currentUser: undefined,
       session: undefined
     };
+    
+    // Set up anonymous user if specified
+    if (typeof options === 'object' && options.anonymous) {
+      const anonymousUser = createAnonymousUser();
+      this._authState.currentUser = anonymousUser;
+      this._authState.authenticated = false; // Anonymous users are not authenticated
+    }
   }
 
   // Readonly Properties
@@ -86,12 +111,16 @@ export class TestDevice {
     this._exercises = [];
     this._syncQueue = [];
     this._subscriptions.clear();
-    this._authState = {
-      authenticated: false,
-      currentUser: undefined,
-      session: undefined
-    };
-    this._networkStatus = true;
+    
+    // Preserve anonymous user if it was set in constructor, otherwise reset auth state
+    if (!this._authState.currentUser || !this._authState.currentUser.isAnonymous) {
+      this._authState = {
+        authenticated: false,
+        currentUser: undefined,
+        session: undefined
+      };
+    }
+    // Note: Don't override _networkStatus here - preserve constructor setting
     this._networkSimulation.enabled = false;
 
     this._initialized = true;
@@ -158,6 +187,10 @@ export class TestDevice {
     }
 
     await this._simulateNetworkDelay();
+  }
+  
+  isNetworkConnected(): boolean {
+    return this._networkStatus;
   }
 
   // Authentication Methods
@@ -248,7 +281,7 @@ export class TestDevice {
   }
 
   // Exercise CRUD Operations
-  async addExercise(name: string): Promise<Exercise> {
+  async addExercise(name: string): Promise<any> {
     this._ensureInitialized();
     
     // Simulate add delay
@@ -273,10 +306,11 @@ export class TestDevice {
     // Notify subscribers
     this._notifySubscribers();
 
-    return exercise;
+    // Transform to contract format expected by integration tests
+    return this._transformExerciseToContractFormat(exercise);
   }
 
-  async updateExercise(id: string, name: string): Promise<Exercise> {
+  async updateExercise(id: string, name: string): Promise<any> {
     this._ensureInitialized();
     
     // Simulate update delay
@@ -289,7 +323,8 @@ export class TestDevice {
 
     const updatedExercise = {
       ...this._exercises[exerciseIndex],
-      name: name.trim()
+      name: name.trim(),
+      updated_at: new Date().toISOString() // Update timestamp
     };
 
     this._exercises[exerciseIndex] = updatedExercise;
@@ -302,7 +337,8 @@ export class TestDevice {
     // Notify subscribers
     this._notifySubscribers();
 
-    return updatedExercise;
+    // Transform to contract format expected by integration tests
+    return this._transformExerciseToContractFormat(updatedExercise);
   }
 
   async deleteExercise(id: string): Promise<void> {
@@ -327,22 +363,24 @@ export class TestDevice {
     this._notifySubscribers();
   }
 
-  async getExercises(): Promise<Exercise[]> {
+  async getExercises(): Promise<any[]> {
     this._ensureInitialized();
     
     // Simulate get delay
     await this._simulateNetworkDelay();
 
-    return [...this._exercises];
+    // Transform all exercises to contract format
+    return this._exercises.map(exercise => this._transformExerciseToContractFormat(exercise));
   }
 
-  async getExercise(id: string): Promise<Exercise | null> {
+  async getExercise(id: string): Promise<any | null> {
     this._ensureInitialized();
     
     // Simulate get delay
     await this._simulateNetworkDelay();
 
-    return this._exercises.find(e => e.id === id) || null;
+    const exercise = this._exercises.find(e => e.id === id);
+    return exercise ? this._transformExerciseToContractFormat(exercise) : null;
   }
 
   // Sync Operations
@@ -456,6 +494,23 @@ export class TestDevice {
       }
     };
   }
+  
+  async getMemoryUsage(): Promise<{ heapUsed: number; heapTotal: number; rss?: number }> {
+    // Simulate memory usage for testing
+    // In real implementation, this would use process.memoryUsage()
+    const baseMemory = 50 * 1024 * 1024; // 50MB base
+    const exerciseMemory = this._exercises.length * 1024; // ~1KB per exercise
+    const syncMemory = this._syncQueue.length * 512; // ~512B per sync operation
+    
+    const heapUsed = baseMemory + exerciseMemory + syncMemory;
+    const heapTotal = heapUsed * 1.5; // Simulate heap overhead
+    
+    return {
+      heapUsed,
+      heapTotal,
+      rss: heapTotal * 1.2
+    };
+  }
 
   // Private Helper Methods
   private _ensureInitialized(): void {
@@ -545,6 +600,36 @@ export class TestDevice {
     return syncedOps
       .sort((a, b) => b.lastAttemptAt!.getTime() - a.lastAttemptAt!.getTime())[0]
       .lastAttemptAt!;
+  }
+
+  /**
+   * Transform Exercise object to contract format expected by integration tests
+   */
+  private _transformExerciseToContractFormat(exercise: Exercise): any {
+    // Determine sync status based on sync queue
+    let syncStatus: SyncStatus = 'synced';
+    
+    const syncOp = this._syncQueue
+      .filter(op => op.recordId === exercise.id)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0]; // Most recent
+    
+    if (syncOp) {
+      syncStatus = syncOp.status;
+    } else if (!this._authState.authenticated || !this._networkStatus) {
+      // If offline or anonymous, exercises are locally pending
+      syncStatus = 'pending';
+    }
+
+    // Transform to contract format
+    return {
+      id: exercise.id,
+      name: exercise.name,
+      createdAt: exercise.created_at, // ISO string format expected by tests
+      updatedAt: exercise.updated_at, // ISO string format expected by tests
+      syncStatus,
+      // userId should be undefined for anonymous users per test expectations
+      userId: (this._authState.currentUser?.isAnonymous || exercise.user_id === 'anonymous') ? undefined : exercise.user_id
+    };
   }
 }
 

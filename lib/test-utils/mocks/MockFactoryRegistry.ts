@@ -10,19 +10,8 @@
 
 import { MockFactoryCollectionImpl } from './MockFactoryCollection';
 import type { 
-  MockFactoryCollection,
-  ExerciseMockFactory,
-  UserMockFactory,
-  SyncStateMockFactory,
-  AuthMockFactory,
-  ServiceMockFactory
+  MockFactoryCollection
 } from '../../../specs/001-we-are-actually/contracts/test-infrastructure';
-
-import type {
-  FirebaseMockConfig,
-  SupabaseMockConfig,
-  ReactNativeMockConfig
-} from '../../../specs/001-we-are-actually/contracts/jest-validation';
 
 import { Exercise } from '../../models/Exercise';
 import { UserAccount } from '../../models/UserAccount';

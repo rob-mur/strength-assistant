@@ -286,7 +286,7 @@ export class SupabaseStorage implements StorageBackend {
       .eq('record_id', recordId)
       .single();
 
-    if (fetchError || !existing) {
+    if (fetchError || !existing || (Array.isArray(existing) && existing.length === 0)) {
       // Create new sync error record if it doesn't exist
       const syncState = createSyncState({
         recordId,

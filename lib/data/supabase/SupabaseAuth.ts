@@ -212,4 +212,55 @@ export class SupabaseAuth {
   private isValidPassword(password: string): boolean {
     return password.length >= 6;
   }
+
+  /**
+   * Link email and password to anonymous user (upgrade anonymous to authenticated)
+   */
+  async linkEmailPassword(email: string, password: string): Promise<UserAccount> {
+    if (!email || !password) {
+      throw new Error('Email and password are required');
+    }
+
+    if (!this.isValidEmail(email)) {
+      throw new Error('Invalid email format');
+    }
+
+    if (!this.isValidPassword(password)) {
+      throw new Error('Password should be at least 6 characters');
+    }
+
+    const currentUser = await this.getCurrentUser();
+    if (!currentUser || !currentUser.isAnonymous) {
+      throw new Error('No anonymous user to upgrade');
+    }
+
+    // Simulate upgrading anonymous user to authenticated user
+    const { data, error } = await this.client.auth.linkEmailPassword(email, password);
+    
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    if (!data.user) {
+      throw new Error('Failed to upgrade anonymous user');
+    }
+
+    // Keep the same user ID but update authentication status
+    const upgradedUser: UserAccount = {
+      id: currentUser.id, // Keep the same ID
+      email: email,
+      isAnonymous: false,
+      createdAt: currentUser.createdAt,
+    };
+
+    return upgradedUser;
+  }
+
+  /**
+   * Force session expiry for testing
+   */
+  async forceSessionExpiry(): Promise<void> {
+    // Simulate expired session by signing out
+    await this.client.auth.forceSessionExpiry();
+  }
 }

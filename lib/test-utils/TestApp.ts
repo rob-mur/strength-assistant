@@ -11,6 +11,11 @@ import { TestDevice } from './TestDevice';
 import { Exercise } from '../models/Exercise';
 import { UserAccount } from '../models/UserAccount';
 
+export interface TestAppOptions {
+  testId?: string;
+  device?: TestDevice;
+}
+
 /**
  * TestApp class for application-level testing
  * 
@@ -24,9 +29,18 @@ export class TestApp {
   private modalStack: string[] = [];
   private theme: 'light' | 'dark' = 'light';
   private initialized: boolean = false;
+  private testId: string;
 
-  constructor(deviceName: string = 'TestApp-Device') {
-    this.device = new TestDevice(deviceName);
+  constructor(options: TestAppOptions | string = {}) {
+    if (typeof options === 'string') {
+      // Legacy string constructor
+      this.device = new TestDevice(options);
+      this.testId = options;
+    } else {
+      // New options constructor
+      this.testId = options.testId || 'TestApp';
+      this.device = options.device || new TestDevice(this.testId);
+    }
   }
 
   // App Lifecycle
@@ -35,7 +49,10 @@ export class TestApp {
       throw new Error('TestApp is already initialized');
     }
 
-    await this.device.init();
+    // Only init the device if it's not already initialized
+    if (!this.device.initialized) {
+      await this.device.init();
+    }
     
     // Reset app state
     this.currentScreen = 'home';
@@ -100,7 +117,11 @@ export class TestApp {
 
   async getCurrentUser(): Promise<UserAccount | null> {
     this._ensureInitialized();
-    return this.device.authState.currentUser || null;
+    const user = this.device.authState.currentUser || null;
+    
+    // Return user as-is since UserAccount interface doesn't include isAuthenticated
+    // The test should check isAnonymous property instead
+    return user;
   }
 
   async isAuthenticated(): Promise<boolean> {
@@ -377,6 +398,94 @@ export class TestApp {
         theme: this.theme
       },
       device: this.device.getDeviceState()
+    };
+  }
+
+  // App Restart Simulation
+  async restart(): Promise<void> {
+    this._ensureInitialized();
+    
+    // Preserve user state and data across restart
+    const currentUser = this.device.authState.currentUser;
+    const exercises = await this.device.getExercises();
+    
+    // Simulate app shutdown
+    await this.cleanup();
+    
+    // Pre-set user state before init to ensure it's preserved
+    if (currentUser) {
+      (this.device as any)._authState = {
+        authenticated: !currentUser.isAnonymous,
+        currentUser: currentUser,
+        session: currentUser.isAnonymous ? undefined : { userId: currentUser.id }
+      };
+    }
+    
+    // Simulate app startup
+    await this.init();
+    
+    // Restore exercises - need to access the internal state since getExercises() returns transformed format
+    // Convert back from contract format to internal Exercise format
+    for (const exercise of exercises) {
+      const internalExercise = {
+        id: exercise.id,
+        name: exercise.name,
+        user_id: exercise.userId || currentUser?.id || 'anonymous',
+        created_at: exercise.createdAt,
+        updated_at: exercise.updatedAt,
+        deleted: false
+      };
+      
+      // Add to internal exercises array directly
+      (this.device as any)._exercises.push(internalExercise);
+      
+      // Restore sync queue entries if they were pending
+      if (exercise.syncStatus === 'pending') {
+        (this.device as any)._addToSyncQueue('create', exercise.id, 'exercise', internalExercise);
+      }
+    }
+  }
+  
+  // Sync state management
+  async getSyncState(): Promise<any> {
+    this._ensureInitialized();
+    
+    const exercises = await this.device.getExercises();
+    // Count exercises with pending sync status
+    const pendingChanges = exercises.filter(ex => ex.syncStatus === 'pending').length;
+    
+    return {
+      isOnline: this.device.isNetworkConnected(),
+      isSyncing: false,
+      lastSyncAt: undefined,
+      pendingChanges,
+      errors: []
+    };
+  }
+  
+  // Storage configuration
+  async getStorageConfig(): Promise<any> {
+    this._ensureInitialized();
+    
+    return {
+      local: {
+        name: 'strengthassistant_test',
+        asyncStorage: {
+          preload: true
+        }
+      },
+      sync: {
+        enabled: false
+      }
+    };
+  }
+  
+  // Feature flags
+  async getFeatureFlags(): Promise<any> {
+    this._ensureInitialized();
+    
+    return {
+      useSupabaseData: false
     };
   }
 

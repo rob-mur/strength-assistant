@@ -8,7 +8,7 @@
  * - React Native animation testing experts
  */
 
-import { waitFor, RenderAPI } from '@testing-library/react-native';
+import { RenderAPI } from '@testing-library/react-native';
 
 export interface AnimatedTestOptions {
   /**
