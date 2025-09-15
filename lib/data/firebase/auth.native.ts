@@ -31,8 +31,8 @@ class AuthNativeService extends FirebaseService {
 				operation: "init",
 				duration: Date.now() - startTime,
 				error: {
-					message: error.message,
-					stack: error.stack
+					message: error instanceof Error ? error.message : String(error),
+					stack: error instanceof Error ? error.stack : undefined
 				}
 			});
 			throw error;
@@ -63,7 +63,7 @@ class AuthNativeService extends FirebaseService {
 					operation: "emulator_setup",
 					emulator: { host, port },
 					error: {
-						message: error.message
+						message: error instanceof Error ? error.message : String(error)
 					}
 				});
 				this.logWarn("Continuing with production Auth");

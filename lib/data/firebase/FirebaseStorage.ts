@@ -116,7 +116,7 @@ export class FirebaseStorage implements StorageBackend {
     const existing = exerciseFromDb({ ...existingData, id: docSnap.id });
     const updated = updateExerciseRecord(existing, updates as ExerciseRecordUpdate);
 
-    await updateDoc(docRef, exerciseToDb(updated));
+    await updateDoc(docRef, exerciseToDb(updated) as any);
 
     return updated;
   }
@@ -249,7 +249,7 @@ export class FirebaseStorage implements StorageBackend {
     const syncState = syncFromDb({ ...existingData, record_id: docSnap.id });
     const failedState = recordSyncFailure(syncState, errorMessage);
 
-    await updateDoc(docRef, syncToDb(failedState));
+    await updateDoc(docRef, syncToDb(failedState) as any);
   }
 
   // Real-time subscriptions

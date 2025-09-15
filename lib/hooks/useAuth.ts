@@ -111,8 +111,8 @@ export function useAuth() {
 		};
 		
 		return Platform.OS === "web" 
-			? authFunctions.onAuthStateChangedWeb(userStateHandler)
-			: authFunctions.onAuthStateChangedNative(userStateHandler);
+			? authFunctions.onAuthStateChangedWeb?.(userStateHandler)
+			: authFunctions.onAuthStateChangedNative?.(userStateHandler);
 	};
 
 	// Main auth initialization function
@@ -182,13 +182,16 @@ export function useAuth() {
 				? authFunctions.signInAnonymouslyWeb
 				: authFunctions.signInAnonymouslyNative;
 			
-			await signInFunction();
+			await signInFunction?.();
 		} catch (error: unknown) {
 			console.error("Anonymous sign in failed:", error);
 			setAuthState(prev => ({
 				...prev,
 				loading: false,
-				error: { code: error.code || "unknown", message: error.message || "An error occurred" },
+				error: { 
+				code: (error as any)?.code || "unknown", 
+				message: (error as any)?.message || "An error occurred" 
+			},
 			}));
 		}
 	};
@@ -202,12 +205,15 @@ export function useAuth() {
 				? authFunctions.createAccountWeb
 				: authFunctions.createAccountNative;
 			
-			await createFunction(email, password);
+			await createFunction?.(email, password);
 		} catch (error: unknown) {
 			setAuthState(prev => ({
 				...prev,
 				loading: false,
-				error: { code: error.code || "unknown", message: error.message || "An error occurred" },
+				error: { 
+				code: (error as any)?.code || "unknown", 
+				message: (error as any)?.message || "An error occurred" 
+			},
 			}));
 		}
 	};
@@ -221,12 +227,15 @@ export function useAuth() {
 				? authFunctions.signInWeb
 				: authFunctions.signInNative;
 			
-			await signInFunction(email, password);
+			await signInFunction?.(email, password);
 		} catch (error: unknown) {
 			setAuthState(prev => ({
 				...prev,
 				loading: false,
-				error: { code: error.code || "unknown", message: error.message || "An error occurred" },
+				error: { 
+				code: (error as any)?.code || "unknown", 
+				message: (error as any)?.message || "An error occurred" 
+			},
 			}));
 		}
 	};
@@ -240,12 +249,15 @@ export function useAuth() {
 				? authFunctions.signOutWeb
 				: authFunctions.signOutNative;
 			
-			await signOutFunction();
+			await signOutFunction?.();
 		} catch (error: unknown) {
 			setAuthState(prev => ({
 				...prev,
 				loading: false,
-				error: { code: error.code || "unknown", message: error.message || "An error occurred" },
+				error: { 
+				code: (error as any)?.code || "unknown", 
+				message: (error as any)?.message || "An error occurred" 
+			},
 			}));
 		}
 	};

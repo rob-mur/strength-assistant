@@ -70,7 +70,7 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 				this.initialized = true;
 				RepositoryLogger.logSuccess("FirebaseExerciseRepo", "initialize");
 			} catch (error: unknown) {
-				RepositoryLogger.logError("FirebaseExerciseRepo", "initialize Firebase services", error);
+				RepositoryLogger.logError("FirebaseExerciseRepo", "initialize Firebase services", error instanceof Error ? error : new Error(String(error)));
 				this.initialized = false; // Ensure we retry on next call
 				throw error;
 			}
@@ -118,7 +118,7 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 
 			RepositoryLogger.logSuccess("FirebaseExerciseRepo", "addExercise");
 		} catch (error: unknown) {
-			RepositoryLogger.logError("FirebaseExerciseRepo", "add exercise", error);
+			RepositoryLogger.logError("FirebaseExerciseRepo", "add exercise", error instanceof Error ? error : new Error(String(error)));
 			throw error;
 		}
 	}
@@ -145,7 +145,7 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 
 			RepositoryLogger.logSuccess("FirebaseExerciseRepo", "getExercises");
 		} catch (error: unknown) {
-			RepositoryLogger.logError("FirebaseExerciseRepo", "get exercises", error);
+			RepositoryLogger.logError("FirebaseExerciseRepo", "get exercises", error instanceof Error ? error : new Error(String(error)));
 		}
 
 		return exercises$;
@@ -186,7 +186,7 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 
 			return unsubscribe;
 		} catch (error: unknown) {
-			RepositoryLogger.logError("FirebaseExerciseRepo", "subscribe to exercises", error);
+			RepositoryLogger.logError("FirebaseExerciseRepo", "subscribe to exercises", error instanceof Error ? error : new Error(String(error)));
 			// Return no-op function on error
 			return () => { };
 		}
@@ -227,7 +227,7 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 
 			RepositoryLogger.logSuccess("FirebaseExerciseRepo", "deleteExercise");
 		} catch (error: unknown) {
-			RepositoryLogger.logError("FirebaseExerciseRepo", "delete exercise", error);
+			RepositoryLogger.logError("FirebaseExerciseRepo", "delete exercise", error instanceof Error ? error : new Error(String(error)));
 			throw error;
 		}
 	}
@@ -242,7 +242,7 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 			const exercises = exercises$.get();
 			return exercises.find(exercise => exercise.id === exerciseId);
 		} catch (error: unknown) {
-			RepositoryLogger.logError("FirebaseExerciseRepo", "get exercise by ID", error);
+			RepositoryLogger.logError("FirebaseExerciseRepo", "get exercise by ID", error instanceof Error ? error : new Error(String(error)));
 			return undefined;
 		}
 	}

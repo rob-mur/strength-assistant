@@ -91,7 +91,7 @@ export class TestApp {
 
   async simulateNetworkIssues(enabled: boolean, config?: Record<string, unknown>): Promise<void> {
     this._ensureInitialized();
-    await this.device.simulateNetworkIssues(enabled, config);
+    await this.device.simulateNetworkIssues(enabled, config as any);
   }
 
   // Authentication Methods (delegated to device)
@@ -215,7 +215,7 @@ export class TestApp {
     // Simulate UI interaction delay
     await this._simulateUIInteraction();
     
-    return await this.device.addExercise(name);
+    return await this.device.addExercise(name) as any;
   }
 
   async updateExercise(id: string, name: string): Promise<Exercise> {
@@ -224,7 +224,7 @@ export class TestApp {
     // Simulate UI interaction delay
     await this._simulateUIInteraction();
     
-    return await this.device.updateExercise(id, name);
+    return await this.device.updateExercise(id, name) as any;
   }
 
   async deleteExercise(id: string): Promise<void> {
@@ -238,7 +238,7 @@ export class TestApp {
 
   async getExercises(): Promise<Exercise[]> {
     this._ensureInitialized();
-    return await this.device.getExercises();
+    return await this.device.getExercises() as any;
   }
 
   async getExercise(id: string): Promise<Exercise | null> {
@@ -285,15 +285,14 @@ export class TestApp {
     this._ensureInitialized();
     
     if (exerciseId) {
-      return await this.device.getSyncStatus(exerciseId);
+      return await this.device.getSyncStatus(exerciseId) as any;
     }
     
-    // Return overall sync status
+    // Return overall sync status in expected format
     const pendingOps = await this.device.getPendingSyncOperations();
     return {
-      hasPendingOperations: pendingOps.length > 0,
-      pendingCount: pendingOps.length,
-      inProgress: pendingOps.some(op => op.status === 'pending' || op.status === 'retrying')
+      hasErrors: pendingOps.some(op => op.status === 'error'),
+      errorMessage: (pendingOps.find(op => op.status === 'error') as any)?.error?.message
     };
   }
 
@@ -384,7 +383,7 @@ export class TestApp {
   // Device State Access
   async getDeviceState(): Promise<Record<string, unknown>> {
     this._ensureInitialized();
-    return this.device.getDeviceState();
+    return this.device.getDeviceState() as any;
   }
 
   async getAppState(): Promise<Record<string, unknown>> {
