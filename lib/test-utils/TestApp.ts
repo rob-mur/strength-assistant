@@ -450,9 +450,8 @@ export class TestApp {
   async getSyncState(): Promise<any> {
     this._ensureInitialized();
     
-    const exercises = await this.device.getExercises();
-    // Count exercises with pending sync status
-    const pendingChanges = exercises.filter(ex => ex.syncStatus === 'pending').length;
+    // Get pending sync operations count from the device's sync queue
+    const pendingChanges = this.device.getPendingSyncCount();
     
     return {
       isOnline: this.device.isNetworkConnected(),

@@ -139,16 +139,16 @@ export class ExerciseService {
   /**
    * Get exercise by ID
    */
-  async getExerciseById(id: string, userId?: string): Promise<ExerciseWithSyncStatus | undefined> {
+  async getExerciseById(id: string, userId?: string): Promise<ExerciseWithSyncStatus> {
     const exercise = this.exercises.get(id);
     
     if (!exercise || exercise.deleted) {
-      return undefined;
+      throw new Error('Exercise not found');
     }
 
     const targetUserId = userId || this.userId;
     if (exercise.user_id !== targetUserId) {
-      return undefined;
+      throw new Error('Exercise not found');
     }
 
     // Check if this exercise has a sync record to determine status
@@ -197,6 +197,11 @@ export class ExerciseService {
       throw new Error('Cannot update deleted exercise');
     }
 
+    // Validate that updates is not empty
+    if (!updates || Object.keys(updates).length === 0) {
+      throw new Error('No updates provided');
+    }
+
     if (updates.name !== undefined) {
       if (!updates.name || updates.name.trim().length === 0) {
         throw new Error('Exercise name cannot be empty');
@@ -206,8 +211,8 @@ export class ExerciseService {
       }
     }
 
-    // Apply updates with slight delay to ensure updated timestamp is later
-    await new Promise(resolve => setTimeout(resolve, 1));
+    // Apply updates with sufficient delay to ensure updated timestamp is later
+    await new Promise(resolve => setTimeout(resolve, 10));
     const updatedExercise: Exercise = {
       ...existingExercise,
       ...updates,
@@ -262,8 +267,7 @@ export class ExerciseService {
     const existingExercise = this.exercises.get(id);
     
     if (!existingExercise) {
-      // Return true for idempotency - deletion of non-existent exercise should succeed
-      return true;
+      throw new Error('Exercise not found');
     }
 
     if (existingExercise.user_id !== targetUserId) {
@@ -387,7 +391,7 @@ export class ExerciseService {
   /**
    * Get single exercise by ID (alias for getExerciseById for contract compatibility)
    */
-  async getExercise(id: string, userId?: string): Promise<ExerciseWithSyncStatus | undefined> {
+  async getExercise(id: string, userId?: string): Promise<ExerciseWithSyncStatus> {
     return this.getExerciseById(id, userId);
   }
 

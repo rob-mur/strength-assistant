@@ -176,8 +176,9 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
 		// Store original state for rollback
 		const originalExercises = exercises$.get();
 
-		// Optimistic delete - remove from local list
-		exercises$.set(current => current.filter(ex => ex.id !== exerciseId && ex.user_id === authenticatedUser.id));
+		// Optimistic delete - remove from local list (only for current user)
+		const updatedExercises = originalExercises.filter(ex => !(ex.id === exerciseId && ex.user_id === authenticatedUser.id));
+		exercises$.set(updatedExercises);
 
 		try {
 			// Use sync function instead of direct Supabase client

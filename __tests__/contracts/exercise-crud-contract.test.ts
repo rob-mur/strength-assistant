@@ -102,11 +102,11 @@ describe('Exercise CRUD Contract', () => {
       await exerciseService.createExercise('User Specific Exercise');
 
       const userExercises = await exerciseService.getExercises(userId);
-      const allExercises = await exerciseService.getExercises();
+      const defaultUserExercises = await exerciseService.getExercises('default-user');
 
       expect(userExercises.length).toBe(1);
       expect(userExercises[0].name).toBe('User Specific Exercise');
-      expect(allExercises.length).toBe(4); // 3 anonymous + 1 user-specific
+      expect(defaultUserExercises.length).toBe(3); // 3 original exercises for default user
     });
 
     it('should return exercises sorted by creation date', async () => {

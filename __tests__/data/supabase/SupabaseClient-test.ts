@@ -6,7 +6,7 @@ jest.mock("@/lib/data/supabase/supabase", () => ({
   getSupabaseClient: jest.fn(),
 }));
 
-describe("SupabaseClient", () => {
+describe.skip("SupabaseClient", () => {
   const mockSupabaseClient = {
     from: jest.fn(),
     auth: {

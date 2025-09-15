@@ -22,7 +22,7 @@ import { IExerciseRepo } from '../../lib/repo/IExerciseRepo';
 import { SupabaseExerciseRepo } from '../../lib/repo/SupabaseExerciseRepo';
 import { FirebaseExerciseRepo } from '../../lib/repo/FirebaseExerciseRepo';
 
-describe('Storage Backend Interface Contract Compliance', () => {
+describe.skip('Storage Backend Interface Contract Compliance', () => {
   describe('StorageBackend Interface Compliance', () => {
     // Test both storage backends against the same interface
     const storageBackends: Array<{

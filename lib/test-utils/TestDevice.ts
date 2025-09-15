@@ -298,10 +298,8 @@ export class TestDevice {
 
     this._exercises.push(exercise);
     
-    // Add to sync queue if user is authenticated and network is available
-    if (this._authState.authenticated && this._networkStatus) {
-      this._addToSyncQueue('create', exercise.id, 'exercise', exercise);
-    }
+    // Add to sync queue for local-first behavior (will sync when network available)
+    this._addToSyncQueue('create', exercise.id, 'exercise', exercise);
 
     // Notify subscribers
     this._notifySubscribers();
@@ -329,10 +327,8 @@ export class TestDevice {
 
     this._exercises[exerciseIndex] = updatedExercise;
 
-    // Add to sync queue if user is authenticated and network is available
-    if (this._authState.authenticated && this._networkStatus) {
-      this._addToSyncQueue('update', updatedExercise.id, 'exercise', updatedExercise);
-    }
+    // Add to sync queue for local-first behavior (will sync when network available)
+    this._addToSyncQueue('update', updatedExercise.id, 'exercise', updatedExercise);
 
     // Notify subscribers
     this._notifySubscribers();
@@ -354,10 +350,8 @@ export class TestDevice {
 
     this._exercises.splice(exerciseIndex, 1);
 
-    // Add to sync queue if user is authenticated and network is available
-    if (this._authState.authenticated && this._networkStatus) {
-      this._addToSyncQueue('delete', id, 'exercise', null);
-    }
+    // Add to sync queue for local-first behavior (will sync when network available)
+    this._addToSyncQueue('delete', id, 'exercise', null);
 
     // Notify subscribers
     this._notifySubscribers();
@@ -600,6 +594,11 @@ export class TestDevice {
     return syncedOps
       .sort((a, b) => b.lastAttemptAt!.getTime() - a.lastAttemptAt!.getTime())[0]
       .lastAttemptAt!;
+  }
+
+  // Sync State Methods
+  getPendingSyncCount(): number {
+    return this._syncQueue.filter(op => op.status === 'pending').length;
   }
 
   /**

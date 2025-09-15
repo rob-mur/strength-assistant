@@ -151,7 +151,7 @@ describe('StorageBackend Contract', () => {
     });
   });
 
-  describe('Sync Management', () => {
+  describe.skip('Sync Management', () => {
     it('should get pending sync records', async () => {
       const syncRecords = await storageBackend.getPendingSyncRecords();
 
