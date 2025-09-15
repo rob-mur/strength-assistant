@@ -35,7 +35,7 @@ class FirestoreNativeService extends FirebaseService {
 				operation: "init",
 				duration: Date.now() - startTime
 			});
-		} catch (error: any) {
+		} catch (error: unknown) {
 			this.logError("Failed to initialize Firebase", {
 				operation: "init",
 				duration: Date.now() - startTime,
@@ -66,7 +66,7 @@ class FirestoreNativeService extends FirebaseService {
 					operation: "emulator_setup",
 					emulator: { host, port }
 				});
-			} catch (error: any) {
+			} catch (error: unknown) {
 				this.logError("Failed to connect to emulator", {
 					operation: "emulator_setup",
 					emulator: { host, port },

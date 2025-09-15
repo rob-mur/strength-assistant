@@ -29,7 +29,7 @@ export abstract class FirebaseService {
 		return Platform.OS === "web" ? "localhost" : "10.0.2.2";
 	}
 
-	protected logInfo(message: string, context?: Partial<any>): void {
+	protected logInfo(message: string, context?: Record<string, unknown>): void {
 		logger.info(message, {
 			service: this.serviceName,
 			platform: this.platform,
@@ -37,7 +37,7 @@ export abstract class FirebaseService {
 		});
 	}
 
-	protected logWarn(message: string, context?: Partial<any>): void {
+	protected logWarn(message: string, context?: Record<string, unknown>): void {
 		logger.warn(message, {
 			service: this.serviceName,
 			platform: this.platform,
@@ -45,7 +45,7 @@ export abstract class FirebaseService {
 		});
 	}
 
-	protected logError(message: string, context?: Partial<any>): void {
+	protected logError(message: string, context?: Record<string, unknown>): void {
 		logger.error(message, {
 			service: this.serviceName,
 			platform: this.platform,

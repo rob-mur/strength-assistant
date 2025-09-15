@@ -43,7 +43,7 @@ class FirebaseWebService extends FirebaseService {
 				operation: "init",
 				duration: Date.now() - startTime
 			});
-		} catch (error: any) {
+		} catch (error: unknown) {
 			this.logError("Failed to initialize Firebase", {
 				operation: "init",
 				duration: Date.now() - startTime,
@@ -56,7 +56,7 @@ class FirebaseWebService extends FirebaseService {
 		}
 	}
 
-	private sanitizeConfig(config: any): Record<string, unknown> {
+	private sanitizeConfig(config: Record<string, unknown>): Record<string, unknown> {
 		const { apiKey, ...safeConfig } = config;
 		return {
 			...safeConfig,
@@ -90,7 +90,7 @@ class FirebaseWebService extends FirebaseService {
 						emulator: { host, port }
 					});
 				}
-			} catch (error: any) {
+			} catch (error: unknown) {
 				this.logError("Failed to connect to emulator", {
 					operation: "emulator_setup",
 					emulator: { host, port },

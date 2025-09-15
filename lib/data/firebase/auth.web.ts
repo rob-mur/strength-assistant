@@ -48,7 +48,7 @@ class AuthWebService extends FirebaseService {
 				operation: "init",
 				duration: Date.now() - startTime
 			});
-		} catch (error: any) {
+		} catch (error: unknown) {
 			this.logError("Failed to initialize Firebase Auth", {
 				operation: "init",
 				duration: Date.now() - startTime,
@@ -88,7 +88,7 @@ class AuthWebService extends FirebaseService {
 						emulator: { host, port }
 					});
 				}
-			} catch (error: any) {
+			} catch (error: unknown) {
 				// In Chrome test environment, emulator connection failures should not block the app
 				this.logError("Failed to connect to emulator", {
 					operation: "emulator_setup",

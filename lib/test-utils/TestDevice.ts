@@ -17,6 +17,16 @@ import type {
   TestDeviceState
 } from '../../specs/001-we-are-actually/contracts/test-infrastructure';
 
+// Exercise contract format for integration tests
+interface ExerciseContractFormat {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+  syncStatus: SyncStatus;
+  userId?: string;
+}
+
 export interface TestDeviceOptions {
   deviceId?: string;
   deviceName?: string;
@@ -281,7 +291,7 @@ export class TestDevice {
   }
 
   // Exercise CRUD Operations
-  async addExercise(name: string): Promise<any> {
+  async addExercise(name: string): Promise<ExerciseContractFormat> {
     this._ensureInitialized();
     
     // Simulate add delay
@@ -308,7 +318,7 @@ export class TestDevice {
     return this._transformExerciseToContractFormat(exercise);
   }
 
-  async updateExercise(id: string, name: string): Promise<any> {
+  async updateExercise(id: string, name: string): Promise<ExerciseContractFormat> {
     this._ensureInitialized();
     
     // Simulate update delay
@@ -357,7 +367,7 @@ export class TestDevice {
     this._notifySubscribers();
   }
 
-  async getExercises(): Promise<any[]> {
+  async getExercises(): Promise<ExerciseContractFormat[]> {
     this._ensureInitialized();
     
     // Simulate get delay
@@ -544,7 +554,7 @@ export class TestDevice {
     operation: 'create' | 'update' | 'delete',
     recordId: string,
     recordType: string,
-    data: any
+    data: Exercise | null
   ): void {
     const syncOperation: SyncOperation = {
       id: uuidv4(),
@@ -604,7 +614,7 @@ export class TestDevice {
   /**
    * Transform Exercise object to contract format expected by integration tests
    */
-  private _transformExerciseToContractFormat(exercise: Exercise): any {
+  private _transformExerciseToContractFormat(exercise: Exercise): ExerciseContractFormat {
     // Determine sync status based on sync queue
     let syncStatus: SyncStatus = 'synced';
     

@@ -23,8 +23,31 @@ export interface AuthState {
 	error: AuthError | null;
 }
 
+// Firebase user type for cross-platform compatibility
+interface FirebaseUser {
+	uid: string;
+	email: string | null;
+	isAnonymous: boolean;
+	[key: string]: any; // For additional platform-specific properties
+}
+
+// Platform-specific auth functions interface
+interface AuthFunctions {
+	initAuth: () => void;
+	signInAnonymouslyWeb?: () => Promise<FirebaseUser>;
+	signInAnonymouslyNative?: () => Promise<FirebaseUser>;
+	createAccountWeb?: (email: string, password: string) => Promise<FirebaseUser>;
+	createAccountNative?: (email: string, password: string) => Promise<FirebaseUser>;
+	signInWeb?: (email: string, password: string) => Promise<FirebaseUser>;
+	signInNative?: (email: string, password: string) => Promise<FirebaseUser>;
+	signOutWeb?: () => Promise<void>;
+	signOutNative?: () => Promise<void>;
+	onAuthStateChangedWeb?: (callback: (user: FirebaseUser | null) => void) => () => void;
+	onAuthStateChangedNative?: (callback: (user: FirebaseUser | null) => void) => () => void;
+}
+
 // Platform-specific function selection
-const getAuthFunctions = (): any => {
+const getAuthFunctions = (): AuthFunctions => {
 	return Platform.OS === "web" ? AuthWeb : AuthNative;
 };
 
@@ -36,7 +59,7 @@ export function useAuth() {
 	});
 
 	// Helper function to handle user state changes
-	const handleUserStateChange = (user: any) => {
+	const handleUserStateChange = (user: FirebaseUser | null) => {
 		const userData = user ? {
 			uid: user.uid,
 			email: user.email,
@@ -60,7 +83,7 @@ export function useAuth() {
 	};
 
 	// Helper function to initialize auth with timeout
-	const initializeAuthWithTimeout = async (authFunctions: any): Promise<void> => {
+	const initializeAuthWithTimeout = async (authFunctions: AuthFunctions): Promise<void> => {
 		const initPromise = new Promise<void>((resolve, reject) => {
 			try {
 				authFunctions.initAuth();
@@ -78,8 +101,8 @@ export function useAuth() {
 	};
 
 	// Helper function to setup auth listener
-	const setupAuthListener = (authFunctions: any): (() => void) | undefined => {
-		const userStateHandler = (user: any) => {
+	const setupAuthListener = (authFunctions: AuthFunctions): (() => void) | undefined => {
+		const userStateHandler = (user: FirebaseUser | null) => {
 			try {
 				handleUserStateChange(user);
 			} catch {
@@ -160,7 +183,7 @@ export function useAuth() {
 				: authFunctions.signInAnonymouslyNative;
 			
 			await signInFunction();
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error("Anonymous sign in failed:", error);
 			setAuthState(prev => ({
 				...prev,
@@ -180,7 +203,7 @@ export function useAuth() {
 				: authFunctions.createAccountNative;
 			
 			await createFunction(email, password);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			setAuthState(prev => ({
 				...prev,
 				loading: false,
@@ -199,7 +222,7 @@ export function useAuth() {
 				: authFunctions.signInNative;
 			
 			await signInFunction(email, password);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			setAuthState(prev => ({
 				...prev,
 				loading: false,
@@ -218,7 +241,7 @@ export function useAuth() {
 				: authFunctions.signOutNative;
 			
 			await signOutFunction();
-		} catch (error: any) {
+		} catch (error: unknown) {
 			setAuthState(prev => ({
 				...prev,
 				loading: false,

@@ -493,7 +493,7 @@ export class ExerciseService {
       
       if (syncData) {
         // Convert date strings back to Date objects
-        const syncRecords = syncData.map(([id, record]: [string, any]) => [
+        const syncRecords = syncData.map(([id, record]: [string, SyncRecord]) => [
           id,
           {
             ...record,

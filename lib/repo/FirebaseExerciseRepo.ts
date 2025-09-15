@@ -8,6 +8,19 @@ import { RepositoryUtils } from "./utils/RepositoryUtils";
 
 // Platform-specific Firebase types and functions - use runtime detection
 
+// Generic Firebase snapshot interface for cross-platform compatibility  
+interface FirebaseSnapshot {
+	forEach: (callback: (doc: FirebaseDocumentSnapshot) => void) => void;
+	size: number;
+	empty: boolean;
+}
+
+interface FirebaseDocumentSnapshot {
+	id: string;
+	data: () => any;
+	exists: boolean;
+}
+
 // Import modular Firestore functions for web
 const getFirebaseModule = () => {
 	if (Platform.OS === "web") {
@@ -56,7 +69,7 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 
 				this.initialized = true;
 				RepositoryLogger.logSuccess("FirebaseExerciseRepo", "initialize");
-			} catch (error: any) {
+			} catch (error: unknown) {
 				RepositoryLogger.logError("FirebaseExerciseRepo", "initialize Firebase services", error);
 				this.initialized = false; // Ensure we retry on next call
 				throw error;
@@ -104,7 +117,7 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 			}
 
 			RepositoryLogger.logSuccess("FirebaseExerciseRepo", "addExercise");
-		} catch (error: any) {
+		} catch (error: unknown) {
 			RepositoryLogger.logError("FirebaseExerciseRepo", "add exercise", error);
 			throw error;
 		}
@@ -122,7 +135,7 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 			const exercisesQuery = this.createExercisesQuery(userId);
 
 			// Set up real-time listener
-			const unsubscribe = exercisesQuery.onSnapshot((snapshot: any) => {
+			const unsubscribe = exercisesQuery.onSnapshot((snapshot: FirebaseSnapshot) => {
 				const exercises = this.processSnapshot(snapshot, userId);
 				exercises$.set(exercises);
 			});
@@ -131,7 +144,7 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 			(exercises$ as any)._unsubscribe = unsubscribe;
 
 			RepositoryLogger.logSuccess("FirebaseExerciseRepo", "getExercises");
-		} catch (error: any) {
+		} catch (error: unknown) {
 			RepositoryLogger.logError("FirebaseExerciseRepo", "get exercises", error);
 		}
 
@@ -157,13 +170,13 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 				}
 				
 				const { onSnapshot } = firebaseModule;
-				unsubscribe = onSnapshot(exercisesQuery, (snapshot: any) => {
+				unsubscribe = onSnapshot(exercisesQuery, (snapshot: FirebaseSnapshot) => {
 					const exercises = this.processSnapshot(snapshot, userId);
 					callback(exercises);
 				});
 			} else {
 				// Use React Native Firebase for native platforms
-				unsubscribe = exercisesQuery.onSnapshot((snapshot: any) => {
+				unsubscribe = exercisesQuery.onSnapshot((snapshot: FirebaseSnapshot) => {
 					const exercises = this.processSnapshot(snapshot, userId);
 					callback(exercises);
 				});
@@ -172,7 +185,7 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 			RepositoryLogger.logSuccess("FirebaseExerciseRepo", "subscribeToExercises");
 
 			return unsubscribe;
-		} catch (error: any) {
+		} catch (error: unknown) {
 			RepositoryLogger.logError("FirebaseExerciseRepo", "subscribe to exercises", error);
 			// Return no-op function on error
 			return () => { };
@@ -213,7 +226,7 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 			}
 
 			RepositoryLogger.logSuccess("FirebaseExerciseRepo", "deleteExercise");
-		} catch (error: any) {
+		} catch (error: unknown) {
 			RepositoryLogger.logError("FirebaseExerciseRepo", "delete exercise", error);
 			throw error;
 		}
@@ -228,7 +241,7 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 			const exercises$ = this.getExercises(userId);
 			const exercises = exercises$.get();
 			return exercises.find(exercise => exercise.id === exerciseId);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			RepositoryLogger.logError("FirebaseExerciseRepo", "get exercise by ID", error);
 			return undefined;
 		}
@@ -308,9 +321,9 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 	/**
 	 * Process snapshot data and convert to Exercise array
 	 */
-	private processSnapshot(snapshot: any, userId: string): Exercise[] {
+	private processSnapshot(snapshot: FirebaseSnapshot, userId: string): Exercise[] {
 		const exercises: Exercise[] = [];
-		snapshot.forEach((doc: any) => {
+		snapshot.forEach((doc: FirebaseDocumentSnapshot) => {
 			const data = doc.data();
 			if (RepositoryUtils.validateExerciseData(data)) {
 				exercises.push({

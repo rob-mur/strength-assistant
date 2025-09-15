@@ -26,7 +26,7 @@ class AuthNativeService extends FirebaseService {
 				operation: "init",
 				duration: Date.now() - startTime 
 			});
-		} catch (error: any) {
+		} catch (error: unknown) {
 			this.logError("Failed to initialize Firebase Auth", {
 				operation: "init",
 				duration: Date.now() - startTime,
@@ -58,7 +58,7 @@ class AuthNativeService extends FirebaseService {
 					operation: "emulator_setup",
 					emulator: { host, port }
 				});
-			} catch (error: any) {
+			} catch (error: unknown) {
 				this.logError("Failed to connect to emulator", {
 					operation: "emulator_setup",
 					emulator: { host, port },

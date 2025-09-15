@@ -9,6 +9,7 @@
  */
 
 import { RenderAPI } from '@testing-library/react-native';
+import { ReactTestInstance } from 'react-test-renderer';
 
 export interface AnimatedTestOptions {
   /**
@@ -103,7 +104,7 @@ export class ComponentTestUtils {
     renderResult: RenderAPI, 
     testId: string,
     options?: { timeout?: number }
-  ): Promise<any> {
+  ): Promise<ReactTestInstance> {
     const timeout = options?.timeout ?? this.options.queryTimeout;
     
     try {
@@ -120,7 +121,7 @@ export class ComponentTestUtils {
     renderResult: RenderAPI, 
     text: string | RegExp,
     options?: { timeout?: number }
-  ): Promise<any> {
+  ): Promise<ReactTestInstance> {
     const timeout = options?.timeout ?? this.options.queryTimeout;
     
     try {
@@ -207,14 +208,14 @@ export class ComponentTestUtils {
     renderComponent: (props: Props) => any,
     initialProps: Props,
     lifecycle: {
-      afterRender?: (renderResult: any) => void | Promise<void>;
-      duringAnimation?: (renderResult: any, time: number) => void;
-      afterAnimation?: (renderResult: any) => void | Promise<void>;
+      afterRender?: (renderResult: RenderAPI) => void | Promise<void>;
+      duringAnimation?: (renderResult: RenderAPI, time: number) => void;
+      afterAnimation?: (renderResult: RenderAPI) => void | Promise<void>;
       propsUpdate?: Props;
-      afterUpdate?: (renderResult: any) => void | Promise<void>;
+      afterUpdate?: (renderResult: RenderAPI) => void | Promise<void>;
     },
     animationDuration = 1000
-  ): Promise<any> {
+  ): Promise<ReactTestInstance> {
     this.setupFakeTimers();
     
     try {

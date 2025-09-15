@@ -9,14 +9,24 @@ import { RepositoryUtils } from "./utils/RepositoryUtils";
 // Note: Using basic legend-state without sync for now
 // TODO: Implement proper sync when library supports it
 
+// Supabase database row interface for exercises
+interface SupabaseExerciseRow {
+	id: string;
+	name: string;
+	user_id: string;
+	created_at?: string;
+	updated_at?: string;
+	deleted?: boolean;
+}
+
 /**
  * Legend State + Supabase implementation of ExerciseRepo
  * Provides offline-first data access with automatic sync
  */
 export class SupabaseExerciseRepo implements IExerciseRepo {
 	private static instance: SupabaseExerciseRepo;
-	private syncInstance: any = null;
-	private _realtimeChannel: any = null;
+	private syncInstance: object | null = null;
+	private _realtimeChannel: object | null = null;
 
 	private constructor() { }
 
@@ -60,7 +70,7 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
 				
 			if (error) throw error;
 			
-			const exercises = (data || []).map((ex: any) => ({
+			const exercises = (data || []).map((ex: SupabaseExerciseRow) => ({
 				id: ex.id,
 				name: ex.name,
 				user_id: ex.user_id,

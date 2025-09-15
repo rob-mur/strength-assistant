@@ -89,7 +89,7 @@ export class TestApp {
     return this.device.networkStatus;
   }
 
-  async simulateNetworkIssues(enabled: boolean, config?: any): Promise<void> {
+  async simulateNetworkIssues(enabled: boolean, config?: Record<string, unknown>): Promise<void> {
     this._ensureInitialized();
     await this.device.simulateNetworkIssues(enabled, config);
   }
@@ -281,7 +281,7 @@ export class TestApp {
   }
 
   // Sync Status and Operations
-  async getSyncStatus(exerciseId?: string): Promise<any> {
+  async getSyncStatus(exerciseId?: string): Promise<{ hasErrors: boolean; errorMessage?: string }> {
     this._ensureInitialized();
     
     if (exerciseId) {
@@ -382,12 +382,12 @@ export class TestApp {
   }
 
   // Device State Access
-  async getDeviceState(): Promise<any> {
+  async getDeviceState(): Promise<Record<string, unknown>> {
     this._ensureInitialized();
     return this.device.getDeviceState();
   }
 
-  async getAppState(): Promise<any> {
+  async getAppState(): Promise<Record<string, unknown>> {
     this._ensureInitialized();
     return {
       app: {
@@ -447,7 +447,7 @@ export class TestApp {
   }
   
   // Sync state management
-  async getSyncState(): Promise<any> {
+  async getSyncState(): Promise<Record<string, unknown>> {
     this._ensureInitialized();
     
     // Get pending sync operations count from the device's sync queue
@@ -463,7 +463,7 @@ export class TestApp {
   }
   
   // Storage configuration
-  async getStorageConfig(): Promise<any> {
+  async getStorageConfig(): Promise<Record<string, unknown>> {
     this._ensureInitialized();
     
     return {
@@ -480,7 +480,7 @@ export class TestApp {
   }
   
   // Feature flags
-  async getFeatureFlags(): Promise<any> {
+  async getFeatureFlags(): Promise<Record<string, unknown>> {
     this._ensureInitialized();
     
     return {

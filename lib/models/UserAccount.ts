@@ -234,7 +234,7 @@ export function upgradeToAuthenticated(user: UserAccount, email: string): UserAc
 /**
  * Converts UserAccount to database-safe format
  */
-export function toDbFormat(user: UserAccount): any {
+export function toDbFormat(user: UserAccount): Record<string, unknown> {
   return {
     id: user.id,
     email: user.email || null,

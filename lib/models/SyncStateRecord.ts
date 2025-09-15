@@ -13,14 +13,14 @@ export interface SyncStateRecord {
   attempts: number;
   lastError?: string;
   nextRetryAt?: Date;
-  payload?: any; // Operation-specific data
+  payload?: Record<string, unknown>; // Operation-specific data
 }
 
 export interface SyncStateInput {
   recordId: string;
   recordType: string;
   operation: 'create' | 'update' | 'delete';
-  payload?: any;
+  payload?: Record<string, unknown>;
 }
 
 /**
@@ -206,7 +206,7 @@ export function getTimeUntilRetry(syncState: SyncStateRecord): number {
 /**
  * Converts SyncStateRecord to database-safe format
  */
-export function toDbFormat(syncState: SyncStateRecord): any {
+export function toDbFormat(syncState: SyncStateRecord): Record<string, unknown> {
   return {
     record_id: syncState.recordId,
     record_type: syncState.recordType,

@@ -169,10 +169,20 @@ export function needsSync(exercise: ExerciseRecord): boolean {
   return exercise.syncStatus === 'pending' || exercise.syncStatus === 'error';
 }
 
+// Database format interfaces
+interface ExerciseDbFormat {
+  id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+  user_id: string | null;
+  sync_status: string;
+}
+
 /**
  * Converts ExerciseRecord to database-safe format
  */
-export function toDbFormat(exercise: ExerciseRecord): any {
+export function toDbFormat(exercise: ExerciseRecord): ExerciseDbFormat {
   return {
     id: exercise.id,
     name: exercise.name,
