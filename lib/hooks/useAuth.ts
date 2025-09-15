@@ -82,7 +82,7 @@ export function useAuth() {
 		const userStateHandler = (user: any) => {
 			try {
 				handleUserStateChange(user);
-			} catch (error) {
+			} catch (_error) {
 				setErrorState();
 			}
 		};
@@ -98,7 +98,7 @@ export function useAuth() {
 			const authFunctions = getAuthFunctions();
 			await initializeAuthWithTimeout(authFunctions);
 			return setupAuthListener(authFunctions);
-		} catch (error: any) {
+		} catch (_error: any) {
 			setErrorState();
 			return undefined;
 		}

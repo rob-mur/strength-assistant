@@ -70,9 +70,9 @@ const initialStoreState: ExerciseStore = {
 export const exerciseStore = observable<ExerciseStore>(initialStoreState);
 
 /**
- * Configure persistence
+ * Configure persistence (reserved for future implementation)
  */
-const persistConfig = {
+const _persistConfig = {
   local: {
     name: 'strength-assistant-exercises',
     // Use AsyncStorage for React Native compatibility

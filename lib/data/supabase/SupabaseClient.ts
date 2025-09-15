@@ -21,8 +21,10 @@ export class SupabaseClient {
 				// In test environment, initialize Supabase if not already done
 				if (process.env.NODE_ENV === 'test') {
 					try {
-						const { initSupabase } = require('./supabase');
-						initSupabase();
+						// Use dynamic import for test environment
+						import('./supabase').then(({ initSupabase }) => {
+							initSupabase();
+						});
 						const client = getSupabaseClient();
 						if (!client || typeof client.from !== 'function') {
 							throw new Error('Invalid Supabase client: missing required methods');

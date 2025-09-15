@@ -8,6 +8,16 @@
 import { v4 as uuidv4 } from 'uuid';
 import type { Exercise } from '../models/Exercise';
 
+// Type for test persistence global
+interface TestPersistence {
+  exercises?: [string, Exercise][];
+  syncRecords?: [string, SyncRecord][];
+}
+
+declare global {
+  var testPersistence: TestPersistence | undefined;
+}
+
 export interface SyncRecord {
   id: string;
   recordId: string;
@@ -17,7 +27,7 @@ export interface SyncRecord {
   createdAt: Date;
   lastAttempt?: Date;
   attempts: number;
-  data?: any;
+  data?: Exercise | Partial<Exercise> | { id: string; user_id: string };
   error?: string;
 }
 
@@ -474,8 +484,8 @@ export class ExerciseService {
     try {
       // In a real app, this would load from AsyncStorage or similar
       // For tests, we'll use in-memory storage
-      const exercisesData = (global as any).testPersistence?.exercises;
-      const syncData = (global as any).testPersistence?.syncRecords;
+      const exercisesData = global.testPersistence?.exercises;
+      const syncData = global.testPersistence?.syncRecords;
 
       if (exercisesData) {
         this.exercises = new Map(exercisesData);
@@ -491,7 +501,7 @@ export class ExerciseService {
             lastAttempt: record.lastAttempt ? new Date(record.lastAttempt) : undefined,
           }
         ]);
-        this.syncRecords = new Map(syncRecords);
+        this.syncRecords = new Map(syncRecords as [string, SyncRecord][]);
       }
     } catch (error) {
       // Handle persistence errors gracefully
@@ -503,12 +513,12 @@ export class ExerciseService {
     try {
       // In a real app, this would save to AsyncStorage or similar
       // For tests, we'll use global storage
-      if (!(global as any).testPersistence) {
-        (global as any).testPersistence = {};
+      if (!global.testPersistence) {
+        global.testPersistence = {};
       }
 
-      (global as any).testPersistence.exercises = Array.from(this.exercises.entries());
-      (global as any).testPersistence.syncRecords = Array.from(this.syncRecords.entries());
+      global.testPersistence.exercises = Array.from(this.exercises.entries());
+      global.testPersistence.syncRecords = Array.from(this.syncRecords.entries());
     } catch (error) {
       // Handle persistence errors gracefully
       console.warn('Failed to save to persistence:', error);

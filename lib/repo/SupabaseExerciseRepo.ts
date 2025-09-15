@@ -16,6 +16,7 @@ import { RepositoryUtils } from "./utils/RepositoryUtils";
 export class SupabaseExerciseRepo implements IExerciseRepo {
 	private static instance: SupabaseExerciseRepo;
 	private syncInstance: any = null;
+	private _realtimeChannel: any = null;
 
 	private constructor() { }
 
@@ -29,11 +30,11 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
 	async initialize(): Promise<void> {
 		// Initialize the repository and load data
 		// Set up real-time subscription for changes
-		const channel = supabaseClient.getSupabaseClient()
+		this._realtimeChannel = supabaseClient.getSupabaseClient()
 			.channel('exercises-changes')
 			.on('postgres_changes', 
 				{ event: '*', schema: 'public', table: 'exercises' },
-				async (payload) => {
+				async (_payload) => {
 					// Refresh exercises when data changes on server
 					await this.refreshExercises();
 				}

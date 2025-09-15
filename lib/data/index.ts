@@ -124,24 +124,24 @@ export class DataLayerAPI {
   /**
    * Get the current backend info
    */
-  getBackendInfo() {
-    const { storageManager } = require('./StorageManager');
+  async getBackendInfo() {
+    const { storageManager } = await import('./StorageManager');
     return storageManager.getBackendInfo();
   }
 
   /**
    * Get current feature flags
    */
-  getFeatureFlags() {
-    const { storageManager } = require('./StorageManager');
+  async getFeatureFlags() {
+    const { storageManager } = await import('./StorageManager');
     return storageManager.getFeatureFlags();
   }
 
   /**
    * Subscribe to auth state changes
    */
-  subscribeToAuthState(callback: (user: any | null) => void): () => void {
-    const { storageManager } = require('./StorageManager');
+  async subscribeToAuthState(callback: (user: any | null) => void): Promise<() => void> {
+    const { storageManager } = await import('./StorageManager');
     const activeBackend = storageManager.getActiveStorageBackend();
     return activeBackend.subscribeToAuthState(callback);
   }
@@ -149,8 +149,8 @@ export class DataLayerAPI {
   /**
    * Check if user is authenticated
    */
-  isAuthenticated(): boolean {
-    const { exerciseStore } = require('./legend-state/ExerciseStore');
+  async isAuthenticated(): Promise<boolean> {
+    const { exerciseStore } = await import('./legend-state/ExerciseStore');
     const user = exerciseStore.user.get();
     return user?.isAuthenticated ?? false;
   }
@@ -158,8 +158,8 @@ export class DataLayerAPI {
   /**
    * Check if user is anonymous
    */
-  isAnonymous(): boolean {
-    const { exerciseStore } = require('./legend-state/ExerciseStore');
+  async isAnonymous(): Promise<boolean> {
+    const { exerciseStore } = await import('./legend-state/ExerciseStore');
     const user = exerciseStore.user.get();
     return user?.isAnonymous ?? true;
   }
@@ -167,10 +167,14 @@ export class DataLayerAPI {
   /**
    * Get sync statistics
    */
-  getSyncStats() {
-    const { exerciseStore } = require('./legend-state/ExerciseStore');
+  async getSyncStats() {
+    const { exerciseStore } = await import('./legend-state/ExerciseStore');
     const syncState = exerciseStore.syncState.get();
     const exercises = Object.values(exerciseStore.exercises.get());
+    
+    interface ExerciseWithSyncStatus {
+      syncStatus: 'synced' | 'pending' | 'error';
+    }
     
     return {
       isOnline: syncState.isOnline,
@@ -179,17 +183,17 @@ export class DataLayerAPI {
       pendingChanges: syncState.pendingChanges,
       errorCount: syncState.errors.length,
       totalExercises: exercises.length,
-      syncedExercises: exercises.filter((e: any) => e.syncStatus === 'synced').length,
-      pendingExercises: exercises.filter((e: any) => e.syncStatus === 'pending').length,
-      failedExercises: exercises.filter((e: any) => e.syncStatus === 'error').length
+      syncedExercises: exercises.filter((e: ExerciseWithSyncStatus) => e.syncStatus === 'synced').length,
+      pendingExercises: exercises.filter((e: ExerciseWithSyncStatus) => e.syncStatus === 'pending').length,
+      failedExercises: exercises.filter((e: ExerciseWithSyncStatus) => e.syncStatus === 'error').length
     };
   }
 
   /**
    * Cleanup - dispose all resources
    */
-  dispose(): void {
-    const { disposeSync } = require('./legend-state/ExerciseStore');
+  async dispose(): Promise<void> {
+    const { disposeSync } = await import('./legend-state/ExerciseStore');
     disposeSync();
     
     if (__DEV__) {
