@@ -194,7 +194,7 @@ export class TestDevice {
   }
 
   // Authentication Methods
-  async signUp(email: string, password: string): Promise<UserAccount> {
+  async signUp(email: string, _password: string): Promise<UserAccount> {
     this._ensureInitialized();
     this._ensureNetworkConnected();
 
@@ -221,7 +221,7 @@ export class TestDevice {
     return user;
   }
 
-  async signIn(email: string, password: string): Promise<UserAccount> {
+  async signIn(email: string, _password: string): Promise<UserAccount> {
     this._ensureInitialized();
     this._ensureNetworkConnected();
 

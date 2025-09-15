@@ -308,7 +308,7 @@ export class TestApp {
   }
 
   // Form and Input Simulation
-  async fillForm(formData: Record<string, string>): Promise<void> {
+  async fillForm(_formData: Record<string, string>): Promise<void> {
     this._ensureInitialized();
     
     // Simulate form filling delay

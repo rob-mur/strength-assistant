@@ -108,7 +108,7 @@ export class ComponentTestUtils {
     
     try {
       return await renderResult.findByTestId(testId, { timeout });
-    } catch (error) {
+    } catch {
       throw new Error(`Element with testId "${testId}" not found within ${timeout}ms`);
     }
   }
@@ -125,7 +125,7 @@ export class ComponentTestUtils {
     
     try {
       return await renderResult.findByText(text, { timeout });
-    } catch (error) {
+    } catch {
       throw new Error(`Text "${text}" not found within ${timeout}ms`);
     }
   }

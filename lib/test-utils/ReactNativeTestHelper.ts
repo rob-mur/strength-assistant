@@ -122,7 +122,7 @@ export class ReactNativeTestHelper {
   /**
    * Wait for component to settle after render with act() wrapping
    */
-  async waitForRender(renderResult?: RenderAPI, maxWait: number = this.options.timeout): Promise<void> {
+  async waitForRender(renderResult?: RenderAPI, _maxWait: number = this.options.timeout): Promise<void> {
     return this.actWrap(async () => {
       // Wait for initial render to complete
       await new Promise(resolve => setTimeout(resolve, 10));

@@ -3,10 +3,10 @@ import { exercises$, user$ } from '../store';
 import { Exercise } from '../../models/Exercise';
 import { ExerciseInsert } from '../../models/supabase';
 
-// Sync configuration constants
-const _SYNC_RETRY_DELAY = 1000; // 1 second
-const _SYNC_TIMEOUT = 30000; // 30 seconds
-const _NETWORK_CHECK_INTERVAL = 5000; // 5 seconds
+// Sync configuration constants (reserved for future implementation)
+// const _SYNC_RETRY_DELAY = 1000; // 1 second
+// const _SYNC_TIMEOUT = 30000; // 30 seconds
+// const _NETWORK_CHECK_INTERVAL = 5000; // 5 seconds
 
 /**
  * Configuration for Legend State sync with Supabase

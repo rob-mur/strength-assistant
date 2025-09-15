@@ -77,7 +77,7 @@ export class MigrationTestApp extends TestApp {
   }
 
   // Data access for testing
-  async getFirebaseData(userId: string): Promise<{ exercises: Exercise[] }> {
+  async getFirebaseData(_userId: string): Promise<{ exercises: Exercise[] }> {
     // Simulate Firebase data access
     const exercises = await this.getExercises();
     return { exercises };
@@ -320,7 +320,7 @@ export class MigrationTestApp extends TestApp {
   }
 
   // Sync status and error simulation methods  
-  async getSyncStatus(exerciseId?: string): Promise<{ hasErrors: boolean; errorMessage?: string }> {
+  async getSyncStatus(_exerciseId?: string): Promise<{ hasErrors: boolean; errorMessage?: string }> {
     // Simulate sync status check
     await this.waitFor(50);
     
@@ -349,7 +349,7 @@ export class MigrationTestApp extends TestApp {
     await this.waitFor(500);
   }
 
-  async simulateMigrationFailure(shouldFail: boolean): Promise<void> {
+  async simulateMigrationFailure(_shouldFail: boolean): Promise<void> {
     // Simulate migration failure scenarios
     await this.waitFor(100);
   }
@@ -450,7 +450,7 @@ export class MigrationTestApp extends TestApp {
     return user;
   }
 
-  async setNetworkStatus(isOnline: boolean): Promise<void> {
+  async setNetworkStatus(_isOnline: boolean): Promise<void> {
     // Simulate network status changes
     await this.waitFor(50);
   }
@@ -498,7 +498,7 @@ export class MigrationTestApp extends TestApp {
   }
 
   // Authentication methods expected by integration tests
-  async signUp(email: string, password: string): Promise<any> {
+  async signUp(email: string, _password: string): Promise<any> {
     // Simulate user signup - return user object and set as current
     const user = {
       id: `user-${Date.now()}`,
@@ -510,7 +510,7 @@ export class MigrationTestApp extends TestApp {
     return user;
   }
 
-  async signIn(email: string, password: string): Promise<any> {
+  async signIn(email: string, _password: string): Promise<any> {
     // Simulate user signin - return user object and set as current
     const user = {
       id: `user-${Date.now()}`,
