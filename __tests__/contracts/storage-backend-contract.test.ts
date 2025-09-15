@@ -71,6 +71,9 @@ describe('StorageBackend Contract', () => {
       const exerciseData = { name: 'Original Name' };
       const created = await storageBackend.createExercise(exerciseData);
 
+      // Add sufficient delay to ensure timestamp precision
+      await new Promise(resolve => setTimeout(resolve, 15));
+
       // Then update it
       const updated = await storageBackend.updateExercise(created.id, {
         name: 'Updated Name'

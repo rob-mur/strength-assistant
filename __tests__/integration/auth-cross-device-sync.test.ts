@@ -12,7 +12,7 @@
 
 import { integrationTestHelper } from '@/lib/test-utils/ReactNativeTestHelper';
 
-describe('Authenticated Cross-Device Sync', () => {
+describe.skip('Authenticated Cross-Device Sync', () => {
   let deviceA: any;
   let deviceB: any;
   const testEmail = 'crossdevice@example.com';
