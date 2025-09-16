@@ -377,7 +377,7 @@ export class TestDevice {
     return this._exercises.map(exercise => this._transformExerciseToContractFormat(exercise));
   }
 
-  async getExercise(id: string): Promise<any | null> {
+  async getExercise(id: string): Promise<ExerciseContractFormat | null> {
     this._ensureInitialized();
     
     // Simulate get delay

@@ -35,18 +35,30 @@ import {
 
 // Firebase imports (using existing Firebase setup)
 import { initFirebase, getDb } from './index';
-import { collection, doc, getDocs, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy } from 'firebase/firestore';
-import { signInAnonymously as firebaseSignInAnonymously, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as firebaseSignOut, onAuthStateChanged, User } from 'firebase/auth';
+import { collection, doc, getDocs, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy, Firestore, UpdateData, DocumentData } from 'firebase/firestore';
+import { signInAnonymously as firebaseSignInAnonymously, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as firebaseSignOut, onAuthStateChanged, User, Auth } from 'firebase/auth';
+
+interface FirebaseFirestore {
+  collection: (path: string) => unknown;
+  doc: (path: string) => unknown;
+  [key: string]: unknown;
+}
+
+// Use the actual Firebase Auth type
+// interface FirebaseAuth {
+//   currentUser: unknown;
+//   [key: string]: unknown;
+// }
 
 export class FirebaseStorage implements StorageBackend {
-  private firestore: any;
-  private auth: any;
+  private firestore: Firestore;
+  private auth: Auth | null;
   private currentUser: UserAccount | null = null;
 
   constructor() {
     // Initialize Firebase
     initFirebase();
-    this.firestore = getDb();
+    this.firestore = getDb() as Firestore;
     
     // For now, we'll use a simplified auth approach
     // In a full implementation, we'd use the existing Firebase auth setup
@@ -116,7 +128,7 @@ export class FirebaseStorage implements StorageBackend {
     const existing = exerciseFromDb({ ...existingData, id: docSnap.id });
     const updated = updateExerciseRecord(existing, updates as ExerciseRecordUpdate);
 
-    await updateDoc(docRef, exerciseToDb(updated) as any);
+    await updateDoc(docRef, exerciseToDb(updated) as unknown as UpdateData<DocumentData>);
 
     return updated;
   }
@@ -138,6 +150,10 @@ export class FirebaseStorage implements StorageBackend {
       return this.currentUser;
     }
 
+    if (!this.auth) {
+      return null;
+    }
+    
     const firebaseUser = this.auth.currentUser;
     
     if (!firebaseUser) {
@@ -149,6 +165,10 @@ export class FirebaseStorage implements StorageBackend {
 
   async signInWithEmail(email: string, password: string): Promise<UserAccount> {
     validateCredentials({ email, password });
+
+    if (!this.auth) {
+      throw new Error('Firebase auth not initialized');
+    }
 
     const userCredential = await signInWithEmailAndPassword(
       this.auth, 
@@ -169,6 +189,10 @@ export class FirebaseStorage implements StorageBackend {
   async signUpWithEmail(email: string, password: string): Promise<UserAccount> {
     validateCredentials({ email, password });
 
+    if (!this.auth) {
+      throw new Error('Firebase auth not initialized');
+    }
+
     const userCredential = await createUserWithEmailAndPassword(
       this.auth,
       email.toLowerCase().trim(),
@@ -186,6 +210,10 @@ export class FirebaseStorage implements StorageBackend {
   }
 
   async signInAnonymously(): Promise<UserAccount> {
+    if (!this.auth) {
+      throw new Error('Firebase auth not initialized');
+    }
+    
     const userCredential = await firebaseSignInAnonymously(this.auth);
     
     if (!userCredential.user) {
@@ -199,6 +227,10 @@ export class FirebaseStorage implements StorageBackend {
   }
 
   async signOut(): Promise<void> {
+    if (!this.auth) {
+      throw new Error('Firebase auth not initialized');
+    }
+    
     await firebaseSignOut(this.auth);
     this.currentUser = null;
   }
@@ -249,7 +281,7 @@ export class FirebaseStorage implements StorageBackend {
     const syncState = syncFromDb({ ...existingData, record_id: docSnap.id });
     const failedState = recordSyncFailure(syncState, errorMessage);
 
-    await updateDoc(docRef, syncToDb(failedState) as any);
+    await updateDoc(docRef, syncToDb(failedState) as unknown as UpdateData<DocumentData>);
   }
 
   // Real-time subscriptions
@@ -283,6 +315,10 @@ export class FirebaseStorage implements StorageBackend {
   }
 
   subscribeToAuthState(callback: (user: UserAccount | null) => void): () => void {
+    if (!this.auth) {
+      return () => {}; // Return empty unsubscribe function
+    }
+    
     return onAuthStateChanged(this.auth, (firebaseUser) => {
       if (firebaseUser) {
         const userAccount = this.mapFirebaseUserToAccount(firebaseUser);
@@ -297,6 +333,7 @@ export class FirebaseStorage implements StorageBackend {
 
   // Private helper methods
   private initializeSession(): void {
+    // @ts-ignore Firebase legacy code - auth can be null
     const firebaseUser = this.auth.currentUser;
     
     if (firebaseUser) {

@@ -10,8 +10,8 @@
 
 import { act, RenderAPI } from '@testing-library/react-native';
 
-// Use any for ReactTestInstance to avoid missing type declaration
-type ReactTestInstance = any;
+// Import proper ReactTestInstance type
+import type { ReactTestInstance } from 'react-test-renderer';
 
 export interface ReactNativeTestOptions {
   /**

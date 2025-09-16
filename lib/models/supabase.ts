@@ -57,8 +57,8 @@ export type ExerciseUpdate = Database['public']['Tables']['exercises']['Update']
 export interface User {
   id: string;
   email?: string;
-  user_metadata?: Record<string, any>;
-  app_metadata?: Record<string, any>;
+  user_metadata?: Record<string, unknown>;
+  app_metadata?: Record<string, unknown>;
   aud: string;
   created_at?: string;
 }

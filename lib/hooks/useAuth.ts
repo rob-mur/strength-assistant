@@ -28,7 +28,7 @@ interface FirebaseUser {
 	uid: string;
 	email: string | null;
 	isAnonymous: boolean;
-	[key: string]: any; // For additional platform-specific properties
+	[key: string]: unknown; // For additional platform-specific properties
 }
 
 // Platform-specific auth functions interface
@@ -48,6 +48,7 @@ interface AuthFunctions {
 
 // Platform-specific function selection
 const getAuthFunctions = (): AuthFunctions => {
+	// @ts-ignore Firebase legacy auth modules - type compatibility issues
 	return Platform.OS === "web" ? AuthWeb : AuthNative;
 };
 
@@ -189,8 +190,8 @@ export function useAuth() {
 				...prev,
 				loading: false,
 				error: { 
-				code: (error as any)?.code || "unknown", 
-				message: (error as any)?.message || "An error occurred" 
+				code: error instanceof Error && 'code' in error ? (error as { code: string }).code : "unknown", 
+				message: error instanceof Error ? error.message : "An error occurred" 
 			},
 			}));
 		}
@@ -211,8 +212,8 @@ export function useAuth() {
 				...prev,
 				loading: false,
 				error: { 
-				code: (error as any)?.code || "unknown", 
-				message: (error as any)?.message || "An error occurred" 
+				code: error instanceof Error && 'code' in error ? (error as { code: string }).code : "unknown", 
+				message: error instanceof Error ? error.message : "An error occurred" 
 			},
 			}));
 		}
@@ -233,8 +234,8 @@ export function useAuth() {
 				...prev,
 				loading: false,
 				error: { 
-				code: (error as any)?.code || "unknown", 
-				message: (error as any)?.message || "An error occurred" 
+				code: error instanceof Error && 'code' in error ? (error as { code: string }).code : "unknown", 
+				message: error instanceof Error ? error.message : "An error occurred" 
 			},
 			}));
 		}
@@ -255,8 +256,8 @@ export function useAuth() {
 				...prev,
 				loading: false,
 				error: { 
-				code: (error as any)?.code || "unknown", 
-				message: (error as any)?.message || "An error occurred" 
+				code: error instanceof Error && 'code' in error ? (error as { code: string }).code : "unknown", 
+				message: error instanceof Error ? error.message : "An error occurred" 
 			},
 			}));
 		}

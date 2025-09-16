@@ -28,8 +28,8 @@ export function getSupabaseClient(): SupabaseClient<Database> {
 
 // Test utility to reset service state
 export function resetSupabaseService(): void {
-	(supabaseService as any).initialized = false;
-	(supabaseService as any).client = undefined;
+	(supabaseService as unknown as { initialized: boolean; client: unknown }).initialized = false;
+	(supabaseService as unknown as { initialized: boolean; client: unknown }).client = undefined;
 }
 
 export { SupabaseClient } from "@supabase/supabase-js";

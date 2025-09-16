@@ -247,19 +247,19 @@ export function toDbFormat(user: UserAccount): Record<string, unknown> {
 /**
  * Converts database format to UserAccount
  */
-export function fromDbFormat(dbRecord: any): UserAccount {
+export function fromDbFormat(dbRecord: Record<string, unknown>): UserAccount {
   const user: UserAccount = {
-    id: dbRecord.id,
-    isAnonymous: dbRecord.is_anonymous,
-    createdAt: new Date(dbRecord.created_at)
+    id: dbRecord.id as string,
+    isAnonymous: dbRecord.is_anonymous as boolean,
+    createdAt: new Date(dbRecord.created_at as string)
   };
 
   if (dbRecord.email) {
-    user.email = dbRecord.email;
+    user.email = dbRecord.email as string;
   }
 
   if (dbRecord.last_sync_at) {
-    user.lastSyncAt = new Date(dbRecord.last_sync_at);
+    user.lastSyncAt = new Date(dbRecord.last_sync_at as string);
   }
 
   // Validate the converted record

@@ -10,6 +10,67 @@
 import { TestDevice } from './TestDevice';
 import { Exercise } from '../models/Exercise';
 import { UserAccount } from '../models/UserAccount';
+import type { NetworkSimulationConfig } from '../../specs/001-we-are-actually/contracts/test-infrastructure';
+
+// Interface adapters for type-safe conversions
+interface ExerciseContractFormat {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+  syncStatus: string;
+  userId?: string;
+}
+
+interface TestDeviceState {
+  authState: unknown;
+  exercises: unknown[];
+  syncOperations: unknown[];
+  networkStatus: string;
+}
+
+// Adapter functions for type conversion
+function adaptExerciseFromContract(exercise: ExerciseContractFormat): Exercise {
+  return {
+    id: exercise.id,
+    name: exercise.name,
+    user_id: exercise.userId || '',
+    created_at: exercise.createdAt,
+    updated_at: exercise.updatedAt,
+    deleted: false
+  };
+}
+
+function adaptExercisesFromContract(exercises: ExerciseContractFormat[]): Exercise[] {
+  return exercises.map(adaptExerciseFromContract);
+}
+
+interface SyncOperationResult {
+  status: 'pending' | 'error' | 'synced';
+  error?: { message: string };
+}
+
+function adaptDeviceStateToRecord(state: TestDeviceState): Record<string, unknown> {
+  return {
+    authState: state.authState,
+    exercises: state.exercises,
+    syncOperations: state.syncOperations,
+    networkStatus: state.networkStatus
+  };
+}
+
+// Internal device manipulation interface for testing
+interface TestDeviceInternal {
+  _authState: unknown;
+  _exercises: unknown[];
+  _addToSyncQueue: (operation: string, id: string, type: string, data: unknown) => void;
+  // Include all TestDevice methods that we need to access
+  getExercises(): Promise<ExerciseContractFormat[]>;
+  getExercise(id: string): Promise<ExerciseContractFormat | null>;
+  authState: { currentUser: UserAccount | null; authenticated: boolean; session?: { userId: string } };
+  initialized: boolean;
+  networkStatus: boolean;
+}
 
 export interface TestAppOptions {
   testId?: string;
@@ -89,9 +150,9 @@ export class TestApp {
     return this.device.networkStatus;
   }
 
-  async simulateNetworkIssues(enabled: boolean, config?: Record<string, unknown>): Promise<void> {
+  async simulateNetworkIssues(enabled: boolean, config?: NetworkSimulationConfig): Promise<void> {
     this._ensureInitialized();
-    await this.device.simulateNetworkIssues(enabled, config as any);
+    await this.device.simulateNetworkIssues(enabled, config);
   }
 
   // Authentication Methods (delegated to device)
@@ -215,7 +276,8 @@ export class TestApp {
     // Simulate UI interaction delay
     await this._simulateUIInteraction();
     
-    return await this.device.addExercise(name) as any;
+    const exercise = await this.device.addExercise(name);
+    return adaptExerciseFromContract(exercise);
   }
 
   async updateExercise(id: string, name: string): Promise<Exercise> {
@@ -224,7 +286,8 @@ export class TestApp {
     // Simulate UI interaction delay
     await this._simulateUIInteraction();
     
-    return await this.device.updateExercise(id, name) as any;
+    const exercise = await this.device.updateExercise(id, name);
+    return adaptExerciseFromContract(exercise);
   }
 
   async deleteExercise(id: string): Promise<void> {
@@ -238,12 +301,14 @@ export class TestApp {
 
   async getExercises(): Promise<Exercise[]> {
     this._ensureInitialized();
-    return await this.device.getExercises() as any;
+    const exercises = await this.device.getExercises();
+    return adaptExercisesFromContract(exercises);
   }
 
   async getExercise(id: string): Promise<Exercise | null> {
     this._ensureInitialized();
-    return await this.device.getExercise(id);
+    const exercise = await this.device.getExercise(id);
+    return exercise ? adaptExerciseFromContract(exercise) : null;
   }
 
   // UI State Simulation
@@ -285,14 +350,18 @@ export class TestApp {
     this._ensureInitialized();
     
     if (exerciseId) {
-      return await this.device.getSyncStatus(exerciseId) as any;
+      const status = await this.device.getSyncStatus(exerciseId);
+      if (typeof status === 'string') {
+        return { hasErrors: status === 'error', errorMessage: status === 'error' ? 'Sync error' : undefined };
+      }
+      return status as { hasErrors: boolean; errorMessage?: string };
     }
     
     // Return overall sync status in expected format
     const pendingOps = await this.device.getPendingSyncOperations();
     return {
       hasErrors: pendingOps.some(op => op.status === 'error'),
-      errorMessage: (pendingOps.find(op => op.status === 'error') as any)?.error?.message
+      errorMessage: (pendingOps.find(op => op.status === 'error') as SyncOperationResult)?.error?.message
     };
   }
 
@@ -383,7 +452,16 @@ export class TestApp {
   // Device State Access
   async getDeviceState(): Promise<Record<string, unknown>> {
     this._ensureInitialized();
-    return this.device.getDeviceState() as any;
+    const deviceState = this.device.getDeviceState();
+    // Transform the device state to match our internal TestDeviceState interface
+    const deviceRecord = deviceState as unknown as Record<string, unknown>;
+    const state: TestDeviceState = {
+      authState: deviceRecord.authState,
+      exercises: deviceRecord.exercises as unknown[],
+      syncOperations: deviceRecord.syncOperations as unknown[],
+      networkStatus: deviceRecord.networkStatus as string
+    };
+    return adaptDeviceStateToRecord(state);
   }
 
   async getAppState(): Promise<Record<string, unknown>> {
@@ -413,7 +491,7 @@ export class TestApp {
     
     // Pre-set user state before init to ensure it's preserved
     if (currentUser) {
-      (this.device as any)._authState = {
+      (this.device as unknown as TestDeviceInternal)._authState = {
         authenticated: !currentUser.isAnonymous,
         currentUser: currentUser,
         session: currentUser.isAnonymous ? undefined : { userId: currentUser.id }
@@ -436,11 +514,11 @@ export class TestApp {
       };
       
       // Add to internal exercises array directly
-      (this.device as any)._exercises.push(internalExercise);
+      (this.device as unknown as TestDeviceInternal)._exercises.push(internalExercise);
       
       // Restore sync queue entries if they were pending
       if (exercise.syncStatus === 'pending') {
-        (this.device as any)._addToSyncQueue('create', exercise.id, 'exercise', internalExercise);
+        (this.device as unknown as TestDeviceInternal)._addToSyncQueue('create', exercise.id, 'exercise', internalExercise);
       }
     }
   }

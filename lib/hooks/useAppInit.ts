@@ -59,15 +59,15 @@ export const useAppInit = () => {
 					operation: "data_layer_init",
 					duration: Date.now() - startTime
 				});
-			} catch (error: any) {
+			} catch (error: unknown) {
 				logger.error("App initialization error", {
 					service: "App Init",
 					platform: "React Native",
 					operation: "init",
 					duration: Date.now() - startTime,
 					error: {
-						message: error.message,
-						stack: error.stack
+						message: (error as Error).message,
+						stack: (error as Error).stack
 					}
 				});
 				

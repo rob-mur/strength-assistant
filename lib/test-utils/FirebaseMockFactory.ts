@@ -17,7 +17,7 @@ interface FirebaseUser {
 
 interface FirebaseAuthResponse {
   user: FirebaseUser | null;
-  credential?: any;
+  credential?: unknown;
 }
 
 export class FirebaseMockFactory {
@@ -121,7 +121,7 @@ export class FirebaseMockFactory {
   /**
    * Create Firestore mock with basic CRUD operations
    */
-  static createFirestoreMock(): any {
+  static createFirestoreMock(): unknown {
     const mockDoc = {
       get: jest.fn(() => Promise.resolve({
         exists: true,
@@ -144,7 +144,7 @@ export class FirebaseMockFactory {
       }),
     };
 
-    const mockCollection: any = {
+    const mockCollection: Record<string, unknown> = {
       add: jest.fn(() => Promise.resolve({ id: `doc-${++this.userCounter}` })),
       doc: jest.fn(() => mockDoc),
       where: jest.fn(() => mockCollection),
@@ -170,7 +170,7 @@ export class FirebaseMockFactory {
     };
 
     return {
-      collection: jest.fn((): any => mockCollection),
+      collection: jest.fn((): Record<string, unknown> => mockCollection),
       enableNetwork: jest.fn(() => Promise.resolve()),
       disableNetwork: jest.fn(() => Promise.resolve()),
       clearPersistence: jest.fn(() => Promise.resolve()),

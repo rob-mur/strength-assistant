@@ -10,7 +10,7 @@ export class RepositoryLogger {
   static logSuccess(
     service: string,
     operation: string,
-    additionalContext?: Record<string, any>
+    additionalContext?: Record<string, unknown>
   ): void {
     logger.info(`${operation} completed successfully`, {
       service,
@@ -27,7 +27,7 @@ export class RepositoryLogger {
     service: string,
     operation: string,
     error: Error,
-    additionalContext?: Record<string, any>
+    additionalContext?: Record<string, unknown>
   ): void {
     logger.error(`Failed to ${operation}`, {
       service,

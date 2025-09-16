@@ -5,11 +5,12 @@ export class RepositoryUtils {
   /**
    * Validate exercise data structure
    */
-  static validateExerciseData(data: any): boolean {
+  static validateExerciseData(data: unknown): boolean {
     if (data === null || data === undefined) return false;
     if (typeof data !== 'object') return false;
-    if (typeof data.name !== 'string') return false;
-    if (data.name.trim().length === 0) return false;
+    const obj = data as Record<string, unknown>;
+    if (typeof obj.name !== 'string') return false;
+    if (obj.name.trim().length === 0) return false;
     return true;
   }
 

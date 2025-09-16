@@ -222,26 +222,26 @@ export function toDbFormat(syncState: SyncStateRecord): Record<string, unknown> 
 /**
  * Converts database format to SyncStateRecord
  */
-export function fromDbFormat(dbRecord: any): SyncStateRecord {
+export function fromDbFormat(dbRecord: Record<string, unknown>): SyncStateRecord {
   const syncState: SyncStateRecord = {
-    recordId: dbRecord.record_id,
-    recordType: dbRecord.record_type,
-    operation: dbRecord.operation,
-    pendingSince: new Date(dbRecord.pending_since),
-    attempts: dbRecord.attempts
+    recordId: dbRecord.record_id as string,
+    recordType: dbRecord.record_type as string,
+    operation: dbRecord.operation as 'create' | 'update' | 'delete',
+    pendingSince: new Date(dbRecord.pending_since as string),
+    attempts: dbRecord.attempts as number
   };
 
   if (dbRecord.last_error) {
-    syncState.lastError = dbRecord.last_error;
+    syncState.lastError = dbRecord.last_error as string;
   }
 
   if (dbRecord.next_retry_at) {
-    syncState.nextRetryAt = new Date(dbRecord.next_retry_at);
+    syncState.nextRetryAt = new Date(dbRecord.next_retry_at as string);
   }
 
   if (dbRecord.payload) {
     try {
-      syncState.payload = JSON.parse(dbRecord.payload);
+      syncState.payload = JSON.parse(dbRecord.payload as string);
     } catch (error) {
       console.warn('Failed to parse sync state payload:', error);
     }

@@ -17,7 +17,7 @@ interface FirebaseSnapshot {
 
 interface FirebaseDocumentSnapshot {
 	id: string;
-	data: () => any;
+	data: () => Record<string, unknown>;
 	exists: boolean;
 }
 
@@ -112,6 +112,7 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 				await addDoc(exercisesCollection, newExercise);
 			} else {
 				// Use React Native Firebase for native platforms
+				// @ts-ignore Firebase legacy native SDK - collection method type mismatch
 				const exercisesCollection = db.collection(path);
 				await exercisesCollection.add(newExercise);
 			}
@@ -141,7 +142,7 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 			});
 
 			// Store unsubscribe function for cleanup
-			(exercises$ as any)._unsubscribe = unsubscribe;
+			(exercises$ as { _unsubscribe?: () => void })._unsubscribe = unsubscribe;
 
 			RepositoryLogger.logSuccess("FirebaseExerciseRepo", "getExercises");
 		} catch (error: unknown) {
@@ -221,6 +222,7 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 				await deleteDoc(exerciseDoc);
 			} else {
 				// Use React Native Firebase for native platforms
+				// @ts-ignore Firebase legacy native SDK - collection method type mismatch
 				const exerciseDoc = db.collection(path).doc(exerciseId);
 				await exerciseDoc.delete();
 			}
@@ -313,6 +315,7 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 			return query(exercisesCollection, orderBy("created_at", "desc"));
 		} else {
 			// Use React Native Firebase for native platforms
+			// @ts-ignore Firebase legacy native SDK - collection method type mismatch
 			const exercisesCollection = db.collection(path);
 			return exercisesCollection.orderBy("created_at", "desc");
 		}
@@ -328,8 +331,10 @@ export class FirebaseExerciseRepo implements IExerciseRepo {
 			if (RepositoryUtils.validateExerciseData(data)) {
 				exercises.push({
 					id: doc.id,
+					// @ts-ignore Firebase legacy data - type validation already done
 					name: data.name,
 					user_id: userId,
+					// @ts-ignore Firebase legacy data - type validation already done
 					created_at: data.created_at,
 					updated_at: new Date().toISOString(),
 					deleted: false

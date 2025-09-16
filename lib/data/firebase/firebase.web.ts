@@ -78,7 +78,7 @@ class FirebaseWebService extends FirebaseService {
 
 			try {
 				// Check if emulator is already connected
-				if (!(this.db as any)._delegate?._databaseId?.database?.includes('emulator')) {
+				if (!(this.db as { _delegate?: { _databaseId?: { database?: string } } })._delegate?._databaseId?.database?.includes('emulator')) {
 					connectFirestoreEmulator(this.db, host, port);
 					this.logInfo("Successfully connected to Firestore emulator", {
 						operation: "emulator_setup",

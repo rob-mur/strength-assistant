@@ -196,17 +196,17 @@ export function toDbFormat(exercise: ExerciseRecord): ExerciseDbFormat {
 /**
  * Converts database format to ExerciseRecord
  */
-export function fromDbFormat(dbRecord: any): ExerciseRecord {
+export function fromDbFormat(dbRecord: Record<string, unknown>): ExerciseRecord {
   const exercise: ExerciseRecord = {
-    id: dbRecord.id,
-    name: dbRecord.name,
-    createdAt: new Date(dbRecord.created_at),
-    updatedAt: new Date(dbRecord.updated_at),
-    syncStatus: dbRecord.sync_status || 'pending'
+    id: dbRecord.id as string,
+    name: dbRecord.name as string,
+    createdAt: new Date(dbRecord.created_at as string),
+    updatedAt: new Date(dbRecord.updated_at as string),
+    syncStatus: (dbRecord.sync_status as 'pending' | 'synced' | 'error') || 'pending'
   };
 
   if (dbRecord.user_id) {
-    exercise.userId = dbRecord.user_id;
+    exercise.userId = dbRecord.user_id as string;
   }
 
   // Validate the converted record

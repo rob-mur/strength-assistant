@@ -9,14 +9,28 @@ import { supabaseClient } from './SupabaseClient';
 import type { UserAccount } from '../../models/UserAccount';
 import { createAnonymousUser, createAuthenticatedUser } from '../../models/UserAccount';
 
+interface SupabaseClient {
+  auth: {
+    getUser: () => Promise<{ data: { user: unknown } | null; error: unknown }>;
+    signInAnonymously: () => Promise<{ data: unknown; error: unknown }>;
+    signUp: (credentials: { email: string; password: string }) => Promise<{ data: unknown; error: unknown }>;
+    signInWithPassword: (credentials: { email: string; password: string }) => Promise<{ data: unknown; error: unknown }>;
+    signOut: () => Promise<{ error: unknown }>;
+    onAuthStateChange: (callback: (event: string, session: unknown) => void) => { data: { subscription: { unsubscribe: () => void } } };
+    linkEmailPassword: (email: string, password: string) => Promise<{ data: { user: unknown }; error: unknown }>;
+    forceSessionExpiry: () => Promise<void>;
+  };
+  [key: string]: unknown;
+}
+
 export class SupabaseAuth {
   private authStateListeners: ((user: UserAccount | null) => void)[] = [];
-  private client: any;
+  private client: SupabaseClient;
 
   constructor() {
     // Get the client - handle both real and mocked cases
     try {
-      this.client = supabaseClient?.getSupabaseClient?.() || supabaseClient;
+      this.client = (supabaseClient?.getSupabaseClient?.() || supabaseClient) as unknown as SupabaseClient;
     } catch (error) {
       // In test environment, create a mock client
       if (process.env.NODE_ENV === 'test') {
@@ -28,9 +42,9 @@ export class SupabaseAuth {
     
     if (this.client?.auth?.onAuthStateChange) {
       // Set up auth state listener with Supabase
-      this.client.auth.onAuthStateChange((event: string, session: any) => {
-        const user = session?.user 
-          ? this.mapSupabaseUserToUserAccount(session.user)
+      this.client.auth.onAuthStateChange((event: string, session: unknown) => {
+        const user = (session as { user?: unknown })?.user 
+          ? this.mapSupabaseUserToUserAccount((session as { user: unknown }).user)
           : null;
         
         // Notify all listeners
@@ -45,7 +59,7 @@ export class SupabaseAuth {
     }
   }
 
-  private createMockClient() {
+  private createMockClient(): SupabaseClient {
     return {
       auth: {
         signUp: jest.fn(() => Promise.resolve({
@@ -65,9 +79,21 @@ export class SupabaseAuth {
           data: { user: { id: 'test-id', email: 'test@example.com', created_at: new Date().toISOString() } },
           error: null
         })),
-        onAuthStateChange: jest.fn(() => ({ data: { subscription: {} }, unsubscribe: jest.fn() }))
+        onAuthStateChange: jest.fn(() => ({ 
+          data: { 
+            subscription: { 
+              unsubscribe: jest.fn() 
+            } 
+          }, 
+          unsubscribe: jest.fn() 
+        })),
+        linkEmailPassword: jest.fn(() => Promise.resolve({
+          data: { user: { id: 'test-id', email: 'test@example.com', created_at: new Date().toISOString() } },
+          error: null
+        })),
+        forceSessionExpiry: jest.fn(() => Promise.resolve())
       }
-    };
+    } as unknown as SupabaseClient;
   }
 
   /**
@@ -89,14 +115,14 @@ export class SupabaseAuth {
     });
 
     if (error) {
-      throw new Error(`Sign up failed: ${error.message}`);
+      throw new Error(`Sign up failed: ${(error as { message: string }).message}`);
     }
 
-    if (!data.user) {
+    if (!(data as { user: unknown }).user) {
       throw new Error('Sign up failed: No user returned');
     }
 
-    return this.mapSupabaseUserToUserAccount(data.user);
+    return this.mapSupabaseUserToUserAccount((data as { user: unknown }).user);
   }
 
   /**
@@ -109,14 +135,14 @@ export class SupabaseAuth {
     });
 
     if (error) {
-      throw new Error(`Sign in failed: ${error.message}`);
+      throw new Error(`Sign in failed: ${(error as { message: string }).message}`);
     }
 
-    if (!data.user) {
+    if (!(data as { user: unknown }).user) {
       throw new Error('Sign in failed: No user returned');
     }
 
-    return this.mapSupabaseUserToUserAccount(data.user);
+    return this.mapSupabaseUserToUserAccount((data as { user: unknown }).user);
   }
 
   /**
@@ -126,21 +152,22 @@ export class SupabaseAuth {
     const { data, error } = await this.client.auth.signInAnonymously();
 
     if (error) {
-      throw new Error(`Anonymous sign in failed: ${error.message}`);
+      throw new Error(`Anonymous sign in failed: ${(error as { message: string }).message}`);
     }
 
-    if (!data.user) {
+    if (!(data as { user: unknown }).user) {
       throw new Error('Anonymous sign in failed: No user returned');
     }
 
-    return this.mapSupabaseUserToUserAccount(data.user);
+    return this.mapSupabaseUserToUserAccount((data as { user: unknown }).user);
   }
 
   /**
    * Get current authenticated user
    */
   async getCurrentUser(): Promise<UserAccount | null> {
-    const { data: { user } } = await this.client.auth.getUser();
+    const { data } = await this.client.auth.getUser();
+    const user = (data as { user: unknown } | null)?.user;
     
     if (!user) {
       return null;
@@ -156,7 +183,7 @@ export class SupabaseAuth {
     const { error } = await this.client.auth.signOut();
     
     if (error) {
-      throw new Error(`Sign out failed: ${error.message}`);
+      throw new Error(`Sign out failed: ${(error as { message: string }).message}`);
     }
   }
 
@@ -178,22 +205,23 @@ export class SupabaseAuth {
   /**
    * Map Supabase User to our UserAccount interface
    */
-  private mapSupabaseUserToUserAccount(supabaseUser: any): UserAccount {
-    const isAnonymous = !supabaseUser.email;
+  private mapSupabaseUserToUserAccount(supabaseUser: unknown): UserAccount {
+    const userData = supabaseUser as { id: string; email?: string; created_at: string };
+    const isAnonymous = !userData.email;
     
     if (isAnonymous) {
       const user = createAnonymousUser();
       return {
         ...user,
-        id: supabaseUser.id,
-        createdAt: new Date(supabaseUser.created_at)
+        id: userData.id,
+        createdAt: new Date(userData.created_at)
       };
     } else {
-      const user = createAuthenticatedUser(supabaseUser.email);
+      const user = createAuthenticatedUser(userData.email!);
       return {
         ...user,
-        id: supabaseUser.id,
-        createdAt: new Date(supabaseUser.created_at)
+        id: userData.id,
+        createdAt: new Date(userData.created_at)
       };
     }
   }
@@ -238,10 +266,10 @@ export class SupabaseAuth {
     const { data, error } = await this.client.auth.linkEmailPassword(email, password);
     
     if (error) {
-      throw new Error(error.message);
+      throw new Error((error as { message: string }).message);
     }
 
-    if (!data.user) {
+    if (!(data as { user: unknown }).user) {
       throw new Error('Failed to upgrade anonymous user');
     }
 

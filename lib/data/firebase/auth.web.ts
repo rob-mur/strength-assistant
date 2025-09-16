@@ -76,7 +76,7 @@ class AuthWebService extends FirebaseService {
 
 			try {
 				// Check if emulator is already connected (prevents double connection errors)
-				if (!(this.authInstance as any)._delegate?._config?.emulator) {
+				if (!(this.authInstance as { _delegate?: { _config?: { emulator?: unknown } } })._delegate?._config?.emulator) {
 					connectAuthEmulator(this.authInstance, emulatorUrl, { disableWarnings: true });
 					this.logInfo("Successfully connected to Auth emulator", {
 						operation: "emulator_setup",

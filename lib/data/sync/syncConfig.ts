@@ -26,12 +26,12 @@ async function loadInitialData() {
 		const user = await supabaseClient.getCurrentUser();
 		if (!user) return;
 
-		const { data, error } = await (supabaseClient.getSupabaseClient().from('exercises') as any)
+		const { data, error } = await (supabaseClient.getSupabaseClient().from('exercises') as unknown as SupabaseQueryBuilder)
 			.select('*')
 			.eq('user_id', user.id);
 
 		if (error) throw error;
-		exercises$.set(data || []);
+		exercises$.set((data as Exercise[]) || []);
 	} catch (error) {
 		console.error('Failed to load initial exercises:', error);
 	}
@@ -40,14 +40,28 @@ async function loadInitialData() {
 /**
  * Set up real-time subscription for exercises
  */
+interface SupabaseSubscription {
+	unsubscribe: () => void;
+	[key: string]: unknown;
+}
+
+interface SupabaseQueryBuilder {
+	select: (fields: string) => SupabaseQueryBuilder;
+	eq: (field: string, value: string) => Promise<{ data: unknown; error: unknown }>;
+	insert: (data: unknown) => Promise<{ data: unknown; error: unknown }>;
+	update: (data: unknown) => Promise<{ data: unknown; error: unknown }>;
+	delete: () => Promise<{ data: unknown; error: unknown }>;
+}
+
 function setupRealtimeSubscription() {
-	let subscription: any = null;
+	let subscription: SupabaseSubscription | null = null;
 
 	const startSubscription = async () => {
 		try {
 			const user = await supabaseClient.getCurrentUser();
 			if (!user) return;
 
+			// @ts-ignore Supabase real-time subscription - complex type compatibility with RealtimeChannel
 			subscription = supabaseClient.getSupabaseClient()
 				.channel('exercises')
 				.on('postgres_changes', {
@@ -119,6 +133,7 @@ export async function syncExerciseToSupabase(exercise: Exercise): Promise<void> 
 			created_at: exercise.created_at,
 		};
 
+		// @ts-ignore Supabase query builder - complex type compatibility with upsert method
 		const { error } = await (supabaseClient.getSupabaseClient().from('exercises') as any)
 			.upsert(exerciseToUpsert);
 		if (error) throw error;
@@ -133,6 +148,7 @@ export async function syncExerciseToSupabase(exercise: Exercise): Promise<void> 
  */
 export async function deleteExerciseFromSupabase(exerciseId: string, userId: string): Promise<void> {
 	try {
+		// @ts-ignore Supabase query builder - complex type compatibility with delete/eq methods
 		const { error } = await (supabaseClient.getSupabaseClient().from('exercises') as any)
 			.delete()
 			.eq('id', exerciseId)
@@ -158,12 +174,12 @@ export const syncHelpers = {
 			const user = await supabaseClient.getCurrentUser();
 			if (!user) return;
 
-			const { data, error } = await (supabaseClient.getSupabaseClient().from('exercises') as any)
+			const { data, error } = await (supabaseClient.getSupabaseClient().from('exercises') as unknown as SupabaseQueryBuilder)
 				.select('*')
 				.eq('user_id', user.id);
 
 			if (!error && data) {
-				exercises$.set(data);
+				exercises$.set(data as Exercise[]);
 			}
 		} catch (error) {
 			console.error('Failed to force sync:', error);

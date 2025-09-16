@@ -8,6 +8,28 @@
 
 import { TestApp } from './TestApp';
 import { Exercise } from '../models/Exercise';
+import { UserAccount } from '../models/UserAccount';
+
+// Type-safe interfaces for MigrationTestApp
+interface FeatureFlagResult {
+  rollback: boolean;
+  previous?: boolean;
+}
+
+interface AuthOperationResult {
+  user: UserAccount | null;
+  success: boolean;
+  error?: string;
+}
+
+interface MigrationState {
+  currentBackend: 'firebase' | 'supabase';
+  migrationInProgress: boolean;
+  dataConsistencyEnabled: boolean;
+  featureFlagValue: string | undefined;
+  app: Record<string, unknown>;
+  device: Record<string, unknown>;
+}
 
 /**
  * MigrationTestApp class for migration testing
@@ -63,7 +85,7 @@ export class MigrationTestApp extends TestApp {
   }
 
   // Feature flag methods used by integration tests
-  async setFeatureFlag(flag: string, value: boolean): Promise<any> {
+  async setFeatureFlag(flag: string, value: boolean): Promise<FeatureFlagResult> {
     if (flag === 'USE_SUPABASE_DATA') {
       const backend = value ? 'supabase' : 'firebase';
       await this.setBackend(backend);
@@ -403,14 +425,7 @@ export class MigrationTestApp extends TestApp {
   }
 
   // Migration State
-  async getMigrationState(): Promise<{
-    currentBackend: 'firebase' | 'supabase';
-    migrationInProgress: boolean;
-    dataConsistencyEnabled: boolean;
-    featureFlagValue: string | undefined;
-    app: any;
-    device: any;
-  }> {
+  async getMigrationState(): Promise<MigrationState> {
     const appState = await this.getAppState();
     
     return {
@@ -418,8 +433,8 @@ export class MigrationTestApp extends TestApp {
       migrationInProgress: this.migrationInProgress,
       dataConsistencyEnabled: this.dataConsistencyCheck,
       featureFlagValue: process.env.USE_SUPABASE_DATA,
-      app: appState.app,
-      device: appState.device
+      app: appState.app as Record<string, unknown>,
+      device: appState.device as Record<string, unknown>
     };
   }
 
@@ -438,16 +453,16 @@ export class MigrationTestApp extends TestApp {
   }
 
   // Authentication methods
-  async signInAnonymously(): Promise<any> {
+  async signInAnonymously(): Promise<AuthOperationResult> {
     // Create proper anonymous user for integration tests
-    const user = {
+    const user: UserAccount = {
       id: `anon-${Date.now()}`,
       email: undefined,
       isAnonymous: true,
       createdAt: new Date()
     };
     this.currentUser = user;
-    return user;
+    return { user, success: true };
   }
 
   async setNetworkStatus(_isOnline: boolean): Promise<void> {
@@ -498,9 +513,9 @@ export class MigrationTestApp extends TestApp {
   }
 
   // Authentication methods expected by integration tests
-  async signUp(email: string, _password: string): Promise<any> {
+  async signUp(email: string, _password: string): Promise<UserAccount> {
     // Simulate user signup - return user object and set as current
-    const user = {
+    const user: UserAccount = {
       id: `user-${Date.now()}`,
       email: email,
       isAnonymous: false,
@@ -510,9 +525,9 @@ export class MigrationTestApp extends TestApp {
     return user;
   }
 
-  async signIn(email: string, _password: string): Promise<any> {
+  async signIn(email: string, _password: string): Promise<UserAccount> {
     // Simulate user signin - return user object and set as current
-    const user = {
+    const user: UserAccount = {
       id: `user-${Date.now()}`,
       email: email,
       isAnonymous: false,
@@ -520,6 +535,17 @@ export class MigrationTestApp extends TestApp {
     };
     this.currentUser = user;
     return user;
+  }
+
+  // Migration-specific auth methods that return result objects
+  async signUpWithResult(email: string, _password: string): Promise<AuthOperationResult> {
+    const user = await this.signUp(email, _password);
+    return { user, success: true };
+  }
+
+  async signInWithResult(email: string, _password: string): Promise<AuthOperationResult> {
+    const user = await this.signIn(email, _password);
+    return { user, success: true };
   }
 
   async signOut(): Promise<void> {
@@ -527,13 +553,13 @@ export class MigrationTestApp extends TestApp {
     this.currentUser = null;
   }
 
-  async getCurrentUser(): Promise<any> {
+  async getCurrentUser(): Promise<UserAccount | null> {
     // Return current user or null if signed out
     return this.currentUser;
   }
 
 
-  private currentUser: any = null;
+  private currentUser: UserAccount | null = null;
 }
 
 // Export for tests

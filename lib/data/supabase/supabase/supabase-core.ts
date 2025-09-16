@@ -159,13 +159,13 @@ export abstract class SupabaseService {
 				operation: "init",
 				duration: Date.now() - startTime,
 			});
-		} catch (error: any) {
+		} catch (error: unknown) {
 			this.logError("Failed to initialize Supabase", {
 				operation: "init",
 				duration: Date.now() - startTime,
 				error: {
-					message: error.message,
-					stack: error.stack,
+					message: error instanceof Error ? error.message : String(error),
+					stack: error instanceof Error ? error.stack : undefined,
 				},
 			});
 			throw error;
