@@ -48,7 +48,8 @@ const ProfileTabIcon = (props: TabIconProps) => (
   />
 );
 
-const CustomTabBar = (props: unknown) => <TabBar {...props} />;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const CustomTabBar = (props: any) => <TabBar {...props} />;
 
 const TabLayout = () => {
   return (
