@@ -47,10 +47,15 @@ interface SupabaseSubscription {
 
 interface SupabaseQueryBuilder {
 	select: (fields: string) => SupabaseQueryBuilder;
-	eq: (field: string, value: string) => Promise<{ data: unknown; error: unknown }>;
+	eq: (field: string, value: string) => SupabaseDeleteQueryBuilder | Promise<{ data: unknown; error: unknown }>;
 	insert: (data: unknown) => Promise<{ data: unknown; error: unknown }>;
 	update: (data: unknown) => Promise<{ data: unknown; error: unknown }>;
-	delete: () => Promise<{ data: unknown; error: unknown }>;
+	delete: () => SupabaseDeleteQueryBuilder;
+	upsert: (data: unknown) => Promise<{ data: unknown; error: unknown }>;
+}
+
+interface SupabaseDeleteQueryBuilder extends Promise<{ data: unknown; error: unknown }> {
+	eq: (field: string, value: string) => SupabaseDeleteQueryBuilder;
 }
 
 function setupRealtimeSubscription() {
@@ -133,9 +138,7 @@ export async function syncExerciseToSupabase(exercise: Exercise): Promise<void> 
 			created_at: exercise.created_at,
 		};
 
-		// @ts-ignore Supabase query builder - complex type compatibility with upsert method
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const { error } = await (supabaseClient.getSupabaseClient().from('exercises') as any)
+		const { error } = await (supabaseClient.getSupabaseClient().from('exercises') as unknown as SupabaseQueryBuilder)
 			.upsert(exerciseToUpsert);
 		if (error) throw error;
 	} catch (error) {
@@ -149,9 +152,7 @@ export async function syncExerciseToSupabase(exercise: Exercise): Promise<void> 
  */
 export async function deleteExerciseFromSupabase(exerciseId: string, userId: string): Promise<void> {
 	try {
-		// @ts-ignore Supabase query builder - complex type compatibility with delete/eq methods
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const { error } = await (supabaseClient.getSupabaseClient().from('exercises') as any)
+		const { error } = await (supabaseClient.getSupabaseClient().from('exercises') as unknown as SupabaseQueryBuilder)
 			.delete()
 			.eq('id', exerciseId)
 			.eq('user_id', userId);
