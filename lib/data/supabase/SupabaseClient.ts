@@ -33,7 +33,7 @@ export class SupabaseClient {
 		return client;
 	}
 
-	private validateClient(client: any): void {
+		private validateClient(client: BaseSupabaseClient<Database>): void {
 		if (!client || typeof client.from !== 'function') {
 			throw new Error('Invalid Supabase client: missing required methods');
 		}

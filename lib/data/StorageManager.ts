@@ -118,7 +118,7 @@ export class StorageManager implements IStorageManager {
     return { isConsistent, errors };
   }
 
-  private validateUserConsistency(supabaseUser: any, firebaseUser: any): {isConsistent: boolean; errors: string[]} {
+  private validateUserConsistency(supabaseUser: { email?: string; isAnonymous?: boolean } | null, firebaseUser: { email?: string; isAnonymous?: boolean } | null): {isConsistent: boolean; errors: string[]} {
     const errors: string[] = [];
     let isConsistent = true;
 
@@ -141,7 +141,8 @@ export class StorageManager implements IStorageManager {
   }
 
   private async validateExerciseConsistency(userId?: string): Promise<{isConsistent: boolean; errors: string[]}> {
-    const [supabaseExercises, firebaseExercises] = await Promise.all([
+    type Exercise = { name: string };
+    const [supabaseExercises, firebaseExercises]: [Exercise[], Exercise[]] = await Promise.all([
       this.supabaseStorage.getExercises(userId),
       this.firebaseStorage.getExercises(userId)
     ]);
@@ -163,7 +164,7 @@ export class StorageManager implements IStorageManager {
     return { isConsistent, errors };
   }
 
-  private validateExerciseNames(supabaseExercises: any[], firebaseExercises: any[]): {isConsistent: boolean; errors: string[]} {
+  private validateExerciseNames(supabaseExercises: { name: string }[], firebaseExercises: { name: string }[]): {isConsistent: boolean; errors: string[]} {
     const errors: string[] = [];
     let isConsistent = true;
 

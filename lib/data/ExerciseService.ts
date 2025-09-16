@@ -316,7 +316,16 @@ export class ExerciseService {
     return true;
   }
 
+
   // ==================== SYNC STATUS MANAGEMENT ====================
+  /**
+   * Get all sync records with status 'error' (failed syncs)
+   */
+  async getFailedSyncs(): Promise<SyncRecord[]> {
+    return Array.from(this.syncRecords.values())
+      .filter(record => record.status === 'error')
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  }
 
   /**
    * Get pending sync records
