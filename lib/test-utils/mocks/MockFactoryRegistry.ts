@@ -311,10 +311,10 @@ export class MockFactoryRegistry {
     }
     
     // Backend-specific ID format validation
-    if (this._config.backendType === 'firebase' && !user.id.match(/^[a-zA-Z0-9]{28}$/)) {
+    if (this._config.backendType === 'firebase' && !/^[a-zA-Z0-9]{28}$/.exec(user.id)) {
       warnings.push('Firebase user ID typically follows 28-character format');
     }
-    if (this._config.backendType === 'supabase' && !user.id.match(/^[a-f0-9-]{36}$/)) {
+    if (this._config.backendType === 'supabase' && !/^[a-f0-9-]{36}$/.exec(user.id)) {
       warnings.push('Supabase user ID typically follows UUID format');
     }
     
@@ -361,12 +361,14 @@ export class MockFactoryRegistry {
     // Backend-specific ID format
     if (this._config.backendType === 'firebase') {
       // Firebase typically uses 28-character alphanumeric IDs
-      if (!normalized.id.match(/^[a-zA-Z0-9]{28}$/)) {
+      const firebaseIdRegex = /^[a-zA-Z0-9]{28}$/;
+      if (!firebaseIdRegex.exec(normalized.id)) {
         normalized.id = this._generateFirebaseUID();
       }
     } else if (this._config.backendType === 'supabase') {
       // Supabase uses UUID format
-      if (!normalized.id.match(/^[a-f0-9-]{36}$/)) {
+      const supabaseIdRegex = /^[a-f0-9-]{36}$/;
+      if (!supabaseIdRegex.exec(normalized.id)) {
         normalized.id = this._convertToUUID(normalized.id);
       }
     }
@@ -383,22 +385,8 @@ export class MockFactoryRegistry {
    * Get backend-specific authentication metadata
    */
   private _getBackendAuthMetadata(): Partial<UserAccount> {
-    switch (this._config.backendType) {
-      case 'firebase':
-        return {
-          // Firebase-specific fields could be added here
-        };
-      case 'supabase':
-        return {
-          // Supabase-specific fields could be added here  
-        };
-      case 'dual':
-        return {
-          // Common fields for dual backend support
-        };
-      default:
-        return {};
-    }
+  // All cases currently return empty objects, so we can simplify:
+  return {};
   }
 
   // ==================== STATISTICS AND MONITORING ====================

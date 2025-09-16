@@ -598,9 +598,13 @@ export class TestDevice {
     let syncStatus: SyncStatus = 'synced';
     
     const syncOps = this._syncQueue.filter(op => op.recordId === exercise.id);
-    const sortedSyncOps = typeof syncOps.toSorted === 'function'
-      ? syncOps.toSorted((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-      : [...syncOps].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    let sortedSyncOps;
+    if (typeof syncOps.toSorted === 'function') {
+      sortedSyncOps = syncOps.toSorted((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    } else {
+      sortedSyncOps = [...syncOps];
+      sortedSyncOps.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    }
     const syncOp = sortedSyncOps[0]; // Most recent
     
     if (syncOp) {

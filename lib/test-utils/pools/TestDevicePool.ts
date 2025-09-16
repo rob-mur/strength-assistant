@@ -28,6 +28,7 @@ interface PooledDevice {
  */
 export class TestDevicePool {
   private static instance: TestDevicePool;
+  // This map must remain mutable for set/clear/delete operations in the pool logic
   private readonly pool: Map<string, PooledDevice> = new Map();
   private readonly maxPoolSize: number;
   private readonly maxIdleTime: number; // milliseconds
@@ -166,7 +167,8 @@ export class TestDevicePool {
    * Generate unique device name
    */
   private generateDeviceName(): string {
-    return `PoolDevice-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  // Use slice instead of deprecated substr
+  return `PoolDevice-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
   }
 
   /**

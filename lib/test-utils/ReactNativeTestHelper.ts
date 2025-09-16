@@ -37,7 +37,7 @@ export interface ReactNativeTestOptions {
 }
 
 export class ReactNativeTestHelper {
-  private options: Required<ReactNativeTestOptions>;
+  private readonly options: Required<ReactNativeTestOptions>;
   
   constructor(options: ReactNativeTestOptions = {}) {
     this.options = {

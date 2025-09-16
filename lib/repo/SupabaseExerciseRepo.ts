@@ -7,7 +7,7 @@ import { syncExerciseToSupabase, deleteExerciseFromSupabase, syncHelpers } from 
 import { v4 as uuidv4 } from 'uuid';
 import { RepositoryUtils } from "./utils/RepositoryUtils";
 // Note: Using basic legend-state without sync for now
-// TODO: Implement proper sync when library supports it
+// Sync will be implemented when the library supports it. Currently using basic legend-state without sync.
 
 // Supabase database row interface for exercises
 interface SupabaseExerciseRow {

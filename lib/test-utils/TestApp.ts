@@ -381,20 +381,21 @@ export class TestApp {
 
   // Form and Input Simulation
   async fillForm(_formData: Record<string, string>): Promise<void> {
-    this._ensureInitialized();
-    
-    // Simulate form filling delay
-    await this._simulateUIInteraction();
-    
-    // Form data would be processed by the actual form components
-    // This is just for test simulation
+  this._ensureInitialized();
+  // Simulate form filling delay
+  await this._simulateUIInteraction();
+  // For test diagnostics, log the form data being filled
+  console.debug('Filling form with data:', _formData);
+  // Form data would be processed by the actual form components
+  // This is just for test simulation
   }
 
   async submitForm(): Promise<void> {
-    this._ensureInitialized();
-    
-    // Simulate form submission delay
-    await this._simulateUIInteraction();
+  this._ensureInitialized();
+  // Simulate form submission delay
+  await this._simulateUIInteraction();
+  // For test diagnostics, log the form submission event
+  console.debug('Submitting form');
   }
 
   async tapButton(buttonName: string): Promise<void> {

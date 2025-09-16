@@ -38,7 +38,7 @@ export interface AnimatedTestOptions {
 }
 
 export class ComponentTestUtils {
-  private options: Required<AnimatedTestOptions>;
+  private readonly options: Required<AnimatedTestOptions>;
   private fakeTimersActive = false;
   
   constructor(options: AnimatedTestOptions = {}) {

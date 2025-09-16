@@ -1,3 +1,49 @@
+// Move helper import to top to satisfy import/first lint rule
+// Type helpers for loose test mocks
+type AnyFn = (...args: any[]) => any;
+type AnyObj = Record<string, any>;
+
+// Helper to create deeply nested Firestore mock
+function createFirestoreMock(): AnyObj {
+  return {
+    collection: jest.fn(() => ({
+      doc: jest.fn(() => ({
+        get: jest.fn().mockResolvedValue({
+          exists: true,
+          data: () => ({ name: 'Test Exercise' })
+        } as any),
+        set: jest.fn().mockResolvedValue(void 0 as any),
+        update: jest.fn().mockResolvedValue(void 0 as any),
+        delete: jest.fn().mockResolvedValue(void 0 as any),
+        onSnapshot: jest.fn((callback: any) => {
+          (callback as any)({
+            exists: true,
+            data: () => ({ name: 'Test Exercise' })
+          } as any);
+          return jest.fn();
+        })
+      })),
+      where: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      get: jest.fn().mockResolvedValue({
+        docs: [{
+          id: 'doc1',
+          data: () => ({ name: 'Test Exercise 1' })
+        }]
+      } as any),
+      onSnapshot: jest.fn((callback: any) => {
+        (callback as any)({
+          docs: [{
+            id: 'doc1',
+            data: () => ({ name: 'Test Exercise 1' })
+          }]
+        } as any);
+        return jest.fn();
+      })
+    }))
+  };
+}
 /**
  * Mock Factory Collection Implementation
  * 
@@ -212,55 +258,18 @@ export class ServiceMockFactoryImpl implements ServiceMockFactory {
       currentUser: null,
       signInWithEmailAndPassword: jest.fn().mockResolvedValue({
         user: { uid: 'test-uid', email: 'test@example.com' }
-      }),
+      } as any),
       createUserWithEmailAndPassword: jest.fn().mockResolvedValue({
         user: { uid: 'test-uid', email: 'test@example.com' }
-      }),
-      signOut: jest.fn().mockResolvedValue(void 0),
-      onAuthStateChanged: jest.fn((callback) => {
-        callback(null); // Start with no user
-        return jest.fn(); // Return unsubscribe function
+      } as any),
+      signOut: jest.fn().mockResolvedValue(void 0 as any),
+      onAuthStateChanged: jest.fn((callback: any) => {
+        (callback as any)(null);
+        return jest.fn();
       })
     } : undefined;
 
-    const firestoreMock = config.firestore ? {
-      collection: jest.fn(() => ({
-        doc: jest.fn(() => ({
-          get: jest.fn().mockResolvedValue({
-            exists: true,
-            data: () => ({ name: 'Test Exercise' })
-          }),
-          set: jest.fn().mockResolvedValue(void 0),
-          update: jest.fn().mockResolvedValue(void 0),
-          delete: jest.fn().mockResolvedValue(void 0),
-          onSnapshot: jest.fn((callback) => {
-            callback({
-              exists: true,
-              data: () => ({ name: 'Test Exercise' })
-            });
-            return jest.fn(); // Return unsubscribe function
-          })
-        })),
-        where: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockReturnThis(),
-        get: jest.fn().mockResolvedValue({
-          docs: [{
-            id: 'doc1',
-            data: () => ({ name: 'Test Exercise 1' })
-          }]
-        }),
-        onSnapshot: jest.fn((callback) => {
-          callback({
-            docs: [{
-              id: 'doc1',
-              data: () => ({ name: 'Test Exercise 1' })
-            }]
-          });
-          return jest.fn();
-        })
-      }))
-    } : undefined;
+    const firestoreMock = config.firestore ? createFirestoreMock() : undefined;
 
     return {
       auth: authMock,

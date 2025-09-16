@@ -25,6 +25,7 @@ import type {
  * Exercise Builder Implementation - Fluent API for exercise creation
  */
 export class ExerciseBuilderImpl implements ExerciseBuilder {
+  // This field must remain mutable for the builder pattern (fluent API)
   private readonly exercise: Partial<Exercise> = {};
 
   withName(name: string): ExerciseBuilder {
@@ -75,6 +76,7 @@ export class ExerciseBuilderImpl implements ExerciseBuilder {
  * User Builder Implementation - Fluent API for user creation
  */
 export class UserBuilderImpl implements UserBuilder {
+  // This field must remain mutable for the builder pattern (fluent API)
   private readonly user: Partial<UserAccount> = {};
 
   withEmail(email: string): UserBuilder {
@@ -119,6 +121,7 @@ export class UserBuilderImpl implements UserBuilder {
  * Sync Data Builder Implementation - Fluent API for sync state creation
  */
 export class SyncDataBuilderImpl implements SyncDataBuilder {
+  // This field must remain mutable for the builder pattern (fluent API)
   private readonly syncState: Partial<SyncState> = {};
 
   forExercise(exercise: Exercise): SyncDataBuilder {
