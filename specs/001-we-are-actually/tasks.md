@@ -367,6 +367,131 @@ Each task completion MUST include:
 - Exit code 0 from `devbox run test` remains the ultimate success criterion
 - Systematic approach proving highly effective with measurable progress
 
+---
+
+## Phase 5: Code Coverage Enhancement (SonarQube Compliance)
+
+### Coverage Analysis Results
+**Current Status**: 48.5% overall coverage (Target: 75%+)
+**Critical Gap**: Multiple 0% coverage files blocking production readiness
+
+### Coverage Priorities by Impact
+
+#### P5.1: Critical Infrastructure Coverage (0% → 80%+)
+**Target Impact**: Unblock production deployment by covering core infrastructure
+
+- [ ] **T051 [CRITICAL] AuthProvider Component Coverage**
+  - **Current**: 0% coverage in `/home/rob/Documents/Github/strength-assistant/lib/components/AuthProvider.tsx`
+  - **Priority**: Authentication context, state management, user sessions, error handling
+  - **Tests**: Unit tests for provider methods, integration tests for context usage
+  - **Impact**: Foundation for all auth-dependent components
+
+- [ ] **T052 [CRITICAL] StorageManager Coverage**
+  - **Current**: 0% coverage in `/home/rob/Documents/Github/strength-assistant/lib/data/StorageManager.ts`
+  - **Priority**: Storage backend switching, initialization, error handling, persistence
+  - **Tests**: Backend selection logic, feature flag handling, initialization sequences
+  - **Impact**: Core data persistence infrastructure
+
+- [ ] **T053 [CRITICAL] Data Layer Initialization Coverage**
+  - **Current**: 0% coverage in `/home/rob/Documents/Github/strength-assistant/lib/data/index.ts`
+  - **Priority**: App startup, backend selection, user state restoration
+  - **Tests**: Initialization flows, error recovery, state management setup
+  - **Impact**: Application startup reliability
+
+#### P5.2: State Management Coverage (0% → 70%+)
+**Target Impact**: Cover reactive state and observable patterns
+
+- [ ] **T054 [HIGH] Legend-State Actions Coverage**
+  - **Current**: 0% coverage in `/home/rob/Documents/Github/strength-assistant/lib/data/legend-state/ExerciseActions.ts`
+  - **Priority**: Exercise CRUD operations, state updates, sync coordination
+  - **Tests**: Action creators, state mutations, async operations
+  - **Impact**: Core state management functionality
+
+- [ ] **T055 [HIGH] Observable Store Coverage**
+  - **Current**: 0% coverage in `/home/rob/Documents/Github/strength-assistant/lib/data/legend-state/ExerciseStore.ts`
+  - **Priority**: Reactive state, subscriptions, data flow
+  - **Tests**: Observable patterns, subscription management, state persistence
+  - **Impact**: Reactive UI state foundation
+
+- [ ] **T056 [HIGH] State Configuration Coverage**
+  - **Current**: 0% coverage in `/home/rob/Documents/Github/strength-assistant/lib/state/legend-config.ts`
+  - **Priority**: Store setup, persistence, optimization settings
+  - **Tests**: Configuration loading, persistence options, performance settings
+  - **Impact**: State management optimization
+
+#### P5.3: Model Enhancement Coverage (2-28% → 80%+)
+**Target Impact**: Critical data models used throughout application
+
+- [ ] **T057 [HIGH] SyncStateRecord Model Coverage**
+  - **Current**: 2% coverage in `/home/rob/Documents/Github/strength-assistant/lib/models/SyncStateRecord.ts`
+  - **Priority**: Sync operations, state transitions, error recovery
+  - **Tests**: State machine logic, error handling, retry mechanisms
+  - **Impact**: Sync reliability and data consistency
+
+- [ ] **T058 [MEDIUM] UserAccount Model Coverage**
+  - **Current**: 28% coverage in `/home/rob/Documents/Github/strength-assistant/lib/models/UserAccount.ts`
+  - **Priority**: User creation, validation, type guards, utilities
+  - **Tests**: Factory methods, validation logic, anonymous/auth transitions
+  - **Impact**: User identity and permissions
+
+#### P5.4: Component Coverage (0% → 60%+)
+**Target Impact**: UI component reliability and user experience
+
+- [ ] **T059 [HIGH] AuthScreen Component Coverage**
+  - **Current**: 0% coverage in `/home/rob/Documents/Github/strength-assistant/lib/components/AuthScreen.tsx`
+  - **Priority**: Login/signup flows, form validation, error states
+  - **Tests**: User interactions, form submissions, error handling
+  - **Impact**: Authentication user experience
+
+- [ ] **T060 [MEDIUM] App Layout Components Coverage**
+  - **Current**: 0% coverage in app navigation files
+  - **Priority**: Navigation structure, tab handling, error boundaries
+  - **Tests**: Navigation flows, tab switching, error boundary behavior
+  - **Impact**: App navigation and structure
+
+- [ ] **T061 [MEDIUM] Profile Screen Coverage**
+  - **Current**: 0% coverage in `/home/rob/Documents/Github/strength-assistant/app/(tabs)/profile.tsx`
+  - **Priority**: User data display, logout functionality
+  - **Tests**: Data display, user interactions, logout flow
+  - **Impact**: User profile management
+
+#### P5.5: Service Integration Coverage (0% → 70%+)
+**Target Impact**: External service reliability
+
+- [ ] **T062 [HIGH] Supabase Client Coverage**
+  - **Current**: 0% coverage in `/home/rob/Documents/Github/strength-assistant/lib/data/supabase/SupabaseClient.ts`
+  - **Priority**: Configuration, connection handling, environment setup
+  - **Tests**: Client initialization, configuration loading, error handling
+  - **Impact**: Supabase integration reliability
+
+### Coverage Implementation Strategy
+
+#### Testing Approach
+- **Unit Tests**: Isolated function and class testing with comprehensive mocking
+- **Integration Tests**: Component interactions and data flow validation
+- **Mock Strategy**: Heavy use of existing MockFactoryCollection infrastructure
+- **Snapshot Testing**: UI component regression prevention
+- **Error Scenarios**: Comprehensive error handling and edge case coverage
+
+#### Expected Outcomes
+- **Current Coverage**: 48.5% overall
+- **Phase 5 Target**: 75%+ overall coverage
+- **SonarQube Compliance**: Address coverage-related quality gate failures
+- **Production Readiness**: Meet enterprise code quality standards
+
+#### Execution Priority
+1. **T051-T053**: Critical infrastructure (enables everything else)
+2. **T054-T056**: State management (core functionality)
+3. **T057-T058**: Enhanced models (data integrity)
+4. **T059-T062**: Component and service coverage (user experience)
+
+### Constitutional Validation P5
+**Expected Outcome**: 75%+ code coverage, SonarQube quality gate passing
+**Validation**: Coverage reports show targeted improvement across all priority areas
+**Impact**: Production deployment readiness achieved
+
+---
+
 ## Validation Checklist
 *GATE: All items must be checked before marking feature complete*
 
@@ -374,6 +499,9 @@ Each task completion MUST include:
 - [ ] All P1 backend integration tests passing (Supabase/Firebase mocks)
 - [ ] All P2 component tests reliable (no timeouts or act() warnings)
 - [ ] All P3 quality improvements applied (mock consistency, assertions)
+- [ ] All P4 systematic test repairs completed (exit code 0)
+- [ ] **All P5 coverage targets achieved (75%+ overall coverage)**
+- [ ] **SonarQube quality gates passing**
 - [ ] Constitutional compliance achieved (exit code 0)
 - [ ] Performance target met (<60 seconds execution)
 - [ ] CI/CD pipeline ready for production deployment
