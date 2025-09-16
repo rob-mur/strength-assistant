@@ -15,12 +15,22 @@ const AccountTypeIcon = ({ isAnonymous, ...props }: IconProps & { isAnonymous?: 
   <List.Icon {...props} icon={isAnonymous ? "incognito" : "account-check"} />
 );
 
+const AccountTypeIconComponent = ({ isAnonymous }: { isAnonymous?: boolean }) => {
+  const AccountTypeIconWithProps = (props: IconProps) => (
+    <AccountTypeIcon {...props} isAnonymous={isAnonymous} />
+  );
+  AccountTypeIconWithProps.displayName = 'AccountTypeIconWithProps';
+  return AccountTypeIconWithProps;
+};
+
 export default function ProfileScreen() {
 	const { user, signOut } = useAuthContext();
 
 	const handleSignOut = async () => {
 		await signOut();
 	};
+
+	const userAccountTypeIcon = AccountTypeIconComponent({ isAnonymous: user?.isAnonymous });
 
 	return (
 		<View style={styles.container}>
@@ -42,7 +52,7 @@ export default function ProfileScreen() {
 						<List.Item
 							title="Account Type"
 							description={user?.isAnonymous ? "Guest Account" : "Registered Account"}
-							left={(props) => <AccountTypeIcon {...props} isAnonymous={user?.isAnonymous} />}
+							left={userAccountTypeIcon}
 						/>
 					</View>
 

@@ -25,7 +25,7 @@ interface SupabaseClient {
 
 export class SupabaseAuth {
   // This array must remain mutable for push/splice in subscribeToAuthState
-  private authStateListeners: ((user: UserAccount | null) => void)[] = [];
+  private readonly authStateListeners: ((user: UserAccount | null) => void)[] = [];
   private readonly client: SupabaseClient;
 
   constructor() {
@@ -44,7 +44,7 @@ export class SupabaseAuth {
       }
     }
 
-    if (this.client && this.client.auth && typeof this.client.auth.onAuthStateChange === 'function') {
+    if (this.client?.auth?.onAuthStateChange) {
       // Set up auth state listener with Supabase
       this.client.auth.onAuthStateChange((event: string, session: unknown) => {
         let user: unknown | undefined = undefined;

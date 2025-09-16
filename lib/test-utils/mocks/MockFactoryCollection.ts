@@ -1,49 +1,3 @@
-// Move helper import to top to satisfy import/first lint rule
-// Type helpers for loose test mocks
-type AnyFn = (...args: any[]) => any;
-type AnyObj = Record<string, any>;
-
-// Helper to create deeply nested Firestore mock
-function createFirestoreMock(): AnyObj {
-  return {
-    collection: jest.fn(() => ({
-      doc: jest.fn(() => ({
-        get: jest.fn().mockResolvedValue({
-          exists: true,
-          data: () => ({ name: 'Test Exercise' })
-        } as any),
-        set: jest.fn().mockResolvedValue(void 0 as any),
-        update: jest.fn().mockResolvedValue(void 0 as any),
-        delete: jest.fn().mockResolvedValue(void 0 as any),
-        onSnapshot: jest.fn((callback: any) => {
-          (callback as any)({
-            exists: true,
-            data: () => ({ name: 'Test Exercise' })
-          } as any);
-          return jest.fn();
-        })
-      })),
-      where: jest.fn().mockReturnThis(),
-      orderBy: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis(),
-      get: jest.fn().mockResolvedValue({
-        docs: [{
-          id: 'doc1',
-          data: () => ({ name: 'Test Exercise 1' })
-        }]
-      } as any),
-      onSnapshot: jest.fn((callback: any) => {
-        (callback as any)({
-          docs: [{
-            id: 'doc1',
-            data: () => ({ name: 'Test Exercise 1' })
-          }]
-        } as any);
-        return jest.fn();
-      })
-    }))
-  };
-}
 /**
  * Mock Factory Collection Implementation
  * 
@@ -79,6 +33,60 @@ import type {
   SupabaseMockConfig,
   ReactNativeMockConfig
 } from '../../../specs/001-we-are-actually/contracts/jest-validation';
+
+// Type helpers for loose test mocks
+type AnyObj = Record<string, unknown>;
+
+// Helper functions to create Firestore mock components
+function createDocumentMock(): AnyObj {
+  return {
+    get: jest.fn().mockResolvedValue({
+      exists: true,
+      data: () => ({ name: 'Test Exercise' })
+    }),
+    set: jest.fn().mockResolvedValue(void 0),
+    update: jest.fn().mockResolvedValue(void 0),
+    delete: jest.fn().mockResolvedValue(void 0),
+    onSnapshot: jest.fn((callback: unknown) => {
+      (callback as (doc: unknown) => void)({
+        exists: true,
+        data: () => ({ name: 'Test Exercise' })
+      });
+      return jest.fn();
+    })
+  };
+}
+
+function createCollectionMock(): AnyObj {
+  return {
+    doc: jest.fn(() => createDocumentMock()),
+    where: jest.fn().mockReturnThis(),
+    orderBy: jest.fn().mockReturnThis(),
+    limit: jest.fn().mockReturnThis(),
+    get: jest.fn().mockResolvedValue({
+      docs: [{
+        id: 'doc1',
+        data: () => ({ name: 'Test Exercise 1' })
+      }]
+    }),
+    onSnapshot: jest.fn((callback: unknown) => {
+      (callback as (snapshot: unknown) => void)({
+        docs: [{
+          id: 'doc1',
+          data: () => ({ name: 'Test Exercise 1' })
+        }]
+      });
+      return jest.fn();
+    })
+  };
+}
+
+// Helper to create deeply nested Firestore mock
+function createFirestoreMock(): AnyObj {
+  return {
+    collection: jest.fn(() => createCollectionMock())
+  };
+}
 
 /**
  * Exercise Mock Factory Implementation
@@ -258,13 +266,13 @@ export class ServiceMockFactoryImpl implements ServiceMockFactory {
       currentUser: null,
       signInWithEmailAndPassword: jest.fn().mockResolvedValue({
         user: { uid: 'test-uid', email: 'test@example.com' }
-      } as any),
+      }),
       createUserWithEmailAndPassword: jest.fn().mockResolvedValue({
         user: { uid: 'test-uid', email: 'test@example.com' }
-      } as any),
-      signOut: jest.fn().mockResolvedValue(void 0 as any),
-      onAuthStateChanged: jest.fn((callback: any) => {
-        (callback as any)(null);
+      }),
+      signOut: jest.fn().mockResolvedValue(void 0),
+      onAuthStateChanged: jest.fn((callback: (user: unknown) => void) => {
+        callback(null);
         return jest.fn();
       })
     } : undefined;

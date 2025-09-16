@@ -104,10 +104,8 @@ export class DataLayerAPI {
         if (__DEV__) {
           console.info(`✅ Data layer initialized with ${currentUser.isAnonymous ? 'anonymous' : 'authenticated'} user`);
         }
-      } else {
-        if (__DEV__) {
-          console.info('✅ Data layer initialized - no active user session');
-        }
+      } else if (__DEV__) {
+        console.info('✅ Data layer initialized - no active user session');
       }
       
     } catch (error) {

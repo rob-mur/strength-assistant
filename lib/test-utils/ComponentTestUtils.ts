@@ -9,7 +9,9 @@
  */
 
 import { RenderAPI } from '@testing-library/react-native';
-import { ReactTestInstance } from 'react-test-renderer';
+
+// Use the modern Element type instead of deprecated ReactTestInstance
+type TestElement = ReturnType<RenderAPI['getByTestId']>;
 
 export interface AnimatedTestOptions {
   /**
@@ -104,10 +106,7 @@ export class ComponentTestUtils {
     renderResult: RenderAPI, 
     testId: string,
     options?: { timeout?: number }
-  /**
-   * @deprecated ReactTestInstance is still the correct return type for findBy* queries in @testing-library/react-native as of 2025. Safe to use until upstream changes.
-   */
-  ): Promise<ReactTestInstance> {
+  ): Promise<TestElement> {
     const timeout = options?.timeout ?? this.options.queryTimeout;
     
     try {
@@ -124,10 +123,7 @@ export class ComponentTestUtils {
     renderResult: RenderAPI, 
     text: string | RegExp,
     options?: { timeout?: number }
-  /**
-   * @deprecated ReactTestInstance is still the correct return type for findBy* queries in @testing-library/react-native as of 2025. Safe to use until upstream changes.
-   */
-  ): Promise<ReactTestInstance> {
+  ): Promise<TestElement> {
     const timeout = options?.timeout ?? this.options.queryTimeout;
     
     try {
@@ -221,10 +217,7 @@ export class ComponentTestUtils {
       afterUpdate?: (renderResult: RenderAPI) => void | Promise<void>;
     },
     animationDuration = 1000
-  /**
-   * @deprecated ReactTestInstance is still the correct return type for findBy* queries in @testing-library/react-native as of 2025. Safe to use until upstream changes.
-   */
-  ): Promise<ReactTestInstance> {
+  ): Promise<TestElement> {
     this.setupFakeTimers();
     
     try {
