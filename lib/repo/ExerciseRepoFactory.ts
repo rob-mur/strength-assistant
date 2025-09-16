@@ -37,6 +37,7 @@ export class ExerciseRepoFactory {
     let useSupabaseEnv;
     try {
       // Use require for synchronous behavior needed by factory
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { default: Constants } = require('expo-constants');
       useSupabaseEnv = Constants.expoConfig?.extra?.useSupabaseData;
     } catch {

@@ -134,6 +134,7 @@ export async function syncExerciseToSupabase(exercise: Exercise): Promise<void> 
 		};
 
 		// @ts-ignore Supabase query builder - complex type compatibility with upsert method
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const { error } = await (supabaseClient.getSupabaseClient().from('exercises') as any)
 			.upsert(exerciseToUpsert);
 		if (error) throw error;
@@ -149,6 +150,7 @@ export async function syncExerciseToSupabase(exercise: Exercise): Promise<void> 
 export async function deleteExerciseFromSupabase(exerciseId: string, userId: string): Promise<void> {
 	try {
 		// @ts-ignore Supabase query builder - complex type compatibility with delete/eq methods
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const { error } = await (supabaseClient.getSupabaseClient().from('exercises') as any)
 			.delete()
 			.eq('id', exerciseId)

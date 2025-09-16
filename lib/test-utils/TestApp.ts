@@ -29,19 +29,23 @@ interface TestDeviceState {
   networkStatus: string;
 }
 
-// Adapter functions for type conversion
-function adaptExerciseFromContract(exercise: ExerciseContractFormat): Exercise {
+// Adapter functions for type conversion  
+function adaptExerciseFromContract(exercise: ExerciseContractFormat): Exercise & { createdAt: string; updatedAt: string; syncStatus: string } {
   return {
     id: exercise.id,
     name: exercise.name,
     user_id: exercise.userId || '',
     created_at: exercise.createdAt,
     updated_at: exercise.updatedAt,
-    deleted: false
+    deleted: false,
+    // Preserve integration test expected field names
+    createdAt: exercise.createdAt,
+    updatedAt: exercise.updatedAt,
+    syncStatus: exercise.syncStatus
   };
 }
 
-function adaptExercisesFromContract(exercises: ExerciseContractFormat[]): Exercise[] {
+function adaptExercisesFromContract(exercises: ExerciseContractFormat[]): (Exercise & { createdAt: string; updatedAt: string; syncStatus: string })[] {
   return exercises.map(adaptExerciseFromContract);
 }
 
@@ -270,7 +274,7 @@ export class TestApp {
   }
 
   // Exercise Operations (delegated to device with UI simulation)
-  async addExercise(name: string): Promise<Exercise> {
+  async addExercise(name: string): Promise<Exercise & { createdAt: string; updatedAt: string; syncStatus: string }> {
     this._ensureInitialized();
     
     // Simulate UI interaction delay
@@ -280,7 +284,7 @@ export class TestApp {
     return adaptExerciseFromContract(exercise);
   }
 
-  async updateExercise(id: string, name: string): Promise<Exercise> {
+  async updateExercise(id: string, name: string): Promise<Exercise & { createdAt: string; updatedAt: string; syncStatus: string }> {
     this._ensureInitialized();
     
     // Simulate UI interaction delay
@@ -299,13 +303,13 @@ export class TestApp {
     await this.device.deleteExercise(id);
   }
 
-  async getExercises(): Promise<Exercise[]> {
+  async getExercises(): Promise<(Exercise & { createdAt: string; updatedAt: string; syncStatus: string })[]> {
     this._ensureInitialized();
     const exercises = await this.device.getExercises();
     return adaptExercisesFromContract(exercises);
   }
 
-  async getExercise(id: string): Promise<Exercise | null> {
+  async getExercise(id: string): Promise<(Exercise & { createdAt: string; updatedAt: string; syncStatus: string }) | null> {
     this._ensureInitialized();
     const exercise = await this.device.getExercise(id);
     return exercise ? adaptExerciseFromContract(exercise) : null;

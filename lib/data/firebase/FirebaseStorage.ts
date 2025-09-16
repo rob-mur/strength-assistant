@@ -38,7 +38,8 @@ import { initFirebase, getDb } from './index';
 import { collection, doc, getDocs, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy, Firestore, UpdateData, DocumentData } from 'firebase/firestore';
 import { signInAnonymously as firebaseSignInAnonymously, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as firebaseSignOut, onAuthStateChanged, User, Auth } from 'firebase/auth';
 
-interface FirebaseFirestore {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+interface _FirebaseFirestore {
   collection: (path: string) => unknown;
   doc: (path: string) => unknown;
   [key: string]: unknown;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Platform } from "react-native";
 
 // Platform-specific imports - use static imports to avoid Metro symbolication issues
@@ -60,7 +60,7 @@ export function useAuth() {
 	});
 
 	// Helper function to handle user state changes
-	const handleUserStateChange = (user: FirebaseUser | null) => {
+	const handleUserStateChange = useCallback((user: FirebaseUser | null) => {
 		const userData = user ? {
 			uid: user.uid,
 			email: user.email,
@@ -72,7 +72,7 @@ export function useAuth() {
 			loading: false,
 			error: null,
 		});
-	};
+	}, []);
 
 	// Helper function to set error state
 	const setErrorState = () => {
@@ -102,7 +102,7 @@ export function useAuth() {
 	};
 
 	// Helper function to setup auth listener
-	const setupAuthListener = (authFunctions: AuthFunctions): (() => void) | undefined => {
+	const setupAuthListener = useCallback((authFunctions: AuthFunctions): (() => void) | undefined => {
 		const userStateHandler = (user: FirebaseUser | null) => {
 			try {
 				handleUserStateChange(user);
@@ -114,10 +114,10 @@ export function useAuth() {
 		return Platform.OS === "web" 
 			? authFunctions.onAuthStateChangedWeb?.(userStateHandler)
 			: authFunctions.onAuthStateChangedNative?.(userStateHandler);
-	};
+	}, [handleUserStateChange]);
 
 	// Main auth initialization function
-	const initializeAuth = async (): Promise<(() => void) | undefined> => {
+	const initializeAuth = useCallback(async (): Promise<(() => void) | undefined> => {
 		try {
 			const authFunctions = getAuthFunctions();
 			await initializeAuthWithTimeout(authFunctions);
@@ -126,7 +126,7 @@ export function useAuth() {
 			setErrorState();
 			return undefined;
 		}
-	};
+	}, [setupAuthListener]);
 
 	useEffect(() => {
 		// Early return for test environments
@@ -158,7 +158,7 @@ export function useAuth() {
 				console.error("Error during auth listener cleanup:", error);
 			}
 		};
-	}, []);
+	}, [initializeAuth]);
 
 	const signInAnonymously = async (): Promise<void> => {
 		// Early return for test environments
@@ -190,8 +190,8 @@ export function useAuth() {
 				...prev,
 				loading: false,
 				error: { 
-				code: error instanceof Error && 'code' in error ? (error as { code: string }).code : "unknown", 
-				message: error instanceof Error ? error.message : "An error occurred" 
+				code: (error as { code?: string })?.code || "unknown", 
+				message: (error as { message?: string })?.message || "An error occurred" 
 			},
 			}));
 		}
@@ -212,8 +212,8 @@ export function useAuth() {
 				...prev,
 				loading: false,
 				error: { 
-				code: error instanceof Error && 'code' in error ? (error as { code: string }).code : "unknown", 
-				message: error instanceof Error ? error.message : "An error occurred" 
+				code: (error as { code?: string })?.code || "unknown", 
+				message: (error as { message?: string })?.message || "An error occurred" 
 			},
 			}));
 		}
@@ -234,8 +234,8 @@ export function useAuth() {
 				...prev,
 				loading: false,
 				error: { 
-				code: error instanceof Error && 'code' in error ? (error as { code: string }).code : "unknown", 
-				message: error instanceof Error ? error.message : "An error occurred" 
+				code: (error as { code?: string })?.code || "unknown", 
+				message: (error as { message?: string })?.message || "An error occurred" 
 			},
 			}));
 		}
@@ -256,8 +256,8 @@ export function useAuth() {
 				...prev,
 				loading: false,
 				error: { 
-				code: error instanceof Error && 'code' in error ? (error as { code: string }).code : "unknown", 
-				message: error instanceof Error ? error.message : "An error occurred" 
+				code: (error as { code?: string })?.code || "unknown", 
+				message: (error as { message?: string })?.message || "An error occurred" 
 			},
 			}));
 		}
