@@ -25,7 +25,7 @@ import type {
  * Exercise Builder Implementation - Fluent API for exercise creation
  */
 export class ExerciseBuilderImpl implements ExerciseBuilder {
-  private exercise: Partial<Exercise> = {};
+  private readonly exercise: Partial<Exercise> = {};
 
   withName(name: string): ExerciseBuilder {
     this.exercise.name = name;
@@ -75,7 +75,7 @@ export class ExerciseBuilderImpl implements ExerciseBuilder {
  * User Builder Implementation - Fluent API for user creation
  */
 export class UserBuilderImpl implements UserBuilder {
-  private user: Partial<UserAccount> = {};
+  private readonly user: Partial<UserAccount> = {};
 
   withEmail(email: string): UserBuilder {
     this.user.email = email;
@@ -119,7 +119,7 @@ export class UserBuilderImpl implements UserBuilder {
  * Sync Data Builder Implementation - Fluent API for sync state creation
  */
 export class SyncDataBuilderImpl implements SyncDataBuilder {
-  private syncState: Partial<SyncState> = {};
+  private readonly syncState: Partial<SyncState> = {};
 
   forExercise(exercise: Exercise): SyncDataBuilder {
     this.syncState.recordId = exercise.id;

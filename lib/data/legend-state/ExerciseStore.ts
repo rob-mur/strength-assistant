@@ -6,8 +6,6 @@
  */
 
 import { observable } from '@legendapp/state';
-// import { ObservablePersistAsyncStorage } from '@legendapp/state/persist-plugins/async-storage';
-// import AsyncStorage from '@react-native-async-storage/async-storage';
 import { isSupabaseDataEnabled } from '../../config/supabase-env';
 
 /**
@@ -73,16 +71,6 @@ export const exerciseStore = observable<ExerciseStore>(initialStoreState);
  * Configure persistence (reserved for future implementation)
  * Note: This configuration is prepared for future Legend State persistence integration
  */
-// const _persistConfig = {
-//   local: {
-//     name: 'strength-assistant-exercises',
-//     // Use AsyncStorage for React Native compatibility
-//     persistPlugin: ObservablePersistAsyncStorage,
-//     options: {
-//       asyncStorage: AsyncStorage
-//     }
-//   }
-// };
 
 /**
  * Configure persistence (simplified for now)

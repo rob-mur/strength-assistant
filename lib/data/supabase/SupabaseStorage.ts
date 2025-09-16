@@ -59,12 +59,11 @@ export interface StorageBackend {
 }
 
 export class SupabaseStorage implements StorageBackend {
-  private client: SupabaseClient;
+  private readonly client: SupabaseClient;
   private currentUser: UserAccount | null = null;
 
   constructor() {
     const config = getSupabaseEnvConfig();
-    
     this.client = createClient(
       getSupabaseUrl(),
       config.anonKey,
@@ -76,9 +75,12 @@ export class SupabaseStorage implements StorageBackend {
         }
       }
     );
-
-    // Initialize current user from session
-    this.initializeSession();
+  }
+  /**
+   * Call this after construction to initialize the session asynchronously.
+   */
+  async init(): Promise<void> {
+    await this.initializeSession();
   }
 
   // Exercise CRUD operations

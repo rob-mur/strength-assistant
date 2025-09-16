@@ -25,7 +25,7 @@ interface SupabaseExerciseRow {
  */
 export class SupabaseExerciseRepo implements IExerciseRepo {
 	private static instance: SupabaseExerciseRepo;
-	private syncInstance: object | null = null;
+	private readonly syncInstance: object | null = null;
 	private _realtimeChannel: object | null = null;
 
 	private constructor() { }

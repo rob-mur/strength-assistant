@@ -5,10 +5,13 @@
  * Manages retry logic and error handling for failed sync operations.
  */
 
+
+export type SyncOperationType = 'create' | 'update' | 'delete';
+
 export interface SyncStateRecord {
   recordId: string;
   recordType: string;
-  operation: 'create' | 'update' | 'delete';
+  operation: SyncOperationType;
   pendingSince: Date;
   attempts: number;
   lastError?: string;
@@ -19,7 +22,7 @@ export interface SyncStateRecord {
 export interface SyncStateInput {
   recordId: string;
   recordType: string;
-  operation: 'create' | 'update' | 'delete';
+  operation: SyncOperationType;
   payload?: Record<string, unknown>;
 }
 
@@ -226,7 +229,7 @@ export function fromDbFormat(dbRecord: Record<string, unknown>): SyncStateRecord
   const syncState: SyncStateRecord = {
     recordId: dbRecord.record_id as string,
     recordType: dbRecord.record_type as string,
-    operation: dbRecord.operation as 'create' | 'update' | 'delete',
+    operation: dbRecord.operation as SyncOperationType,
     pendingSince: new Date(dbRecord.pending_since as string),
     attempts: dbRecord.attempts as number
   };

@@ -103,7 +103,7 @@ export function validateExerciseName(name: string): void {
   }
 
   // Check for invalid characters (optional business rule)
-  const invalidChars = /[<>\"'&]/;
+    const invalidChars = /[<>"'&]/;
   if (invalidChars.test(trimmedName)) {
     throw new ExerciseValidationError('Exercise name contains invalid characters', 'name');
   }

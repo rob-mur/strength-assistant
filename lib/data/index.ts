@@ -140,7 +140,7 @@ export class DataLayerAPI {
   /**
    * Subscribe to auth state changes
    */
-  async subscribeToAuthState(callback: (user: unknown | null) => void): Promise<() => void> {
+  async subscribeToAuthState(callback: (user: import('../models/UserAccount').UserAccount | null) => void): Promise<() => void> {
     const { storageManager } = await import('./StorageManager');
     const activeBackend = storageManager.getActiveStorageBackend();
     return activeBackend.subscribeToAuthState(callback);

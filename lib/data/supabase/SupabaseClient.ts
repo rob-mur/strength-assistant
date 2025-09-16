@@ -10,9 +10,7 @@ export class SupabaseClient {
 	private client: BaseSupabaseClient<Database> | null = null;
 
 	private getClient(): BaseSupabaseClient<Database> {
-		if (!this.client) {
-			this.client = this.initializeClient();
-		}
+	this.client ??= this.initializeClient();
 		return this.client;
 	}
 

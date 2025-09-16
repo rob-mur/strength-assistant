@@ -123,7 +123,7 @@ export class TestDevice {
     this._subscriptions.clear();
     
     // Preserve anonymous user if it was set in constructor, otherwise reset auth state
-    if (!this._authState.currentUser || !this._authState.currentUser.isAnonymous) {
+    if (!this._authState.currentUser?.isAnonymous) {
       this._authState = {
         authenticated: false,
         currentUser: undefined,
@@ -204,45 +204,12 @@ export class TestDevice {
   }
 
   // Authentication Methods
-  async signUp(email: string, _password: string): Promise<UserAccount> {
+  private async doAuth(email: string): Promise<UserAccount> {
     this._ensureInitialized();
     this._ensureNetworkConnected();
-
-    // Simulate sign up delay and potential failure
     await this._simulateNetworkDelay();
     this._simulateNetworkFailure();
-
-    // Create authenticated user
     const user = createAuthenticatedUser(email);
-    
-    // Update auth state
-    this._authState = {
-      authenticated: true,
-      currentUser: user,
-      session: {
-        sessionId: uuidv4(),
-        userId: user.id,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
-        accessToken: `access_${uuidv4()}`,
-        refreshToken: `refresh_${uuidv4()}`
-      }
-    };
-
-    return user;
-  }
-
-  async signIn(email: string, _password: string): Promise<UserAccount> {
-    this._ensureInitialized();
-    this._ensureNetworkConnected();
-
-    // Simulate sign in delay and potential failure
-    await this._simulateNetworkDelay();
-    this._simulateNetworkFailure();
-
-    // Create authenticated user (in real implementation, would validate credentials)
-    const user = createAuthenticatedUser(email);
-    
-    // Update auth state
     this._authState = {
       authenticated: true,
       currentUser: user,
@@ -254,8 +221,15 @@ export class TestDevice {
         refreshToken: `refresh_${uuidv4()}`
       }
     };
-
     return user;
+  }
+
+  async signUp(email: string, _password: string): Promise<UserAccount> {
+    return this.doAuth(email);
+  }
+
+  async signIn(email: string, _password: string): Promise<UserAccount> {
+    return this.doAuth(email);
   }
 
   async signOut(): Promise<void> {
@@ -300,7 +274,9 @@ export class TestDevice {
     const exercise: Exercise = {
       id: uuidv4(),
       name: name.trim(),
-      user_id: this._authState.currentUser?.id || 'anonymous',
+      user_id: (this._authState.currentUser && 'id' in this._authState.currentUser)
+        ? (this._authState.currentUser as { id: string }).id
+        : 'anonymous',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       deleted: false
@@ -392,9 +368,11 @@ export class TestDevice {
     this._ensureInitialized();
     
     // Find most recent sync operation for this exercise
-    const syncOp = this._syncQueue
-      .filter(op => op.recordId === exerciseId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
+    const syncOps = this._syncQueue.filter(op => op.recordId === exerciseId);
+    const sortedSyncOps = typeof syncOps.toSorted === 'function'
+      ? syncOps.toSorted((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      : [...syncOps].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    const syncOp = sortedSyncOps[0];
 
     if (!syncOp) {
       return 'synced'; // No pending operations
@@ -601,9 +579,10 @@ export class TestDevice {
       return undefined;
     }
 
-    return syncedOps
-      .sort((a, b) => b.lastAttemptAt!.getTime() - a.lastAttemptAt!.getTime())[0]
-      .lastAttemptAt!;
+    const sortedSyncedOps = typeof syncedOps.toSorted === 'function'
+      ? syncedOps.toSorted((a, b) => b.lastAttemptAt!.getTime() - a.lastAttemptAt!.getTime())
+      : [...syncedOps].sort((a, b) => b.lastAttemptAt!.getTime() - a.lastAttemptAt!.getTime());
+    return sortedSyncedOps[0].lastAttemptAt!;
   }
 
   // Sync State Methods
@@ -618,9 +597,11 @@ export class TestDevice {
     // Determine sync status based on sync queue
     let syncStatus: SyncStatus = 'synced';
     
-    const syncOp = this._syncQueue
-      .filter(op => op.recordId === exercise.id)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0]; // Most recent
+    const syncOps = this._syncQueue.filter(op => op.recordId === exercise.id);
+    const sortedSyncOps = typeof syncOps.toSorted === 'function'
+      ? syncOps.toSorted((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      : [...syncOps].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    const syncOp = sortedSyncOps[0]; // Most recent
     
     if (syncOp) {
       syncStatus = syncOp.status;
@@ -637,7 +618,10 @@ export class TestDevice {
       updatedAt: exercise.updated_at, // ISO string format expected by tests
       syncStatus,
       // userId should be undefined for anonymous users per test expectations
-      userId: (this._authState.currentUser?.isAnonymous || exercise.user_id === 'anonymous') ? undefined : exercise.user_id
+      userId: (this._authState.currentUser && 'isAnonymous' in this._authState.currentUser && (this._authState.currentUser as { isAnonymous: boolean }).isAnonymous)
+        || exercise.user_id === 'anonymous'
+        ? undefined
+        : exercise.user_id
     };
   }
 }

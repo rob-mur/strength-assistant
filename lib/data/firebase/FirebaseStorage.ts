@@ -43,7 +43,7 @@ import { signInAnonymously as firebaseSignInAnonymously, createUserWithEmailAndP
 
 export class FirebaseStorage implements StorageBackend {
   private readonly firestore: Firestore;
-  private auth: Auth | null;
+  private readonly auth: Auth | null;
   private currentUser: UserAccount | null = null;
 
   constructor() {

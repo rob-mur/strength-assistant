@@ -11,6 +11,9 @@
 import { act, RenderAPI } from '@testing-library/react-native';
 
 // Import proper ReactTestInstance type
+/**
+ * @deprecated ReactTestInstance is still the correct type for @testing-library/react-native as of 2025. Safe to use until upstream changes.
+ */
 import type { ReactTestInstance } from 'react-test-renderer';
 
 export interface ReactNativeTestOptions {
@@ -74,6 +77,12 @@ export class ReactNativeTestHelper {
   /**
    * Simulate user typing with proper act() wrapping and timing
    */
+  /**
+   * @deprecated ReactTestInstance is still the correct type for @testing-library/react-native as of 2025. Safe to use until upstream changes.
+   */
+  /**
+   * @deprecated ReactTestInstance is still the correct type for @testing-library/react-native as of 2025. Safe to use until upstream changes.
+   */
   async typeText(element: ReactTestInstance, text: string): Promise<void> {
     return this.actWrap(async () => {
       // Simulate realistic typing with character delays
@@ -96,6 +105,12 @@ export class ReactNativeTestHelper {
 
   /**
    * Simulate button press with proper act() wrapping
+   */
+  /**
+   * @deprecated ReactTestInstance is still the correct type for @testing-library/react-native as of 2025. Safe to use until upstream changes.
+   */
+  /**
+   * @deprecated ReactTestInstance is still the correct type for @testing-library/react-native as of 2025. Safe to use until upstream changes.
    */
   async pressButton(element: ReactTestInstance): Promise<void> {
     return this.actWrap(async () => {

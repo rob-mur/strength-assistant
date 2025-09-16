@@ -28,7 +28,7 @@ interface PooledDevice {
  */
 export class TestDevicePool {
   private static instance: TestDevicePool;
-  private pool: Map<string, PooledDevice> = new Map();
+  private readonly pool: Map<string, PooledDevice> = new Map();
   private readonly maxPoolSize: number;
   private readonly maxIdleTime: number; // milliseconds
   private readonly memoryThresholdMB: number;

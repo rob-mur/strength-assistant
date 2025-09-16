@@ -513,11 +513,10 @@ export class MigrationTestApp extends TestApp {
   }
 
   // Authentication methods expected by integration tests
-  async signUp(email: string, _password: string): Promise<UserAccount> {
-    // Simulate user signup - return user object and set as current
+  private createAndSetUserAccount(email: string): UserAccount {
     const user: UserAccount = {
       id: `user-${Date.now()}`,
-      email: email,
+      email,
       isAnonymous: false,
       createdAt: new Date()
     };
@@ -525,16 +524,14 @@ export class MigrationTestApp extends TestApp {
     return user;
   }
 
+  async signUp(email: string, _password: string): Promise<UserAccount> {
+    // Simulate user signup - return user object and set as current
+    return this.createAndSetUserAccount(email);
+  }
+
   async signIn(email: string, _password: string): Promise<UserAccount> {
     // Simulate user signin - return user object and set as current
-    const user: UserAccount = {
-      id: `user-${Date.now()}`,
-      email: email,
-      isAnonymous: false,
-      createdAt: new Date()
-    };
-    this.currentUser = user;
-    return user;
+    return this.createAndSetUserAccount(email);
   }
 
   // Migration-specific auth methods that return result objects

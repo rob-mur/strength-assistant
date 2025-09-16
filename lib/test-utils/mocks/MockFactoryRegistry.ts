@@ -72,7 +72,7 @@ export interface RegistryStatistics {
  * - Performance monitoring and statistics
  */
 export class MockFactoryRegistry {
-  private _collection: MockFactoryCollection;
+  private readonly _collection: MockFactoryCollection;
   private _config: BackendAgnosticConfig;
   private _statistics: RegistryStatistics;
   private _mockValidationEnabled: boolean = true;

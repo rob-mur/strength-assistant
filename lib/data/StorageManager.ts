@@ -51,15 +51,20 @@ export class StorageManager implements IStorageManager {
     // Initialize both backends
     this.supabaseStorage = new SupabaseStorage();
     this.firebaseStorage = new FirebaseStorage();
-    
     // Read feature flags from environment
     this.featureFlags = {
       useSupabaseData: isSupabaseDataEnabled()
     };
-
     if (__DEV__) {
       console.info(`🔄 StorageManager initialized with ${this.featureFlags.useSupabaseData ? 'Supabase' : 'Firebase'} backend`);
     }
+  }
+
+  /**
+   * Call this after construction to initialize async backends.
+   */
+  async init(): Promise<void> {
+    await this.supabaseStorage.init();
   }
 
   /**
@@ -298,6 +303,7 @@ export class StorageManager implements IStorageManager {
 
 // Export singleton instance
 export const storageManager = new StorageManager();
+// If you need async initialization, call: await storageManager.init();
 
 // Export for testing
 export default StorageManager;

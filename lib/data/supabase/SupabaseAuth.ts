@@ -24,13 +24,16 @@ interface SupabaseClient {
 }
 
 export class SupabaseAuth {
-  private authStateListeners: ((user: UserAccount | null) => void)[] = [];
-  private client: SupabaseClient;
+  private readonly authStateListeners: ((user: UserAccount | null) => void)[] = [];
+  private readonly client: SupabaseClient;
 
   constructor() {
     // Get the client - handle both real and mocked cases
     try {
-      this.client = (supabaseClient?.getSupabaseClient?.() || supabaseClient) as unknown as SupabaseClient;
+      const maybeClient = (typeof supabaseClient?.getSupabaseClient === 'function')
+        ? supabaseClient.getSupabaseClient()
+        : supabaseClient;
+  this.client = maybeClient as unknown as SupabaseClient;
     } catch (error) {
       // In test environment, create a mock client
       if (process.env.NODE_ENV === 'test') {
@@ -39,18 +42,19 @@ export class SupabaseAuth {
         throw error;
       }
     }
-    
-    if (this.client?.auth?.onAuthStateChange) {
+
+    if (this.client && this.client.auth && typeof this.client.auth.onAuthStateChange === 'function') {
       // Set up auth state listener with Supabase
       this.client.auth.onAuthStateChange((event: string, session: unknown) => {
-        const user = (session as { user?: unknown })?.user 
-          ? this.mapSupabaseUserToUserAccount((session as { user: unknown }).user)
-          : null;
-        
+        let user: unknown | undefined = undefined;
+        if (session && typeof session === 'object' && 'user' in session) {
+          user = (session as { user?: unknown }).user;
+        }
+        const mappedUser = user ? this.mapSupabaseUserToUserAccount(user) : null;
         // Notify all listeners
         this.authStateListeners.forEach(listener => {
           try {
-            listener(user);
+    listener(mappedUser);
           } catch (error) {
             console.error('Error in auth state listener:', error);
           }
@@ -158,8 +162,10 @@ export class SupabaseAuth {
    */
   async getCurrentUser(): Promise<UserAccount | null> {
     const { data } = await this.client.auth.getUser();
-    const user = (data as { user: unknown } | null)?.user;
-    
+    let user: unknown | undefined = undefined;
+    if (data && typeof data === 'object' && 'user' in data) {
+      user = (data as { user?: unknown }).user;
+    }
     if (!user) {
       return null;
     }
@@ -249,7 +255,7 @@ export class SupabaseAuth {
     }
 
     const currentUser = await this.getCurrentUser();
-    if (!currentUser || !currentUser.isAnonymous) {
+    if (!currentUser?.isAnonymous) {
       throw new Error('No anonymous user to upgrade');
     }
 

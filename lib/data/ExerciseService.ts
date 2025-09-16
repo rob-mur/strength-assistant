@@ -18,12 +18,15 @@ declare global {
   var testPersistence: TestPersistence | undefined;
 }
 
+
+export type SyncStatus = 'pending' | 'synced' | 'error';
+
 export interface SyncRecord {
   id: string;
   recordId: string;
   recordType: 'exercise';
   operation: 'create' | 'update' | 'delete';
-  status: 'pending' | 'synced' | 'error';
+  status: SyncStatus;
   createdAt: Date;
   lastAttempt?: Date;
   attempts: number;
@@ -41,7 +44,7 @@ export interface ExerciseWithSyncStatus extends Exercise {
   createdAt: Date;
   updatedAt: Date;
   userId?: string;
-  syncStatus: 'pending' | 'synced' | 'error';
+  syncStatus: SyncStatus;
 }
 
 /**
@@ -165,7 +168,7 @@ export class ExerciseService {
     const syncRecord = Array.from(this.syncRecords.values())
       .find(record => record.recordId === exercise.id);
     
-    let syncStatus: 'pending' | 'synced' | 'error' = 'synced';
+  let syncStatus: SyncStatus = 'synced';
     if (this.enableSync && syncRecord) {
       syncStatus = syncRecord.status;
     } else if (this.enableSync) {
@@ -527,9 +530,7 @@ export class ExerciseService {
     try {
       // In a real app, this would save to AsyncStorage or similar
       // For tests, we'll use global storage
-      if (!global.testPersistence) {
-        global.testPersistence = {};
-      }
+  global.testPersistence ??= {};
 
       global.testPersistence.exercises = Array.from(this.exercises.entries());
       global.testPersistence.syncRecords = Array.from(this.syncRecords.entries());
