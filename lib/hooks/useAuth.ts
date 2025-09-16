@@ -157,7 +157,7 @@ export function useAuth() {
 	}, []);
 
 	// Helper function to handle auth cleanup
-	const cleanupAuth = useCallback((timeoutId: number, unsubscribe?: () => void) => {
+	const cleanupAuth = useCallback((timeoutId: ReturnType<typeof setTimeout>, unsubscribe?: () => void) => {
 		clearTimeout(timeoutId);
 		if (!unsubscribe) return;
 		
