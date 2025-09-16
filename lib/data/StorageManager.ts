@@ -43,9 +43,9 @@ export interface IStorageManager {
  * switching between them based on the USE_SUPABASE_DATA environment variable.
  */
 export class StorageManager implements IStorageManager {
-  private supabaseStorage: SupabaseStorage;
-  private firebaseStorage: FirebaseStorage;
-  private featureFlags: FeatureFlags;
+  private readonly supabaseStorage: SupabaseStorage;
+  private readonly firebaseStorage: FirebaseStorage;
+  private readonly featureFlags: FeatureFlags;
 
   constructor() {
     // Initialize both backends
@@ -98,58 +98,96 @@ export class StorageManager implements IStorageManager {
         this.firebaseStorage.getCurrentUser()
       ]);
 
-      // Compare user states
-      if (supabaseUser && firebaseUser) {
-        if (supabaseUser.email !== firebaseUser.email) {
-          errors.push(`User email mismatch: Supabase(${supabaseUser.email}) vs Firebase(${firebaseUser.email})`);
-          isConsistent = false;
-        }
-        
-        if (supabaseUser.isAnonymous !== firebaseUser.isAnonymous) {
-          errors.push(`User anonymous status mismatch: Supabase(${supabaseUser.isAnonymous}) vs Firebase(${firebaseUser.isAnonymous})`);
-          isConsistent = false;
-        }
-      } else if (supabaseUser !== firebaseUser) {
-        errors.push(`User presence mismatch: Supabase(${!!supabaseUser}) vs Firebase(${!!firebaseUser})`);
-        isConsistent = false;
-      }
+      // Validate user consistency
+      const userValidation = this.validateUserConsistency(supabaseUser, firebaseUser);
+      errors.push(...userValidation.errors);
+      if (!userValidation.isConsistent) isConsistent = false;
 
-      // Get exercises from both backends for current user
+      // Validate exercise consistency
       const userId = supabaseUser?.id || firebaseUser?.id;
-      const [supabaseExercises, firebaseExercises] = await Promise.all([
-        this.supabaseStorage.getExercises(userId),
-        this.firebaseStorage.getExercises(userId)
-      ]);
-
-      // Compare exercise counts
-      if (supabaseExercises.length !== firebaseExercises.length) {
-        errors.push(`Exercise count mismatch: Supabase(${supabaseExercises.length}) vs Firebase(${firebaseExercises.length})`);
-        isConsistent = false;
-      }
-
-      // Compare exercise names (simple consistency check)
-      const supabaseNames = new Set(supabaseExercises.map(e => e.name));
-      const firebaseNames = new Set(firebaseExercises.map(e => e.name));
-      
-      for (const name of supabaseNames) {
-        if (!firebaseNames.has(name)) {
-          errors.push(`Exercise "${name}" exists in Supabase but not Firebase`);
-          isConsistent = false;
-        }
-      }
-
-      for (const name of firebaseNames) {
-        if (!supabaseNames.has(name)) {
-          errors.push(`Exercise "${name}" exists in Firebase but not Supabase`);
-          isConsistent = false;
-        }
-      }
+      const exerciseValidation = await this.validateExerciseConsistency(userId);
+      errors.push(...exerciseValidation.errors);
+      if (!exerciseValidation.isConsistent) isConsistent = false;
 
     } catch (error) {
       errors.push(`Consistency validation failed: ${error instanceof Error ? error.message : String(error)}`);
       isConsistent = false;
     }
 
+    this.logValidationResults(isConsistent, errors);
+    return { isConsistent, errors };
+  }
+
+  private validateUserConsistency(supabaseUser: any, firebaseUser: any): {isConsistent: boolean; errors: string[]} {
+    const errors: string[] = [];
+    let isConsistent = true;
+
+    if (supabaseUser && firebaseUser) {
+      if (supabaseUser.email !== firebaseUser.email) {
+        errors.push(`User email mismatch: Supabase(${supabaseUser.email}) vs Firebase(${firebaseUser.email})`);
+        isConsistent = false;
+      }
+      
+      if (supabaseUser.isAnonymous !== firebaseUser.isAnonymous) {
+        errors.push(`User anonymous status mismatch: Supabase(${supabaseUser.isAnonymous}) vs Firebase(${firebaseUser.isAnonymous})`);
+        isConsistent = false;
+      }
+    } else if (supabaseUser !== firebaseUser) {
+      errors.push(`User presence mismatch: Supabase(${!!supabaseUser}) vs Firebase(${!!firebaseUser})`);
+      isConsistent = false;
+    }
+
+    return { isConsistent, errors };
+  }
+
+  private async validateExerciseConsistency(userId?: string): Promise<{isConsistent: boolean; errors: string[]}> {
+    const [supabaseExercises, firebaseExercises] = await Promise.all([
+      this.supabaseStorage.getExercises(userId),
+      this.firebaseStorage.getExercises(userId)
+    ]);
+
+    const errors: string[] = [];
+    let isConsistent = true;
+
+    // Compare exercise counts
+    if (supabaseExercises.length !== firebaseExercises.length) {
+      errors.push(`Exercise count mismatch: Supabase(${supabaseExercises.length}) vs Firebase(${firebaseExercises.length})`);
+      isConsistent = false;
+    }
+
+    // Compare exercise names
+    const nameValidation = this.validateExerciseNames(supabaseExercises, firebaseExercises);
+    errors.push(...nameValidation.errors);
+    if (!nameValidation.isConsistent) isConsistent = false;
+
+    return { isConsistent, errors };
+  }
+
+  private validateExerciseNames(supabaseExercises: any[], firebaseExercises: any[]): {isConsistent: boolean; errors: string[]} {
+    const errors: string[] = [];
+    let isConsistent = true;
+
+    const supabaseNames = new Set(supabaseExercises.map(e => e.name));
+    const firebaseNames = new Set(firebaseExercises.map(e => e.name));
+    
+    for (const name of supabaseNames) {
+      if (!firebaseNames.has(name)) {
+        errors.push(`Exercise "${name}" exists in Supabase but not Firebase`);
+        isConsistent = false;
+      }
+    }
+
+    for (const name of firebaseNames) {
+      if (!supabaseNames.has(name)) {
+        errors.push(`Exercise "${name}" exists in Firebase but not Supabase`);
+        isConsistent = false;
+      }
+    }
+
+    return { isConsistent, errors };
+  }
+
+  private logValidationResults(isConsistent: boolean, errors: string[]): void {
     if (__DEV__) {
       if (isConsistent) {
         console.info('✅ Data consistency validation passed');
@@ -157,8 +195,6 @@ export class StorageManager implements IStorageManager {
         console.warn('⚠️ Data consistency issues detected:', errors);
       }
     }
-
-    return { isConsistent, errors };
   }
 
   /**

@@ -50,7 +50,7 @@ export class TestDevice {
   private _authState: TestAuthenticationState;
   private _exercises: Exercise[] = [];
   private _syncQueue: SyncOperation[] = [];
-  private _subscriptions: Set<(exercises: Exercise[]) => void> = new Set();
+  private readonly _subscriptions: Set<(exercises: Exercise[]) => void> = new Set();
   private _networkSimulation: {
     enabled: boolean;
     latencyMs: number;

@@ -169,7 +169,7 @@ export function validatePassword(password: string): void {
   }
 
   // Check for at least one number or special character (basic strength check)
-  const hasNumberOrSpecial = /[0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+  const hasNumberOrSpecial = /[0-9!@#$%^&*()_+=[\]{};':"\\|,.<>/?-]/.test(password);
   if (!hasNumberOrSpecial) {
     throw new UserValidationError('Password must contain at least one number or special character', 'password');
   }

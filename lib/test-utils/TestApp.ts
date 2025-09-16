@@ -88,13 +88,13 @@ export interface TestAppOptions {
  * Works in conjunction with TestDevice for complete testing scenarios.
  */
 export class TestApp {
-  private device: TestDevice;
+  private readonly device: TestDevice;
   private currentScreen: string = 'home';
   private navigationStack: string[] = ['home'];
   private modalStack: string[] = [];
   private theme: 'light' | 'dark' = 'light';
   private initialized: boolean = false;
-  private testId: string;
+  private readonly testId: string;
 
   constructor(options: TestAppOptions | string = {}) {
     if (typeof options === 'string') {

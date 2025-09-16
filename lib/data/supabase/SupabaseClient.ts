@@ -11,34 +11,44 @@ export class SupabaseClient {
 
 	private getClient(): BaseSupabaseClient<Database> {
 		if (!this.client) {
-			try {
-				const client = getSupabaseClient();
-				if (!client || typeof client.from !== 'function') {
-					throw new Error('Invalid Supabase client: missing required methods');
-				}
-				this.client = client;
-			} catch (error) {
-				// In test environment, initialize Supabase if not already done
-				if (process.env.NODE_ENV === 'test') {
-					try {
-						// Use dynamic import for test environment
-						import('./supabase').then(({ initSupabase }) => {
-							initSupabase();
-						});
-						const client = getSupabaseClient();
-						if (!client || typeof client.from !== 'function') {
-							throw new Error('Invalid Supabase client: missing required methods');
-						}
-						this.client = client;
-					} catch (initError) {
-						throw new Error(`Failed to initialize Supabase in test environment: ${initError instanceof Error ? initError.message : String(initError)}`);
-					}
-				} else {
-					throw error;
-				}
-			}
+			this.client = this.initializeClient();
 		}
 		return this.client;
+	}
+
+	private initializeClient(): BaseSupabaseClient<Database> {
+		try {
+			return this.createValidatedClient();
+		} catch (error) {
+			if (process.env.NODE_ENV === 'test') {
+				return this.initializeTestClient();
+			}
+			throw error;
+		}
+	}
+
+	private createValidatedClient(): BaseSupabaseClient<Database> {
+		const client = getSupabaseClient();
+		this.validateClient(client);
+		return client;
+	}
+
+	private validateClient(client: any): void {
+		if (!client || typeof client.from !== 'function') {
+			throw new Error('Invalid Supabase client: missing required methods');
+		}
+	}
+
+	private initializeTestClient(): BaseSupabaseClient<Database> {
+		try {
+			// Use dynamic import for test environment
+			import('./supabase').then(({ initSupabase }) => {
+				initSupabase();
+			});
+			return this.createValidatedClient();
+		} catch (initError) {
+			throw new Error(`Failed to initialize Supabase in test environment: ${initError instanceof Error ? initError.message : String(initError)}`);
+		}
 	}
 
 	/**
