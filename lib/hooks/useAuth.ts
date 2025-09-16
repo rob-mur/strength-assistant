@@ -106,7 +106,8 @@ export function useAuth() {
 		const userStateHandler = (user: FirebaseUser | null) => {
 			try {
 				handleUserStateChange(user);
-			} catch {
+			} catch (error: unknown) {
+				console.error("Error handling user state change:", error);
 				setErrorState();
 			}
 		};
@@ -122,7 +123,8 @@ export function useAuth() {
 			const authFunctions = getAuthFunctions();
 			await initializeAuthWithTimeout(authFunctions);
 			return setupAuthListener(authFunctions);
-		} catch {
+		} catch (error: unknown) {
+			console.error("Error initializing auth:", error);
 			setErrorState();
 			return undefined;
 		}
@@ -143,7 +145,8 @@ export function useAuth() {
 				.then((authUnsubscribe) => {
 					unsubscribe = authUnsubscribe;
 				})
-				.catch(() => {
+				.catch((error: unknown) => {
+					console.error("Error in auth initialization timeout:", error);
 					setErrorState();
 				});
 		}, 50);

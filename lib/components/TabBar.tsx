@@ -35,14 +35,9 @@ const TabBar = (props: BottomTabBarProps) => (
     getLabelText={({ route }) => {
       const { options } = props.descriptors[route.key];
       if (typeof options.tabBarLabel === "function") {
-        throw "Unsupported Label";
+        throw new Error("Unsupported Label");
       }
-      const label =
-        options.tabBarLabel !== undefined
-          ? options.tabBarLabel
-          : options.title !== undefined
-            ? options.title
-            : route.name;
+      const label = options.tabBarLabel ?? options.title ?? route.name;
 
       return label;
     }}

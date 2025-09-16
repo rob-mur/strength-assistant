@@ -5,8 +5,6 @@ import {
 	TextInput,
 	Button,
 	Card,
-	Title,
-	Paragraph,
 	Snackbar,
 	HelperText,
 	Divider,
@@ -91,15 +89,15 @@ export function AuthScreen() {
 			<View style={styles.content}>
 				<Card style={styles.card}>
 					<Card.Content>
-						<Title style={styles.title}>
+						<Text variant="headlineMedium" style={styles.title}>
 							{mode === "signin" ? "Sign In" : "Create Account"}
-						</Title>
-						<Paragraph style={styles.subtitle}>
+						</Text>
+						<Text variant="bodyMedium" style={styles.subtitle}>
 							{mode === "signin" 
 								? "Welcome back! Sign in to continue." 
 								: "Create a new account to get started."
 							}
-						</Paragraph>
+						</Text>
 
 						<View style={styles.form}>
 							<TextInput

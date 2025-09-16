@@ -17,7 +17,8 @@ export interface LogContext {
 
 export class FirebaseLogger {
 	private createMessage(level: string, message: string, context: LogContext): string {
-		const prefix = `[${context.service}${context.platform ? ` ${context.platform}` : ''}]`;
+		const platformSuffix = context.platform ? ` ${context.platform}` : '';
+		const prefix = `[${context.service}${platformSuffix}]`;
 		return `${prefix} ${message}`;
 	}
 

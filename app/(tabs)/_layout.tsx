@@ -5,10 +5,55 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Tabs } from "expo-router";
 import React from "react";
 
+// Tab icon components
+interface TabIconProps {
+  focused: boolean;
+  color: string;
+  size?: number;
+}
+
+const HomeTabIcon = (props: TabIconProps) => (
+  <MaterialCommunityIcons
+    {...props}
+    size={24}
+    name={props.focused ? "home" : "home-outline"}
+  />
+);
+
+const ExercisesTabIcon = (props: TabIconProps) => (
+  <MaterialIcons
+    testID="exercisesTab"
+    {...props}
+    size={24}
+    name={props.focused ? "sports-gymnastics" : "sports-martial-arts"}
+  />
+);
+
+const WorkoutTabIcon = (props: TabIconProps) =>
+  props.focused ? (
+    <MaterialCommunityIcons
+      {...props}
+      size={24}
+      name={"weight-lifter"}
+    />
+  ) : (
+    <MaterialIcons {...props} size={24} name={"fitness-center"} />
+  );
+
+const ProfileTabIcon = (props: TabIconProps) => (
+  <MaterialCommunityIcons
+    {...props}
+    size={24}
+    name={props.focused ? "account" : "account-outline"}
+  />
+);
+
+const CustomTabBar = (props: unknown) => <TabBar {...props} />;
+
 const TabLayout = () => {
   return (
     <Tabs
-      tabBar={(props) => <TabBar {...props} />}
+      tabBar={CustomTabBar}
       screenOptions={{
         tabBarHideOnKeyboard: true,
       }}
@@ -17,56 +62,28 @@ const TabLayout = () => {
         name="index"
         options={{
           title: Locales.t("titleHome"),
-          tabBarIcon: (props) => (
-            <MaterialCommunityIcons
-              {...props}
-              size={24}
-              name={props.focused ? "home" : "home-outline"}
-            />
-          ),
+          tabBarIcon: HomeTabIcon,
         }}
       />
       <Tabs.Screen
         name="exercises"
         options={{
           title: Locales.t("titleExercises"),
-          tabBarIcon: (props) => (
-            <MaterialIcons
-              testID="exercisesTab"
-              {...props}
-              size={24}
-              name={props.focused ? "sports-gymnastics" : "sports-martial-arts"}
-            />
-          ),
+          tabBarIcon: ExercisesTabIcon,
         }}
       />
       <Tabs.Screen
         name="workout"
         options={{
           title: Locales.t("titleWorkout"),
-          tabBarIcon: (props) =>
-            props.focused ? (
-              <MaterialCommunityIcons
-                {...props}
-                size={24}
-                name={"weight-lifter"}
-              />
-            ) : (
-              <MaterialIcons {...props} size={24} name={"fitness-center"} />
-            ),
+          tabBarIcon: WorkoutTabIcon,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: (props) => (
-            <MaterialCommunityIcons
-              {...props}
-              size={24}
-              name={props.focused ? "account" : "account-outline"}
-            />
-          ),
+          tabBarIcon: ProfileTabIcon,
         }}
       />
     </Tabs>

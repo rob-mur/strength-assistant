@@ -1,7 +1,19 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
-import { Card, Title, Paragraph, Button, List, Divider } from "react-native-paper";
+import { Card, Text, Button, List, Divider } from "react-native-paper";
 import { useAuthContext } from "@/lib/components/AuthProvider";
+
+// Extracted icon components
+interface IconProps {
+  color: string;
+  style?: object;
+}
+
+const AccountIcon = (props: IconProps) => <List.Icon {...props} icon="account-circle" />;
+const EmailIcon = (props: IconProps) => <List.Icon {...props} icon="email" />;
+const AccountTypeIcon = ({ isAnonymous, ...props }: IconProps & { isAnonymous?: boolean }) => (
+  <List.Icon {...props} icon={isAnonymous ? "incognito" : "account-check"} />
+);
 
 export default function ProfileScreen() {
 	const { user, signOut } = useAuthContext();
@@ -14,35 +26,35 @@ export default function ProfileScreen() {
 		<View style={styles.container}>
 			<Card style={styles.card}>
 				<Card.Content>
-					<Title style={styles.title}>Profile</Title>
+					<Text variant="headlineMedium" style={styles.title}>Profile</Text>
 					
 					<View style={styles.userInfo}>
 						<List.Item
 							title="User ID"
 							description={user?.uid || "N/A"}
-							left={(props) => <List.Icon {...props} icon="account-circle" />}
+							left={AccountIcon}
 						/>
 						<List.Item
 							title="Email"
 							description={user?.email || "Anonymous User"}
-							left={(props) => <List.Icon {...props} icon="email" />}
+							left={EmailIcon}
 						/>
 						<List.Item
 							title="Account Type"
 							description={user?.isAnonymous ? "Guest Account" : "Registered Account"}
-							left={(props) => <List.Icon {...props} icon={user?.isAnonymous ? "incognito" : "account-check"} />}
+							left={(props) => <AccountTypeIcon {...props} isAnonymous={user?.isAnonymous} />}
 						/>
 					</View>
 
 					<Divider style={styles.divider} />
 
 					<View style={styles.actions}>
-						<Paragraph style={styles.signOutDescription}>
+						<Text variant="bodyMedium" style={styles.signOutDescription}>
 							{user?.isAnonymous 
 								? "Sign out of your guest account. Your data will be lost unless you create a permanent account first."
 								: "Sign out of your account. You can sign back in anytime."
 							}
-						</Paragraph>
+						</Text>
 						
 						<Button
 							mode="contained"

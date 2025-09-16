@@ -11,7 +11,7 @@ import { logger } from "@/lib/data/firebase/logger";
 import { initializeDataLayer } from "@/lib/data/sync";
 
 export const useAppInit = () => {
-	const [isAppReady, setAppReady] = useState(false);
+	const [isAppReady, setIsAppReady] = useState(false);
 
 	const [fontsLoaded, fontError] = useFonts({
 		NotoSans_400Regular,
@@ -86,7 +86,7 @@ export const useAppInit = () => {
 					});
 				}
 			} finally {
-				setAppReady(true);
+				setIsAppReady(true);
 				logger.info("App initialization complete", {
 					service: "App Init",
 					platform: "React Native",

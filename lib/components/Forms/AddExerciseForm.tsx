@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/hooks/useAuth";
 import { Locales } from "@/lib/locales";
 
 export default function AddExerciseForm() {
-  const [exercise, onChangeExercise] = React.useState("");
+  const [exercise, setExercise] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(false);
   const router = useRouter();
   const { user } = useAuth();
@@ -20,7 +20,7 @@ export default function AddExerciseForm() {
           testID="name"
           label={Locales.t("name")}
           value={exercise}
-          onChangeText={onChangeExercise}
+          onChangeText={setExercise}
         ></TextInput>
       </Card.Content>
       <Card.Actions>

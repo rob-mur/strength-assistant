@@ -1,4 +1,3 @@
-import { CommonTestState } from "@/__test_utils__/utils";
 import WorkoutScreen from "@/app/(tabs)/workout";
 import { render, screen } from "@testing-library/react-native";
 

@@ -75,19 +75,12 @@ class AuthWebService extends FirebaseService {
 			});
 
 			try {
-				// Check if emulator is already connected (prevents double connection errors)
-				if (!(this.authInstance as { _delegate?: { _config?: { emulator?: unknown } } })._delegate?._config?.emulator) {
-					connectAuthEmulator(this.authInstance, emulatorUrl, { disableWarnings: true });
-					this.logInfo("Successfully connected to Auth emulator", {
-						operation: "emulator_setup",
-						emulator: { host, port }
-					});
-				} else {
-					this.logInfo("Auth emulator already connected", {
-						operation: "emulator_setup",
-						emulator: { host, port }
-					});
-				}
+				// Attempt to connect to emulator, ignoring errors if already connected
+				connectAuthEmulator(this.authInstance, emulatorUrl, { disableWarnings: true });
+				this.logInfo("Successfully connected to Auth emulator", {
+					operation: "emulator_setup",
+					emulator: { host, port }
+				});
 			} catch (error: unknown) {
 				// In Chrome test environment, emulator connection failures should not block the app
 				this.logError("Failed to connect to emulator", {
