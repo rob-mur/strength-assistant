@@ -43,8 +43,8 @@ export interface TestDeviceOptions {
  * and exercise management scenarios.
  */
 export class TestDevice {
-  private _deviceId: string;
-  private _deviceName: string;
+  private readonly _deviceId: string;
+  private readonly _deviceName: string;
   private _initialized: boolean = false;
   private _networkStatus: boolean = true;
   private _authState: TestAuthenticationState;

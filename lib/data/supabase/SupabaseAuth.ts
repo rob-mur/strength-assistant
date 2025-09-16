@@ -97,6 +97,21 @@ export class SupabaseAuth {
   }
 
   /**
+   * Helper method to handle common auth response pattern
+   */
+  private handleAuthResponse(data: unknown, error: unknown, operation: string): UserAccount {
+    if (error) {
+      throw new Error(`${operation} failed: ${(error as { message: string }).message}`);
+    }
+
+    if (!(data as { user: unknown }).user) {
+      throw new Error(`${operation} failed: No user returned`);
+    }
+
+    return this.mapSupabaseUserToUserAccount((data as { user: unknown }).user);
+  }
+
+  /**
    * Sign up new user with email and password
    */
   async signUp(email: string, password: string): Promise<UserAccount> {
@@ -114,15 +129,7 @@ export class SupabaseAuth {
       password
     });
 
-    if (error) {
-      throw new Error(`Sign up failed: ${(error as { message: string }).message}`);
-    }
-
-    if (!(data as { user: unknown }).user) {
-      throw new Error('Sign up failed: No user returned');
-    }
-
-    return this.mapSupabaseUserToUserAccount((data as { user: unknown }).user);
+    return this.handleAuthResponse(data, error, 'Sign up');
   }
 
   /**
@@ -134,15 +141,7 @@ export class SupabaseAuth {
       password
     });
 
-    if (error) {
-      throw new Error(`Sign in failed: ${(error as { message: string }).message}`);
-    }
-
-    if (!(data as { user: unknown }).user) {
-      throw new Error('Sign in failed: No user returned');
-    }
-
-    return this.mapSupabaseUserToUserAccount((data as { user: unknown }).user);
+    return this.handleAuthResponse(data, error, 'Sign in');
   }
 
   /**
@@ -151,15 +150,7 @@ export class SupabaseAuth {
   async signInAnonymously(): Promise<UserAccount> {
     const { data, error } = await this.client.auth.signInAnonymously();
 
-    if (error) {
-      throw new Error(`Anonymous sign in failed: ${(error as { message: string }).message}`);
-    }
-
-    if (!(data as { user: unknown }).user) {
-      throw new Error('Anonymous sign in failed: No user returned');
-    }
-
-    return this.mapSupabaseUserToUserAccount((data as { user: unknown }).user);
+    return this.handleAuthResponse(data, error, 'Anonymous sign in');
   }
 
   /**

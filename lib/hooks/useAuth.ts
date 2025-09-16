@@ -61,11 +61,10 @@ export function useAuth() {
 
 	// Helper function to handle user state changes
 	const handleUserStateChange = useCallback((user: FirebaseUser | null) => {
-		const userData = user ? {
-			uid: user.uid,
-			email: user.email,
-			isAnonymous: user.isAnonymous,
-		} : null;
+		const userData = user ? (() => {
+			const { uid, email, isAnonymous } = user;
+			return { uid, email, isAnonymous };
+		})() : null;
 
 		setAuthState({
 			user: userData,
@@ -75,13 +74,35 @@ export function useAuth() {
 	}, []);
 
 	// Helper function to set error state
-	const setErrorState = () => {
+	const setErrorState = useCallback(() => {
 		setAuthState({
 			user: null,
 			loading: false,
 			error: null,
 		});
-	};
+	}, []);
+
+	// Helper function to handle auth errors consistently
+	const handleAuthError = useCallback((error: unknown) => {
+		const { code = "unknown", message = "An error occurred" } = (error as { code?: string; message?: string }) || {};
+		
+		setAuthState(prev => ({
+			...prev,
+			loading: false,
+			error: { code, message },
+		}));
+	}, []);
+
+	// Helper function to get platform-specific auth function
+	const getPlatformAuthFunction = useCallback(<T extends keyof AuthFunctions>(
+		authFunctions: AuthFunctions,
+		webFunctionName: T,
+		nativeFunctionName: T
+	) => {
+		return Platform.OS === "web" 
+			? authFunctions[webFunctionName]
+			: authFunctions[nativeFunctionName];
+	}, []);
 
 	// Helper function to initialize auth with timeout
 	const initializeAuthWithTimeout = async (authFunctions: AuthFunctions): Promise<void> => {
@@ -115,7 +136,7 @@ export function useAuth() {
 		return Platform.OS === "web" 
 			? authFunctions.onAuthStateChangedWeb?.(userStateHandler)
 			: authFunctions.onAuthStateChangedNative?.(userStateHandler);
-	}, [handleUserStateChange]);
+	}, [handleUserStateChange, setErrorState]);
 
 	// Main auth initialization function
 	const initializeAuth = useCallback(async (): Promise<(() => void) | undefined> => {
@@ -128,11 +149,28 @@ export function useAuth() {
 			setErrorState();
 			return undefined;
 		}
-	}, [setupAuthListener]);
+	}, [setupAuthListener, setErrorState]);
+
+	// Helper function to check if running in test environment
+	const isTestEnvironment = useCallback(() => {
+		return process.env.CHROME_TEST === 'true' || process.env.CI === 'true';
+	}, []);
+
+	// Helper function to handle auth cleanup
+	const cleanupAuth = useCallback((timeoutId: number, unsubscribe?: () => void) => {
+		clearTimeout(timeoutId);
+		if (!unsubscribe) return;
+		
+		try {
+			unsubscribe();
+		} catch (error) {
+			console.error("Error during auth listener cleanup:", error);
+		}
+	}, []);
 
 	useEffect(() => {
 		// Early return for test environments
-		if (process.env.CHROME_TEST === 'true' || process.env.CI === 'true') {
+		if (isTestEnvironment()) {
 			setErrorState();
 			return;
 		}
@@ -151,21 +189,12 @@ export function useAuth() {
 				});
 		}, 50);
 
-		return () => {
-			clearTimeout(timeoutId);
-			if (!unsubscribe) return;
-			
-			try {
-				unsubscribe();
-			} catch (error) {
-				console.error("Error during auth listener cleanup:", error);
-			}
-		};
-	}, [initializeAuth]);
+		return () => cleanupAuth(timeoutId, unsubscribe);
+	}, [initializeAuth, isTestEnvironment, setErrorState, cleanupAuth]);
 
 	const signInAnonymously = async (): Promise<void> => {
 		// Early return for test environments
-		if (process.env.CHROME_TEST === 'true' || process.env.CI === 'true' || process.env.NODE_ENV === 'test') {
+		if (isTestEnvironment() || process.env.NODE_ENV === 'test') {
 			setAuthState({
 				user: {
 					uid: "test-user-chrome",
@@ -182,21 +211,16 @@ export function useAuth() {
 			const authFunctions = getAuthFunctions();
 			setAuthState(prev => ({ ...prev, loading: true, error: null }));
 			
-			const signInFunction = Platform.OS === "web" 
-				? authFunctions.signInAnonymouslyWeb
-				: authFunctions.signInAnonymouslyNative;
+			const signInFunction = getPlatformAuthFunction(
+				authFunctions,
+				'signInAnonymouslyWeb',
+				'signInAnonymouslyNative'
+			);
 			
 			await signInFunction?.();
 		} catch (error: unknown) {
 			console.error("Anonymous sign in failed:", error);
-			setAuthState(prev => ({
-				...prev,
-				loading: false,
-				error: { 
-				code: (error as { code?: string })?.code || "unknown", 
-				message: (error as { message?: string })?.message || "An error occurred" 
-			},
-			}));
+			handleAuthError(error);
 		}
 	};
 
@@ -205,20 +229,15 @@ export function useAuth() {
 			const authFunctions = getAuthFunctions();
 			setAuthState(prev => ({ ...prev, loading: true, error: null }));
 			
-			const createFunction = Platform.OS === "web" 
-				? authFunctions.createAccountWeb
-				: authFunctions.createAccountNative;
+			const createFunction = getPlatformAuthFunction(
+				authFunctions,
+				'createAccountWeb',
+				'createAccountNative'
+			);
 			
 			await createFunction?.(email, password);
 		} catch (error: unknown) {
-			setAuthState(prev => ({
-				...prev,
-				loading: false,
-				error: { 
-				code: (error as { code?: string })?.code || "unknown", 
-				message: (error as { message?: string })?.message || "An error occurred" 
-			},
-			}));
+			handleAuthError(error);
 		}
 	};
 
@@ -227,20 +246,15 @@ export function useAuth() {
 			const authFunctions = getAuthFunctions();
 			setAuthState(prev => ({ ...prev, loading: true, error: null }));
 			
-			const signInFunction = Platform.OS === "web" 
-				? authFunctions.signInWeb
-				: authFunctions.signInNative;
+			const signInFunction = getPlatformAuthFunction(
+				authFunctions,
+				'signInWeb',
+				'signInNative'
+			);
 			
 			await signInFunction?.(email, password);
 		} catch (error: unknown) {
-			setAuthState(prev => ({
-				...prev,
-				loading: false,
-				error: { 
-				code: (error as { code?: string })?.code || "unknown", 
-				message: (error as { message?: string })?.message || "An error occurred" 
-			},
-			}));
+			handleAuthError(error);
 		}
 	};
 
@@ -249,20 +263,15 @@ export function useAuth() {
 			const authFunctions = getAuthFunctions();
 			setAuthState(prev => ({ ...prev, loading: true, error: null }));
 			
-			const signOutFunction = Platform.OS === "web" 
-				? authFunctions.signOutWeb
-				: authFunctions.signOutNative;
+			const signOutFunction = getPlatformAuthFunction(
+				authFunctions,
+				'signOutWeb',
+				'signOutNative'
+			);
 			
 			await signOutFunction?.();
 		} catch (error: unknown) {
-			setAuthState(prev => ({
-				...prev,
-				loading: false,
-				error: { 
-				code: (error as { code?: string })?.code || "unknown", 
-				message: (error as { message?: string })?.message || "An error occurred" 
-			},
-			}));
+			handleAuthError(error);
 		}
 	};
 

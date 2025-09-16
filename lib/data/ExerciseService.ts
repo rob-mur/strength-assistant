@@ -51,8 +51,8 @@ export class ExerciseService {
   private exercises: Map<string, Exercise> = new Map();
   private syncRecords: Map<string, SyncRecord> = new Map();
   private userId: string;
-  private enableSync: boolean;
-  private persistence: boolean;
+  private readonly enableSync: boolean;
+  private readonly persistence: boolean;
 
   constructor(options: ExerciseServiceOptions = {}) {
     this.userId = options.userId || 'default-user';
@@ -61,7 +61,7 @@ export class ExerciseService {
     
     // Load from persistence if enabled
     if (this.persistence) {
-      this.loadFromPersistence();
+      this.loadFromPersistenceSync();
     }
   }
 
@@ -480,7 +480,7 @@ export class ExerciseService {
 
   // ==================== PRIVATE PERSISTENCE METHODS ====================
 
-  private async loadFromPersistence(): Promise<void> {
+  private loadFromPersistenceSync(): void {
     try {
       // In a real app, this would load from AsyncStorage or similar
       // For tests, we'll use in-memory storage
@@ -507,6 +507,11 @@ export class ExerciseService {
       // Handle persistence errors gracefully
       console.warn('Failed to load from persistence:', error);
     }
+  }
+
+  private async loadFromPersistence(): Promise<void> {
+    // Delegate to sync version since this operation is actually synchronous
+    this.loadFromPersistenceSync();
   }
 
   private async saveToPersistence(): Promise<void> {

@@ -367,8 +367,6 @@ describe.skip('Storage Backend Interface Contract Compliance', () => {
       expect(typeof supabaseBackend.createExercise).toBe('function');
 
       // Firebase backend test will be skipped until interface is implemented
-      // const firebaseBackend = new FirebaseStorage();  
-      // expect(typeof firebaseBackend.createExercise).toBe('function');
     });
 
     it('should support unified error handling', () => {

@@ -40,13 +40,9 @@ import { signInAnonymously as firebaseSignInAnonymously, createUserWithEmailAndP
 
 
 // Use the actual Firebase Auth type
-// interface FirebaseAuth {
-//   currentUser: unknown;
-//   [key: string]: unknown;
-// }
 
 export class FirebaseStorage implements StorageBackend {
-  private firestore: Firestore;
+  private readonly firestore: Firestore;
   private auth: Auth | null;
   private currentUser: UserAccount | null = null;
 
@@ -59,8 +55,8 @@ export class FirebaseStorage implements StorageBackend {
     // In a full implementation, we'd use the existing Firebase auth setup
     this.auth = null;
     
-    // Initialize current user from auth state
-    this.initializeSession();
+    // Note: User session initialization should be done asynchronously
+    // after constructor completes via getCurrentUser() or auth state listener
   }
 
   // Exercise CRUD operations
@@ -328,7 +324,10 @@ export class FirebaseStorage implements StorageBackend {
 
   // Private helper methods
   private initializeSession(): void {
-    // @ts-ignore Firebase legacy code - auth can be null
+    if (!this.auth) {
+      return; // No auth available
+    }
+    
     const firebaseUser = this.auth.currentUser;
     
     if (firebaseUser) {
@@ -337,21 +336,21 @@ export class FirebaseStorage implements StorageBackend {
   }
 
   private mapFirebaseUserToAccount(user: User): UserAccount {
-    const isAnonymous = user.isAnonymous;
+    const { isAnonymous, uid, email, metadata } = user;
     
     if (isAnonymous) {
       return {
-        id: user.uid,
+        id: uid,
         isAnonymous: true,
-        createdAt: new Date(user.metadata.creationTime || Date.now())
+        createdAt: new Date(metadata.creationTime || Date.now())
       };
     }
 
-    if (!user.email) {
+    if (!email) {
       throw new Error('Non-anonymous user must have email');
     }
 
-    return createAuthenticatedUser(user.email);
+    return createAuthenticatedUser(email);
   }
 
   // Development/testing utilities
