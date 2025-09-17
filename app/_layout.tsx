@@ -2,7 +2,7 @@ import "react-native-get-random-values";
 import { SplashScreen, Stack } from "expo-router";
 import React from "react";
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from "react-native-paper";
-import { useColorScheme, View } from "react-native";
+import { useColorScheme } from "react-native";
 import handleErrors from "./error";
 import { useAppInit } from "@/lib/hooks/useAppInit";
 import { AuthProvider } from "@/lib/components/AuthProvider";
@@ -43,11 +43,9 @@ const RootLayout = () => {
 
 const RootLayoutNav = () => {
   return (
-    <View testID="root-layout-nav">
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      </Stack>
-    </View>
+    <Stack>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+    </Stack>
   );
 };
 
