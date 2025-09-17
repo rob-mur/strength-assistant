@@ -8,11 +8,15 @@ const mockRouter = {
   navigate: jest.fn(),
 };
 
-const MockStack = ({ children }) => children;
+const MockStack = jest.fn(({ children }) => children);
 MockStack.Screen = jest.fn(() => null);
+
+const MockTabs = jest.fn(({ children }) => children);
+MockTabs.Screen = jest.fn(() => null);
 
 module.exports = {
   Stack: MockStack,
+  Tabs: MockTabs,
   useRouter: jest.fn(() => mockRouter),
   useLocalSearchParams: jest.fn(() => ({})),
   router: mockRouter,
