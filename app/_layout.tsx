@@ -41,11 +41,16 @@ const RootLayout = () => {
   );
 };
 
+import { View } from "react-native";
+// ... other imports
+
 const RootLayoutNav = () => {
   return (
-    <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-    </Stack>
+    <View testID="root-layout-nav">
+      <Stack>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      </Stack>
+    </View>
   );
 };
 

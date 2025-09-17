@@ -26,7 +26,7 @@ module.exports = {
 
   // Minimal transforms for speed - only essential modules
   transformIgnorePatterns: [
-    "node_modules/(?!(react-native|@react-native|expo|@expo|uuid))",
+    "node_modules/(?!(react-native|@react-native|expo|@expo|uuid|@react-navigation))",
   ],
 
   // Use default jest-expo transforms for compatibility

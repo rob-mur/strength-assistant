@@ -47,6 +47,57 @@ describe.skip("SupabaseClient", () => {
       
       expect(getSupabaseClient).toHaveBeenCalledTimes(1);
     });
+
+    test("initializes test client in test environment when main client fails", () => {
+      const originalNodeEnv = process.env.NODE_ENV;
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'test',
+        writable: true,
+        configurable: true
+      });
+      
+      // Mock first call to fail, second call to succeed
+      (getSupabaseClient as jest.Mock)
+        .mockImplementationOnce(() => {
+          throw new Error('Client initialization failed');
+        })
+        .mockReturnValueOnce(mockSupabaseClient);
+
+      const client = new SupabaseClient();
+      const result = client.getSupabaseClient();
+      
+      expect(result).toBe(mockSupabaseClient);
+      expect(getSupabaseClient).toHaveBeenCalledTimes(2);
+      
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: originalNodeEnv,
+        writable: true,
+        configurable: true
+      });
+    });
+
+    test("throws error when not in test environment and client initialization fails", () => {
+      const originalNodeEnv = process.env.NODE_ENV;
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'production',
+        writable: true,
+        configurable: true
+      });
+      
+      (getSupabaseClient as jest.Mock).mockImplementation(() => {
+        throw new Error('Client initialization failed');
+      });
+
+      const client = new SupabaseClient();
+      
+      expect(() => client.getSupabaseClient()).toThrow('Client initialization failed');
+      
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: originalNodeEnv,
+        writable: true,
+        configurable: true
+      });
+    });
   });
 
   describe("getSupabaseClient", () => {
