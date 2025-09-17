@@ -148,6 +148,7 @@ export function AuthScreen() {
 								loading={loading}
 								disabled={loading}
 								style={styles.primaryButton}
+								testID={mode === "signin" ? "sign-in-button" : "create-account-button"}
 							>
 								{mode === "signin" ? "Sign In" : "Create Account"}
 							</Button>
@@ -157,6 +158,7 @@ export function AuthScreen() {
 								onPress={switchMode}
 								disabled={loading}
 								style={styles.secondaryButton}
+								testID="switch-mode-button"
 							>
 								{mode === "signin" 
 									? "Need an account? Sign up" 
