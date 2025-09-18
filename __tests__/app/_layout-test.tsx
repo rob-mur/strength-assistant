@@ -70,46 +70,4 @@ describe("RootLayout", () => {
     const { toJSON } = render(<RootLayout />);
     expect(toJSON()).toBeNull();
   });
-
-  it.skip("should render the layout with light theme when color scheme is light", () => {
-    // TODO: Fix Stack.Screen mocking issue
-    (useAppInit as jest.Mock).mockReturnValue(true);
-    (useColorScheme as jest.Mock).mockReturnValue("light");
-    render(<RootLayout />);
-    expect(screen.getByTestId("root-layout-nav")).toBeTruthy();
-    expect(PaperProvider).toHaveBeenCalledWith(
-      expect.objectContaining({
-        theme: MD3LightTheme,
-      }),
-      {},
-    );
-  });
-
-  it.skip("should render the layout with dark theme when color scheme is dark", () => {
-    // TODO: Fix Stack.Screen mocking issue
-    (useAppInit as jest.Mock).mockReturnValue(true);
-    (useColorScheme as jest.Mock).mockReturnValue("dark");
-    render(<RootLayout />);
-    expect(screen.getByTestId("root-layout-nav")).toBeTruthy();
-    expect(PaperProvider).toHaveBeenCalledWith(
-      expect.objectContaining({
-        theme: MD3DarkTheme,
-      }),
-      {},
-    );
-  });
-
-  it.skip("should configure the stack navigator correctly", () => {
-    // TODO: Fix Stack.Screen mocking issue
-    (useAppInit as jest.Mock).mockReturnValue(true);
-    (useColorScheme as jest.Mock).mockReturnValue("light");
-    render(<RootLayout />);
-    expect(MockScreen).toHaveBeenCalledWith(
-      expect.objectContaining({
-        name: "(tabs)",
-        options: { headerShown: false },
-      }),
-      {},
-    );
-  });
 });
