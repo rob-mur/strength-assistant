@@ -169,10 +169,14 @@ describe('ExerciseActions', () => {
     describe('updateExercise', () => {
       it('should handle update exercise workflow', async () => {
         // Mock that exercise exists
-        const mockExerciseGet = jest.fn().mockReturnValue({ id: 'ex123', name: 'Old Name' });
+        const mockExercise = { id: 'ex123', name: 'Old Name', createdAt: '2023-01-01T00:00:00.000Z' };
+        const mockExerciseGet = jest.fn().mockReturnValue(mockExercise);
+        const mockExerciseSet = jest.fn();
+        
+        // Mock the store structure correctly
         (exerciseStore.exercises as any)['ex123'] = { 
           get: mockExerciseGet,
-          set: jest.fn()
+          set: mockExerciseSet
         };
 
         await exerciseActions.updateExercise('ex123', 'New Name');
@@ -189,11 +193,13 @@ describe('ExerciseActions', () => {
 
         expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(expect.any(Function));
       });
+
     });
 
     describe('deleteExercise', () => {
       it('should handle delete exercise workflow', async () => {
-        const mockExerciseGet = jest.fn().mockReturnValue({ id: 'ex123', name: 'Exercise' });
+        const mockExercise = { id: 'ex123', name: 'Exercise' };
+        const mockExerciseGet = jest.fn().mockReturnValue(mockExercise);
         const mockExerciseDelete = jest.fn();
         (exerciseStore.exercises as any)['ex123'] = { 
           get: mockExerciseGet,
@@ -214,6 +220,7 @@ describe('ExerciseActions', () => {
 
         expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(expect.any(Function));
       });
+
     });
   });
 
@@ -648,6 +655,66 @@ describe('ExerciseActions', () => {
       await exerciseActions.addExercise('Test');
 
       expect(mockConsole.error).toHaveBeenCalledWith('❌', 'Failed to add exercise: Test error');
+    });
+  });
+
+  describe('Helper Functions', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    describe('getExercises', () => {
+      it('should return array of exercises from store', () => {
+        const mockExercises = {
+          'ex1': { id: 'ex1', name: 'Exercise 1' },
+          'ex2': { id: 'ex2', name: 'Exercise 2' },
+        };
+        (exerciseStore.exercises.get as jest.Mock).mockReturnValue(mockExercises);
+
+        const result = getExercises();
+
+        expect(result).toEqual([
+          { id: 'ex1', name: 'Exercise 1' },
+          { id: 'ex2', name: 'Exercise 2' },
+        ]);
+        expect(exerciseStore.exercises.get).toHaveBeenCalled();
+      });
+    });
+
+    describe('getCurrentUser', () => {
+      it('should return current user from store', () => {
+        const mockUser = { id: 'user123', email: 'test@example.com' };
+        (exerciseStore.user.get as jest.Mock).mockReturnValue(mockUser);
+
+        const result = getCurrentUser();
+
+        expect(result).toEqual(mockUser);
+        expect(exerciseStore.user.get).toHaveBeenCalled();
+      });
+    });
+
+    describe('getSyncState', () => {
+      it('should return sync state from store', () => {
+        const mockSyncState = { isOnline: true, lastSync: new Date() };
+        (exerciseStore.syncState.get as jest.Mock).mockReturnValue(mockSyncState);
+
+        const result = getSyncState();
+
+        expect(result).toEqual(mockSyncState);
+        expect(exerciseStore.syncState.get).toHaveBeenCalled();
+      });
+    });
+
+    describe('getFeatureFlags', () => {
+      it('should return feature flags from store', () => {
+        const mockFeatureFlags = { newFeature: true, betaFeature: false };
+        (exerciseStore.featureFlags.get as jest.Mock).mockReturnValue(mockFeatureFlags);
+
+        const result = getFeatureFlags();
+
+        expect(result).toEqual(mockFeatureFlags);
+        expect(exerciseStore.featureFlags.get).toHaveBeenCalled();
+      });
     });
   });
 });
