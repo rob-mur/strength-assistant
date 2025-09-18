@@ -1,18 +1,18 @@
 // Mock React Native Firebase Auth using FirebaseMockFactory
 jest.mock('@react-native-firebase/auth', () => {
-  const FirebaseMockFactory = require('./lib/test-utils/FirebaseMockFactory').default;
+  const FirebaseMockFactory = require('./__tests__/test-utils/FirebaseMockFactory').default;
   return FirebaseMockFactory.getReactNativeFirebaseMock();
 });
 
 // Mock Firebase web SDK using FirebaseMockFactory
 jest.mock('firebase/auth', () => {
-  const FirebaseMockFactory = require('./lib/test-utils/FirebaseMockFactory').default;
+  const FirebaseMockFactory = require('./__tests__/test-utils/FirebaseMockFactory').default;
   return FirebaseMockFactory.getWebFirebaseMock();
 });
 
 // Mock Firebase Firestore web SDK
 jest.mock('firebase/firestore', () => {
-  const FirebaseMockFactory = require('./lib/test-utils/FirebaseMockFactory').default;
+  const FirebaseMockFactory = require('./__tests__/test-utils/FirebaseMockFactory').default;
   return {
     getFirestore: jest.fn(() => FirebaseMockFactory.createFirestoreMock()),
     collection: jest.fn(),
@@ -397,7 +397,7 @@ afterEach(async () => {
     
     // Reset Firebase mock state for test isolation
     try {
-      const FirebaseMockFactory = require('./lib/test-utils/FirebaseMockFactory').default;
+      const FirebaseMockFactory = require('./__tests__/test-utils/FirebaseMockFactory').default;
       FirebaseMockFactory.cleanup();
     } catch (error) {
       // Ignore cleanup errors to prevent test interference

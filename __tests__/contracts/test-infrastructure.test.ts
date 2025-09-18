@@ -8,9 +8,9 @@
  * defined in specs/001-we-are-actually/contracts/test-infrastructure.ts
  */
 
-import { TestDevice } from '../../lib/test-utils/TestDevice';
-import MockFactoryCollectionImpl from '../../lib/test-utils/mocks/MockFactoryCollection';
-import TestDataBuilderCollectionImpl from '../../lib/test-utils/builders/TestDataBuilderCollection';
+import { TestDevice } from '../test-utils/TestDevice';
+import MockFactoryCollectionImpl from '../test-utils/mocks/MockFactoryCollection';
+import TestDataBuilderCollectionImpl from '../test-utils/builders/TestDataBuilderCollection';
 import type {
   TestDevice as TestDeviceInterface,
   TestInfrastructureManager,

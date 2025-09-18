@@ -7,8 +7,8 @@
  */
 
 import { TestApp } from './TestApp';
-import { Exercise } from '../models/Exercise';
-import { UserAccount } from '../models/UserAccount';
+import { Exercise } from '../../lib/models/Exercise';
+import { UserAccount } from '../../lib/models/UserAccount';
 
 // Type-safe interfaces for MigrationTestApp
 interface FeatureFlagResult {

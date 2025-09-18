@@ -3,7 +3,7 @@ import { useAuth } from "@/lib/hooks/useAuth";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react-native";
 import { CommonTestState } from "../../__test_utils__/utils";
 import AddExerciseForm from "@/lib/components/Forms/AddExerciseForm";
-import { testHelper, actWithAnimations } from "@/lib/test-utils/ReactNativeTestHelper";
+import { testHelper, actWithAnimations } from "../test-utils/ReactNativeTestHelper";
 
 // Mock dependencies first
 jest.mock('@legendapp/state', () => ({

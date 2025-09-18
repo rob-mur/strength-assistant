@@ -43,7 +43,7 @@ module.exports = {
     "!**/*.stories.{ts,tsx}",
     "!lib/repo/FirebaseExerciseRepo.ts",
     "!lib/data/firebase/**",
-    "!lib/test-utils/**", // Exclude test infrastructure from coverage
+    "!__tests__/test-utils/**", // Exclude test infrastructure from coverage
     "!**/*.test.{ts,tsx}",
     "!**/*.spec.{ts,tsx}",
   ],
@@ -87,16 +87,16 @@ module.exports = {
   // TypeScript-first module resolution for constitutional compliance
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
   testMatch: [
-    "**/__tests__/**/*.(ts|tsx|js)",
-    "**/*.(test|spec).(ts|tsx|js)",
+    "**/__tests__/**/*.(test|spec).(ts|tsx|js)", // Only test files in __tests__
+    "**/*.(test|spec).(ts|tsx|js)", // Test files anywhere
     "**/__tests__/contracts/**/*.test.ts" // Include contract tests
   ],
 
   // Path aliases and constitutional infrastructure mapping
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/$1",
-    "^../../lib/test-utils/TestDevice$": "<rootDir>/lib/test-utils/TestDevice",
-    "^../lib/test-utils/(.*)$": "<rootDir>/lib/test-utils/$1",
+    "^../../lib/test-utils/TestDevice$": "<rootDir>/__tests__/test-utils/TestDevice",
+    "^../lib/test-utils/(.*)$": "<rootDir>/__tests__/test-utils/$1",
     "^@constitution/(.*)$": "<rootDir>/lib/constitution/$1",
     "^@testing/(.*)$": "<rootDir>/lib/testing/$1"
   },

@@ -8,7 +8,7 @@ import {
   complexAnimationTester, 
   testWithFakeTimers,
   describeWithFakeTimers 
-} from "@/lib/test-utils/ComponentTestUtils";
+} from "../test-utils/ComponentTestUtils";
 
 // Mock the AuthProvider and AuthScreen components
 jest.mock("@/lib/components/AuthProvider", () => ({

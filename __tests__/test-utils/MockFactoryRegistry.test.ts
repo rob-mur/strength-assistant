@@ -5,7 +5,7 @@
  * for all mock factory operations with backend-agnostic strategies.
  */
 
-import { MockFactoryRegistry, dualBackendRegistry, firebaseRegistry, supabaseRegistry } from '@/lib/test-utils/mocks/MockFactoryRegistry';
+import { MockFactoryRegistry, dualBackendRegistry, firebaseRegistry, supabaseRegistry } from './mocks/MockFactoryRegistry';
 
 describe('MockFactoryRegistry - T012 Implementation', () => {
   

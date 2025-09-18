@@ -16,7 +16,7 @@ describe('Feature Flag Migration Flow', () => {
 
   beforeEach(async () => {
     // This will fail initially - MigrationTestApp doesn't exist yet
-    const { MigrationTestApp } = require('../../lib/test-utils/MigrationTestApp');
+    const { MigrationTestApp } = require('../test-utils/MigrationTestApp');
     app = new MigrationTestApp();
     await app.init();
     

@@ -6,7 +6,7 @@ This document captures the testing strategies and patterns discovered during sys
 
 ## Core Testing Utilities
 
-### ReactNativeTestHelper (`lib/test-utils/ReactNativeTestHelper.ts`)
+### ReactNativeTestHelper (`__tests__/test-utils/ReactNativeTestHelper.ts`)
 
 **Purpose**: Centralized utility for React Native specific testing concerns
 **Key Achievement**: **Zero React act() warnings eliminated** from component tests
@@ -19,7 +19,7 @@ This document captures the testing strategies and patterns discovered during sys
 
 #### Usage Patterns:
 ```typescript
-import { testHelper, actWithAnimations } from '@/lib/test-utils/ReactNativeTestHelper';
+import { testHelper, actWithAnimations } from '../test-utils/ReactNativeTestHelper';
 
 // Wait for component render
 await testHelper.waitForRender(renderResult);
@@ -37,7 +37,7 @@ await testHelper.testLoadingState(
 );
 ```
 
-### ComponentTestUtils (`lib/test-utils/ComponentTestUtils.ts`)
+### ComponentTestUtils (`__tests__/test-utils/ComponentTestUtils.ts`)
 
 **Purpose**: Evidence-based animation testing utilities
 **Key Achievement**: **25x performance improvement** (50+ seconds to ~2 seconds)
@@ -49,7 +49,7 @@ await testHelper.testLoadingState(
 
 #### Usage for Complex Components:
 ```typescript
-import { complexAnimationTester } from '@/lib/test-utils/ComponentTestUtils';
+import { complexAnimationTester } from '../test-utils/ComponentTestUtils';
 
 // Timeout behavior testing
 await complexAnimationTester.testTimeoutBehavior(

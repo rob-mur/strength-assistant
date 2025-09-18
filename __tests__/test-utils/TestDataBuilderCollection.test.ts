@@ -7,7 +7,7 @@
  * - TypeScript safety improvements
  */
 
-import { TestDataBuilderCollectionImpl } from '@/lib/test-utils/builders/TestDataBuilderCollection';
+import { TestDataBuilderCollectionImpl } from './builders/TestDataBuilderCollection';
 
 describe('TestDataBuilderCollection - T014 Implementation', () => {
   let collection: TestDataBuilderCollectionImpl;

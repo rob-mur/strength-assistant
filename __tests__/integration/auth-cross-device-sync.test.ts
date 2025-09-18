@@ -10,7 +10,7 @@
  * using evidence-based testing patterns from T008-T010 work.
  */
 
-import { integrationTestHelper } from '@/lib/test-utils/ReactNativeTestHelper';
+import { integrationTestHelper } from '../test-utils/ReactNativeTestHelper';
 
 describe.skip('Authenticated Cross-Device Sync', () => {
   let deviceA: any;
@@ -24,7 +24,7 @@ describe.skip('Authenticated Cross-Device Sync', () => {
   beforeEach(async () => {
     // Use proper async handling with integration test helper
     await integrationTestHelper.actWrap(async () => {
-      const { TestDevice } = require('../../lib/test-utils/TestDevice');
+      const { TestDevice } = require('../test-utils/TestDevice');
       
       deviceA = new TestDevice('Device-A');
       deviceB = new TestDevice('Device-B');
@@ -251,7 +251,7 @@ describe.skip('Authenticated Cross-Device Sync', () => {
 
     beforeEach(async () => {
       await integrationTestHelper.actWrap(async () => {
-        const { TestDevice } = require('../../lib/test-utils/TestDevice');
+        const { TestDevice } = require('../test-utils/TestDevice');
         deviceC = new TestDevice('Device-C');
         await deviceC.init();
 

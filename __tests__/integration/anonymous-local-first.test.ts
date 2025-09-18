@@ -9,10 +9,10 @@
  * - Data consistency in offline mode
  */
 
-import { TestDevice } from '../../lib/test-utils/TestDevice';
-import { TestApp } from '../../lib/test-utils/TestApp';
-import MockFactoryCollection from '../../lib/test-utils/mocks/MockFactoryCollection';
-import TestDataBuilderCollection from '../../lib/test-utils/builders/TestDataBuilderCollection';
+import { TestDevice } from '../test-utils/TestDevice';
+import { TestApp } from '../test-utils/TestApp';
+import MockFactoryCollection from '../test-utils/mocks/MockFactoryCollection';
+import TestDataBuilderCollection from '../test-utils/builders/TestDataBuilderCollection';
 
 describe('Anonymous Local-First Storage Integration', () => {
   let testDevice: TestDevice;

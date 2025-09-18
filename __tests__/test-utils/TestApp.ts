@@ -8,8 +8,8 @@
  */
 
 import { TestDevice } from './TestDevice';
-import { Exercise } from '../models/Exercise';
-import { UserAccount } from '../models/UserAccount';
+import { Exercise } from '../../lib/models/Exercise';
+import { UserAccount } from '../../lib/models/UserAccount';
 import type { NetworkSimulationConfig } from '../../specs/001-we-are-actually/contracts/test-infrastructure';
 
 // Interface adapters for type-safe conversions

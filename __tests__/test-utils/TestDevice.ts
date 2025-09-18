@@ -7,8 +7,8 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { Exercise } from '../models/Exercise';
-import { UserAccount, createAnonymousUser, createAuthenticatedUser } from '../models/UserAccount';
+import { Exercise } from '../../lib/models/Exercise';
+import { UserAccount, createAnonymousUser, createAuthenticatedUser } from '../../lib/models/UserAccount';
 import type {
   TestAuthenticationState,
   NetworkSimulationConfig,
