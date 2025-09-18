@@ -176,19 +176,19 @@ export class StorageManager implements IStorageManager {
     const supabaseNames = new Set(supabaseExercises.map(e => e.name));
     const firebaseNames = new Set(firebaseExercises.map(e => e.name));
     
-    for (const name of supabaseNames) {
+    Array.from(supabaseNames).forEach(name => {
       if (!firebaseNames.has(name)) {
         errors.push(`Exercise "${name}" exists in Supabase but not Firebase`);
         isConsistent = false;
       }
-    }
+    });
 
-    for (const name of firebaseNames) {
+    Array.from(firebaseNames).forEach(name => {
       if (!supabaseNames.has(name)) {
         errors.push(`Exercise "${name}" exists in Firebase but not Supabase`);
         isConsistent = false;
       }
-    }
+    });
 
     return { isConsistent, errors };
   }

@@ -101,7 +101,7 @@ export class FirebaseStorage implements StorageBackend {
 
     querySnapshot.forEach((doc) => {
       const data = doc.data();
-      exercises.push(exerciseFromDb({ ...data, id: doc.id }));
+      exercises.push(exerciseFromDb(Object.assign({}, data, { id: doc.id })));
     });
 
     return exercises;
