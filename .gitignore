@@ -68,3 +68,4 @@ report.xml
 
 **/.devbox/
 .jest-cache/
+supabase/.temp/
