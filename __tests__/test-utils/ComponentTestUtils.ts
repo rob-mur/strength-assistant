@@ -1,6 +1,6 @@
 /**
  * Component Test Utilities - Evidence-Based Patterns
- * 
+ *
  * Research-backed utilities for testing React Native components with animations,
  * timers, and complex state interactions. Based on 2025 best practices from:
  * - React Native Testing Library official docs
@@ -8,10 +8,10 @@
  * - React Native animation testing experts
  */
 
-import { RenderAPI } from '@testing-library/react-native';
+import { RenderAPI } from "@testing-library/react-native";
 
 // Use the modern Element type instead of deprecated ReactTestInstance
-type TestElement = ReturnType<RenderAPI['getByTestId']>;
+type TestElement = ReturnType<RenderAPI["getByTestId"]>;
 
 export interface AnimatedTestOptions {
   /**
@@ -19,19 +19,19 @@ export interface AnimatedTestOptions {
    * @default 10 - Research shows 10ms steps provide smooth animation testing
    */
   timeStep?: number;
-  
+
   /**
    * Maximum time to wait for animated state changes (ms)
    * @default 5000
    */
   maxWaitTime?: number;
-  
+
   /**
    * Whether to automatically setup/cleanup fake timers
    * @default true
    */
   manageFakeTimers?: boolean;
-  
+
   /**
    * Timeout for findBy queries (ms)
    * @default 1000
@@ -42,7 +42,7 @@ export interface AnimatedTestOptions {
 export class ComponentTestUtils {
   private readonly options: Required<AnimatedTestOptions>;
   private fakeTimersActive = false;
-  
+
   constructor(options: AnimatedTestOptions = {}) {
     this.options = {
       timeStep: options.timeStep ?? 10,
@@ -79,22 +79,25 @@ export class ComponentTestUtils {
    * Time-stepping pattern for smooth animation testing
    * Based on React Native animation testing research showing 10ms steps work best
    */
-  async advanceAnimationBySteps(totalTime: number, callback?: (currentTime: number) => void): Promise<void> {
+  async advanceAnimationBySteps(
+    totalTime: number,
+    callback?: (currentTime: number) => void,
+  ): Promise<void> {
     const steps = Math.ceil(totalTime / this.options.timeStep);
-    
+
     for (let i = 0; i <= steps; i++) {
       const currentTime = Math.min(i * this.options.timeStep, totalTime);
-      
+
       // Advance timers by step
       jest.advanceTimersByTime(this.options.timeStep);
-      
+
       // Optional callback for mid-animation checks
       if (callback) {
         callback(currentTime);
       }
-      
+
       // Small delay to allow React Native to process animation callbacks
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
     }
   }
 
@@ -103,16 +106,18 @@ export class ComponentTestUtils {
    * Research shows findBy queries handle act() automatically and are more reliable
    */
   async waitForElement(
-    renderResult: RenderAPI, 
+    renderResult: RenderAPI,
     testId: string,
-    options?: { timeout?: number }
+    options?: { timeout?: number },
   ): Promise<TestElement> {
     const timeout = options?.timeout ?? this.options.queryTimeout;
-    
+
     try {
-  return await renderResult.findByTestId(testId, { timeout });
+      return await renderResult.findByTestId(testId, { timeout });
     } catch {
-      throw new Error(`Element with testId "${testId}" not found within ${timeout}ms`);
+      throw new Error(
+        `Element with testId "${testId}" not found within ${timeout}ms`,
+      );
     }
   }
 
@@ -120,14 +125,14 @@ export class ComponentTestUtils {
    * Wait for text content using findBy pattern
    */
   async waitForText(
-    renderResult: RenderAPI, 
+    renderResult: RenderAPI,
     text: string | RegExp,
-    options?: { timeout?: number }
+    options?: { timeout?: number },
   ): Promise<TestElement> {
     const timeout = options?.timeout ?? this.options.queryTimeout;
-    
+
     try {
-  return await renderResult.findByText(text, { timeout });
+      return await renderResult.findByText(text, { timeout });
     } catch {
       throw new Error(`Text "${text}" not found within ${timeout}ms`);
     }
@@ -140,17 +145,17 @@ export class ComponentTestUtils {
   async testAnimationTransition<T>(
     animationDuration: number,
     stateChecker: (currentTime: number) => T,
-    expectedStates: { time: number; expectedValue: T }[]
+    expectedStates: { time: number; expectedValue: T }[],
   ): Promise<void> {
     this.setupFakeTimers();
-    
+
     try {
       await this.advanceAnimationBySteps(animationDuration, (currentTime) => {
         // Check expected states at specific times
-        const expectedState = expectedStates.find(state => 
-          Math.abs(state.time - currentTime) < this.options.timeStep
+        const expectedState = expectedStates.find(
+          (state) => Math.abs(state.time - currentTime) < this.options.timeStep,
         );
-        
+
         if (expectedState) {
           const actualState = stateChecker(currentTime);
           expect(actualState).toEqual(expectedState.expectedValue);
@@ -169,34 +174,35 @@ export class ComponentTestUtils {
     timeoutDuration: number,
     beforeTimeoutCheck: () => void,
     afterTimeoutCheck: () => void,
-    options?: { 
+    options?: {
       checkBeforeTimeout?: number;
       forceStateUpdate?: () => void;
-    }
+    },
   ): Promise<void> {
     this.setupFakeTimers();
-    
+
     try {
       // Check state before timeout
       if (options?.checkBeforeTimeout) {
         jest.advanceTimersByTime(options.checkBeforeTimeout);
         beforeTimeoutCheck();
       }
-      
+
       // Advance past timeout
-      jest.advanceTimersByTime(timeoutDuration - (options?.checkBeforeTimeout || 0) + 10);
-      
+      jest.advanceTimersByTime(
+        timeoutDuration - (options?.checkBeforeTimeout || 0) + 10,
+      );
+
       // Force state update if needed (for components that need external triggers)
       if (options?.forceStateUpdate) {
         options.forceStateUpdate();
       }
-      
+
       // Wait for React to process the timeout
-      await new Promise(resolve => setTimeout(resolve, 0));
-      
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
       // Check state after timeout
       afterTimeoutCheck();
-      
     } finally {
       this.cleanupFakeTimers();
     }
@@ -216,18 +222,18 @@ export class ComponentTestUtils {
       propsUpdate?: Props;
       afterUpdate?: (renderResult: RenderAPI) => void | Promise<void>;
     },
-    animationDuration = 1000
+    animationDuration = 1000,
   ): Promise<TestElement> {
     this.setupFakeTimers();
-    
+
     try {
       // Initial render
       const renderResult = renderComponent(initialProps);
-      
+
       if (lifecycle.afterRender) {
         await lifecycle.afterRender(renderResult);
       }
-      
+
       // Animation phase
       if (lifecycle.duringAnimation) {
         await this.advanceAnimationBySteps(animationDuration, (time) => {
@@ -237,24 +243,23 @@ export class ComponentTestUtils {
         // Simple animation advancement without callbacks
         await this.advanceAnimationBySteps(animationDuration);
       }
-      
+
       if (lifecycle.afterAnimation) {
         await lifecycle.afterAnimation(renderResult);
       }
-      
+
       // Props update phase
       if (lifecycle.propsUpdate) {
         // @ts-ignore Test utility type compatibility - render result vs React element
         renderResult.rerender(renderComponent(lifecycle.propsUpdate));
-        
+
         if (lifecycle.afterUpdate) {
           await lifecycle.afterUpdate(renderResult);
         }
       }
-      
+
       // @ts-ignore Test utility return type compatibility - render result interface mismatch
       return renderResult;
-      
     } finally {
       this.cleanupFakeTimers();
     }
@@ -271,15 +276,15 @@ export class ComponentTestUtils {
       },
       afterEach: () => {
         this.cleanupFakeTimers();
-      }
+      },
     };
   }
 
   /**
    * Debug utility for checking timer state
    */
-  getTimerInfo(): { 
-    active: boolean; 
+  getTimerInfo(): {
+    active: boolean;
     pendingTimers: number;
     options: Required<AnimatedTestOptions>;
   } {
@@ -325,9 +330,9 @@ export const complexAnimationTester = new ComponentTestUtils({
  * Usage: testWithFakeTimers('test description', async () => { ... });
  */
 export function testWithFakeTimers(
-  testName: string, 
+  testName: string,
   testFn: () => Promise<void>,
-  tester: ComponentTestUtils = standardComponentTester
+  tester: ComponentTestUtils = standardComponentTester,
 ) {
   return test(testName, async () => {
     tester.setupFakeTimers();
@@ -345,14 +350,14 @@ export function testWithFakeTimers(
 export function describeWithFakeTimers(
   description: string,
   testSuite: () => void,
-  tester: ComponentTestUtils = standardComponentTester
+  tester: ComponentTestUtils = standardComponentTester,
 ) {
   return describe(description, () => {
     const hooks = tester.createTestHooks();
-    
+
     beforeEach(hooks.beforeEach);
     afterEach(hooks.afterEach);
-    
+
     testSuite();
   });
 }

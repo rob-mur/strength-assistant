@@ -1,23 +1,37 @@
 /**
  * Supabase Authentication Implementation
- * 
+ *
  * Provides authentication functionality using Supabase Auth with feature flag support.
  * Supports both email/password authentication and anonymous users.
  */
 
-import { supabaseClient } from './SupabaseClient';
-import type { UserAccount } from '../../models/UserAccount';
-import { createAnonymousUser, createAuthenticatedUser } from '../../models/UserAccount';
+import { supabaseClient } from "./SupabaseClient";
+import type { UserAccount } from "../../models/UserAccount";
+import {
+  createAnonymousUser,
+  createAuthenticatedUser,
+} from "../../models/UserAccount";
 
 interface SupabaseClient {
   auth: {
     getUser: () => Promise<{ data: { user: unknown } | null; error: unknown }>;
     signInAnonymously: () => Promise<{ data: unknown; error: unknown }>;
-    signUp: (credentials: { email: string; password: string }) => Promise<{ data: unknown; error: unknown }>;
-    signInWithPassword: (credentials: { email: string; password: string }) => Promise<{ data: unknown; error: unknown }>;
+    signUp: (credentials: {
+      email: string;
+      password: string;
+    }) => Promise<{ data: unknown; error: unknown }>;
+    signInWithPassword: (credentials: {
+      email: string;
+      password: string;
+    }) => Promise<{ data: unknown; error: unknown }>;
     signOut: () => Promise<{ error: unknown }>;
-    onAuthStateChange: (callback: (event: string, session: unknown) => void) => { data: { subscription: { unsubscribe: () => void } } };
-    linkEmailPassword: (email: string, password: string) => Promise<{ data: { user: unknown }; error: unknown }>;
+    onAuthStateChange: (
+      callback: (event: string, session: unknown) => void,
+    ) => { data: { subscription: { unsubscribe: () => void } } };
+    linkEmailPassword: (
+      email: string,
+      password: string,
+    ) => Promise<{ data: { user: unknown }; error: unknown }>;
     forceSessionExpiry: () => Promise<void>;
   };
   [key: string]: unknown;
@@ -25,19 +39,21 @@ interface SupabaseClient {
 
 export class SupabaseAuth {
   // This array must remain mutable for push/splice in subscribeToAuthState
-  private readonly authStateListeners: ((user: UserAccount | null) => void)[] = [];
+  private readonly authStateListeners: ((user: UserAccount | null) => void)[] =
+    [];
   private readonly client: SupabaseClient;
 
   constructor() {
     // Get the client - handle both real and mocked cases
     try {
-      const maybeClient = (typeof supabaseClient?.getSupabaseClient === 'function')
-        ? supabaseClient.getSupabaseClient()
-        : supabaseClient;
-  this.client = maybeClient as unknown as SupabaseClient;
+      const maybeClient =
+        typeof supabaseClient?.getSupabaseClient === "function"
+          ? supabaseClient.getSupabaseClient()
+          : supabaseClient;
+      this.client = maybeClient as unknown as SupabaseClient;
     } catch (error) {
       // In test environment, create a mock client
-      if (process.env.NODE_ENV === 'test') {
+      if (process.env.NODE_ENV === "test") {
         this.client = this.createMockClient();
       } else {
         throw error;
@@ -48,16 +64,18 @@ export class SupabaseAuth {
       // Set up auth state listener with Supabase
       this.client.auth.onAuthStateChange((event: string, session: unknown) => {
         let user: unknown = undefined;
-        if (session && typeof session === 'object' && 'user' in session) {
+        if (session && typeof session === "object" && "user" in session) {
           user = (session as { user?: unknown }).user;
         }
-        const mappedUser = user ? this.mapSupabaseUserToUserAccount(user) : null;
+        const mappedUser = user
+          ? this.mapSupabaseUserToUserAccount(user)
+          : null;
         // Notify all listeners
-        this.authStateListeners.forEach(listener => {
+        this.authStateListeners.forEach((listener) => {
           try {
-    listener(mappedUser);
+            listener(mappedUser);
           } catch (error) {
-            console.error('Error in auth state listener:', error);
+            console.error("Error in auth state listener:", error);
           }
         });
       });
@@ -67,46 +85,91 @@ export class SupabaseAuth {
   private createMockClient(): SupabaseClient {
     return {
       auth: {
-        signUp: jest.fn(() => Promise.resolve({
-          data: { user: { id: 'test-id', email: 'test@example.com', created_at: new Date().toISOString() } },
-          error: null
-        })),
-        signInWithPassword: jest.fn(() => Promise.resolve({
-          data: { user: { id: 'test-id', email: 'test@example.com', created_at: new Date().toISOString() } },
-          error: null
-        })),
-        signInAnonymously: jest.fn(() => Promise.resolve({
-          data: { user: { id: 'test-anon-id', created_at: new Date().toISOString() } },
-          error: null
-        })),
+        signUp: jest.fn(() =>
+          Promise.resolve({
+            data: {
+              user: {
+                id: "test-id",
+                email: "test@example.com",
+                created_at: new Date().toISOString(),
+              },
+            },
+            error: null,
+          }),
+        ),
+        signInWithPassword: jest.fn(() =>
+          Promise.resolve({
+            data: {
+              user: {
+                id: "test-id",
+                email: "test@example.com",
+                created_at: new Date().toISOString(),
+              },
+            },
+            error: null,
+          }),
+        ),
+        signInAnonymously: jest.fn(() =>
+          Promise.resolve({
+            data: {
+              user: {
+                id: "test-anon-id",
+                created_at: new Date().toISOString(),
+              },
+            },
+            error: null,
+          }),
+        ),
         signOut: jest.fn(() => Promise.resolve({ error: null })),
-        getUser: jest.fn(() => Promise.resolve({
-          data: { user: { id: 'test-id', email: 'test@example.com', created_at: new Date().toISOString() } },
-          error: null
+        getUser: jest.fn(() =>
+          Promise.resolve({
+            data: {
+              user: {
+                id: "test-id",
+                email: "test@example.com",
+                created_at: new Date().toISOString(),
+              },
+            },
+            error: null,
+          }),
+        ),
+        onAuthStateChange: jest.fn(() => ({
+          data: {
+            subscription: {
+              unsubscribe: jest.fn(),
+            },
+          },
+          unsubscribe: jest.fn(),
         })),
-        onAuthStateChange: jest.fn(() => ({ 
-          data: { 
-            subscription: { 
-              unsubscribe: jest.fn() 
-            } 
-          }, 
-          unsubscribe: jest.fn() 
-        })),
-        linkEmailPassword: jest.fn(() => Promise.resolve({
-          data: { user: { id: 'test-id', email: 'test@example.com', created_at: new Date().toISOString() } },
-          error: null
-        })),
-        forceSessionExpiry: jest.fn(() => Promise.resolve())
-      }
+        linkEmailPassword: jest.fn(() =>
+          Promise.resolve({
+            data: {
+              user: {
+                id: "test-id",
+                email: "test@example.com",
+                created_at: new Date().toISOString(),
+              },
+            },
+            error: null,
+          }),
+        ),
+        forceSessionExpiry: jest.fn(() => Promise.resolve()),
+      },
     } as unknown as SupabaseClient;
   }
 
   /**
    * Helper method to handle common auth response pattern
    */
-  private handleAuthResponse(data: unknown, error: unknown, operation: string): UserAccount {
+  private handleAuthResponse(
+    data: unknown,
+    error: unknown,
+    operation: string,
+  ): UserAccount {
     if (error) {
-      throw new Error(`${operation} failed: ${(error as { message: string }).message}`);
+      throw new Error(
+        `${operation} failed: ${(error as { message: string }).message}`,
+      );
     }
 
     if (!(data as { user: unknown }).user) {
@@ -122,19 +185,19 @@ export class SupabaseAuth {
   async signUp(email: string, password: string): Promise<UserAccount> {
     // Basic validation
     if (!this.isValidEmail(email)) {
-      throw new Error('Invalid email format');
+      throw new Error("Invalid email format");
     }
-    
+
     if (!this.isValidPassword(password)) {
-      throw new Error('Password must be at least 6 characters long');
+      throw new Error("Password must be at least 6 characters long");
     }
 
     const { data, error } = await this.client.auth.signUp({
       email,
-      password
+      password,
     });
 
-    return this.handleAuthResponse(data, error, 'Sign up');
+    return this.handleAuthResponse(data, error, "Sign up");
   }
 
   /**
@@ -143,10 +206,10 @@ export class SupabaseAuth {
   async signIn(email: string, password: string): Promise<UserAccount> {
     const { data, error } = await this.client.auth.signInWithPassword({
       email,
-      password
+      password,
     });
 
-    return this.handleAuthResponse(data, error, 'Sign in');
+    return this.handleAuthResponse(data, error, "Sign in");
   }
 
   /**
@@ -155,7 +218,7 @@ export class SupabaseAuth {
   async signInAnonymously(): Promise<UserAccount> {
     const { data, error } = await this.client.auth.signInAnonymously();
 
-    return this.handleAuthResponse(data, error, 'Anonymous sign in');
+    return this.handleAuthResponse(data, error, "Anonymous sign in");
   }
 
   /**
@@ -164,7 +227,7 @@ export class SupabaseAuth {
   async getCurrentUser(): Promise<UserAccount | null> {
     const { data } = await this.client.auth.getUser();
     let user: unknown = undefined;
-    if (data && typeof data === 'object' && 'user' in data) {
+    if (data && typeof data === "object" && "user" in data) {
       user = (data as { user?: unknown }).user;
     }
     if (!user) {
@@ -179,16 +242,20 @@ export class SupabaseAuth {
    */
   async signOut(): Promise<void> {
     const { error } = await this.client.auth.signOut();
-    
+
     if (error) {
-      throw new Error(`Sign out failed: ${(error as { message: string }).message}`);
+      throw new Error(
+        `Sign out failed: ${(error as { message: string }).message}`,
+      );
     }
   }
 
   /**
    * Subscribe to authentication state changes
    */
-  subscribeToAuthState(callback: (user: UserAccount | null) => void): () => void {
+  subscribeToAuthState(
+    callback: (user: UserAccount | null) => void,
+  ): () => void {
     this.authStateListeners.push(callback);
 
     // Return unsubscribe function
@@ -204,22 +271,26 @@ export class SupabaseAuth {
    * Map Supabase User to our UserAccount interface
    */
   private mapSupabaseUserToUserAccount(supabaseUser: unknown): UserAccount {
-    const userData = supabaseUser as { id: string; email?: string; created_at: string };
+    const userData = supabaseUser as {
+      id: string;
+      email?: string;
+      created_at: string;
+    };
     const isAnonymous = !userData.email;
-    
+
     if (isAnonymous) {
       const user = createAnonymousUser();
       return {
         ...user,
         id: userData.id,
-        createdAt: new Date(userData.created_at)
+        createdAt: new Date(userData.created_at),
       };
     } else {
       const user = createAuthenticatedUser(userData.email!);
       return {
         ...user,
         id: userData.id,
-        createdAt: new Date(userData.created_at)
+        createdAt: new Date(userData.created_at),
       };
     }
   }
@@ -242,33 +313,39 @@ export class SupabaseAuth {
   /**
    * Link email and password to anonymous user (upgrade anonymous to authenticated)
    */
-  async linkEmailPassword(email: string, password: string): Promise<UserAccount> {
+  async linkEmailPassword(
+    email: string,
+    password: string,
+  ): Promise<UserAccount> {
     if (!email || !password) {
-      throw new Error('Email and password are required');
+      throw new Error("Email and password are required");
     }
 
     if (!this.isValidEmail(email)) {
-      throw new Error('Invalid email format');
+      throw new Error("Invalid email format");
     }
 
     if (!this.isValidPassword(password)) {
-      throw new Error('Password should be at least 6 characters');
+      throw new Error("Password should be at least 6 characters");
     }
 
     const currentUser = await this.getCurrentUser();
     if (!currentUser?.isAnonymous) {
-      throw new Error('No anonymous user to upgrade');
+      throw new Error("No anonymous user to upgrade");
     }
 
     // Simulate upgrading anonymous user to authenticated user
-    const { data, error } = await this.client.auth.linkEmailPassword(email, password);
-    
+    const { data, error } = await this.client.auth.linkEmailPassword(
+      email,
+      password,
+    );
+
     if (error) {
       throw new Error((error as { message: string }).message);
     }
 
     if (!(data as { user: unknown }).user) {
-      throw new Error('Failed to upgrade anonymous user');
+      throw new Error("Failed to upgrade anonymous user");
     }
 
     // Keep the same user ID but update authentication status

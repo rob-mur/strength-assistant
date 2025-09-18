@@ -20,23 +20,29 @@ export function getSupabaseEnvConfig(): SupabaseEnvConfig {
   const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url) {
-    throw new Error('EXPO_PUBLIC_SUPABASE_URL environment variable is required');
+    throw new Error(
+      "EXPO_PUBLIC_SUPABASE_URL environment variable is required",
+    );
   }
 
   if (!anonKey) {
-    throw new Error('EXPO_PUBLIC_SUPABASE_ANON_KEY environment variable is required');
+    throw new Error(
+      "EXPO_PUBLIC_SUPABASE_ANON_KEY environment variable is required",
+    );
   }
 
-  const useEmulator = process.env.EXPO_PUBLIC_USE_SUPABASE_EMULATOR === 'true';
-  const emulatorHost = process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_HOST || '127.0.0.1';
-  const emulatorPort = process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_PORT || '54321';
+  const useEmulator = process.env.EXPO_PUBLIC_USE_SUPABASE_EMULATOR === "true";
+  const emulatorHost =
+    process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_HOST || "127.0.0.1";
+  const emulatorPort =
+    process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_PORT || "54321";
 
   return {
     url,
     anonKey,
     useEmulator,
     emulatorHost,
-    emulatorPort
+    emulatorPort,
   };
 }
 
@@ -45,11 +51,11 @@ export function getSupabaseEnvConfig(): SupabaseEnvConfig {
  */
 export function getSupabaseUrl(): string {
   const config = getSupabaseEnvConfig();
-  
+
   if (config.useEmulator) {
     return `http://${config.emulatorHost}:${config.emulatorPort}`;
   }
-  
+
   return config.url;
 }
 
@@ -57,7 +63,7 @@ export function getSupabaseUrl(): string {
  * Checks if Supabase data layer is enabled via feature flag
  */
 export function isSupabaseDataEnabled(): boolean {
-  return process.env.USE_SUPABASE_DATA === 'true';
+  return process.env.USE_SUPABASE_DATA === "true";
 }
 
 /**
@@ -67,24 +73,31 @@ export function isSupabaseDataEnabled(): boolean {
 export function validateSupabaseEnvironment(): void {
   try {
     getSupabaseEnvConfig();
-    
+
     // Additional validation for development environment
     if (__DEV__) {
-      const useEmulator = process.env.EXPO_PUBLIC_USE_EMULATOR === 'true';
-      const useSupabaseEmulator = process.env.EXPO_PUBLIC_USE_SUPABASE_EMULATOR === 'true';
-      
+      const useEmulator = process.env.EXPO_PUBLIC_USE_EMULATOR === "true";
+      const useSupabaseEmulator =
+        process.env.EXPO_PUBLIC_USE_SUPABASE_EMULATOR === "true";
+
       if (useEmulator && !useSupabaseEmulator) {
-        console.warn('⚠️  EXPO_PUBLIC_USE_EMULATOR is true but EXPO_PUBLIC_USE_SUPABASE_EMULATOR is false. Consider enabling Supabase emulator for development.');
+        console.warn(
+          "⚠️  EXPO_PUBLIC_USE_EMULATOR is true but EXPO_PUBLIC_USE_SUPABASE_EMULATOR is false. Consider enabling Supabase emulator for development.",
+        );
       }
-      
+
       if (isSupabaseDataEnabled()) {
-        console.info('✅ Supabase data layer is enabled (USE_SUPABASE_DATA=true)');
+        console.info(
+          "✅ Supabase data layer is enabled (USE_SUPABASE_DATA=true)",
+        );
       } else {
-        console.info('ℹ️  Firebase data layer is active (USE_SUPABASE_DATA=false)');
+        console.info(
+          "ℹ️  Firebase data layer is active (USE_SUPABASE_DATA=false)",
+        );
       }
     }
   } catch (error) {
-    console.error('❌ Supabase environment validation failed:', error);
+    console.error("❌ Supabase environment validation failed:", error);
     throw error;
   }
 }

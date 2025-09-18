@@ -5,7 +5,7 @@ This document outlines tasks to improve the test coverage of the project, based 
 ## Phase 1: Address 0% Coverage Files ✅ COMPLETED
 
 - [x] Create tests for `app/_layout.tsx` ✅ Tests already existed
-- [x] Create tests for `app/error.ts` ✅ Added comprehensive tests  
+- [x] Create tests for `app/error.ts` ✅ Added comprehensive tests
 - [x] Create tests for `lib/components/Cards/GettingStartedCard.tsx` ✅ Added comprehensive tests (100% coverage)
 - [x] Create tests for `lib/data/supabase/SupabaseClient.ts` ✅ Tests exist but skipped - needs debugging
 - [x] Create tests for `lib/data/supabase/supabase.ts` ✅ Added comprehensive tests (100% coverage)
@@ -14,18 +14,20 @@ This document outlines tasks to improve the test coverage of the project, based 
 
 - [x] Improve test coverage for `lib/config/supabase-env.ts` ✅ Improved significantly (removed problematic test due to env isolation issues)
 - [x] Improve test coverage for `lib/data/supabase/SupabaseStorage.ts` ✅ Currently 100% coverage
-- [x] Improve test coverage for `lib/data/supabase/SupabaseAuth.ts` ✅ Currently 100% coverage  
+- [x] Improve test coverage for `lib/data/supabase/SupabaseAuth.ts` ✅ Currently 100% coverage
 - [x] Improve test coverage for `lib/components/Forms` ✅ Currently 100% coverage
 
 ## Phase 3: Address Remaining Low Coverage Areas ✅ COMPLETED
 
 ### High Priority (Low Coverage Files) - Target: 85%+ Coverage
+
 - [x] **Improve `lib/config/supabase-env.ts` (40.74% → 80%+)** ✅ Environment validation & error handling tests added
 - [x] **Add tests for `lib/data/index.ts` (0% → 100%)** ✅ DataLayerAPI tests added with comprehensive coverage
 - [x] **Improve `lib/data/StorageManager.ts` (53.46% → 100%)** ✅ **Outstanding**: 100% statements, functions, lines coverage
 - [x] **Improve `lib/data/ExerciseService.ts` (78.39% → 98.76%)** ✅ **Exceptional**: Far exceeded 90% target with comprehensive testing
 
-### Medium Priority (Good Coverage, Polish Needed) - Target: 90%+ Coverage  
+### Medium Priority (Good Coverage, Polish Needed) - Target: 90%+ Coverage
+
 - [ ] **Improve `app/storybook.tsx` (0% → 80%+)** - Basic component rendering tests
 - [ ] **Improve `app/(tabs)/_layout.tsx` (58.33% → 85%+)** - Tab navigation and screen configuration tests
 - [ ] **Improve `app/(tabs)/workout.tsx` (80% → 90%+)** - Edge cases and error handling
@@ -33,51 +35,56 @@ This document outlines tasks to improve the test coverage of the project, based 
 - [ ] **Improve `lib/data/legend-state/ExerciseActions.ts` (93.54% → 95%+)** - Error path coverage
 
 ### Low Priority (Excellent Coverage, Minor Gaps) - Target: 95%+ Coverage
+
 - [ ] **Improve `lib/hooks/useObservableExercises.ts` (20% → 90%+)** - Hook lifecycle and state tests
 - [ ] **Improve `lib/repo/utils/LoggingUtils.ts` (50% → 90%+)** - Logging scenarios and error cases
-
 
 ## Critical Issues Fixed ✅ COMPLETED
 
 - [x] Fixed failing tests in AddExerciseForm-test.tsx ✅ useRouter mock issues resolved
-- [x] Fixed failing tests in ExerciseScreen-test.tsx ✅ useRouter mock issues resolved  
+- [x] Fixed failing tests in ExerciseScreen-test.tsx ✅ useRouter mock issues resolved
 - [x] Fixed failing tests in WorkoutScreen-test.tsx ✅ useRouter mock issues resolved
-- [x] Improved expo-router mock setup ✅ Added comprehensive mock in __mocks__/expo-router.js
+- [x] Improved expo-router mock setup ✅ Added comprehensive mock in **mocks**/expo-router.js
 - [x] Fixed CommonTestState utility ✅ Proper integration with mocked expo-router
 
 ## Current Status
 
 **Major Improvements Made:**
+
 - Fixed all critical failing tests that were blocking development
 - Significantly improved overall test coverage
-- Created comprehensive test infrastructure 
+- Created comprehensive test infrastructure
 - Added tests for previously untested components
 
 **Remaining Work:**
+
 - ✅ All critical test failures fixed
 - Continue improving coverage for remaining low-coverage files (optional)
 
 ## ✅ INTEGRATION TESTS FIXED - ALL TESTS PASSING
 
 **Current Status**: 🎉 **CI Pipeline Ready!**
-- ✅ All tests passing (100% success rate) 
+
+- ✅ All tests passing (100% success rate)
 - ✅ Integration tests restored and working
 - ✅ Overall test coverage: **81.54%** (excellent improvement)
-- ✅ Branch coverage: **75.31%** 
+- ✅ Branch coverage: **75.31%**
 - ✅ Function coverage: **79.49%**
 - ✅ Line coverage: **81.88%**
 - ✅ SonarQube issues fixed (2 minor TypeScript union type issues resolved)
 
 **Test Suite Summary**:
-- ✅ PASS __tests__/app/_layout-test.tsx
-- ✅ PASS __tests__/integration/feature-flag-migration.test.ts
-- ✅ PASS __tests__/integration/anonymous-local-first.test.ts
-- ✅ PASS __tests__/components/AddExerciseForm-test.tsx
-- ✅ PASS __tests__/contracts/test-infrastructure.test.ts
-- ✅ PASS __tests__/components/AuthAwareLayout-test.tsx
+
+- ✅ PASS **tests**/app/\_layout-test.tsx
+- ✅ PASS **tests**/integration/feature-flag-migration.test.ts
+- ✅ PASS **tests**/integration/anonymous-local-first.test.ts
+- ✅ PASS **tests**/components/AddExerciseForm-test.tsx
+- ✅ PASS **tests**/contracts/test-infrastructure.test.ts
+- ✅ PASS **tests**/components/AuthAwareLayout-test.tsx
 - ✅ Plus all other existing tests
 
 **Key Fixes Applied**:
+
 - Fixed expo-router mocking issues across all test files
 - Improved CommonTestState utility integration
 - Addressed Stack.Screen component mocking challenges
@@ -86,20 +93,23 @@ This document outlines tasks to improve the test coverage of the project, based 
 ## Recent Work Completed (Latest Session)
 
 ### Integration Tests Restored ✅
+
 - **Root Cause**: JavaScript mock `__mocks__/expo-router.js` was interfering with web builds
 - **Fix Applied**: Replaced with TypeScript mock to prevent build interference
 - **Issue**: View wrapper around Stack component broke React Navigation
 - **Fix Applied**: Removed problematic View wrapper from `app/_layout.tsx`
 - **Result**: Both integration tests now passing (2/2 success rate)
 
-### Unit Tests Fixed ✅  
+### Unit Tests Fixed ✅
+
 - **Issue**: Router mocks weren't consistent across test files
 - **Fix Applied**: Created comprehensive TypeScript mock with shared router instance
 - **Added**: Stack and Tabs components with Screen properties
 - **Result**: All unit tests passing (953/953 success rate)
 
 ### SonarQube Issues Resolved ✅
+
 - **Issue**: 2 minor TypeScript union type violations (rule S6571)
-- **Location**: `lib/data/supabase/SupabaseAuth.ts` lines 50 and 166  
+- **Location**: `lib/data/supabase/SupabaseAuth.ts` lines 50 and 166
 - **Fix Applied**: Removed redundant `| undefined` from `unknown | undefined` types
 - **Result**: Code quality improved, ready for CI analysis

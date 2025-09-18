@@ -2,9 +2,13 @@ import { SupabaseService } from "@/lib/data/supabase/supabase/supabase-core";
 import { Logger } from "@/lib/data/supabase/supabase/logger";
 
 // Mock Supabase JS
-jest.mock("@supabase/supabase-js", () => ({
-  createClient: jest.fn(),
-}), { virtual: true });
+jest.mock(
+  "@supabase/supabase-js",
+  () => ({
+    createClient: jest.fn(),
+  }),
+  { virtual: true },
+);
 
 // Mock the Logger
 jest.mock("@/lib/data/supabase/supabase/logger");
@@ -38,16 +42,24 @@ class TestSupabaseService extends SupabaseService {
   // Override for testing
   protected isEmulatorEnabled(): boolean {
     const nodeEnv = this.mockNodeEnv ?? process.env.NODE_ENV;
-    const emulatorFlag = this.mockEmulatorFlag ?? process.env.EXPO_PUBLIC_USE_SUPABASE_EMULATOR;
+    const emulatorFlag =
+      this.mockEmulatorFlag ?? process.env.EXPO_PUBLIC_USE_SUPABASE_EMULATOR;
     return nodeEnv === "development" || emulatorFlag === "true";
   }
 
   protected getEmulatorHost(): string {
-    return this.mockEmulatorHost ?? process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_HOST ?? "127.0.0.1";
+    return (
+      this.mockEmulatorHost ??
+      process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_HOST ??
+      "127.0.0.1"
+    );
   }
 
   protected getEmulatorPort(): number {
-    const port = this.mockEmulatorPort ?? process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_PORT ?? "54321";
+    const port =
+      this.mockEmulatorPort ??
+      process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_PORT ??
+      "54321";
     return parseInt(port, 10);
   }
 
@@ -93,7 +105,10 @@ class TestSupabaseService extends SupabaseService {
     this.logWarn(message, context);
   }
 
-  public testLogError(message: string, context?: Record<string, unknown>): void {
+  public testLogError(
+    message: string,
+    context?: Record<string, unknown>,
+  ): void {
     this.logError(message, context);
   }
 }
@@ -104,7 +119,7 @@ describe("SupabaseService", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Reset environment variables to clean state - remove Supabase vars
     process.env = { ...originalEnv };
     delete process.env.EXPO_PUBLIC_SUPABASE_URL;
@@ -112,17 +127,19 @@ describe("SupabaseService", () => {
     delete process.env.EXPO_PUBLIC_USE_SUPABASE_EMULATOR;
     delete process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_HOST;
     delete process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_PORT;
-    
+
     // Create a mock logger instance
     mockLogger = {
       info: jest.fn(),
       warn: jest.fn(),
       error: jest.fn(),
     } as any;
-    
+
     // Mock the Logger constructor to return our mock
-    (Logger as jest.MockedClass<typeof Logger>).mockImplementation(() => mockLogger);
-    
+    (Logger as jest.MockedClass<typeof Logger>).mockImplementation(
+      () => mockLogger,
+    );
+
     service = new TestSupabaseService();
   });
 
@@ -144,12 +161,14 @@ describe("SupabaseService", () => {
       // Set up required environment variables
       process.env.EXPO_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
       process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "test-key";
-      
+
       // Mock createSupabaseClient to set client
-      (service as any).createSupabaseClient = jest.fn().mockImplementation(() => {
-        (service as any).client = { mock: "client" };
-      });
-      
+      (service as any).createSupabaseClient = jest
+        .fn()
+        .mockImplementation(() => {
+          (service as any).client = { mock: "client" };
+        });
+
       service.init();
       expect(service.isReady()).toBe(true);
     });
@@ -158,12 +177,14 @@ describe("SupabaseService", () => {
       // Set up required environment variables
       process.env.EXPO_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
       process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "test-key";
-      
+
       // Mock createSupabaseClient to set client
-      (service as any).createSupabaseClient = jest.fn().mockImplementation(() => {
-        (service as any).client = { mock: "client" };
-      });
-      
+      (service as any).createSupabaseClient = jest
+        .fn()
+        .mockImplementation(() => {
+          (service as any).client = { mock: "client" };
+        });
+
       service.init();
       expect(service.getSupabaseClient()).toEqual({ mock: "client" });
     });
@@ -172,11 +193,11 @@ describe("SupabaseService", () => {
   describe("assertInitialized", () => {
     test("throws error when not initialized", () => {
       expect(() => service.testAssertInitialized("test operation")).toThrow(
-        "Supabase service not initialized. Call init() before test operation"
+        "Supabase service not initialized. Call init() before test operation",
       );
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Supabase service not initialized. Call init() before test operation",
-        undefined
+        undefined,
       );
     });
 
@@ -184,14 +205,18 @@ describe("SupabaseService", () => {
       // Set up required environment variables
       process.env.EXPO_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
       process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "test-key";
-      
+
       // Mock createSupabaseClient to avoid actual client creation
-      (service as any).createSupabaseClient = jest.fn().mockImplementation(() => {
-        (service as any).client = { mock: "client" };
-      });
-      
+      (service as any).createSupabaseClient = jest
+        .fn()
+        .mockImplementation(() => {
+          (service as any).client = { mock: "client" };
+        });
+
       service.init();
-      expect(() => service.testAssertInitialized("test operation")).not.toThrow();
+      expect(() =>
+        service.testAssertInitialized("test operation"),
+      ).not.toThrow();
     });
   });
 
@@ -199,27 +224,27 @@ describe("SupabaseService", () => {
     test("logs info messages", () => {
       const message = "Test info";
       const context = { test: true };
-      
+
       service.testLogInfo(message, context);
-      
+
       expect(mockLogger.info).toHaveBeenCalledWith(message, context);
     });
 
     test("logs warning messages", () => {
       const message = "Test warning";
       const context = { test: true };
-      
+
       service.testLogWarn(message, context);
-      
+
       expect(mockLogger.warn).toHaveBeenCalledWith(message, context);
     });
 
     test("logs error messages", () => {
       const message = "Test error";
       const context = { test: true };
-      
+
       service.testLogError(message, context);
-      
+
       expect(mockLogger.error).toHaveBeenCalledWith(message, context);
     });
   });

@@ -4,10 +4,10 @@ import { Text, View } from "react-native";
 import { AuthAwareLayout } from "@/lib/components/AuthAwareLayout";
 import { useAuthContext } from "@/lib/components/AuthProvider";
 import { AuthUser, AuthError } from "@/lib/hooks/useAuth";
-import { 
-  complexAnimationTester, 
+import {
+  complexAnimationTester,
   testWithFakeTimers,
-  describeWithFakeTimers 
+  describeWithFakeTimers,
 } from "../test-utils/ComponentTestUtils";
 
 // Mock the AuthProvider and AuthScreen components
@@ -19,7 +19,12 @@ jest.mock("@/lib/components/AuthScreen", () => {
   const MockReact = require("react");
   const MockRN = require("react-native");
   return {
-    AuthScreen: () => MockReact.createElement(MockRN.Text, { testID: "auth-screen" }, "AuthScreen Component"),
+    AuthScreen: () =>
+      MockReact.createElement(
+        MockRN.Text,
+        { testID: "auth-screen" },
+        "AuthScreen Component",
+      ),
   };
 });
 
@@ -42,7 +47,7 @@ const TestChild = () => <Text testID="test-child">Test Child Content</Text>;
 const createMockAuthContext = (
   user: AuthUser | null = null,
   loading = false,
-  error: AuthError | null = null
+  error: AuthError | null = null,
 ) => ({
   user,
   loading,
@@ -72,14 +77,12 @@ describe("AuthAwareLayout", () => {
 
   describe("Loading State", () => {
     test("shows loading indicator when auth is loading and no force auth", () => {
-      mockUseAuthContext.mockReturnValue(
-        createMockAuthContext(null, true)
-      );
+      mockUseAuthContext.mockReturnValue(createMockAuthContext(null, true));
 
       render(
         <AuthAwareLayout>
           <TestChild />
-        </AuthAwareLayout>
+        </AuthAwareLayout>,
       );
 
       expect(screen.getByText("Initializing...")).toBeTruthy();
@@ -88,14 +91,12 @@ describe("AuthAwareLayout", () => {
     });
 
     test("shows loading indicator with activity indicator", () => {
-      mockUseAuthContext.mockReturnValue(
-        createMockAuthContext(null, true)
-      );
+      mockUseAuthContext.mockReturnValue(createMockAuthContext(null, true));
 
       render(
         <AuthAwareLayout>
           <TestChild />
-        </AuthAwareLayout>
+        </AuthAwareLayout>,
       );
 
       // Check that ActivityIndicator is rendered (it should be present)
@@ -106,14 +107,12 @@ describe("AuthAwareLayout", () => {
 
   describe("Auth Required State", () => {
     test("shows AuthScreen when no user and not loading", () => {
-      mockUseAuthContext.mockReturnValue(
-        createMockAuthContext(null, false)
-      );
+      mockUseAuthContext.mockReturnValue(createMockAuthContext(null, false));
 
       render(
         <AuthAwareLayout>
           <TestChild />
-        </AuthAwareLayout>
+        </AuthAwareLayout>,
       );
 
       expect(screen.getByTestId("auth-screen")).toBeTruthy();
@@ -124,16 +123,14 @@ describe("AuthAwareLayout", () => {
     test("shows AuthScreen when forceShowAuth is true", async () => {
       // Use manual fake timer approach for now - debugging complex utility
       jest.useFakeTimers();
-      
+
       try {
-        mockUseAuthContext.mockReturnValue(
-          createMockAuthContext(null, true)
-        );
+        mockUseAuthContext.mockReturnValue(createMockAuthContext(null, true));
 
         const { rerender } = render(
           <AuthAwareLayout>
             <TestChild />
-          </AuthAwareLayout>
+          </AuthAwareLayout>,
         );
 
         // Initially should show loading
@@ -141,23 +138,22 @@ describe("AuthAwareLayout", () => {
 
         // Fast forward time and update state
         jest.advanceTimersByTime(5000);
-        
+
         // Force component to re-evaluate after timer advance
         mockUseAuthContext.mockReturnValue(
-          createMockAuthContext(null, false) // loading: false to trigger auth screen
+          createMockAuthContext(null, false), // loading: false to trigger auth screen
         );
-        
+
         rerender(
           <AuthAwareLayout>
             <TestChild />
-          </AuthAwareLayout>
+          </AuthAwareLayout>,
         );
 
         // Should now show auth screen
         expect(screen.getByTestId("auth-screen")).toBeTruthy();
         expect(screen.queryByText("Initializing...")).toBeNull();
         expect(screen.queryByTestId("test-child")).toBeNull();
-        
       } finally {
         jest.runOnlyPendingTimers();
         jest.useRealTimers();
@@ -167,20 +163,20 @@ describe("AuthAwareLayout", () => {
 
   describe("Authenticated State", () => {
     test("shows children when user is authenticated", () => {
-      const mockUser = { 
-        uid: "test-uid", 
-        email: "test@example.com", 
-        isAnonymous: false 
+      const mockUser = {
+        uid: "test-uid",
+        email: "test@example.com",
+        isAnonymous: false,
       };
-      
+
       mockUseAuthContext.mockReturnValue(
-        createMockAuthContext(mockUser, false)
+        createMockAuthContext(mockUser, false),
       );
 
       render(
         <AuthAwareLayout>
           <TestChild />
-        </AuthAwareLayout>
+        </AuthAwareLayout>,
       );
 
       expect(screen.getByTestId("test-child")).toBeTruthy();
@@ -189,20 +185,20 @@ describe("AuthAwareLayout", () => {
     });
 
     test("shows children when anonymous user is authenticated", () => {
-      const mockUser = { 
-        uid: "anonymous-uid", 
-        email: null, 
-        isAnonymous: true 
+      const mockUser = {
+        uid: "anonymous-uid",
+        email: null,
+        isAnonymous: true,
       };
-      
+
       mockUseAuthContext.mockReturnValue(
-        createMockAuthContext(mockUser, false)
+        createMockAuthContext(mockUser, false),
       );
 
       render(
         <AuthAwareLayout>
           <TestChild />
-        </AuthAwareLayout>
+        </AuthAwareLayout>,
       );
 
       expect(screen.getByTestId("test-child")).toBeTruthy();
@@ -211,14 +207,14 @@ describe("AuthAwareLayout", () => {
     });
 
     test("renders multiple children correctly", () => {
-      const mockUser = { 
-        uid: "test-uid", 
-        email: "test@example.com", 
-        isAnonymous: false 
+      const mockUser = {
+        uid: "test-uid",
+        email: "test@example.com",
+        isAnonymous: false,
       };
-      
+
       mockUseAuthContext.mockReturnValue(
-        createMockAuthContext(mockUser, false)
+        createMockAuthContext(mockUser, false),
       );
 
       render(
@@ -228,7 +224,7 @@ describe("AuthAwareLayout", () => {
           <View testID="child-3">
             <Text>Nested Child</Text>
           </View>
-        </AuthAwareLayout>
+        </AuthAwareLayout>,
       );
 
       expect(screen.getByTestId("child-1")).toBeTruthy();
@@ -240,58 +236,52 @@ describe("AuthAwareLayout", () => {
   describe("Environment-Specific Behavior", () => {
     test("handles Chrome test environment correctly", () => {
       process.env.CHROME_TEST = "true";
-      
-      mockUseAuthContext.mockReturnValue(
-        createMockAuthContext(null, true)
-      );
+
+      mockUseAuthContext.mockReturnValue(createMockAuthContext(null, true));
 
       render(
         <AuthAwareLayout>
           <TestChild />
-        </AuthAwareLayout>
+        </AuthAwareLayout>,
       );
 
       // Should show loading initially
       expect(screen.getByText("Initializing...")).toBeTruthy();
-      
+
       // Verify the warning was logged for Chrome test environment
       expect(console.warn).toHaveBeenCalledWith(
-        "Chrome test environment - auth state should be managed by useAuth hook"
+        "Chrome test environment - auth state should be managed by useAuth hook",
       );
     });
 
     test("handles CI environment correctly", () => {
       process.env.CI = "true";
-      
-      mockUseAuthContext.mockReturnValue(
-        createMockAuthContext(null, true)
-      );
+
+      mockUseAuthContext.mockReturnValue(createMockAuthContext(null, true));
 
       render(
         <AuthAwareLayout>
           <TestChild />
-        </AuthAwareLayout>
+        </AuthAwareLayout>,
       );
 
       // Should show loading initially
       expect(screen.getByText("Initializing...")).toBeTruthy();
-      
+
       // Verify the warning was logged for CI environment
       expect(console.warn).toHaveBeenCalledWith(
-        "Chrome test environment - auth state should be managed by useAuth hook"
+        "Chrome test environment - auth state should be managed by useAuth hook",
       );
     });
 
     test.skip("sets timeout in non-test environments", async () => {
-      mockUseAuthContext.mockReturnValue(
-        createMockAuthContext(null, true)
-      );
+      mockUseAuthContext.mockReturnValue(createMockAuthContext(null, true));
 
       // Render the component first
       render(
         <AuthAwareLayout>
           <TestChild />
-        </AuthAwareLayout>
+        </AuthAwareLayout>,
       );
 
       await complexAnimationTester.testTimeoutBehavior(
@@ -304,46 +294,44 @@ describe("AuthAwareLayout", () => {
           // After timeout - should show auth screen with warning
           expect(screen.getByTestId("auth-screen")).toBeTruthy();
           expect(console.warn).toHaveBeenCalledWith(
-            "Auth loading timeout - forcing auth screen display"
+            "Auth loading timeout - forcing auth screen display",
           );
         },
         {
           checkBeforeTimeout: 500, // Check at 500ms, timeout at 1000ms
-        }
+        },
       );
     });
   });
 
   describe("State Transitions", () => {
     test("transitions from loading to authenticated", () => {
-      const mockUser = { 
-        uid: "test-uid", 
-        email: "test@example.com", 
-        isAnonymous: false 
+      const mockUser = {
+        uid: "test-uid",
+        email: "test@example.com",
+        isAnonymous: false,
       };
 
       // Start with loading state
-      mockUseAuthContext.mockReturnValue(
-        createMockAuthContext(null, true)
-      );
+      mockUseAuthContext.mockReturnValue(createMockAuthContext(null, true));
 
       const { rerender } = render(
         <AuthAwareLayout>
           <TestChild />
-        </AuthAwareLayout>
+        </AuthAwareLayout>,
       );
 
       expect(screen.getByText("Initializing...")).toBeTruthy();
 
       // Transition to authenticated
       mockUseAuthContext.mockReturnValue(
-        createMockAuthContext(mockUser, false)
+        createMockAuthContext(mockUser, false),
       );
 
       rerender(
         <AuthAwareLayout>
           <TestChild />
-        </AuthAwareLayout>
+        </AuthAwareLayout>,
       );
 
       expect(screen.getByTestId("test-child")).toBeTruthy();
@@ -352,27 +340,23 @@ describe("AuthAwareLayout", () => {
 
     test("transitions from loading to auth required", () => {
       // Start with loading state
-      mockUseAuthContext.mockReturnValue(
-        createMockAuthContext(null, true)
-      );
+      mockUseAuthContext.mockReturnValue(createMockAuthContext(null, true));
 
       const { rerender } = render(
         <AuthAwareLayout>
           <TestChild />
-        </AuthAwareLayout>
+        </AuthAwareLayout>,
       );
 
       expect(screen.getByText("Initializing...")).toBeTruthy();
 
       // Transition to no user, not loading
-      mockUseAuthContext.mockReturnValue(
-        createMockAuthContext(null, false)
-      );
+      mockUseAuthContext.mockReturnValue(createMockAuthContext(null, false));
 
       rerender(
         <AuthAwareLayout>
           <TestChild />
-        </AuthAwareLayout>
+        </AuthAwareLayout>,
       );
 
       expect(screen.getByTestId("auth-screen")).toBeTruthy();
@@ -380,34 +364,32 @@ describe("AuthAwareLayout", () => {
     });
 
     test("transitions from authenticated to auth required", () => {
-      const mockUser = { 
-        uid: "test-uid", 
-        email: "test@example.com", 
-        isAnonymous: false 
+      const mockUser = {
+        uid: "test-uid",
+        email: "test@example.com",
+        isAnonymous: false,
       };
 
       // Start with authenticated state
       mockUseAuthContext.mockReturnValue(
-        createMockAuthContext(mockUser, false)
+        createMockAuthContext(mockUser, false),
       );
 
       const { rerender } = render(
         <AuthAwareLayout>
           <TestChild />
-        </AuthAwareLayout>
+        </AuthAwareLayout>,
       );
 
       expect(screen.getByTestId("test-child")).toBeTruthy();
 
       // Transition to no user (logged out)
-      mockUseAuthContext.mockReturnValue(
-        createMockAuthContext(null, false)
-      );
+      mockUseAuthContext.mockReturnValue(createMockAuthContext(null, false));
 
       rerender(
         <AuthAwareLayout>
           <TestChild />
-        </AuthAwareLayout>
+        </AuthAwareLayout>,
       );
 
       expect(screen.getByTestId("auth-screen")).toBeTruthy();
@@ -420,14 +402,12 @@ describe("AuthAwareLayout", () => {
       jest.useFakeTimers();
       const clearTimeoutSpy = jest.spyOn(global, "clearTimeout");
 
-      mockUseAuthContext.mockReturnValue(
-        createMockAuthContext(null, true)
-      );
+      mockUseAuthContext.mockReturnValue(createMockAuthContext(null, true));
 
       const { unmount } = render(
         <AuthAwareLayout>
           <TestChild />
-        </AuthAwareLayout>
+        </AuthAwareLayout>,
       );
 
       // Unmount before timeout
@@ -445,25 +425,21 @@ describe("AuthAwareLayout", () => {
       const clearTimeoutSpy = jest.spyOn(global, "clearTimeout");
 
       // Start with loading state
-      mockUseAuthContext.mockReturnValue(
-        createMockAuthContext(null, true)
-      );
+      mockUseAuthContext.mockReturnValue(createMockAuthContext(null, true));
 
       const { rerender } = render(
         <AuthAwareLayout>
           <TestChild />
-        </AuthAwareLayout>
+        </AuthAwareLayout>,
       );
 
       // Change to not loading
-      mockUseAuthContext.mockReturnValue(
-        createMockAuthContext(null, false)
-      );
+      mockUseAuthContext.mockReturnValue(createMockAuthContext(null, false));
 
       rerender(
         <AuthAwareLayout>
           <TestChild />
-        </AuthAwareLayout>
+        </AuthAwareLayout>,
       );
 
       // Verify timeout was cleared when loading changed
@@ -476,16 +452,19 @@ describe("AuthAwareLayout", () => {
 
   describe("Edge Cases", () => {
     test("handles auth context with error state", () => {
-      const mockError = { code: "auth/network-error", message: "Network error" };
-      
+      const mockError = {
+        code: "auth/network-error",
+        message: "Network error",
+      };
+
       mockUseAuthContext.mockReturnValue(
-        createMockAuthContext(null, false, mockError)
+        createMockAuthContext(null, false, mockError),
       );
 
       render(
         <AuthAwareLayout>
           <TestChild />
-        </AuthAwareLayout>
+        </AuthAwareLayout>,
       );
 
       // Should show auth screen when there's an error and no user
@@ -494,21 +473,24 @@ describe("AuthAwareLayout", () => {
     });
 
     test("shows children even when there's an error but user exists", () => {
-      const mockUser = { 
-        uid: "test-uid", 
-        email: "test@example.com", 
-        isAnonymous: false 
+      const mockUser = {
+        uid: "test-uid",
+        email: "test@example.com",
+        isAnonymous: false,
       };
-      const mockError = { code: "auth/network-error", message: "Network error" };
-      
+      const mockError = {
+        code: "auth/network-error",
+        message: "Network error",
+      };
+
       mockUseAuthContext.mockReturnValue(
-        createMockAuthContext(mockUser, false, mockError)
+        createMockAuthContext(mockUser, false, mockError),
       );
 
       render(
         <AuthAwareLayout>
           <TestChild />
-        </AuthAwareLayout>
+        </AuthAwareLayout>,
       );
 
       // Should show children because user exists, despite error
@@ -517,14 +499,14 @@ describe("AuthAwareLayout", () => {
     });
 
     test("handles empty children", () => {
-      const mockUser = { 
-        uid: "test-uid", 
-        email: "test@example.com", 
-        isAnonymous: false 
+      const mockUser = {
+        uid: "test-uid",
+        email: "test@example.com",
+        isAnonymous: false,
       };
-      
+
       mockUseAuthContext.mockReturnValue(
-        createMockAuthContext(mockUser, false)
+        createMockAuthContext(mockUser, false),
       );
 
       // Should render without crashing

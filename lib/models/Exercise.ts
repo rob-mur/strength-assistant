@@ -26,7 +26,7 @@ export class ExerciseValidator {
    */
   static validateExerciseInput(input: ExerciseInput): void {
     if (!input) {
-      throw new Error('Exercise input is required');
+      throw new Error("Exercise input is required");
     }
 
     this.validateExerciseName(input.name);
@@ -38,22 +38,26 @@ export class ExerciseValidator {
    * @throws Error if validation fails
    */
   static validateExerciseName(name: string): void {
-    if (name === null || name === undefined || typeof name !== 'string') {
-      throw new Error('Exercise name is required and must be a string');
+    if (name === null || name === undefined || typeof name !== "string") {
+      throw new Error("Exercise name is required and must be a string");
     }
 
     const trimmedName = name.trim();
-    
+
     if (trimmedName.length < this.MIN_NAME_LENGTH) {
-      throw new Error('Exercise name cannot be empty');
+      throw new Error("Exercise name cannot be empty");
     }
 
     if (trimmedName.length > this.MAX_NAME_LENGTH) {
-      throw new Error(`Exercise name cannot exceed ${this.MAX_NAME_LENGTH} characters`);
+      throw new Error(
+        `Exercise name cannot exceed ${this.MAX_NAME_LENGTH} characters`,
+      );
     }
 
     if (!this.VALID_NAME_PATTERN.test(trimmedName)) {
-      throw new Error('Exercise name contains invalid characters. Only letters, numbers, spaces, and basic punctuation are allowed');
+      throw new Error(
+        "Exercise name contains invalid characters. Only letters, numbers, spaces, and basic punctuation are allowed",
+      );
     }
   }
 
@@ -63,6 +67,6 @@ export class ExerciseValidator {
    * @returns Sanitized name
    */
   static sanitizeExerciseName(name: string): string {
-    return name.trim().replace(/\s+/g, ' ');
+    return name.trim().replace(/\s+/g, " ");
   }
 }

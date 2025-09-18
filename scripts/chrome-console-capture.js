@@ -4,9 +4,9 @@
  * Connects to Chrome DevTools Protocol to capture console logs
  */
 
-const CDP = require('chrome-remote-interface');
-const fs = require('fs');
-const path = require('path');
+const CDP = require("chrome-remote-interface");
+const fs = require("fs");
+const path = require("path");
 
 class ConsoleCapture {
   constructor(outputFile, port = 9222) {
@@ -19,13 +19,15 @@ class ConsoleCapture {
 
   async start() {
     try {
-      console.log(`🔍 Starting console capture, connecting to Chrome on port ${this.port}`);
-      
+      console.log(
+        `🔍 Starting console capture, connecting to Chrome on port ${this.port}`,
+      );
+
       // Wait for Chrome to be ready with extended timeout
       let retries = 0;
       const maxRetries = 15; // Increased from 10 to 15
       let client = null;
-      
+
       while (retries < maxRetries) {
         try {
           // Check if Chrome DevTools port is accessible first
@@ -36,16 +38,20 @@ class ConsoleCapture {
             break;
           }
         } catch (error) {
-          console.log(`⏳ Waiting for Chrome DevTools (attempt ${retries + 1}/${maxRetries})...`);
-          await new Promise(resolve => setTimeout(resolve, 2000)); // Increased delay from 1s to 2s
+          console.log(
+            `⏳ Waiting for Chrome DevTools (attempt ${retries + 1}/${maxRetries})...`,
+          );
+          await new Promise((resolve) => setTimeout(resolve, 2000)); // Increased delay from 1s to 2s
           retries++;
         }
       }
-      
+
       if (!client) {
-        throw new Error(`Failed to connect to Chrome DevTools after ${maxRetries} attempts`);
+        throw new Error(
+          `Failed to connect to Chrome DevTools after ${maxRetries} attempts`,
+        );
       }
-      
+
       this.client = client;
       const { Console, Runtime, Page } = this.client;
 
@@ -53,7 +59,7 @@ class ConsoleCapture {
       await Console.enable();
       await Runtime.enable();
       await Page.enable();
-      
+
       console.log(`✅ Connected to Chrome DevTools on port ${this.port}`);
 
       // Listen for console messages
@@ -72,7 +78,7 @@ class ConsoleCapture {
       });
 
       this.isActive = true;
-      console.log('✅ Console capture started successfully');
+      console.log("✅ Console capture started successfully");
 
       // Save logs periodically
       this.saveInterval = setInterval(() => {
@@ -81,7 +87,7 @@ class ConsoleCapture {
 
       return true;
     } catch (error) {
-      console.error('❌ Failed to start console capture:', error.message);
+      console.error("❌ Failed to start console capture:", error.message);
       return false;
     }
   }
@@ -90,12 +96,12 @@ class ConsoleCapture {
     const timestamp = new Date().toISOString();
     const logEntry = {
       timestamp,
-      type: 'console',
-      level: params.message.level || 'log',
-      text: params.message.text || '',
-      url: params.message.url || '',
+      type: "console",
+      level: params.message.level || "log",
+      text: params.message.text || "",
+      url: params.message.url || "",
       line: params.message.line || 0,
-      source: 'console'
+      source: "console",
     };
 
     this.logs.push(logEntry);
@@ -105,18 +111,20 @@ class ConsoleCapture {
   captureRuntimeConsole(params) {
     const timestamp = new Date().toISOString();
     const args = params.args || [];
-    const text = args.map(arg => {
-      if (arg.value !== undefined) return String(arg.value);
-      if (arg.description) return arg.description;
-      return arg.type || 'undefined';
-    }).join(' ');
+    const text = args
+      .map((arg) => {
+        if (arg.value !== undefined) return String(arg.value);
+        if (arg.description) return arg.description;
+        return arg.type || "undefined";
+      })
+      .join(" ");
 
     const logEntry = {
       timestamp,
-      type: 'runtime',
-      level: params.type || 'log',
+      type: "runtime",
+      level: params.type || "log",
       text,
-      source: 'runtime'
+      source: "runtime",
     };
 
     this.logs.push(logEntry);
@@ -126,17 +134,22 @@ class ConsoleCapture {
   captureException(params) {
     const timestamp = new Date().toISOString();
     const exception = params.exceptionDetails;
-    const text = exception.exception?.description || exception.text || 'Unknown exception';
+    const text =
+      exception.exception?.description || exception.text || "Unknown exception";
 
     const logEntry = {
       timestamp,
-      type: 'exception',
-      level: 'error',
+      type: "exception",
+      level: "error",
       text,
-      stack: exception.stackTrace?.callFrames?.map(frame => 
-        `  at ${frame.functionName || 'anonymous'} (${frame.url}:${frame.lineNumber}:${frame.columnNumber})`
-      ).join('\n') || '',
-      source: 'exception'
+      stack:
+        exception.stackTrace?.callFrames
+          ?.map(
+            (frame) =>
+              `  at ${frame.functionName || "anonymous"} (${frame.url}:${frame.lineNumber}:${frame.columnNumber})`,
+          )
+          .join("\n") || "",
+      source: "exception",
     };
 
     this.logs.push(logEntry);
@@ -150,17 +163,20 @@ class ConsoleCapture {
     if (this.logs.length === 0) return;
 
     try {
-      const logContent = this.logs.map(log => {
-        let line = `[${log.timestamp}] [${log.level.toUpperCase()}] ${log.text}`;
-        if (log.url) line += ` (${log.url}:${log.line})`;
-        if (log.stack) line += `\n${log.stack}`;
-        return line;
-      }).join('\n') + '\n';
+      const logContent =
+        this.logs
+          .map((log) => {
+            let line = `[${log.timestamp}] [${log.level.toUpperCase()}] ${log.text}`;
+            if (log.url) line += ` (${log.url}:${log.line})`;
+            if (log.stack) line += `\n${log.stack}`;
+            return line;
+          })
+          .join("\n") + "\n";
 
       fs.appendFileSync(this.outputFile, logContent);
       this.logs = []; // Clear captured logs after saving
     } catch (error) {
-      console.error('❌ Failed to save logs:', error.message);
+      console.error("❌ Failed to save logs:", error.message);
     }
   }
 
@@ -169,7 +185,7 @@ class ConsoleCapture {
       try {
         // Save any remaining logs
         this.saveLogs();
-        
+
         // Clear interval
         if (this.saveInterval) {
           clearInterval(this.saveInterval);
@@ -177,9 +193,9 @@ class ConsoleCapture {
 
         // Close connection
         await this.client.close();
-        console.log('✅ Console capture stopped');
+        console.log("✅ Console capture stopped");
       } catch (error) {
-        console.error('❌ Error stopping console capture:', error.message);
+        console.error("❌ Error stopping console capture:", error.message);
       }
     }
   }
@@ -187,7 +203,7 @@ class ConsoleCapture {
 
 // CLI usage
 if (require.main === module) {
-  const outputFile = process.argv[2] || '/tmp/chrome-console.log';
+  const outputFile = process.argv[2] || "/tmp/chrome-console.log";
   const port = parseInt(process.argv[3]) || 9222;
 
   console.log(`🔍 Chrome Console Capture starting...`);
@@ -197,14 +213,14 @@ if (require.main === module) {
   const capture = new ConsoleCapture(outputFile, port);
 
   // Handle graceful shutdown
-  process.on('SIGINT', async () => {
-    console.log('\n🛑 Received SIGINT, stopping console capture...');
+  process.on("SIGINT", async () => {
+    console.log("\n🛑 Received SIGINT, stopping console capture...");
     await capture.stop();
     process.exit(0);
   });
 
-  process.on('SIGTERM', async () => {
-    console.log('\n🛑 Received SIGTERM, stopping console capture...');
+  process.on("SIGTERM", async () => {
+    console.log("\n🛑 Received SIGTERM, stopping console capture...");
     await capture.stop();
     process.exit(0);
   });
@@ -212,12 +228,12 @@ if (require.main === module) {
   // Start capture
   capture.start().then((success) => {
     if (!success) {
-      console.error('❌ Failed to start console capture');
+      console.error("❌ Failed to start console capture");
       process.exit(1);
     }
-    
+
     // Keep process running
-    console.log('🔄 Console capture is running... Press Ctrl+C to stop');
+    console.log("🔄 Console capture is running... Press Ctrl+C to stop");
   });
 }
 

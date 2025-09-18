@@ -43,32 +43,36 @@ describe("GettingStartedCard", () => {
     render(
       <TestWrapper>
         <GettingStartedCard {...defaultProps} />
-      </TestWrapper>
+      </TestWrapper>,
     );
 
-    expect(screen.getByText("Welcome to the app! Let's get you started.")).toBeTruthy();
+    expect(
+      screen.getByText("Welcome to the app! Let's get you started."),
+    ).toBeTruthy();
     expect(screen.getByText("Get Started")).toBeTruthy();
   });
 
   it("renders without error when custom style is provided", () => {
     const customStyle = { backgroundColor: "red", padding: 20 };
-    
+
     expect(() => {
       render(
         <TestWrapper>
           <GettingStartedCard {...defaultProps} style={customStyle} />
-        </TestWrapper>
+        </TestWrapper>,
       );
     }).not.toThrow();
 
-    expect(screen.getByText("Welcome to the app! Let's get you started.")).toBeTruthy();
+    expect(
+      screen.getByText("Welcome to the app! Let's get you started."),
+    ).toBeTruthy();
   });
 
   it("calls on_get_started with router when button is pressed", () => {
     render(
       <TestWrapper>
         <GettingStartedCard {...defaultProps} />
-      </TestWrapper>
+      </TestWrapper>,
     );
 
     const button = screen.getByTestId("get-started");
@@ -82,7 +86,7 @@ describe("GettingStartedCard", () => {
     render(
       <TestWrapper>
         <GettingStartedCard {...defaultProps} />
-      </TestWrapper>
+      </TestWrapper>,
     );
 
     const button = screen.getByTestId("get-started");
@@ -100,7 +104,7 @@ describe("GettingStartedCard", () => {
     render(
       <TestWrapper>
         <GettingStartedCard {...customProps} />
-      </TestWrapper>
+      </TestWrapper>,
     );
 
     expect(screen.getByText("Ready to track your workouts?")).toBeTruthy();
@@ -111,7 +115,7 @@ describe("GettingStartedCard", () => {
     render(
       <TestWrapper>
         <GettingStartedCard {...defaultProps} />
-      </TestWrapper>
+      </TestWrapper>,
     );
 
     const button = screen.getByTestId("get-started");

@@ -13,21 +13,21 @@ if (config.resolver.alias) {
     // Disable TTY module for web builds - prevents debug package errors
     tty: false,
     // Use browser-compatible process polyfill
-    process: require.resolve('process/browser'),
+    process: require.resolve("process/browser"),
     // Disable util module for web builds
     util: false,
   };
 } else {
   config.resolver.alias = {
     tty: false,
-    process: require.resolve('process/browser'),
+    process: require.resolve("process/browser"),
     util: false,
   };
 }
 
 // Ensure proper platform resolution for web builds
-config.resolver.platforms = ['web', 'native', 'ios', 'android'];
-config.resolver.mainFields = ['browser', 'module', 'main'];
+config.resolver.platforms = ["web", "native", "ios", "android"];
+config.resolver.mainFields = ["browser", "module", "main"];
 
 const withStorybook = require("@storybook/react-native/metro/withStorybook");
 

@@ -2,4 +2,4 @@
  * Test Device Pool Exports
  */
 
-export * from './TestDevicePool';
+export * from "./TestDevicePool";

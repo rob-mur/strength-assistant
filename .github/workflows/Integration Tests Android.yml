@@ -51,7 +51,7 @@ jobs:
         with:
           name: preview_build
 
-      - name: 🛠 Setup testing environment  
+      - name: 🛠 Setup testing environment
         uses: ./.github/actions/setup-dev-environment
         with:
           devbox-config: android-testing

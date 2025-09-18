@@ -1,43 +1,65 @@
 /**
  * Firebase Storage Backend Implementation
- * 
+ *
  * Implements the StorageBackend interface for Firebase,
  * maintaining compatibility with the existing Firebase backend.
  */
 
-import type { ExerciseRecord } from '../../models/ExerciseRecord';
-import type { UserAccount } from '../../models/UserAccount';  
-import type { SyncStateRecord } from '../../models/SyncStateRecord';
-import { StorageBackend } from '../supabase/SupabaseStorage';
+import type { ExerciseRecord } from "../../models/ExerciseRecord";
+import type { UserAccount } from "../../models/UserAccount";
+import type { SyncStateRecord } from "../../models/SyncStateRecord";
+import { StorageBackend } from "../supabase/SupabaseStorage";
 
-import { 
-  createExerciseRecord, 
-  updateExerciseRecord, 
+import {
+  createExerciseRecord,
+  updateExerciseRecord,
   validateExerciseRecord,
   ExerciseRecordInput,
   ExerciseRecordUpdate,
   toDbFormat as exerciseToDb,
-  fromDbFormat as exerciseFromDb
-} from '../../models/ExerciseRecord';
+  fromDbFormat as exerciseFromDb,
+} from "../../models/ExerciseRecord";
 
 import {
   createAuthenticatedUser,
-  validateCredentials
-} from '../../models/UserAccount';
+  validateCredentials,
+} from "../../models/UserAccount";
 
 import {
   createSyncState,
   recordSyncFailure,
   isReadyForRetry,
   toDbFormat as syncToDb,
-  fromDbFormat as syncFromDb
-} from '../../models/SyncStateRecord';
+  fromDbFormat as syncFromDb,
+} from "../../models/SyncStateRecord";
 
 // Firebase imports (using existing Firebase setup)
-import { initFirebase, getDb } from './index';
-import { collection, doc, getDocs, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy, Firestore, UpdateData, DocumentData } from 'firebase/firestore';
-import { signInAnonymously as firebaseSignInAnonymously, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as firebaseSignOut, onAuthStateChanged, User, Auth } from 'firebase/auth';
-
+import { initFirebase, getDb } from "./index";
+import {
+  collection,
+  doc,
+  getDocs,
+  getDoc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  onSnapshot,
+  query,
+  where,
+  orderBy,
+  Firestore,
+  UpdateData,
+  DocumentData,
+} from "firebase/firestore";
+import {
+  signInAnonymously as firebaseSignInAnonymously,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
+  User,
+  Auth,
+} from "firebase/auth";
 
 // Use the actual Firebase Auth type
 
@@ -50,27 +72,35 @@ export class FirebaseStorage implements StorageBackend {
     // Initialize Firebase
     initFirebase();
     this.firestore = getDb() as Firestore;
-    
+
     // For now, we'll use a simplified auth approach
     // In a full implementation, we'd use the existing Firebase auth setup
     this.auth = null;
-    
+
     // Note: User session initialization should be done asynchronously
     // after constructor completes via getCurrentUser() or auth state listener
   }
 
   // Exercise CRUD operations
-  async createExercise(exercise: Omit<ExerciseRecord, 'id' | 'createdAt' | 'updatedAt' | 'syncStatus'>): Promise<ExerciseRecord> {
+  async createExercise(
+    exercise: Omit<
+      ExerciseRecord,
+      "id" | "createdAt" | "updatedAt" | "syncStatus"
+    >,
+  ): Promise<ExerciseRecord> {
     const input: ExerciseRecordInput = {
       name: exercise.name,
-      userId: exercise.userId
+      userId: exercise.userId,
     };
 
     const newExercise = createExerciseRecord(input);
     validateExerciseRecord(newExercise);
 
-    const docRef = await addDoc(collection(this.firestore, 'exercises'), exerciseToDb(newExercise));
-    
+    const docRef = await addDoc(
+      collection(this.firestore, "exercises"),
+      exerciseToDb(newExercise),
+    );
+
     // Firebase generates ID, so update our record
     const exerciseWithId = { ...newExercise, id: docRef.id };
     await updateDoc(docRef, { id: docRef.id });
@@ -80,19 +110,19 @@ export class FirebaseStorage implements StorageBackend {
 
   async getExercises(userId?: string): Promise<ExerciseRecord[]> {
     let exercisesQuery;
-    
+
     if (userId) {
       exercisesQuery = query(
-        collection(this.firestore, 'exercises'),
-        where('user_id', '==', userId),
-        orderBy('created_at', 'asc')
+        collection(this.firestore, "exercises"),
+        where("user_id", "==", userId),
+        orderBy("created_at", "asc"),
       );
     } else {
       // Get exercises for anonymous user (no user_id or null user_id)
       exercisesQuery = query(
-        collection(this.firestore, 'exercises'),
-        where('user_id', 'in', [null, undefined]),
-        orderBy('created_at', 'asc')
+        collection(this.firestore, "exercises"),
+        where("user_id", "in", [null, undefined]),
+        orderBy("created_at", "asc"),
       );
     }
 
@@ -101,35 +131,44 @@ export class FirebaseStorage implements StorageBackend {
 
     querySnapshot.forEach((doc) => {
       const data = doc.data();
-      exercises.push(exerciseFromDb(Object.assign({}, data, { id: doc.id })));
+      exercises.push(exerciseFromDb({ data, ...{ id: doc.id } }));
     });
 
     return exercises;
   }
 
-  async updateExercise(id: string, updates: Partial<Pick<ExerciseRecord, 'name'>>): Promise<ExerciseRecord> {
-    const docRef = doc(this.firestore, 'exercises', id);
+  async updateExercise(
+    id: string,
+    updates: Partial<Pick<ExerciseRecord, "name">>,
+  ): Promise<ExerciseRecord> {
+    const docRef = doc(this.firestore, "exercises", id);
     const docSnap = await getDoc(docRef);
 
     if (!docSnap.exists()) {
-      throw new Error('Exercise not found');
+      throw new Error("Exercise not found");
     }
 
     const existingData = docSnap.data();
     const existing = exerciseFromDb({ ...existingData, id: docSnap.id });
-    const updated = updateExerciseRecord(existing, updates as ExerciseRecordUpdate);
+    const updated = updateExerciseRecord(
+      existing,
+      updates as ExerciseRecordUpdate,
+    );
 
-    await updateDoc(docRef, exerciseToDb(updated) as unknown as UpdateData<DocumentData>);
+    await updateDoc(
+      docRef,
+      exerciseToDb(updated) as unknown as UpdateData<DocumentData>,
+    );
 
     return updated;
   }
 
   async deleteExercise(id: string): Promise<void> {
-    const docRef = doc(this.firestore, 'exercises', id);
+    const docRef = doc(this.firestore, "exercises", id);
     const docSnap = await getDoc(docRef);
 
     if (!docSnap.exists()) {
-      throw new Error('Exercise not found');
+      throw new Error("Exercise not found");
     }
 
     await deleteDoc(docRef);
@@ -144,9 +183,9 @@ export class FirebaseStorage implements StorageBackend {
     if (!this.auth) {
       return null;
     }
-    
+
     const firebaseUser = this.auth.currentUser;
-    
+
     if (!firebaseUser) {
       return null;
     }
@@ -158,22 +197,22 @@ export class FirebaseStorage implements StorageBackend {
     validateCredentials({ email, password });
 
     if (!this.auth) {
-      throw new Error('Firebase auth not initialized');
+      throw new Error("Firebase auth not initialized");
     }
 
     const userCredential = await signInWithEmailAndPassword(
-      this.auth, 
-      email.toLowerCase().trim(), 
-      password
+      this.auth,
+      email.toLowerCase().trim(),
+      password,
     );
 
     if (!userCredential.user) {
-      throw new Error('Sign in failed: No user returned');
+      throw new Error("Sign in failed: No user returned");
     }
 
     const userAccount = this.mapFirebaseUserToAccount(userCredential.user);
     this.currentUser = userAccount;
-    
+
     return userAccount;
   }
 
@@ -181,47 +220,47 @@ export class FirebaseStorage implements StorageBackend {
     validateCredentials({ email, password });
 
     if (!this.auth) {
-      throw new Error('Firebase auth not initialized');
+      throw new Error("Firebase auth not initialized");
     }
 
     const userCredential = await createUserWithEmailAndPassword(
       this.auth,
       email.toLowerCase().trim(),
-      password
+      password,
     );
 
     if (!userCredential.user) {
-      throw new Error('Sign up failed: No user returned');
+      throw new Error("Sign up failed: No user returned");
     }
 
     const userAccount = this.mapFirebaseUserToAccount(userCredential.user);
     this.currentUser = userAccount;
-    
+
     return userAccount;
   }
 
   async signInAnonymously(): Promise<UserAccount> {
     if (!this.auth) {
-      throw new Error('Firebase auth not initialized');
+      throw new Error("Firebase auth not initialized");
     }
-    
+
     const userCredential = await firebaseSignInAnonymously(this.auth);
-    
+
     if (!userCredential.user) {
-      throw new Error('Anonymous sign in failed');
+      throw new Error("Anonymous sign in failed");
     }
 
     const userAccount = this.mapFirebaseUserToAccount(userCredential.user);
     this.currentUser = userAccount;
-    
+
     return userAccount;
   }
 
   async signOut(): Promise<void> {
     if (!this.auth) {
-      throw new Error('Firebase auth not initialized');
+      throw new Error("Firebase auth not initialized");
     }
-    
+
     await firebaseSignOut(this.auth);
     this.currentUser = null;
   }
@@ -229,7 +268,10 @@ export class FirebaseStorage implements StorageBackend {
   // Sync management
   async getPendingSyncRecords(): Promise<SyncStateRecord[]> {
     const querySnapshot = await getDocs(
-      query(collection(this.firestore, 'sync_states'), orderBy('pending_since', 'asc'))
+      query(
+        collection(this.firestore, "sync_states"),
+        orderBy("pending_since", "asc"),
+      ),
     );
 
     const syncStates: SyncStateRecord[] = [];
@@ -237,7 +279,7 @@ export class FirebaseStorage implements StorageBackend {
     querySnapshot.forEach((doc) => {
       const data = doc.data();
       const syncState = syncFromDb({ ...data, record_id: doc.id });
-      
+
       if (isReadyForRetry(syncState)) {
         syncStates.push(syncState);
       }
@@ -247,24 +289,27 @@ export class FirebaseStorage implements StorageBackend {
   }
 
   async markSyncComplete(recordId: string): Promise<void> {
-    const docRef = doc(this.firestore, 'sync_states', recordId);
+    const docRef = doc(this.firestore, "sync_states", recordId);
     await deleteDoc(docRef);
   }
 
   async markSyncError(recordId: string, errorMessage: string): Promise<void> {
-    const docRef = doc(this.firestore, 'sync_states', recordId);
+    const docRef = doc(this.firestore, "sync_states", recordId);
     const docSnap = await getDoc(docRef);
 
     if (!docSnap.exists()) {
       // Create new sync error record
       const syncState = createSyncState({
         recordId,
-        recordType: 'exercise',
-        operation: 'create'
+        recordType: "exercise",
+        operation: "create",
       });
 
       const failedState = recordSyncFailure(syncState, errorMessage);
-      await addDoc(collection(this.firestore, 'sync_states'), syncToDb(failedState));
+      await addDoc(
+        collection(this.firestore, "sync_states"),
+        syncToDb(failedState),
+      );
       return;
     }
 
@@ -272,44 +317,52 @@ export class FirebaseStorage implements StorageBackend {
     const syncState = syncFromDb({ ...existingData, record_id: docSnap.id });
     const failedState = recordSyncFailure(syncState, errorMessage);
 
-    await updateDoc(docRef, syncToDb(failedState) as unknown as UpdateData<DocumentData>);
+    await updateDoc(
+      docRef,
+      syncToDb(failedState) as unknown as UpdateData<DocumentData>,
+    );
   }
 
   // Real-time subscriptions
-  subscribeToExercises(userId: string, callback: (exercises: ExerciseRecord[]) => void): () => void {
+  subscribeToExercises(
+    userId: string,
+    callback: (exercises: ExerciseRecord[]) => void,
+  ): () => void {
     let exercisesQuery;
-    
+
     if (userId) {
       exercisesQuery = query(
-        collection(this.firestore, 'exercises'),
-        where('user_id', '==', userId),
-        orderBy('created_at', 'asc')
+        collection(this.firestore, "exercises"),
+        where("user_id", "==", userId),
+        orderBy("created_at", "asc"),
       );
     } else {
       exercisesQuery = query(
-        collection(this.firestore, 'exercises'),
-        where('user_id', 'in', [null, undefined]),
-        orderBy('created_at', 'asc')
+        collection(this.firestore, "exercises"),
+        where("user_id", "in", [null, undefined]),
+        orderBy("created_at", "asc"),
       );
     }
 
     return onSnapshot(exercisesQuery, (snapshot) => {
       const exercises: ExerciseRecord[] = [];
-      
+
       snapshot.forEach((doc) => {
         const data = doc.data();
         exercises.push(exerciseFromDb({ ...data, id: doc.id }));
       });
-      
+
       callback(exercises);
     });
   }
 
-  subscribeToAuthState(callback: (user: UserAccount | null) => void): () => void {
+  subscribeToAuthState(
+    callback: (user: UserAccount | null) => void,
+  ): () => void {
     if (!this.auth) {
       return () => {}; // Return empty unsubscribe function
     }
-    
+
     return onAuthStateChanged(this.auth, (firebaseUser) => {
       if (firebaseUser) {
         const userAccount = this.mapFirebaseUserToAccount(firebaseUser);
@@ -327,9 +380,9 @@ export class FirebaseStorage implements StorageBackend {
     if (!this.auth) {
       return; // No auth available
     }
-    
+
     const firebaseUser = this.auth.currentUser;
-    
+
     if (firebaseUser) {
       this.currentUser = this.mapFirebaseUserToAccount(firebaseUser);
     }
@@ -337,17 +390,17 @@ export class FirebaseStorage implements StorageBackend {
 
   private mapFirebaseUserToAccount(user: User): UserAccount {
     const { isAnonymous, uid, email, metadata } = user;
-    
+
     if (isAnonymous) {
       return {
         id: uid,
         isAnonymous: true,
-        createdAt: new Date(metadata.creationTime || Date.now())
+        createdAt: new Date(metadata.creationTime || Date.now()),
       };
     }
 
     if (!email) {
-      throw new Error('Non-anonymous user must have email');
+      throw new Error("Non-anonymous user must have email");
     }
 
     return createAuthenticatedUser(email);
@@ -356,16 +409,16 @@ export class FirebaseStorage implements StorageBackend {
   // Development/testing utilities
   async clearAllData(): Promise<void> {
     // Only available in development/testing
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('clearAllData is not available in production');
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("clearAllData is not available in production");
     }
 
     // This is a simplified implementation - in practice you'd batch delete
-    const exercises = await getDocs(collection(this.firestore, 'exercises'));
-    const syncStates = await getDocs(collection(this.firestore, 'sync_states'));
+    const exercises = await getDocs(collection(this.firestore, "exercises"));
+    const syncStates = await getDocs(collection(this.firestore, "sync_states"));
 
     const deletePromises: Promise<void>[] = [];
-    
+
     exercises.forEach((doc) => {
       deletePromises.push(deleteDoc(doc.ref));
     });

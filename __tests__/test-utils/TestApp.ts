@@ -1,16 +1,16 @@
 /**
  * TestApp Implementation
- * 
+ *
  * Application-level test utility that provides a mock React Native Expo app
  * context for integration testing. Complements TestDevice by providing
  * higher-level app simulation including navigation, UI context, and
  * cross-component interactions.
  */
 
-import { TestDevice } from './TestDevice';
-import { Exercise } from '../../lib/models/Exercise';
-import { UserAccount } from '../../lib/models/UserAccount';
-import type { NetworkSimulationConfig } from '../../specs/001-we-are-actually/contracts/test-infrastructure';
+import { TestDevice } from "./TestDevice";
+import { Exercise } from "../../lib/models/Exercise";
+import { UserAccount } from "../../lib/models/UserAccount";
+import type { NetworkSimulationConfig } from "../../specs/001-we-are-actually/contracts/test-infrastructure";
 
 // Interface adapters for type-safe conversions
 interface ExerciseContractFormat {
@@ -29,37 +29,43 @@ interface TestDeviceState {
   networkStatus: string;
 }
 
-// Adapter functions for type conversion  
-function adaptExerciseFromContract(exercise: ExerciseContractFormat): Exercise & { createdAt: string; updatedAt: string; syncStatus: string } {
+// Adapter functions for type conversion
+function adaptExerciseFromContract(
+  exercise: ExerciseContractFormat,
+): Exercise & { createdAt: string; updatedAt: string; syncStatus: string } {
   return {
     id: exercise.id,
     name: exercise.name,
-    user_id: exercise.userId || '',
+    user_id: exercise.userId || "",
     created_at: exercise.createdAt,
     updated_at: exercise.updatedAt,
     deleted: false,
     // Preserve integration test expected field names
     createdAt: exercise.createdAt,
     updatedAt: exercise.updatedAt,
-    syncStatus: exercise.syncStatus
+    syncStatus: exercise.syncStatus,
   };
 }
 
-function adaptExercisesFromContract(exercises: ExerciseContractFormat[]): (Exercise & { createdAt: string; updatedAt: string; syncStatus: string })[] {
+function adaptExercisesFromContract(
+  exercises: ExerciseContractFormat[],
+): (Exercise & { createdAt: string; updatedAt: string; syncStatus: string })[] {
   return exercises.map(adaptExerciseFromContract);
 }
 
 interface SyncOperationResult {
-  status: 'pending' | 'error' | 'synced';
+  status: "pending" | "error" | "synced";
   error?: { message: string };
 }
 
-function adaptDeviceStateToRecord(state: TestDeviceState): Record<string, unknown> {
+function adaptDeviceStateToRecord(
+  state: TestDeviceState,
+): Record<string, unknown> {
   return {
     authState: state.authState,
     exercises: state.exercises,
     syncOperations: state.syncOperations,
-    networkStatus: state.networkStatus
+    networkStatus: state.networkStatus,
   };
 }
 
@@ -67,11 +73,20 @@ function adaptDeviceStateToRecord(state: TestDeviceState): Record<string, unknow
 interface TestDeviceInternal {
   _authState: unknown;
   _exercises: unknown[];
-  _addToSyncQueue: (operation: string, id: string, type: string, data: unknown) => void;
+  _addToSyncQueue: (
+    operation: string,
+    id: string,
+    type: string,
+    data: unknown,
+  ) => void;
   // Include all TestDevice methods that we need to access
   getExercises(): Promise<ExerciseContractFormat[]>;
   getExercise(id: string): Promise<ExerciseContractFormat | null>;
-  authState: { currentUser: UserAccount | null; authenticated: boolean; session?: { userId: string } };
+  authState: {
+    currentUser: UserAccount | null;
+    authenticated: boolean;
+    session?: { userId: string };
+  };
   initialized: boolean;
   networkStatus: boolean;
 }
@@ -83,27 +98,27 @@ export interface TestAppOptions {
 
 /**
  * TestApp class for application-level testing
- * 
+ *
  * Provides mock app context, navigation, and UI simulation for integration tests.
  * Works in conjunction with TestDevice for complete testing scenarios.
  */
 export class TestApp {
   private readonly device: TestDevice;
-  private currentScreen: string = 'home';
-  private navigationStack: string[] = ['home'];
+  private currentScreen: string = "home";
+  private navigationStack: string[] = ["home"];
   private modalStack: string[] = [];
-  private theme: 'light' | 'dark' = 'light';
+  private theme: "light" | "dark" = "light";
   private initialized: boolean = false;
   private readonly testId: string;
 
   constructor(options: TestAppOptions | string = {}) {
-    if (typeof options === 'string') {
+    if (typeof options === "string") {
       // Legacy string constructor
       this.device = new TestDevice(options);
       this.testId = options;
     } else {
       // New options constructor
-      this.testId = options.testId || 'TestApp';
+      this.testId = options.testId || "TestApp";
       this.device = options.device || new TestDevice(this.testId);
     }
   }
@@ -111,20 +126,20 @@ export class TestApp {
   // App Lifecycle
   async init(): Promise<void> {
     if (this.initialized) {
-      throw new Error('TestApp is already initialized');
+      throw new Error("TestApp is already initialized");
     }
 
     // Only init the device if it's not already initialized
     if (!this.device.initialized) {
       await this.device.init();
     }
-    
+
     // Reset app state
-    this.currentScreen = 'home';
-    this.navigationStack = ['home'];
+    this.currentScreen = "home";
+    this.navigationStack = ["home"];
     this.modalStack = [];
-    this.theme = 'light';
-    
+    this.theme = "light";
+
     this.initialized = true;
   }
 
@@ -134,12 +149,12 @@ export class TestApp {
     }
 
     await this.device.cleanup();
-    
+
     // Reset app state
-    this.currentScreen = 'home';
-    this.navigationStack = ['home'];
+    this.currentScreen = "home";
+    this.navigationStack = ["home"];
     this.modalStack = [];
-    
+
     this.initialized = false;
   }
 
@@ -154,7 +169,10 @@ export class TestApp {
     return this.device.networkStatus;
   }
 
-  async simulateNetworkIssues(enabled: boolean, config?: NetworkSimulationConfig): Promise<void> {
+  async simulateNetworkIssues(
+    enabled: boolean,
+    config?: NetworkSimulationConfig,
+  ): Promise<void> {
     this._ensureInitialized();
     await this.device.simulateNetworkIssues(enabled, config);
   }
@@ -183,7 +201,7 @@ export class TestApp {
   async getCurrentUser(): Promise<UserAccount | null> {
     this._ensureInitialized();
     const user = this.device.authState.currentUser || null;
-    
+
     // Return user as-is since UserAccount interface doesn't include isAuthenticated
     // The test should check isAnonymous property instead
     return user;
@@ -198,38 +216,38 @@ export class TestApp {
   async navigateToHome(): Promise<void> {
     this._ensureInitialized();
     await this._simulateNavigation();
-    this._pushToStack('home');
-    this.currentScreen = 'home';
+    this._pushToStack("home");
+    this.currentScreen = "home";
   }
 
   async navigateToExerciseList(): Promise<void> {
     this._ensureInitialized();
     await this._simulateNavigation();
-    this._pushToStack('exercises');
-    this.currentScreen = 'exercises';
+    this._pushToStack("exercises");
+    this.currentScreen = "exercises";
   }
 
   async navigateToExerciseCreation(): Promise<void> {
     this._ensureInitialized();
     await this._simulateNavigation();
-    this._pushToStack('exercises/add');
-    this.currentScreen = 'exercises/add';
+    this._pushToStack("exercises/add");
+    this.currentScreen = "exercises/add";
   }
 
   async navigateToWorkout(): Promise<void> {
     this._ensureInitialized();
     await this._simulateNavigation();
-    this._pushToStack('workout');
-    this.currentScreen = 'workout';
+    this._pushToStack("workout");
+    this.currentScreen = "workout";
   }
 
   async navigateBack(): Promise<void> {
     this._ensureInitialized();
-    
+
     if (this.navigationStack.length <= 1) {
-      throw new Error('Cannot navigate back from root screen');
+      throw new Error("Cannot navigate back from root screen");
     }
-    
+
     await this._simulateNavigation();
     this.navigationStack.pop();
     this.currentScreen = this.navigationStack[this.navigationStack.length - 1];
@@ -254,62 +272,78 @@ export class TestApp {
 
   async closeModal(): Promise<void> {
     this._ensureInitialized();
-    
+
     if (this.modalStack.length === 0) {
-      throw new Error('No modal open to close');
+      throw new Error("No modal open to close");
     }
-    
+
     await this._simulateNavigation();
     this.modalStack.pop();
   }
 
   async isModalOpen(modalName?: string): Promise<boolean> {
     this._ensureInitialized();
-    
+
     if (modalName) {
       return this.modalStack.includes(modalName);
     }
-    
+
     return this.modalStack.length > 0;
   }
 
   // Exercise Operations (delegated to device with UI simulation)
-  async addExercise(name: string): Promise<Exercise & { createdAt: string; updatedAt: string; syncStatus: string }> {
+  async addExercise(
+    name: string,
+  ): Promise<
+    Exercise & { createdAt: string; updatedAt: string; syncStatus: string }
+  > {
     this._ensureInitialized();
-    
+
     // Simulate UI interaction delay
     await this._simulateUIInteraction();
-    
+
     const exercise = await this.device.addExercise(name);
     return adaptExerciseFromContract(exercise);
   }
 
-  async updateExercise(id: string, name: string): Promise<Exercise & { createdAt: string; updatedAt: string; syncStatus: string }> {
+  async updateExercise(
+    id: string,
+    name: string,
+  ): Promise<
+    Exercise & { createdAt: string; updatedAt: string; syncStatus: string }
+  > {
     this._ensureInitialized();
-    
+
     // Simulate UI interaction delay
     await this._simulateUIInteraction();
-    
+
     const exercise = await this.device.updateExercise(id, name);
     return adaptExerciseFromContract(exercise);
   }
 
   async deleteExercise(id: string): Promise<void> {
     this._ensureInitialized();
-    
+
     // Simulate UI interaction delay
     await this._simulateUIInteraction();
-    
+
     await this.device.deleteExercise(id);
   }
 
-  async getExercises(): Promise<(Exercise & { createdAt: string; updatedAt: string; syncStatus: string })[]> {
+  async getExercises(): Promise<
+    (Exercise & { createdAt: string; updatedAt: string; syncStatus: string })[]
+  > {
     this._ensureInitialized();
     const exercises = await this.device.getExercises();
     return adaptExercisesFromContract(exercises);
   }
 
-  async getExercise(id: string): Promise<(Exercise & { createdAt: string; updatedAt: string; syncStatus: string }) | null> {
+  async getExercise(
+    id: string,
+  ): Promise<
+    | (Exercise & { createdAt: string; updatedAt: string; syncStatus: string })
+    | null
+  > {
     this._ensureInitialized();
     const exercise = await this.device.getExercise(id);
     return exercise ? adaptExerciseFromContract(exercise) : null;
@@ -318,54 +352,61 @@ export class TestApp {
   // UI State Simulation
   async getExerciseList(): Promise<string[]> {
     this._ensureInitialized();
-    
+
     const exercises = await this.device.getExercises();
-    return exercises.map(ex => ex.name);
+    return exercises.map((ex) => ex.name);
   }
 
   async getExerciseCount(): Promise<number> {
     this._ensureInitialized();
-    
+
     const exercises = await this.device.getExercises();
     return exercises.length;
   }
 
   async isExerciseVisible(name: string): Promise<boolean> {
     this._ensureInitialized();
-    
+
     const exerciseList = await this.getExerciseList();
     return exerciseList.includes(name);
   }
 
   // Theme and UI State
-  async setTheme(theme: 'light' | 'dark'): Promise<void> {
+  async setTheme(theme: "light" | "dark"): Promise<void> {
     this._ensureInitialized();
     this.theme = theme;
     await this._simulateUIUpdate();
   }
 
-  async getTheme(): Promise<'light' | 'dark'> {
+  async getTheme(): Promise<"light" | "dark"> {
     this._ensureInitialized();
     return this.theme;
   }
 
   // Sync Status and Operations
-  async getSyncStatus(exerciseId?: string): Promise<{ hasErrors: boolean; errorMessage?: string }> {
+  async getSyncStatus(
+    exerciseId?: string,
+  ): Promise<{ hasErrors: boolean; errorMessage?: string }> {
     this._ensureInitialized();
-    
+
     if (exerciseId) {
       const status = await this.device.getSyncStatus(exerciseId);
-      if (typeof status === 'string') {
-        return { hasErrors: status === 'error', errorMessage: status === 'error' ? 'Sync error' : undefined };
+      if (typeof status === "string") {
+        return {
+          hasErrors: status === "error",
+          errorMessage: status === "error" ? "Sync error" : undefined,
+        };
       }
       return status as { hasErrors: boolean; errorMessage?: string };
     }
-    
+
     // Return overall sync status in expected format
     const pendingOps = await this.device.getPendingSyncOperations();
     return {
-      hasErrors: pendingOps.some(op => op.status === 'error'),
-      errorMessage: (pendingOps.find(op => op.status === 'error') as SyncOperationResult)?.error?.message
+      hasErrors: pendingOps.some((op) => op.status === "error"),
+      errorMessage: (
+        pendingOps.find((op) => op.status === "error") as SyncOperationResult
+      )?.error?.message,
     };
   }
 
@@ -381,46 +422,46 @@ export class TestApp {
 
   // Form and Input Simulation
   async fillForm(_formData: Record<string, string>): Promise<void> {
-  this._ensureInitialized();
-  // Simulate form filling delay
-  await this._simulateUIInteraction();
-  // For test diagnostics, log the form data being filled
-  console.debug('Filling form with data:', _formData);
-  // Form data would be processed by the actual form components
-  // This is just for test simulation
+    this._ensureInitialized();
+    // Simulate form filling delay
+    await this._simulateUIInteraction();
+    // For test diagnostics, log the form data being filled
+    console.debug("Filling form with data:", _formData);
+    // Form data would be processed by the actual form components
+    // This is just for test simulation
   }
 
   async submitForm(): Promise<void> {
-  this._ensureInitialized();
-  // Simulate form submission delay
-  await this._simulateUIInteraction();
-  // For test diagnostics, log the form submission event
-  console.debug('Submitting form');
+    this._ensureInitialized();
+    // Simulate form submission delay
+    await this._simulateUIInteraction();
+    // For test diagnostics, log the form submission event
+    console.debug("Submitting form");
   }
 
   async tapButton(buttonName: string): Promise<void> {
     this._ensureInitialized();
-    
+
     // Simulate button tap delay
     await this._simulateUIInteraction();
-    
+
     // Handle common button actions
     switch (buttonName.toLowerCase()) {
-      case 'add exercise':
-      case 'add':
+      case "add exercise":
+      case "add":
         await this.navigateToExerciseCreation();
         break;
-      case 'save':
-      case 'submit':
+      case "save":
+      case "submit":
         await this.submitForm();
         break;
-      case 'back':
+      case "back":
         await this.navigateBack();
         break;
-      case 'home':
+      case "home":
         await this.navigateToHome();
         break;
-      case 'exercises':
+      case "exercises":
         await this.navigateToExerciseList();
         break;
       default:
@@ -434,15 +475,18 @@ export class TestApp {
     return await this.device.waitFor(ms);
   }
 
-  async waitForElement(elementName: string, timeoutMs: number = 5000): Promise<void> {
+  async waitForElement(
+    elementName: string,
+    timeoutMs: number = 5000,
+  ): Promise<void> {
     this._ensureInitialized();
-    
+
     const startTime = Date.now();
-    
+
     while (Date.now() - startTime < timeoutMs) {
       // Simulate element presence check
       await this.waitFor(100);
-      
+
       // In a real implementation, this would check for actual UI elements
       // For testing purposes, we assume elements exist based on current screen
       const isElementVisible = await this._isElementVisible(elementName);
@@ -450,7 +494,7 @@ export class TestApp {
         return;
       }
     }
-    
+
     throw new Error(`Element '${elementName}' not found within ${timeoutMs}ms`);
   }
 
@@ -464,7 +508,7 @@ export class TestApp {
       authState: deviceRecord.authState,
       exercises: deviceRecord.exercises as unknown[],
       syncOperations: deviceRecord.syncOperations as unknown[],
-      networkStatus: deviceRecord.networkStatus as string
+      networkStatus: deviceRecord.networkStatus as string,
     };
     return adaptDeviceStateToRecord(state);
   }
@@ -477,101 +521,112 @@ export class TestApp {
         currentScreen: this.currentScreen,
         navigationStack: [...this.navigationStack],
         modalStack: [...this.modalStack],
-        theme: this.theme
+        theme: this.theme,
       },
-      device: this.device.getDeviceState()
+      device: this.device.getDeviceState(),
     };
   }
 
   // App Restart Simulation
   async restart(): Promise<void> {
     this._ensureInitialized();
-    
+
     // Preserve user state and data across restart
     const currentUser = this.device.authState.currentUser;
     const exercises = await this.device.getExercises();
-    
+
     // Simulate app shutdown
     await this.cleanup();
-    
+
     // Pre-set user state before init to ensure it's preserved
     if (currentUser) {
       (this.device as unknown as TestDeviceInternal)._authState = {
         authenticated: !currentUser.isAnonymous,
         currentUser: currentUser,
-        session: currentUser.isAnonymous ? undefined : { userId: currentUser.id }
+        session: currentUser.isAnonymous
+          ? undefined
+          : { userId: currentUser.id },
       };
     }
-    
+
     // Simulate app startup
     await this.init();
-    
+
     // Restore exercises - need to access the internal state since getExercises() returns transformed format
     // Convert back from contract format to internal Exercise format
     for (const exercise of exercises) {
       const internalExercise = {
         id: exercise.id,
         name: exercise.name,
-        user_id: exercise.userId || currentUser?.id || 'anonymous',
+        user_id: exercise.userId || currentUser?.id || "anonymous",
         created_at: exercise.createdAt,
         updated_at: exercise.updatedAt,
-        deleted: false
+        deleted: false,
       };
-      
+
       // Add to internal exercises array directly
-      (this.device as unknown as TestDeviceInternal)._exercises.push(internalExercise);
-      
+      (this.device as unknown as TestDeviceInternal)._exercises.push(
+        internalExercise,
+      );
+
       // Restore sync queue entries if they were pending
-      if (exercise.syncStatus === 'pending') {
-        (this.device as unknown as TestDeviceInternal)._addToSyncQueue('create', exercise.id, 'exercise', internalExercise);
+      if (exercise.syncStatus === "pending") {
+        (this.device as unknown as TestDeviceInternal)._addToSyncQueue(
+          "create",
+          exercise.id,
+          "exercise",
+          internalExercise,
+        );
       }
     }
   }
-  
+
   // Sync state management
   async getSyncState(): Promise<Record<string, unknown>> {
     this._ensureInitialized();
-    
+
     // Get pending sync operations count from the device's sync queue
     const pendingChanges = this.device.getPendingSyncCount();
-    
+
     return {
       isOnline: this.device.isNetworkConnected(),
       isSyncing: false,
       lastSyncAt: undefined,
       pendingChanges,
-      errors: []
+      errors: [],
     };
   }
-  
+
   // Storage configuration
   async getStorageConfig(): Promise<Record<string, unknown>> {
     this._ensureInitialized();
-    
+
     return {
       local: {
-        name: 'strengthassistant_test',
+        name: "strengthassistant_test",
         asyncStorage: {
-          preload: true
-        }
+          preload: true,
+        },
       },
       sync: {
-        enabled: false
-      }
+        enabled: false,
+      },
     };
   }
-  
+
   // Feature flags
   async getFeatureFlags(): Promise<Record<string, unknown>> {
     this._ensureInitialized();
-    
+
     return {
-      useSupabaseData: false
+      useSupabaseData: false,
     };
   }
 
   // Subscription Management
-  subscribeToExerciseChanges(callback: (exercises: Exercise[]) => void): () => void {
+  subscribeToExerciseChanges(
+    callback: (exercises: Exercise[]) => void,
+  ): () => void {
     this._ensureInitialized();
     return this.device.subscribeToExerciseChanges(callback);
   }
@@ -579,7 +634,9 @@ export class TestApp {
   // Private Helper Methods
   private _ensureInitialized(): void {
     if (!this.initialized) {
-      throw new Error('TestApp must be initialized before use. Call init() first.');
+      throw new Error(
+        "TestApp must be initialized before use. Call init() first.",
+      );
     }
   }
 
@@ -609,30 +666,30 @@ export class TestApp {
   private async _isElementVisible(elementName: string): Promise<boolean> {
     // Simulate element visibility check based on current screen and modal state
     const normalizedElement = elementName.toLowerCase();
-    
+
     // Check modal elements first
     if (this.modalStack.length > 0) {
       const currentModal = this.modalStack[this.modalStack.length - 1];
       return normalizedElement.includes(currentModal);
     }
-    
+
     // Check screen-specific elements
     switch (this.currentScreen) {
-      case 'home':
-        return ['welcome', 'home', 'navigation'].some(keyword => 
-          normalizedElement.includes(keyword)
+      case "home":
+        return ["welcome", "home", "navigation"].some((keyword) =>
+          normalizedElement.includes(keyword),
         );
-      case 'exercises':
-        return ['exercise', 'list', 'add', 'exercise list'].some(keyword => 
-          normalizedElement.includes(keyword)
+      case "exercises":
+        return ["exercise", "list", "add", "exercise list"].some((keyword) =>
+          normalizedElement.includes(keyword),
         );
-      case 'exercises/add':
-        return ['form', 'input', 'save', 'submit', 'exercise name'].some(keyword => 
-          normalizedElement.includes(keyword)
+      case "exercises/add":
+        return ["form", "input", "save", "submit", "exercise name"].some(
+          (keyword) => normalizedElement.includes(keyword),
         );
-      case 'workout':
-        return ['workout', 'start', 'exercise'].some(keyword => 
-          normalizedElement.includes(keyword)
+      case "workout":
+        return ["workout", "start", "exercise"].some((keyword) =>
+          normalizedElement.includes(keyword),
         );
       default:
         return false;

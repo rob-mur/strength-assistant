@@ -1,6 +1,6 @@
 /**
  * Legend State Configuration Tests - Comprehensive Coverage
- * 
+ *
  * Essential test coverage for the legend-config module focusing on:
  * - Store configuration generation with environment handling
  * - Supabase sync configuration with feature flag switching
@@ -14,20 +14,24 @@ import {
   createUserStoreConfig,
   createSyncStateConfig,
   legendStateGlobalConfig,
-  LegendStateSupabaseConfig
-} from '../../lib/state/legend-config';
+  LegendStateSupabaseConfig,
+} from "../../lib/state/legend-config";
 
 // Mock dependencies
-jest.mock('../../lib/config/supabase-env', () => ({
+jest.mock("../../lib/config/supabase-env", () => ({
   getSupabaseUrl: jest.fn(),
   getSupabaseEnvConfig: jest.fn(),
   isSupabaseDataEnabled: jest.fn(),
 }));
 
 // Import mocked modules for type safety
-import { getSupabaseUrl, getSupabaseEnvConfig, isSupabaseDataEnabled } from '../../lib/config/supabase-env';
+import {
+  getSupabaseUrl,
+  getSupabaseEnvConfig,
+  isSupabaseDataEnabled,
+} from "../../lib/config/supabase-env";
 
-describe('Legend State Configuration', () => {
+describe("Legend State Configuration", () => {
   const originalConsole = console;
   const mockConsole = {
     error: jest.fn(),
@@ -37,12 +41,12 @@ describe('Legend State Configuration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     Object.assign(console, mockConsole);
-    
+
     // Set up default mock returns
-    (getSupabaseUrl as jest.Mock).mockReturnValue('https://test.supabase.co');
+    (getSupabaseUrl as jest.Mock).mockReturnValue("https://test.supabase.co");
     (getSupabaseEnvConfig as jest.Mock).mockReturnValue({
-      anonKey: 'test-anon-key-12345',
-      url: 'https://test.supabase.co'
+      anonKey: "test-anon-key-12345",
+      url: "https://test.supabase.co",
     });
     (isSupabaseDataEnabled as jest.Mock).mockReturnValue(true);
   });
@@ -51,44 +55,44 @@ describe('Legend State Configuration', () => {
     Object.assign(console, originalConsole);
   });
 
-  describe('createExerciseStoreConfig', () => {
-    it('should create exercise store config with Supabase sync enabled', () => {
+  describe("createExerciseStoreConfig", () => {
+    it("should create exercise store config with Supabase sync enabled", () => {
       (isSupabaseDataEnabled as jest.Mock).mockReturnValue(true);
 
       const config = createExerciseStoreConfig();
 
       expect(config).toEqual({
         local: {
-          name: 'exercises',
+          name: "exercises",
           asyncStorage: {
-            preload: true
-          }
+            preload: true,
+          },
         },
         sync: {
           enabled: true,
           supabase: {
-            url: 'https://test.supabase.co',
-            anonKey: 'test-anon-key-12345',
-            table: 'exercises',
-            select: '*',
+            url: "https://test.supabase.co",
+            anonKey: "test-anon-key-12345",
+            table: "exercises",
+            select: "*",
             actions: {
-              create: 'insert',
-              update: 'update',
-              delete: 'delete'
+              create: "insert",
+              update: "update",
+              delete: "delete",
             },
             realtime: {
               enabled: true,
-              schema: 'public'
-            }
+              schema: "public",
+            },
           },
           retry: {
             infinite: false,
             times: 5,
             delay: 1000,
-            backoff: 'exponential'
+            backoff: "exponential",
           },
-          conflictResolution: 'lastWriteWins'
-        }
+          conflictResolution: "lastWriteWins",
+        },
       });
 
       expect(getSupabaseUrl).toHaveBeenCalled();
@@ -96,95 +100,95 @@ describe('Legend State Configuration', () => {
       expect(isSupabaseDataEnabled).toHaveBeenCalled();
     });
 
-    it('should create exercise store config with sync disabled when Supabase not enabled', () => {
+    it("should create exercise store config with sync disabled when Supabase not enabled", () => {
       (isSupabaseDataEnabled as jest.Mock).mockReturnValue(false);
 
       const config = createExerciseStoreConfig();
 
       expect(config).toEqual({
         local: {
-          name: 'exercises',
+          name: "exercises",
           asyncStorage: {
-            preload: true
-          }
+            preload: true,
+          },
         },
         sync: {
-          enabled: false
-        }
+          enabled: false,
+        },
       });
 
       expect(isSupabaseDataEnabled).toHaveBeenCalled();
     });
 
-    it('should handle different Supabase environment configurations', () => {
-      (getSupabaseUrl as jest.Mock).mockReturnValue('https://prod.supabase.co');
+    it("should handle different Supabase environment configurations", () => {
+      (getSupabaseUrl as jest.Mock).mockReturnValue("https://prod.supabase.co");
       (getSupabaseEnvConfig as jest.Mock).mockReturnValue({
-        anonKey: 'prod-anon-key-67890',
-        url: 'https://prod.supabase.co'
+        anonKey: "prod-anon-key-67890",
+        url: "https://prod.supabase.co",
       });
 
       const config = createExerciseStoreConfig();
 
-      expect(config.sync?.supabase?.url).toBe('https://prod.supabase.co');
-      expect(config.sync?.supabase?.anonKey).toBe('prod-anon-key-67890');
+      expect(config.sync?.supabase?.url).toBe("https://prod.supabase.co");
+      expect(config.sync?.supabase?.anonKey).toBe("prod-anon-key-67890");
     });
   });
 
-  describe('createUserStoreConfig', () => {
-    it('should create user store config with Supabase sync enabled', () => {
+  describe("createUserStoreConfig", () => {
+    it("should create user store config with Supabase sync enabled", () => {
       (isSupabaseDataEnabled as jest.Mock).mockReturnValue(true);
 
       const config = createUserStoreConfig();
 
       expect(config).toEqual({
         local: {
-          name: 'user',
+          name: "user",
           asyncStorage: {
-            preload: true
-          }
+            preload: true,
+          },
         },
         sync: {
           enabled: true,
           supabase: {
-            url: 'https://test.supabase.co',
-            anonKey: 'test-anon-key-12345',
-            table: 'user_profiles',
-            select: '*',
+            url: "https://test.supabase.co",
+            anonKey: "test-anon-key-12345",
+            table: "user_profiles",
+            select: "*",
             realtime: {
               enabled: true,
-              schema: 'public'
-            }
+              schema: "public",
+            },
           },
           retry: {
             infinite: false,
             times: 3,
             delay: 2000,
-            backoff: 'exponential'
+            backoff: "exponential",
           },
-          conflictResolution: 'lastWriteWins'
-        }
+          conflictResolution: "lastWriteWins",
+        },
       });
     });
 
-    it('should create user store config with sync disabled when Supabase not enabled', () => {
+    it("should create user store config with sync disabled when Supabase not enabled", () => {
       (isSupabaseDataEnabled as jest.Mock).mockReturnValue(false);
 
       const config = createUserStoreConfig();
 
       expect(config).toEqual({
         local: {
-          name: 'user',
+          name: "user",
           asyncStorage: {
-            preload: true
-          }
+            preload: true,
+          },
         },
         sync: {
-          enabled: false
-        }
+          enabled: false,
+        },
       });
     });
 
-    it('should use different retry settings for user store', () => {
+    it("should use different retry settings for user store", () => {
       (isSupabaseDataEnabled as jest.Mock).mockReturnValue(true);
 
       const config = createUserStoreConfig();
@@ -193,38 +197,38 @@ describe('Legend State Configuration', () => {
         infinite: false,
         times: 3,
         delay: 2000,
-        backoff: 'exponential'
+        backoff: "exponential",
       });
     });
 
-    it('should configure user_profiles table correctly', () => {
+    it("should configure user_profiles table correctly", () => {
       (isSupabaseDataEnabled as jest.Mock).mockReturnValue(true);
 
       const config = createUserStoreConfig();
 
-      expect(config.sync?.supabase?.table).toBe('user_profiles');
+      expect(config.sync?.supabase?.table).toBe("user_profiles");
       expect(config.sync?.supabase?.actions).toBeUndefined(); // User store doesn't define custom actions
     });
   });
 
-  describe('createSyncStateConfig', () => {
-    it('should create sync state config with local-only storage', () => {
+  describe("createSyncStateConfig", () => {
+    it("should create sync state config with local-only storage", () => {
       const config = createSyncStateConfig();
 
       expect(config).toEqual({
         local: {
-          name: 'syncState',
+          name: "syncState",
           asyncStorage: {
-            preload: true
-          }
+            preload: true,
+          },
         },
         sync: {
-          enabled: false
-        }
+          enabled: false,
+        },
       });
     });
 
-    it('should always disable sync for sync state regardless of Supabase setting', () => {
+    it("should always disable sync for sync state regardless of Supabase setting", () => {
       (isSupabaseDataEnabled as jest.Mock).mockReturnValue(true);
 
       const config = createSyncStateConfig();
@@ -233,54 +237,54 @@ describe('Legend State Configuration', () => {
     });
   });
 
-  describe('LegendStateSupabaseConfig interface', () => {
-    it('should support complete configuration structure', () => {
+  describe("LegendStateSupabaseConfig interface", () => {
+    it("should support complete configuration structure", () => {
       const fullConfig: LegendStateSupabaseConfig = {
         local: {
-          name: 'test',
+          name: "test",
           indexedDB: {
-            prefixID: 'app',
-            version: 1
+            prefixID: "app",
+            version: 1,
           },
           asyncStorage: {
-            preload: false
-          }
+            preload: false,
+          },
         },
         sync: {
           enabled: true,
           supabase: {
-            url: 'https://example.supabase.co',
-            anonKey: 'test-key',
-            table: 'test_table',
-            select: 'id, name',
+            url: "https://example.supabase.co",
+            anonKey: "test-key",
+            table: "test_table",
+            select: "id, name",
             actions: {
-              create: 'custom_insert',
-              update: 'custom_update',
-              delete: 'custom_delete'
+              create: "custom_insert",
+              update: "custom_update",
+              delete: "custom_delete",
             },
             realtime: {
               enabled: false,
-              schema: 'custom'
-            }
+              schema: "custom",
+            },
           },
           retry: {
             infinite: true,
             delay: 500,
             times: 10,
-            backoff: 'constant'
+            backoff: "constant",
           },
-          conflictResolution: 'manual'
-        }
+          conflictResolution: "manual",
+        },
       };
 
-      expect(fullConfig.local.name).toBe('test');
+      expect(fullConfig.local.name).toBe("test");
       expect(fullConfig.sync?.enabled).toBe(true);
-      expect(fullConfig.sync?.conflictResolution).toBe('manual');
+      expect(fullConfig.sync?.conflictResolution).toBe("manual");
     });
   });
 
-  describe('legendStateGlobalConfig', () => {
-    describe('development environment', () => {
+  describe("legendStateGlobalConfig", () => {
+    describe("development environment", () => {
       beforeEach(() => {
         (global as any).__DEV__ = true;
       });
@@ -289,56 +293,71 @@ describe('Legend State Configuration', () => {
         (global as any).__DEV__ = false;
       });
 
-      it('should enable logging in development', () => {
+      it("should enable logging in development", () => {
         expect(legendStateGlobalConfig.enableLogging).toBe(true);
       });
 
-      it('should handle sync errors with detailed logging in development', () => {
-        const testError = new Error('Test sync error');
-        testError.stack = 'Test error stack trace';
+      it("should handle sync errors with detailed logging in development", () => {
+        const testError = new Error("Test sync error");
+        testError.stack = "Test error stack trace";
 
-        legendStateGlobalConfig.onSyncError(testError, 'exercises');
+        legendStateGlobalConfig.onSyncError(testError, "exercises");
 
-        expect(mockConsole.error).toHaveBeenCalledWith('Legend State sync error for exercises:', testError);
-        expect(mockConsole.error).toHaveBeenCalledWith('Sync error details:', {
-          message: 'Test sync error',
-          stack: 'Test error stack trace',
-          table: 'exercises'
+        expect(mockConsole.error).toHaveBeenCalledWith(
+          "Legend State sync error for exercises:",
+          testError,
+        );
+        expect(mockConsole.error).toHaveBeenCalledWith("Sync error details:", {
+          message: "Test sync error",
+          stack: "Test error stack trace",
+          table: "exercises",
         });
       });
 
-      it('should log connection changes in development', () => {
+      it("should log connection changes in development", () => {
         legendStateGlobalConfig.onConnectionChange(true);
-        expect(mockConsole.log).toHaveBeenCalledWith('Legend State connection status: online');
+        expect(mockConsole.log).toHaveBeenCalledWith(
+          "Legend State connection status: online",
+        );
 
         legendStateGlobalConfig.onConnectionChange(false);
-        expect(mockConsole.log).toHaveBeenCalledWith('Legend State connection status: offline');
+        expect(mockConsole.log).toHaveBeenCalledWith(
+          "Legend State connection status: offline",
+        );
       });
     });
 
-    describe('production environment', () => {
+    describe("production environment", () => {
       beforeEach(() => {
         (global as any).__DEV__ = false;
       });
 
-      it('should disable logging in production', () => {
+      it("should disable logging in production", () => {
         // Re-import module to get fresh evaluation of __DEV__
         jest.isolateModules(() => {
-          const { legendStateGlobalConfig: productionConfig } = require('../../lib/state/legend-config');
+          const {
+            legendStateGlobalConfig: productionConfig,
+          } = require("../../lib/state/legend-config");
           expect(productionConfig.enableLogging).toBe(false);
         });
       });
 
-      it('should handle sync errors without detailed logging in production', () => {
-        const testError = new Error('Test sync error');
+      it("should handle sync errors without detailed logging in production", () => {
+        const testError = new Error("Test sync error");
 
-        legendStateGlobalConfig.onSyncError(testError, 'exercises');
+        legendStateGlobalConfig.onSyncError(testError, "exercises");
 
-        expect(mockConsole.error).toHaveBeenCalledWith('Legend State sync error for exercises:', testError);
-        expect(mockConsole.error).not.toHaveBeenCalledWith('Sync error details:', expect.any(Object));
+        expect(mockConsole.error).toHaveBeenCalledWith(
+          "Legend State sync error for exercises:",
+          testError,
+        );
+        expect(mockConsole.error).not.toHaveBeenCalledWith(
+          "Sync error details:",
+          expect.any(Object),
+        );
       });
 
-      it('should not log connection changes in production', () => {
+      it("should not log connection changes in production", () => {
         legendStateGlobalConfig.onConnectionChange(true);
         legendStateGlobalConfig.onConnectionChange(false);
 
@@ -346,39 +365,42 @@ describe('Legend State Configuration', () => {
       });
     });
 
-    it('should optimize updates by default', () => {
+    it("should optimize updates by default", () => {
       expect(legendStateGlobalConfig.optimizeUpdates).toBe(true);
     });
 
-    it('should handle sync errors for different tables', () => {
-      const testError = new Error('Sync failed');
+    it("should handle sync errors for different tables", () => {
+      const testError = new Error("Sync failed");
 
-      legendStateGlobalConfig.onSyncError(testError, 'user_profiles');
+      legendStateGlobalConfig.onSyncError(testError, "user_profiles");
 
-      expect(mockConsole.error).toHaveBeenCalledWith('Legend State sync error for user_profiles:', testError);
+      expect(mockConsole.error).toHaveBeenCalledWith(
+        "Legend State sync error for user_profiles:",
+        testError,
+      );
     });
 
-    it('should handle errors without stack trace', () => {
+    it("should handle errors without stack trace", () => {
       const originalDev = (global as any).__DEV__;
       (global as any).__DEV__ = true;
 
-      const testError = new Error('Test error without stack');
+      const testError = new Error("Test error without stack");
       delete (testError as any).stack;
 
-      legendStateGlobalConfig.onSyncError(testError, 'test_table');
+      legendStateGlobalConfig.onSyncError(testError, "test_table");
 
-      expect(mockConsole.error).toHaveBeenCalledWith('Sync error details:', {
-        message: 'Test error without stack',
+      expect(mockConsole.error).toHaveBeenCalledWith("Sync error details:", {
+        message: "Test error without stack",
         stack: undefined,
-        table: 'test_table'
+        table: "test_table",
       });
 
       (global as any).__DEV__ = originalDev;
     });
   });
 
-  describe('Configuration Integration', () => {
-    it('should create consistent configurations across all store types', () => {
+  describe("Configuration Integration", () => {
+    it("should create consistent configurations across all store types", () => {
       (isSupabaseDataEnabled as jest.Mock).mockReturnValue(true);
 
       const exerciseConfig = createExerciseStoreConfig();
@@ -391,32 +413,34 @@ describe('Legend State Configuration', () => {
       expect(syncStateConfig.local.asyncStorage?.preload).toBe(true);
 
       // All configs should use lastWriteWins for conflict resolution when sync enabled
-      expect(exerciseConfig.sync?.conflictResolution).toBe('lastWriteWins');
-      expect(userConfig.sync?.conflictResolution).toBe('lastWriteWins');
+      expect(exerciseConfig.sync?.conflictResolution).toBe("lastWriteWins");
+      expect(userConfig.sync?.conflictResolution).toBe("lastWriteWins");
       expect(syncStateConfig.sync?.enabled).toBe(false); // Special case - no sync
     });
 
-    it('should handle environment configuration errors gracefully', () => {
+    it("should handle environment configuration errors gracefully", () => {
       (getSupabaseEnvConfig as jest.Mock).mockImplementation(() => {
-        throw new Error('Environment config error');
+        throw new Error("Environment config error");
       });
 
-      expect(() => createExerciseStoreConfig()).toThrow('Environment config error');
+      expect(() => createExerciseStoreConfig()).toThrow(
+        "Environment config error",
+      );
     });
 
-    it('should use different store names for different configurations', () => {
+    it("should use different store names for different configurations", () => {
       const exerciseConfig = createExerciseStoreConfig();
       const userConfig = createUserStoreConfig();
       const syncStateConfig = createSyncStateConfig();
 
-      expect(exerciseConfig.local.name).toBe('exercises');
-      expect(userConfig.local.name).toBe('user');
-      expect(syncStateConfig.local.name).toBe('syncState');
+      expect(exerciseConfig.local.name).toBe("exercises");
+      expect(userConfig.local.name).toBe("user");
+      expect(syncStateConfig.local.name).toBe("syncState");
     });
   });
 
-  describe('Feature Flag Integration', () => {
-    it('should properly integrate with isSupabaseDataEnabled feature flag', () => {
+  describe("Feature Flag Integration", () => {
+    it("should properly integrate with isSupabaseDataEnabled feature flag", () => {
       // Test enabled state
       (isSupabaseDataEnabled as jest.Mock).mockReturnValue(true);
       const enabledConfig = createExerciseStoreConfig();
@@ -428,7 +452,7 @@ describe('Legend State Configuration', () => {
       expect(disabledConfig.sync?.enabled).toBe(false);
     });
 
-    it('should call feature flag function for each config creation', () => {
+    it("should call feature flag function for each config creation", () => {
       createExerciseStoreConfig();
       createUserStoreConfig();
 

@@ -75,6 +75,7 @@ devbox run integration_test_chrome
 ## 4. Constitutional Requirements (Amendment v2.6.0)
 
 ### Binary Exit Code Enforcement
+
 All test validation MUST check process exit codes:
 
 ```bash
@@ -85,14 +86,17 @@ echo "Exit code: $?"
 ```
 
 ### Task Completion Validation Protocol
+
 Every task completion MUST include:
 
 1. **Pre-Completion Declaration**:
+
    ```markdown
    **Expected Test Outcome**: [PASS/FAIL] - [Detailed reasoning]
    ```
 
 2. **Validation Execution**:
+
    ```bash
    devbox run test
    echo "Exit code: $?"
@@ -108,6 +112,7 @@ Every task completion MUST include:
 ## 5. Test Repair Workflow
 
 ### Phase 1: Foundation Stability (P0)
+
 ```bash
 # Check Jest worker stability
 devbox run test 2>&1 | grep -i "worker\|child process\|exception"
@@ -116,7 +121,8 @@ devbox run test 2>&1 | grep -i "worker\|child process\|exception"
 devbox run test 2>&1 | grep -i "memory\|timeout\|killed"
 ```
 
-### Phase 2: Backend Integration (P1)  
+### Phase 2: Backend Integration (P1)
+
 ```bash
 # Test Supabase client initialization
 EXPO_PUBLIC_USE_SUPABASE=true npm test -- __tests__/data/supabase/
@@ -126,6 +132,7 @@ EXPO_PUBLIC_USE_SUPABASE=false npm test -- __tests__/data/firebase/
 ```
 
 ### Phase 3: Component Reliability (P2)
+
 ```bash
 # Test React Native components with proper act() wrapping
 npm test -- __tests__/components/ --verbose
@@ -137,6 +144,7 @@ npm test 2>&1 | grep -i "act\|async\|update.*test"
 ## 6. Performance Monitoring
 
 ### Execution Time Tracking
+
 ```bash
 # Time the full test suite
 time devbox run test
@@ -146,6 +154,7 @@ time devbox run test
 ```
 
 ### Memory Usage Monitoring
+
 ```bash
 # Monitor Jest memory usage
 devbox run test --detectOpenHandles --forceExit
@@ -157,18 +166,22 @@ devbox run test 2>&1 | grep -i "leak\|memory\|handle"
 ## 7. Systematic Failure Cataloging
 
 ### Current Status (Baseline)
+
 - **Total Tests**: 420
 - **Failing Tests**: 122 (❌ Constitutional violation)
 - **Pass Rate**: 71% (Target: 100%)
 - **Exit Code**: 1 (Target: 0)
 
 ### Repair Tracking Template
+
 ```markdown
 ## Test Repair: [TestName]
+
 **Expected Outcome**: PASS - [Reasoning]
 **Error Type**: [timeout/assertion/mock/worker]
 **Fix Applied**: [Specific change made]
-**Validation**: 
+**Validation**:
+
 - Exit code: [0/1]
 - Execution time: [X seconds]
 - Pass status: [PASS/FAIL]
@@ -177,6 +190,7 @@ devbox run test 2>&1 | grep -i "leak\|memory\|handle"
 ## 8. CI/CD Readiness Validation
 
 ### Pre-commit Requirements
+
 ```bash
 # These commands must ALL return exit code 0:
 npx tsc --noEmit                  # TypeScript compilation
@@ -185,6 +199,7 @@ npm run lint                      # Code quality
 ```
 
 ### Pipeline Integration
+
 ```bash
 # Simulate CI environment
 CI=true devbox run test
@@ -194,6 +209,7 @@ docker run --rm -v $(pwd):/app -w /app node:latest bash -c "npm ci && devbox run
 ```
 
 ### Success Criteria Checklist
+
 - [ ] ✅ Exit code 0 from `devbox run test`
 - [ ] ✅ All 420 tests passing
 - [ ] ✅ <60 second execution time

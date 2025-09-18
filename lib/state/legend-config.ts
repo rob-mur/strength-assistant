@@ -3,7 +3,11 @@
  * Configures Legend State observable with Supabase backend synchronization
  */
 
-import { getSupabaseUrl, getSupabaseEnvConfig, isSupabaseDataEnabled } from '../config/supabase-env';
+import {
+  getSupabaseUrl,
+  getSupabaseEnvConfig,
+  isSupabaseDataEnabled,
+} from "../config/supabase-env";
 
 export interface LegendStateSupabaseConfig {
   // Local persistence configuration
@@ -41,10 +45,10 @@ export interface LegendStateSupabaseConfig {
       infinite?: boolean;
       delay?: number;
       times?: number;
-      backoff?: 'constant' | 'exponential';
+      backoff?: "constant" | "exponential";
     };
     // Conflict resolution
-    conflictResolution?: 'lastWriteWins' | 'firstWriteWins' | 'manual';
+    conflictResolution?: "lastWriteWins" | "firstWriteWins" | "manual";
   };
 }
 
@@ -57,38 +61,40 @@ export function createExerciseStoreConfig(): LegendStateSupabaseConfig {
 
   return {
     local: {
-      name: 'exercises',
+      name: "exercises",
       asyncStorage: {
-        preload: true
-      }
+        preload: true,
+      },
     },
-    sync: useSupabaseData ? {
-      enabled: true,
-      supabase: {
-        url: getSupabaseUrl(),
-        anonKey: supabaseConfig.anonKey,
-        table: 'exercises',
-        select: '*',
-        actions: {
-          create: 'insert',
-          update: 'update',
-          delete: 'delete'
-        },
-        realtime: {
+    sync: useSupabaseData
+      ? {
           enabled: true,
-          schema: 'public'
+          supabase: {
+            url: getSupabaseUrl(),
+            anonKey: supabaseConfig.anonKey,
+            table: "exercises",
+            select: "*",
+            actions: {
+              create: "insert",
+              update: "update",
+              delete: "delete",
+            },
+            realtime: {
+              enabled: true,
+              schema: "public",
+            },
+          },
+          retry: {
+            infinite: false,
+            times: 5,
+            delay: 1000,
+            backoff: "exponential",
+          },
+          conflictResolution: "lastWriteWins",
         }
-      },
-      retry: {
-        infinite: false,
-        times: 5,
-        delay: 1000,
-        backoff: 'exponential'
-      },
-      conflictResolution: 'lastWriteWins'
-    } : {
-      enabled: false
-    }
+      : {
+          enabled: false,
+        },
   };
 }
 
@@ -101,33 +107,35 @@ export function createUserStoreConfig(): LegendStateSupabaseConfig {
 
   return {
     local: {
-      name: 'user',
+      name: "user",
       asyncStorage: {
-        preload: true
-      }
+        preload: true,
+      },
     },
-    sync: useSupabaseData ? {
-      enabled: true,
-      supabase: {
-        url: getSupabaseUrl(),
-        anonKey: supabaseConfig.anonKey,
-        table: 'user_profiles',
-        select: '*',
-        realtime: {
+    sync: useSupabaseData
+      ? {
           enabled: true,
-          schema: 'public'
+          supabase: {
+            url: getSupabaseUrl(),
+            anonKey: supabaseConfig.anonKey,
+            table: "user_profiles",
+            select: "*",
+            realtime: {
+              enabled: true,
+              schema: "public",
+            },
+          },
+          retry: {
+            infinite: false,
+            times: 3,
+            delay: 2000,
+            backoff: "exponential",
+          },
+          conflictResolution: "lastWriteWins",
         }
-      },
-      retry: {
-        infinite: false,
-        times: 3,
-        delay: 2000,
-        backoff: 'exponential'
-      },
-      conflictResolution: 'lastWriteWins'
-    } : {
-      enabled: false
-    }
+      : {
+          enabled: false,
+        },
   };
 }
 
@@ -137,15 +145,15 @@ export function createUserStoreConfig(): LegendStateSupabaseConfig {
 export function createSyncStateConfig(): LegendStateSupabaseConfig {
   return {
     local: {
-      name: 'syncState',
+      name: "syncState",
       asyncStorage: {
-        preload: true
-      }
+        preload: true,
+      },
     },
     // Sync state is always local-only, no remote sync needed
     sync: {
-      enabled: false
-    }
+      enabled: false,
+    },
   };
 }
 
@@ -155,28 +163,30 @@ export function createSyncStateConfig(): LegendStateSupabaseConfig {
 export const legendStateGlobalConfig = {
   // Enable debug logging in development
   enableLogging: __DEV__,
-  
+
   // Performance optimizations
   optimizeUpdates: true,
-  
+
   // Error handling
   onSyncError: (error: Error, table: string) => {
     console.error(`Legend State sync error for ${table}:`, error);
-    
+
     // In development, show more detailed errors
     if (__DEV__) {
-      console.error('Sync error details:', {
+      console.error("Sync error details:", {
         message: error.message,
         stack: error.stack,
-        table
+        table,
       });
     }
   },
-  
+
   // Connection status handling
   onConnectionChange: (isConnected: boolean) => {
     if (__DEV__) {
-      console.log(`Legend State connection status: ${isConnected ? 'online' : 'offline'}`);
+      console.log(
+        `Legend State connection status: ${isConnected ? "online" : "offline"}`,
+      );
     }
-  }
+  },
 };

@@ -5,7 +5,7 @@ import { BottomNavigation } from "react-native-paper";
 
 const TabBar = (props: BottomTabBarProps) => {
   const { state, navigation, descriptors, insets } = props;
-  
+
   return (
     <BottomNavigation.Bar
       shifting

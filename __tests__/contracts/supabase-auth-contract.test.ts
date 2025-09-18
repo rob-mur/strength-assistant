@@ -1,20 +1,20 @@
 /**
  * Contract Test: Supabase Authentication
- * 
+ *
  * This test ensures that Supabase authentication implementation provides
  * the expected interface and behavior for both authenticated and anonymous users.
- * 
+ *
  * CRITICAL: This test MUST fail initially - SupabaseAuth doesn't exist yet.
  */
 
-import type { UserAccount } from '../../lib/models/UserAccount';
+import type { UserAccount } from "../../lib/models/UserAccount";
 
-describe('Supabase Auth Contract', () => {
+describe("Supabase Auth Contract", () => {
   let supabaseAuth: any;
 
   beforeEach(() => {
     // This will fail initially - SupabaseAuth doesn't exist yet
-    const { SupabaseAuth } = require('../../lib/data/supabase/SupabaseAuth');
+    const { SupabaseAuth } = require("../../lib/data/supabase/SupabaseAuth");
     supabaseAuth = new SupabaseAuth();
   });
 
@@ -27,10 +27,10 @@ describe('Supabase Auth Contract', () => {
     }
   });
 
-  describe('Email/Password Authentication', () => {
-    it('should sign up new user with email and password', async () => {
-      const email = 'test@example.com';
-      const password = 'securepassword123';
+  describe("Email/Password Authentication", () => {
+    it("should sign up new user with email and password", async () => {
+      const email = "test@example.com";
+      const password = "securepassword123";
 
       const user = await supabaseAuth.signUp(email, password);
 
@@ -42,9 +42,9 @@ describe('Supabase Auth Contract', () => {
       expect(user.lastSyncAt).toBeUndefined(); // New user hasn't synced yet
     });
 
-    it('should sign in existing user with email and password', async () => {
-      const email = 'existing@example.com';
-      const password = 'password123';
+    it("should sign in existing user with email and password", async () => {
+      const email = "existing@example.com";
+      const password = "password123";
 
       const user = await supabaseAuth.signIn(email, password);
 
@@ -55,30 +55,30 @@ describe('Supabase Auth Contract', () => {
       expect(user.createdAt).toBeInstanceOf(Date);
     });
 
-    it('should throw error for invalid credentials', async () => {
-      const email = 'invalid@example.com';
-      const password = 'wrongpassword';
+    it("should throw error for invalid credentials", async () => {
+      const email = "invalid@example.com";
+      const password = "wrongpassword";
 
       await expect(supabaseAuth.signIn(email, password)).rejects.toThrow();
     });
 
-    it('should throw error for invalid email format', async () => {
-      const email = 'invalid-email';
-      const password = 'password123';
+    it("should throw error for invalid email format", async () => {
+      const email = "invalid-email";
+      const password = "password123";
 
       await expect(supabaseAuth.signUp(email, password)).rejects.toThrow();
     });
 
-    it('should throw error for weak password', async () => {
-      const email = 'test@example.com';
-      const password = '123'; // Too weak
+    it("should throw error for weak password", async () => {
+      const email = "test@example.com";
+      const password = "123"; // Too weak
 
       await expect(supabaseAuth.signUp(email, password)).rejects.toThrow();
     });
   });
 
-  describe('Anonymous Authentication', () => {
-    it('should create anonymous user', async () => {
+  describe("Anonymous Authentication", () => {
+    it("should create anonymous user", async () => {
       const user = await supabaseAuth.signInAnonymously();
 
       expect(user).toBeDefined();
@@ -88,7 +88,7 @@ describe('Supabase Auth Contract', () => {
       expect(user.createdAt).toBeInstanceOf(Date);
     });
 
-    it('should allow multiple anonymous sign-ins', async () => {
+    it("should allow multiple anonymous sign-ins", async () => {
       const user1 = await supabaseAuth.signInAnonymously();
       await supabaseAuth.signOut();
       const user2 = await supabaseAuth.signInAnonymously();
@@ -99,8 +99,8 @@ describe('Supabase Auth Contract', () => {
     });
   });
 
-  describe('User State Management', () => {
-    it('should return current authenticated user', async () => {
+  describe("User State Management", () => {
+    it("should return current authenticated user", async () => {
       await supabaseAuth.signInAnonymously();
 
       const currentUser = await supabaseAuth.getCurrentUser();
@@ -109,28 +109,28 @@ describe('Supabase Auth Contract', () => {
       expect(currentUser?.isAnonymous).toBe(true);
     });
 
-    it('should return null when no user is authenticated', async () => {
+    it("should return null when no user is authenticated", async () => {
       const currentUser = await supabaseAuth.getCurrentUser();
 
       expect(currentUser).toBeNull();
     });
 
-    it('should sign out current user', async () => {
+    it("should sign out current user", async () => {
       await supabaseAuth.signInAnonymously();
-      
+
       await supabaseAuth.signOut();
-      
+
       const currentUser = await supabaseAuth.getCurrentUser();
       expect(currentUser).toBeNull();
     });
   });
 
-  describe('Authentication State Subscription', () => {
-    it('should notify subscribers of auth state changes', async () => {
+  describe("Authentication State Subscription", () => {
+    it("should notify subscribers of auth state changes", async () => {
       let callbackCount = 0;
       const callback = (user: UserAccount | null) => {
         callbackCount++;
-        
+
         if (callbackCount === 1) {
           // First callback should be null (no user)
           expect(user).toBeNull();
@@ -155,7 +155,7 @@ describe('Supabase Auth Contract', () => {
       }, 1000);
     });
 
-    it('should allow unsubscribing from auth state changes', async () => {
+    it("should allow unsubscribing from auth state changes", async () => {
       const callback = jest.fn();
       const unsubscribe = supabaseAuth.subscribeToAuthState(callback);
 
@@ -166,23 +166,26 @@ describe('Supabase Auth Contract', () => {
       await supabaseAuth.signInAnonymously();
 
       // Wait a bit to ensure callback doesn't get called
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       expect(callback).not.toHaveBeenCalled();
     });
   });
 
-  describe('User Migration from Anonymous to Authenticated', () => {
-    it('should support upgrading anonymous user to authenticated', async () => {
+  describe("User Migration from Anonymous to Authenticated", () => {
+    it("should support upgrading anonymous user to authenticated", async () => {
       // Start as anonymous user
       const anonymousUser = await supabaseAuth.signInAnonymously();
       expect(anonymousUser.isAnonymous).toBe(true);
 
       // Upgrade to authenticated user
-      const email = 'upgraded@example.com';
-      const password = 'password123';
-      
-      const authenticatedUser = await supabaseAuth.linkEmailPassword(email, password);
+      const email = "upgraded@example.com";
+      const password = "password123";
+
+      const authenticatedUser = await supabaseAuth.linkEmailPassword(
+        email,
+        password,
+      );
 
       expect(authenticatedUser.id).toBe(anonymousUser.id); // Same user ID
       expect(authenticatedUser.email).toBe(email);
@@ -190,21 +193,21 @@ describe('Supabase Auth Contract', () => {
     });
   });
 
-  describe('Session Management', () => {
-    it('should persist session across app restarts', async () => {
+  describe("Session Management", () => {
+    it("should persist session across app restarts", async () => {
       await supabaseAuth.signInAnonymously();
-      
+
       // Simulate app restart by creating new auth instance
-      const { SupabaseAuth } = require('../../lib/data/supabase/SupabaseAuth');
+      const { SupabaseAuth } = require("../../lib/data/supabase/SupabaseAuth");
       const newAuthInstance = new SupabaseAuth();
-      
+
       const restoredUser = await newAuthInstance.getCurrentUser();
-      
+
       expect(restoredUser).toBeDefined();
       expect(restoredUser?.isAnonymous).toBe(true);
     });
 
-    it('should handle expired sessions gracefully', async () => {
+    it("should handle expired sessions gracefully", async () => {
       await supabaseAuth.signInAnonymously();
 
       // Simulate expired session

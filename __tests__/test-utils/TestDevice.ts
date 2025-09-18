@@ -1,21 +1,25 @@
 /**
  * TestDevice Implementation
- * 
+ *
  * Critical test infrastructure class that was missing and blocking 80 failing tests.
  * Provides device simulation for multi-device testing scenarios with full authentication,
  * exercise CRUD operations, sync status tracking, and real-time subscription management.
  */
 
-import { v4 as uuidv4 } from 'uuid';
-import { Exercise } from '../../lib/models/Exercise';
-import { UserAccount, createAnonymousUser, createAuthenticatedUser } from '../../lib/models/UserAccount';
+import { v4 as uuidv4 } from "uuid";
+import { Exercise } from "../../lib/models/Exercise";
+import {
+  UserAccount,
+  createAnonymousUser,
+  createAuthenticatedUser,
+} from "../../lib/models/UserAccount";
 import type {
   TestAuthenticationState,
   NetworkSimulationConfig,
   SyncStatus,
   SyncOperation,
-  TestDeviceState
-} from '../../specs/001-we-are-actually/contracts/test-infrastructure';
+  TestDeviceState,
+} from "../../specs/001-we-are-actually/contracts/test-infrastructure";
 
 // Exercise contract format for integration tests
 interface ExerciseContractFormat {
@@ -37,7 +41,7 @@ export interface TestDeviceOptions {
 
 /**
  * TestDevice class implementing the full contract interface
- * 
+ *
  * This class was identified as the primary blocker for test failures.
  * It simulates a device for testing cross-device sync, authentication,
  * and exercise management scenarios.
@@ -50,7 +54,8 @@ export class TestDevice {
   private _authState: TestAuthenticationState;
   private _exercises: Exercise[] = [];
   private _syncQueue: SyncOperation[] = [];
-  private readonly _subscriptions: Set<(exercises: Exercise[]) => void> = new Set();
+  private readonly _subscriptions: Set<(exercises: Exercise[]) => void> =
+    new Set();
   private _networkSimulation: {
     enabled: boolean;
     latencyMs: number;
@@ -60,11 +65,11 @@ export class TestDevice {
     enabled: false,
     latencyMs: 0,
     failureRate: 0,
-    intermittentConnectivity: false
+    intermittentConnectivity: false,
   };
 
   constructor(options: TestDeviceOptions | string) {
-    if (typeof options === 'string') {
+    if (typeof options === "string") {
       // Legacy string constructor
       this._deviceId = uuidv4();
       this._deviceName = options;
@@ -72,18 +77,18 @@ export class TestDevice {
     } else {
       // New options constructor
       this._deviceId = options.deviceId || uuidv4();
-      this._deviceName = options.deviceName || 'TestDevice';
+      this._deviceName = options.deviceName || "TestDevice";
       this._networkStatus = options.networkConnected ?? true;
     }
-    
+
     this._authState = {
       authenticated: false,
       currentUser: undefined,
-      session: undefined
+      session: undefined,
     };
-    
+
     // Set up anonymous user if specified
-    if (typeof options === 'object' && options.anonymous) {
+    if (typeof options === "object" && options.anonymous) {
       const anonymousUser = createAnonymousUser();
       this._authState.currentUser = anonymousUser;
       this._authState.authenticated = false; // Anonymous users are not authenticated
@@ -114,27 +119,27 @@ export class TestDevice {
   // Core Device Lifecycle
   async init(): Promise<void> {
     if (this._initialized) {
-      throw new Error('TestDevice is already initialized');
+      throw new Error("TestDevice is already initialized");
     }
 
     // Reset state to clean baseline
     this._exercises = [];
     this._syncQueue = [];
     this._subscriptions.clear();
-    
+
     // Preserve anonymous user if it was set in constructor, otherwise reset auth state
     if (!this._authState.currentUser?.isAnonymous) {
       this._authState = {
         authenticated: false,
         currentUser: undefined,
-        session: undefined
+        session: undefined,
       };
     }
     // Note: Don't override _networkStatus here - preserve constructor setting
     this._networkSimulation.enabled = false;
 
     this._initialized = true;
-    
+
     // Simulate initialization delay
     await this._simulateNetworkDelay();
   }
@@ -150,7 +155,7 @@ export class TestDevice {
     // Clear all data
     this._exercises = [];
     this._syncQueue = [];
-    
+
     // Clean up subscriptions
     this._subscriptions.clear();
 
@@ -159,7 +164,7 @@ export class TestDevice {
       enabled: false,
       latencyMs: 0,
       failureRate: 0,
-      intermittentConnectivity: false
+      intermittentConnectivity: false,
     };
 
     this._initialized = false;
@@ -172,13 +177,13 @@ export class TestDevice {
   async setNetworkStatus(online: boolean): Promise<void> {
     this._ensureInitialized();
     this._networkStatus = online;
-    
+
     // If going offline, mark pending sync operations
     if (!online) {
-      this._syncQueue.forEach(op => {
-        if (op.status === 'pending') {
-          op.status = 'error';
-          op.lastError = 'Network offline';
+      this._syncQueue.forEach((op) => {
+        if (op.status === "pending") {
+          op.status = "error";
+          op.lastError = "Network offline";
         }
       });
     }
@@ -186,19 +191,23 @@ export class TestDevice {
     await this._simulateNetworkDelay();
   }
 
-  async simulateNetworkIssues(enabled: boolean, config?: NetworkSimulationConfig): Promise<void> {
+  async simulateNetworkIssues(
+    enabled: boolean,
+    config?: NetworkSimulationConfig,
+  ): Promise<void> {
     this._ensureInitialized();
-    
+
     this._networkSimulation.enabled = enabled;
     if (enabled && config) {
       this._networkSimulation.latencyMs = config.latencyMs || 100;
       this._networkSimulation.failureRate = config.failureRate || 0.1;
-      this._networkSimulation.intermittentConnectivity = config.intermittentConnectivity || false;
+      this._networkSimulation.intermittentConnectivity =
+        config.intermittentConnectivity || false;
     }
 
     await this._simulateNetworkDelay();
   }
-  
+
   isNetworkConnected(): boolean {
     return this._networkStatus;
   }
@@ -218,8 +227,8 @@ export class TestDevice {
         userId: user.id,
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
         accessToken: `access_${uuidv4()}`,
-        refreshToken: `refresh_${uuidv4()}`
-      }
+        refreshToken: `refresh_${uuidv4()}`,
+      },
     };
     return user;
   }
@@ -234,7 +243,7 @@ export class TestDevice {
 
   async signOut(): Promise<void> {
     this._ensureInitialized();
-    
+
     // Simulate sign out delay
     await this._simulateNetworkDelay();
 
@@ -242,13 +251,13 @@ export class TestDevice {
     this._authState = {
       authenticated: false,
       currentUser: createAnonymousUser(),
-      session: undefined
+      session: undefined,
     };
   }
 
   async signOutAll(): Promise<void> {
     this._ensureInitialized();
-    
+
     // Simulate sign out all delay
     await this._simulateNetworkDelay();
 
@@ -256,7 +265,7 @@ export class TestDevice {
     this._authState = {
       authenticated: false,
       currentUser: undefined,
-      session: undefined
+      session: undefined,
     };
 
     // Clear user-specific data
@@ -267,25 +276,26 @@ export class TestDevice {
   // Exercise CRUD Operations
   async addExercise(name: string): Promise<ExerciseContractFormat> {
     this._ensureInitialized();
-    
+
     // Simulate add delay
     await this._simulateNetworkDelay();
 
     const exercise: Exercise = {
       id: uuidv4(),
       name: name.trim(),
-      user_id: (this._authState.currentUser && 'id' in this._authState.currentUser)
-        ? (this._authState.currentUser as { id: string }).id
-        : 'anonymous',
+      user_id:
+        this._authState.currentUser && "id" in this._authState.currentUser
+          ? (this._authState.currentUser as { id: string }).id
+          : "anonymous",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      deleted: false
+      deleted: false,
     };
 
     this._exercises.push(exercise);
-    
+
     // Add to sync queue for local-first behavior (will sync when network available)
-    this._addToSyncQueue('create', exercise.id, 'exercise', exercise);
+    this._addToSyncQueue("create", exercise.id, "exercise", exercise);
 
     // Notify subscribers
     this._notifySubscribers();
@@ -294,13 +304,16 @@ export class TestDevice {
     return this._transformExerciseToContractFormat(exercise);
   }
 
-  async updateExercise(id: string, name: string): Promise<ExerciseContractFormat> {
+  async updateExercise(
+    id: string,
+    name: string,
+  ): Promise<ExerciseContractFormat> {
     this._ensureInitialized();
-    
+
     // Simulate update delay
     await this._simulateNetworkDelay();
 
-    const exerciseIndex = this._exercises.findIndex(e => e.id === id);
+    const exerciseIndex = this._exercises.findIndex((e) => e.id === id);
     if (exerciseIndex === -1) {
       throw new Error(`Exercise with id ${id} not found`);
     }
@@ -308,13 +321,18 @@ export class TestDevice {
     const updatedExercise = {
       ...this._exercises[exerciseIndex],
       name: name.trim(),
-      updated_at: new Date().toISOString() // Update timestamp
+      updated_at: new Date().toISOString(), // Update timestamp
     };
 
     this._exercises[exerciseIndex] = updatedExercise;
 
     // Add to sync queue for local-first behavior (will sync when network available)
-    this._addToSyncQueue('update', updatedExercise.id, 'exercise', updatedExercise);
+    this._addToSyncQueue(
+      "update",
+      updatedExercise.id,
+      "exercise",
+      updatedExercise,
+    );
 
     // Notify subscribers
     this._notifySubscribers();
@@ -325,11 +343,11 @@ export class TestDevice {
 
   async deleteExercise(id: string): Promise<void> {
     this._ensureInitialized();
-    
+
     // Simulate delete delay
     await this._simulateNetworkDelay();
 
-    const exerciseIndex = this._exercises.findIndex(e => e.id === id);
+    const exerciseIndex = this._exercises.findIndex((e) => e.id === id);
     if (exerciseIndex === -1) {
       throw new Error(`Exercise with id ${id} not found`);
     }
@@ -337,7 +355,7 @@ export class TestDevice {
     this._exercises.splice(exerciseIndex, 1);
 
     // Add to sync queue for local-first behavior (will sync when network available)
-    this._addToSyncQueue('delete', id, 'exercise', null);
+    this._addToSyncQueue("delete", id, "exercise", null);
 
     // Notify subscribers
     this._notifySubscribers();
@@ -345,37 +363,44 @@ export class TestDevice {
 
   async getExercises(): Promise<ExerciseContractFormat[]> {
     this._ensureInitialized();
-    
+
     // Simulate get delay
     await this._simulateNetworkDelay();
 
     // Transform all exercises to contract format
-    return this._exercises.map(exercise => this._transformExerciseToContractFormat(exercise));
+    return this._exercises.map((exercise) =>
+      this._transformExerciseToContractFormat(exercise),
+    );
   }
 
   async getExercise(id: string): Promise<ExerciseContractFormat | null> {
     this._ensureInitialized();
-    
+
     // Simulate get delay
     await this._simulateNetworkDelay();
 
-    const exercise = this._exercises.find(e => e.id === id);
+    const exercise = this._exercises.find((e) => e.id === id);
     return exercise ? this._transformExerciseToContractFormat(exercise) : null;
   }
 
   // Sync Operations
   async getSyncStatus(exerciseId: string): Promise<SyncStatus> {
     this._ensureInitialized();
-    
+
     // Find most recent sync operation for this exercise
-    const syncOps = this._syncQueue.filter(op => op.recordId === exerciseId);
-    const sortedSyncOps = typeof syncOps.toSorted === 'function'
-      ? syncOps.toSorted((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-      : [...syncOps].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    const syncOps = this._syncQueue.filter((op) => op.recordId === exerciseId);
+    const sortedSyncOps =
+      typeof syncOps.toSorted === "function"
+        ? syncOps.toSorted(
+            (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+          )
+        : [...syncOps].sort(
+            (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+          );
     const syncOp = sortedSyncOps[0];
 
     if (!syncOp) {
-      return 'synced'; // No pending operations
+      return "synced"; // No pending operations
     }
 
     return syncOp.status;
@@ -383,29 +408,31 @@ export class TestDevice {
 
   async waitForSyncComplete(timeoutMs: number = 10000): Promise<void> {
     this._ensureInitialized();
-    
+
     const startTime = Date.now();
-    
+
     while (Date.now() - startTime < timeoutMs) {
-      const pendingOps = this._syncQueue.filter(op => 
-        op.status === 'pending' || op.status === 'retrying'
+      const pendingOps = this._syncQueue.filter(
+        (op) => op.status === "pending" || op.status === "retrying",
       );
-      
+
       if (pendingOps.length === 0) {
         return; // All sync operations complete
       }
-      
+
       await this.waitFor(100); // Check every 100ms
     }
-    
-    throw new Error('Timeout waiting for sync to complete');
+
+    throw new Error("Timeout waiting for sync to complete");
   }
 
-  subscribeToExerciseChanges(callback: (exercises: Exercise[]) => void): () => void {
+  subscribeToExerciseChanges(
+    callback: (exercises: Exercise[]) => void,
+  ): () => void {
     this._ensureInitialized();
-    
+
     this._subscriptions.add(callback);
-    
+
     // Return unsubscribe function
     return () => {
       this._subscriptions.delete(callback);
@@ -414,43 +441,44 @@ export class TestDevice {
 
   async retryFailedSyncs(): Promise<void> {
     this._ensureInitialized();
-    
+
     if (!this._networkStatus) {
-      throw new Error('Cannot retry syncs while offline');
+      throw new Error("Cannot retry syncs while offline");
     }
 
     // Find failed sync operations and retry them
-    const failedOps = this._syncQueue.filter(op => op.status === 'error');
-    
+    const failedOps = this._syncQueue.filter((op) => op.status === "error");
+
     for (const op of failedOps) {
-      op.status = 'retrying';
+      op.status = "retrying";
       op.retryCount += 1;
       op.lastAttemptAt = new Date();
-      
+
       // Simulate retry delay
       await this._simulateNetworkDelay();
-      
+
       // Simulate retry success/failure
-      if (Math.random() < 0.8) { // 80% success rate for retries
-        op.status = 'synced';
+      if (Math.random() < 0.8) {
+        // 80% success rate for retries
+        op.status = "synced";
       } else {
-        op.status = 'error';
-        op.lastError = 'Retry failed';
+        op.status = "error";
+        op.lastError = "Retry failed";
       }
     }
   }
 
   async getPendingSyncOperations(): Promise<SyncOperation[]> {
     this._ensureInitialized();
-    
-    return this._syncQueue.filter(op => 
-      op.status === 'pending' || op.status === 'retrying'
+
+    return this._syncQueue.filter(
+      (op) => op.status === "pending" || op.status === "retrying",
     );
   }
 
   // Utility Methods
   async waitFor(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   getDeviceState(): TestDeviceState {
@@ -458,52 +486,61 @@ export class TestDevice {
       device: {
         id: this._deviceId,
         name: this._deviceName,
-        initialized: this._initialized
+        initialized: this._initialized,
       },
       network: {
         online: this._networkStatus,
-        simulatingIssues: this._networkSimulation.enabled
+        simulatingIssues: this._networkSimulation.enabled,
       },
       auth: this._authState,
       data: {
         exercises: [...this._exercises],
-        pendingSyncOperations: [...this._syncQueue]
+        pendingSyncOperations: [...this._syncQueue],
       },
       sync: {
-        inProgress: this._syncQueue.some(op => op.status === 'pending' || op.status === 'retrying'),
+        inProgress: this._syncQueue.some(
+          (op) => op.status === "pending" || op.status === "retrying",
+        ),
         lastSyncAt: this._getLastSyncTime(),
-        failedOperations: this._syncQueue.filter(op => op.status === 'error').length
-      }
+        failedOperations: this._syncQueue.filter((op) => op.status === "error")
+          .length,
+      },
     };
   }
-  
-  async getMemoryUsage(): Promise<{ heapUsed: number; heapTotal: number; rss?: number }> {
+
+  async getMemoryUsage(): Promise<{
+    heapUsed: number;
+    heapTotal: number;
+    rss?: number;
+  }> {
     // Simulate memory usage for testing
     // In real implementation, this would use process.memoryUsage()
     const baseMemory = 50 * 1024 * 1024; // 50MB base
     const exerciseMemory = this._exercises.length * 1024; // ~1KB per exercise
     const syncMemory = this._syncQueue.length * 512; // ~512B per sync operation
-    
+
     const heapUsed = baseMemory + exerciseMemory + syncMemory;
     const heapTotal = heapUsed * 1.5; // Simulate heap overhead
-    
+
     return {
       heapUsed,
       heapTotal,
-      rss: heapTotal * 1.2
+      rss: heapTotal * 1.2,
     };
   }
 
   // Private Helper Methods
   private _ensureInitialized(): void {
     if (!this._initialized) {
-      throw new Error('TestDevice must be initialized before use. Call init() first.');
+      throw new Error(
+        "TestDevice must be initialized before use. Call init() first.",
+      );
     }
   }
 
   private _ensureNetworkConnected(): void {
     if (!this._networkStatus) {
-      throw new Error('Network is offline. Cannot perform network operations.');
+      throw new Error("Network is offline. Cannot perform network operations.");
     }
   }
 
@@ -524,15 +561,15 @@ export class TestDevice {
     }
 
     if (Math.random() < this._networkSimulation.failureRate) {
-      throw new Error('Simulated network failure');
+      throw new Error("Simulated network failure");
     }
   }
 
   private _addToSyncQueue(
-    operation: 'create' | 'update' | 'delete',
+    operation: "create" | "update" | "delete",
     recordId: string,
     recordType: string,
-    data: Exercise | null
+    data: Exercise | null,
   ): void {
     const syncOperation: SyncOperation = {
       id: uuidv4(),
@@ -540,23 +577,26 @@ export class TestDevice {
       recordId,
       recordType,
       data,
-      status: 'pending',
+      status: "pending",
       retryCount: 0,
       createdAt: new Date(),
-      lastAttemptAt: new Date()
+      lastAttemptAt: new Date(),
     };
 
     this._syncQueue.push(syncOperation);
 
     // Simulate async sync processing
     setTimeout(() => {
-      const op = this._syncQueue.find(o => o.id === syncOperation.id);
-      if (op && op.status === 'pending') {
-        if (this._networkStatus && Math.random() < 0.9) { // 90% success rate
-          op.status = 'synced';
+      const op = this._syncQueue.find((o) => o.id === syncOperation.id);
+      if (op && op.status === "pending") {
+        if (this._networkStatus && Math.random() < 0.9) {
+          // 90% success rate
+          op.status = "synced";
         } else {
-          op.status = 'error';
-          op.lastError = this._networkStatus ? 'Server error' : 'Network offline';
+          op.status = "error";
+          op.lastError = this._networkStatus
+            ? "Server error"
+            : "Network offline";
         }
       }
     }, 500); // Simulate 500ms sync delay
@@ -564,54 +604,65 @@ export class TestDevice {
 
   private _notifySubscribers(): void {
     const exercises = [...this._exercises];
-    this._subscriptions.forEach(callback => {
+    this._subscriptions.forEach((callback) => {
       try {
         callback(exercises);
       } catch (error) {
-        console.error('Error in exercise change subscription callback:', error);
+        console.error("Error in exercise change subscription callback:", error);
       }
     });
   }
 
   private _getLastSyncTime(): Date | undefined {
-    const syncedOps = this._syncQueue.filter(op => op.status === 'synced');
+    const syncedOps = this._syncQueue.filter((op) => op.status === "synced");
     if (syncedOps.length === 0) {
       return undefined;
     }
 
-    const sortedSyncedOps = typeof syncedOps.toSorted === 'function'
-      ? syncedOps.toSorted((a, b) => b.lastAttemptAt!.getTime() - a.lastAttemptAt!.getTime())
-      : [...syncedOps].sort((a, b) => b.lastAttemptAt!.getTime() - a.lastAttemptAt!.getTime());
+    const sortedSyncedOps =
+      typeof syncedOps.toSorted === "function"
+        ? syncedOps.toSorted(
+            (a, b) => b.lastAttemptAt!.getTime() - a.lastAttemptAt!.getTime(),
+          )
+        : [...syncedOps].sort(
+            (a, b) => b.lastAttemptAt!.getTime() - a.lastAttemptAt!.getTime(),
+          );
     return sortedSyncedOps[0].lastAttemptAt!;
   }
 
   // Sync State Methods
   getPendingSyncCount(): number {
-    return this._syncQueue.filter(op => op.status === 'pending').length;
+    return this._syncQueue.filter((op) => op.status === "pending").length;
   }
 
   /**
    * Transform Exercise object to contract format expected by integration tests
    */
-  private _transformExerciseToContractFormat(exercise: Exercise): ExerciseContractFormat {
+  private _transformExerciseToContractFormat(
+    exercise: Exercise,
+  ): ExerciseContractFormat {
     // Determine sync status based on sync queue
-    let syncStatus: SyncStatus = 'synced';
-    
-    const syncOps = this._syncQueue.filter(op => op.recordId === exercise.id);
+    let syncStatus: SyncStatus = "synced";
+
+    const syncOps = this._syncQueue.filter((op) => op.recordId === exercise.id);
     let sortedSyncOps;
-    if (typeof syncOps.toSorted === 'function') {
-      sortedSyncOps = syncOps.toSorted((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    if (typeof syncOps.toSorted === "function") {
+      sortedSyncOps = syncOps.toSorted(
+        (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+      );
     } else {
       sortedSyncOps = [...syncOps];
-      sortedSyncOps.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      sortedSyncOps.sort(
+        (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+      );
     }
     const syncOp = sortedSyncOps[0]; // Most recent
-    
+
     if (syncOp) {
       syncStatus = syncOp.status;
     } else if (!this._authState.authenticated || !this._networkStatus) {
       // If offline or anonymous, exercises are locally pending
-      syncStatus = 'pending';
+      syncStatus = "pending";
     }
 
     // Transform to contract format
@@ -622,10 +673,14 @@ export class TestDevice {
       updatedAt: exercise.updated_at, // ISO string format expected by tests
       syncStatus,
       // userId should be undefined for anonymous users per test expectations
-      userId: (this._authState.currentUser && 'isAnonymous' in this._authState.currentUser && (this._authState.currentUser as { isAnonymous: boolean }).isAnonymous)
-        || exercise.user_id === 'anonymous'
-        ? undefined
-        : exercise.user_id
+      userId:
+        (this._authState.currentUser &&
+          "isAnonymous" in this._authState.currentUser &&
+          (this._authState.currentUser as { isAnonymous: boolean })
+            .isAnonymous) ||
+        exercise.user_id === "anonymous"
+          ? undefined
+          : exercise.user_id,
     };
   }
 }

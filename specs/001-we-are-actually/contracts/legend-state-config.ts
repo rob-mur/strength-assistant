@@ -39,10 +39,10 @@ export interface LegendStateConfig {
       infinite?: boolean;
       delay?: number;
       times?: number;
-      backoff?: 'constant' | 'exponential';
+      backoff?: "constant" | "exponential";
     };
     // Conflict resolution
-    conflictResolution?: 'lastWriteWins' | 'firstWriteWins' | 'manual';
+    conflictResolution?: "lastWriteWins" | "firstWriteWins" | "manual";
   };
 }
 
@@ -51,15 +51,18 @@ export interface LegendStateConfig {
  * Defines the observable store structure for exercise data
  */
 export interface ExerciseStore {
-  exercises: Record<string, {
-    id: string;
-    name: string;
-    createdAt: string; // ISO string for serialization
-    updatedAt: string; // ISO string for serialization
-    userId?: string;
-    syncStatus: 'pending' | 'synced' | 'error';
-  }>;
-  
+  exercises: Record<
+    string,
+    {
+      id: string;
+      name: string;
+      createdAt: string; // ISO string for serialization
+      updatedAt: string; // ISO string for serialization
+      userId?: string;
+      syncStatus: "pending" | "synced" | "error";
+    }
+  >;
+
   // User state
   user: {
     id?: string;
@@ -92,18 +95,21 @@ export interface ExerciseActions {
   addExercise: (name: string) => Promise<void>;
   updateExercise: (id: string, name: string) => Promise<void>;
   deleteExercise: (id: string) => Promise<void>;
-  
+
   // Authentication operations
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signInAnonymously: () => Promise<void>;
   signOut: () => Promise<void>;
-  
+
   // Sync operations
   forcSync: () => Promise<void>;
   clearSyncErrors: () => void;
-  
+
   // Migration operations
-  validateConsistency: () => Promise<{isConsistent: boolean; errors: string[]}>;
+  validateConsistency: () => Promise<{
+    isConsistent: boolean;
+    errors: string[];
+  }>;
   migrateToSupabase: () => Promise<void>;
 }

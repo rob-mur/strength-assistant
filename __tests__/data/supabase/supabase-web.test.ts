@@ -1,9 +1,17 @@
-import { initSupabase, getSupabaseClient, resetSupabaseService } from "@/lib/data/supabase/supabase/supabase.web";
+import {
+  initSupabase,
+  getSupabaseClient,
+  resetSupabaseService,
+} from "@/lib/data/supabase/supabase/supabase.web";
 
 // Mock the Supabase client
-jest.mock("@supabase/supabase-js", () => ({
-  createClient: jest.fn(),
-}), { virtual: true });
+jest.mock(
+  "@supabase/supabase-js",
+  () => ({
+    createClient: jest.fn(),
+  }),
+  { virtual: true },
+);
 
 const { createClient } = require("@supabase/supabase-js");
 const mockCreateClient = createClient;
@@ -13,11 +21,11 @@ const originalEnv = process.env;
 
 // Helper function to set NODE_ENV in Jest environment
 function setNodeEnv(value: string) {
-  Object.defineProperty(process.env, 'NODE_ENV', {
+  Object.defineProperty(process.env, "NODE_ENV", {
     value,
     writable: true,
     enumerable: true,
-    configurable: true
+    configurable: true,
   });
 }
 
@@ -59,9 +67,9 @@ describe("SupabaseWebService", () => {
       setNodeEnv("production");
       process.env.EXPO_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
       process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
-      
+
       initSupabase();
-      
+
       expect(mockCreateClient).toHaveBeenCalledWith(
         "https://test.supabase.co",
         "test-anon-key",
@@ -71,16 +79,16 @@ describe("SupabaseWebService", () => {
             persistSession: true,
             detectSessionInUrl: true,
           },
-        }
+        },
       );
     });
 
     test("initializes with emulator configuration in development", () => {
       setNodeEnv("development");
       process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "dev-anon-key";
-      
+
       initSupabase();
-      
+
       expect(mockCreateClient).toHaveBeenCalledWith(
         "http://127.0.0.1:54321",
         "dev-anon-key",
@@ -90,7 +98,7 @@ describe("SupabaseWebService", () => {
             persistSession: true,
             detectSessionInUrl: true,
           }),
-        })
+        }),
       );
     });
 
@@ -99,25 +107,25 @@ describe("SupabaseWebService", () => {
       process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_HOST = "localhost";
       process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_PORT = "8000";
       process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "dev-anon-key";
-      
+
       initSupabase();
-      
+
       expect(mockCreateClient).toHaveBeenCalledWith(
         "http://localhost:8000",
         "dev-anon-key",
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
     test("uses default development key when no key provided in emulator mode", () => {
       setNodeEnv("development");
-      
+
       initSupabase();
-      
+
       expect(mockCreateClient).toHaveBeenCalledWith(
         "http://127.0.0.1:54321",
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0",
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -125,9 +133,9 @@ describe("SupabaseWebService", () => {
       setNodeEnv("production"); // Force production mode
       process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "test-key";
       // No URL set
-      
+
       expect(() => initSupabase()).toThrow(
-        "Missing Supabase configuration. URL: false, Key: true"
+        "Missing Supabase configuration. URL: false, Key: true",
       );
     });
 
@@ -135,9 +143,9 @@ describe("SupabaseWebService", () => {
       setNodeEnv("production"); // Force production mode
       process.env.EXPO_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
       // No anon key set
-      
+
       expect(() => initSupabase()).toThrow(
-        "Missing Supabase configuration. URL: true, Key: false"
+        "Missing Supabase configuration. URL: true, Key: false",
       );
     });
 
@@ -146,10 +154,10 @@ describe("SupabaseWebService", () => {
       setNodeEnv("development");
       process.env.EXPO_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
       process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
-      
+
       initSupabase();
       initSupabase(); // Second call should skip
-      
+
       expect(mockCreateClient).toHaveBeenCalledTimes(1);
     });
   });
@@ -160,17 +168,17 @@ describe("SupabaseWebService", () => {
       setNodeEnv("development");
       process.env.EXPO_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
       process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
-      
+
       initSupabase();
       const client = getSupabaseClient();
-      
+
       expect(client).toBe(mockClient);
     });
 
     test("throws error when not initialized", () => {
       // Service is already reset in beforeEach
       expect(() => getSupabaseClient()).toThrow(
-        "Supabase service not initialized. Call init() before getSupabaseClient()"
+        "Supabase service not initialized. Call init() before getSupabaseClient()",
       );
     });
   });
@@ -180,11 +188,11 @@ describe("SupabaseWebService", () => {
       setNodeEnv("production"); // Ensure production mode
       process.env.EXPO_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
       process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
-      
+
       mockCreateClient.mockImplementation(() => {
         throw new Error("Connection failed");
       });
-      
+
       expect(() => initSupabase()).toThrow("Connection failed");
     });
   });
@@ -192,20 +200,20 @@ describe("SupabaseWebService", () => {
   describe("emulator detection", () => {
     test("detects emulator mode with EXPO_PUBLIC_USE_SUPABASE_EMULATOR", () => {
       // Use Object.defineProperty to ensure the property is set correctly in Jest
-      Object.defineProperty(process.env, 'EXPO_PUBLIC_USE_SUPABASE_EMULATOR', {
-        value: 'true',
+      Object.defineProperty(process.env, "EXPO_PUBLIC_USE_SUPABASE_EMULATOR", {
+        value: "true",
         writable: true,
         enumerable: true,
-        configurable: true
+        configurable: true,
       });
       // When in emulator mode, service provides default anon key
-      
+
       initSupabase();
-      
+
       expect(mockCreateClient).toHaveBeenCalledWith(
         "http://127.0.0.1:54321",
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0",
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -214,13 +222,13 @@ describe("SupabaseWebService", () => {
       process.env.EXPO_PUBLIC_USE_SUPABASE_EMULATOR = "false";
       process.env.EXPO_PUBLIC_SUPABASE_URL = "https://prod.supabase.co";
       process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "prod-key";
-      
+
       initSupabase();
-      
+
       expect(mockCreateClient).toHaveBeenCalledWith(
         "https://prod.supabase.co",
         "prod-key",
-        expect.any(Object)
+        expect.any(Object),
       );
     });
   });

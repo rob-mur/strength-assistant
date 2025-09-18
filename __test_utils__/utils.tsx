@@ -13,7 +13,7 @@ export class CommonTestState {
     // Get the mock router from the mocked useRouter
     const mockUseRouter = useRouter as jest.Mock;
     this.mockRouter = mockUseRouter();
-    
+
     // Reset the calls for this test
     jest.clearAllMocks();
   }

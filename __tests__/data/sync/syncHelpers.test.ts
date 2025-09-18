@@ -82,13 +82,16 @@ describe("syncHelpers", () => {
 
     test("handles errors gracefully", async () => {
       const { supabaseClient } = require("@/lib/data/supabase/SupabaseClient");
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-      
+      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+
       supabaseClient.getCurrentUser.mockRejectedValue(new Error("Auth failed"));
 
       await expect(syncHelpers.forceSync()).resolves.not.toThrow();
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to force sync:', expect.any(Error));
-      
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Failed to force sync:",
+        expect.any(Error),
+      );
+
       consoleErrorSpy.mockRestore();
     });
   });

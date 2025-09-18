@@ -49,9 +49,11 @@ export interface Database {
 }
 
 // Export table types for convenience
-export type ExerciseRow = Database['public']['Tables']['exercises']['Row'];
-export type ExerciseInsert = Database['public']['Tables']['exercises']['Insert'];
-export type ExerciseUpdate = Database['public']['Tables']['exercises']['Update'];
+export type ExerciseRow = Database["public"]["Tables"]["exercises"]["Row"];
+export type ExerciseInsert =
+  Database["public"]["Tables"]["exercises"]["Insert"];
+export type ExerciseUpdate =
+  Database["public"]["Tables"]["exercises"]["Update"];
 
 // User type for store (from Supabase Auth)
 export interface User {

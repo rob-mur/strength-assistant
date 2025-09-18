@@ -1,44 +1,55 @@
 /**
  * Supabase Storage Backend Implementation
- * 
+ *
  * Implements the StorageBackend interface for Supabase,
  * providing exercise CRUD operations, user management, and sync tracking.
  */
 
 // Import interfaces from local models instead of contracts
-import type { ExerciseRecord } from '../../models/ExerciseRecord';
-import type { UserAccount } from '../../models/UserAccount';  
-import type { SyncStateRecord } from '../../models/SyncStateRecord';
-import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
-import { getSupabaseUrl, getSupabaseEnvConfig } from '../../config/supabase-env';
-import { 
-  createExerciseRecord, 
-  updateExerciseRecord, 
+import type { ExerciseRecord } from "../../models/ExerciseRecord";
+import type { UserAccount } from "../../models/UserAccount";
+import type { SyncStateRecord } from "../../models/SyncStateRecord";
+import { createClient, SupabaseClient, User } from "@supabase/supabase-js";
+import {
+  getSupabaseUrl,
+  getSupabaseEnvConfig,
+} from "../../config/supabase-env";
+import {
+  createExerciseRecord,
+  updateExerciseRecord,
   validateExerciseRecord,
   ExerciseRecordInput,
   ExerciseRecordUpdate,
   toDbFormat as exerciseToDb,
-  fromDbFormat as exerciseFromDb
-} from '../../models/ExerciseRecord';
+  fromDbFormat as exerciseFromDb,
+} from "../../models/ExerciseRecord";
 import {
   createAnonymousUser,
   createAuthenticatedUser,
-  validateCredentials
-} from '../../models/UserAccount';
+  validateCredentials,
+} from "../../models/UserAccount";
 import {
   createSyncState,
   recordSyncFailure,
   isReadyForRetry,
   toDbFormat as syncToDb,
-  fromDbFormat as syncFromDb
-} from '../../models/SyncStateRecord';
+  fromDbFormat as syncFromDb,
+} from "../../models/SyncStateRecord";
 
 // StorageBackend interface definition (matches contract)
 export interface StorageBackend {
   // Exercise CRUD operations
-  createExercise(exercise: Omit<ExerciseRecord, 'id' | 'createdAt' | 'updatedAt' | 'syncStatus'>): Promise<ExerciseRecord>;
+  createExercise(
+    exercise: Omit<
+      ExerciseRecord,
+      "id" | "createdAt" | "updatedAt" | "syncStatus"
+    >,
+  ): Promise<ExerciseRecord>;
   getExercises(userId?: string): Promise<ExerciseRecord[]>;
-  updateExercise(id: string, updates: Partial<Pick<ExerciseRecord, 'name'>>): Promise<ExerciseRecord>;
+  updateExercise(
+    id: string,
+    updates: Partial<Pick<ExerciseRecord, "name">>,
+  ): Promise<ExerciseRecord>;
   deleteExercise(id: string): Promise<void>;
 
   // User management
@@ -52,10 +63,15 @@ export interface StorageBackend {
   getPendingSyncRecords(): Promise<SyncStateRecord[]>;
   markSyncComplete(recordId: string): Promise<void>;
   markSyncError(recordId: string, error: string): Promise<void>;
-  
+
   // Real-time subscriptions
-  subscribeToExercises(userId: string, callback: (exercises: ExerciseRecord[]) => void): () => void;
-  subscribeToAuthState(callback: (user: UserAccount | null) => void): () => void;
+  subscribeToExercises(
+    userId: string,
+    callback: (exercises: ExerciseRecord[]) => void,
+  ): () => void;
+  subscribeToAuthState(
+    callback: (user: UserAccount | null) => void,
+  ): () => void;
 }
 
 export class SupabaseStorage implements StorageBackend {
@@ -64,17 +80,13 @@ export class SupabaseStorage implements StorageBackend {
 
   constructor() {
     const config = getSupabaseEnvConfig();
-    this.client = createClient(
-      getSupabaseUrl(),
-      config.anonKey,
-      {
-        auth: {
-          autoRefreshToken: true,
-          persistSession: true,
-          detectSessionInUrl: true
-        }
-      }
-    );
+    this.client = createClient(getSupabaseUrl(), config.anonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+      },
+    });
   }
   /**
    * Call this after construction to initialize the session asynchronously.
@@ -84,17 +96,22 @@ export class SupabaseStorage implements StorageBackend {
   }
 
   // Exercise CRUD operations
-  async createExercise(exercise: Omit<ExerciseRecord, 'id' | 'createdAt' | 'updatedAt' | 'syncStatus'>): Promise<ExerciseRecord> {
+  async createExercise(
+    exercise: Omit<
+      ExerciseRecord,
+      "id" | "createdAt" | "updatedAt" | "syncStatus"
+    >,
+  ): Promise<ExerciseRecord> {
     const input: ExerciseRecordInput = {
       name: exercise.name,
-      userId: exercise.userId
+      userId: exercise.userId,
     };
 
     const newExercise = createExerciseRecord(input);
     validateExerciseRecord(newExercise);
 
     const { data, error } = await this.client
-      .from('exercises')
+      .from("exercises")
       .insert(exerciseToDb(newExercise))
       .select()
       .single();
@@ -107,16 +124,18 @@ export class SupabaseStorage implements StorageBackend {
   }
 
   async getExercises(userId?: string): Promise<ExerciseRecord[]> {
-    let query = this.client.from('exercises').select('*');
+    let query = this.client.from("exercises").select("*");
 
     if (userId) {
-      query = query.eq('user_id', userId);
+      query = query.eq("user_id", userId);
     } else {
       // Get exercises for anonymous user (no user_id)
-      query = query.is('user_id', null);
+      query = query.is("user_id", null);
     }
 
-    const { data, error } = await query.order('created_at', { ascending: true });
+    const { data, error } = await query.order("created_at", {
+      ascending: true,
+    });
 
     if (error) {
       throw new Error(`Failed to retrieve exercises: ${error.message}`);
@@ -125,25 +144,31 @@ export class SupabaseStorage implements StorageBackend {
     return (data || []).map(exerciseFromDb);
   }
 
-  async updateExercise(id: string, updates: Partial<Pick<ExerciseRecord, 'name'>>): Promise<ExerciseRecord> {
+  async updateExercise(
+    id: string,
+    updates: Partial<Pick<ExerciseRecord, "name">>,
+  ): Promise<ExerciseRecord> {
     // First get the existing exercise
     const { data: existingData, error: fetchError } = await this.client
-      .from('exercises')
-      .select('*')
-      .eq('id', id)
+      .from("exercises")
+      .select("*")
+      .eq("id", id)
       .single();
 
     if (fetchError || !existingData) {
-      throw new Error('Exercise not found');
+      throw new Error("Exercise not found");
     }
 
     const existing = exerciseFromDb(existingData);
-    const updated = updateExerciseRecord(existing, updates as ExerciseRecordUpdate);
+    const updated = updateExerciseRecord(
+      existing,
+      updates as ExerciseRecordUpdate,
+    );
 
     const { data, error } = await this.client
-      .from('exercises')
+      .from("exercises")
       .update(exerciseToDb(updated))
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -157,19 +182,16 @@ export class SupabaseStorage implements StorageBackend {
   async deleteExercise(id: string): Promise<void> {
     // Check if exercise exists
     const { data: existingData, error: fetchError } = await this.client
-      .from('exercises')
-      .select('id')
-      .eq('id', id)
+      .from("exercises")
+      .select("id")
+      .eq("id", id)
       .single();
 
     if (fetchError || !existingData) {
-      throw new Error('Exercise not found');
+      throw new Error("Exercise not found");
     }
 
-    const { error } = await this.client
-      .from('exercises')
-      .delete()
-      .eq('id', id);
+    const { error } = await this.client.from("exercises").delete().eq("id", id);
 
     if (error) {
       throw new Error(`Failed to delete exercise: ${error.message}`);
@@ -182,8 +204,10 @@ export class SupabaseStorage implements StorageBackend {
       return this.currentUser;
     }
 
-    const { data: { session } } = await this.client.auth.getSession();
-    
+    const {
+      data: { session },
+    } = await this.client.auth.getSession();
+
     if (!session?.user) {
       return null;
     }
@@ -196,7 +220,7 @@ export class SupabaseStorage implements StorageBackend {
 
     const { data, error } = await this.client.auth.signInWithPassword({
       email: email.toLowerCase().trim(),
-      password
+      password,
     });
 
     if (error) {
@@ -204,12 +228,12 @@ export class SupabaseStorage implements StorageBackend {
     }
 
     if (!data.user) {
-      throw new Error('Sign in failed: No user returned');
+      throw new Error("Sign in failed: No user returned");
     }
 
     const userAccount = this.mapSupabaseUserToAccount(data.user);
     this.currentUser = userAccount;
-    
+
     return userAccount;
   }
 
@@ -218,7 +242,7 @@ export class SupabaseStorage implements StorageBackend {
 
     const { data, error } = await this.client.auth.signUp({
       email: email.toLowerCase().trim(),
-      password
+      password,
     });
 
     if (error) {
@@ -226,12 +250,12 @@ export class SupabaseStorage implements StorageBackend {
     }
 
     if (!data.user) {
-      throw new Error('Sign up failed: No user returned');
+      throw new Error("Sign up failed: No user returned");
     }
 
     const userAccount = this.mapSupabaseUserToAccount(data.user);
     this.currentUser = userAccount;
-    
+
     return userAccount;
   }
 
@@ -239,13 +263,13 @@ export class SupabaseStorage implements StorageBackend {
     // Supabase doesn't have built-in anonymous auth, so we create a temporary anonymous user
     const anonymousUser = createAnonymousUser();
     this.currentUser = anonymousUser;
-    
+
     return anonymousUser;
   }
 
   async signOut(): Promise<void> {
     const { error } = await this.client.auth.signOut();
-    
+
     if (error) {
       throw new Error(`Sign out failed: ${error.message}`);
     }
@@ -256,24 +280,22 @@ export class SupabaseStorage implements StorageBackend {
   // Sync management
   async getPendingSyncRecords(): Promise<SyncStateRecord[]> {
     const { data, error } = await this.client
-      .from('sync_states')
-      .select('*')
-      .order('pending_since', { ascending: true });
+      .from("sync_states")
+      .select("*")
+      .order("pending_since", { ascending: true });
 
     if (error) {
       throw new Error(`Failed to retrieve sync records: ${error.message}`);
     }
 
-    return (data || [])
-      .map(syncFromDb)
-      .filter(isReadyForRetry);
+    return (data || []).map(syncFromDb).filter(isReadyForRetry);
   }
 
   async markSyncComplete(recordId: string): Promise<void> {
     const { error } = await this.client
-      .from('sync_states')
+      .from("sync_states")
       .delete()
-      .eq('record_id', recordId);
+      .eq("record_id", recordId);
 
     if (error) {
       throw new Error(`Failed to mark sync complete: ${error.message}`);
@@ -283,27 +305,33 @@ export class SupabaseStorage implements StorageBackend {
   async markSyncError(recordId: string, errorMessage: string): Promise<void> {
     // First get the existing sync record
     const { data: existing, error: fetchError } = await this.client
-      .from('sync_states')
-      .select('*')
-      .eq('record_id', recordId)
+      .from("sync_states")
+      .select("*")
+      .eq("record_id", recordId)
       .single();
 
-    if (fetchError || !existing || (Array.isArray(existing) && existing.length === 0)) {
+    if (
+      fetchError ||
+      !existing ||
+      (Array.isArray(existing) && existing.length === 0)
+    ) {
       // Create new sync error record if it doesn't exist
       const syncState = createSyncState({
         recordId,
-        recordType: 'exercise', // Default type
-        operation: 'create' // Default operation
+        recordType: "exercise", // Default type
+        operation: "create", // Default operation
       });
 
       const failedState = recordSyncFailure(syncState, errorMessage);
 
       const { error: insertError } = await this.client
-        .from('sync_states')
+        .from("sync_states")
         .insert(syncToDb(failedState));
 
       if (insertError) {
-        throw new Error(`Failed to create sync error record: ${insertError.message}`);
+        throw new Error(
+          `Failed to create sync error record: ${insertError.message}`,
+        );
       }
 
       return;
@@ -313,9 +341,9 @@ export class SupabaseStorage implements StorageBackend {
     const failedState = recordSyncFailure(syncState, errorMessage);
 
     const { error } = await this.client
-      .from('sync_states')
+      .from("sync_states")
       .update(syncToDb(failedState))
-      .eq('record_id', recordId);
+      .eq("record_id", recordId);
 
     if (error) {
       throw new Error(`Failed to mark sync error: ${error.message}`);
@@ -323,21 +351,26 @@ export class SupabaseStorage implements StorageBackend {
   }
 
   // Real-time subscriptions
-  subscribeToExercises(userId: string, callback: (exercises: ExerciseRecord[]) => void): () => void {
+  subscribeToExercises(
+    userId: string,
+    callback: (exercises: ExerciseRecord[]) => void,
+  ): () => void {
     const subscription = this.client
-      .channel('exercises_changes')
-      .on('postgres_changes', 
-          { 
-            event: '*', 
-            schema: 'public', 
-            table: 'exercises',
-            filter: userId ? `user_id=eq.${userId}` : 'user_id=is.null'
-          }, 
-          async () => {
-            // Fetch updated exercises and call callback
-            const exercises = await this.getExercises(userId);
-            callback(exercises);
-          })
+      .channel("exercises_changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "exercises",
+          filter: userId ? `user_id=eq.${userId}` : "user_id=is.null",
+        },
+        async () => {
+          // Fetch updated exercises and call callback
+          const exercises = await this.getExercises(userId);
+          callback(exercises);
+        },
+      )
       .subscribe();
 
     // Return unsubscribe function
@@ -346,19 +379,21 @@ export class SupabaseStorage implements StorageBackend {
     };
   }
 
-  subscribeToAuthState(callback: (user: UserAccount | null) => void): () => void {
-    const { data: { subscription } } = this.client.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user) {
-          const userAccount = this.mapSupabaseUserToAccount(session.user);
-          this.currentUser = userAccount;
-          callback(userAccount);
-        } else {
-          this.currentUser = null;
-          callback(null);
-        }
+  subscribeToAuthState(
+    callback: (user: UserAccount | null) => void,
+  ): () => void {
+    const {
+      data: { subscription },
+    } = this.client.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        const userAccount = this.mapSupabaseUserToAccount(session.user);
+        this.currentUser = userAccount;
+        callback(userAccount);
+      } else {
+        this.currentUser = null;
+        callback(null);
       }
-    );
+    });
 
     return () => {
       subscription.unsubscribe();
@@ -366,9 +401,12 @@ export class SupabaseStorage implements StorageBackend {
   }
 
   // Additional methods for anonymous user migration
-  async linkEmailPassword(email: string, password: string): Promise<UserAccount> {
+  async linkEmailPassword(
+    email: string,
+    password: string,
+  ): Promise<UserAccount> {
     if (!this.currentUser?.isAnonymous) {
-      throw new Error('Can only link email/password to anonymous users');
+      throw new Error("Can only link email/password to anonymous users");
     }
 
     // This would typically involve Supabase's user linking functionality
@@ -385,24 +423,26 @@ export class SupabaseStorage implements StorageBackend {
   // Private helper methods
   private async initializeSession(): Promise<void> {
     try {
-      const { data: { session } } = await this.client.auth.getSession();
-      
+      const {
+        data: { session },
+      } = await this.client.auth.getSession();
+
       if (session?.user) {
         this.currentUser = this.mapSupabaseUserToAccount(session.user);
       }
     } catch (error) {
-      console.warn('Failed to initialize session:', error);
+      console.warn("Failed to initialize session:", error);
     }
   }
 
   private mapSupabaseUserToAccount(user: User): UserAccount {
     const isAnonymous = !user.email; // No email means anonymous
-    
+
     if (isAnonymous) {
       return {
         id: user.id,
         isAnonymous: true,
-        createdAt: new Date(user.created_at)
+        createdAt: new Date(user.created_at),
       };
     }
 
@@ -412,11 +452,11 @@ export class SupabaseStorage implements StorageBackend {
   // Development/testing utilities
   async clearAllData(): Promise<void> {
     // Only available in development/testing
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('clearAllData is not available in production');
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("clearAllData is not available in production");
     }
 
-    await this.client.from('exercises').delete().neq('id', '');
-    await this.client.from('sync_states').delete().neq('record_id', '');
+    await this.client.from("exercises").delete().neq("id", "");
+    await this.client.from("sync_states").delete().neq("record_id", "");
   }
 }

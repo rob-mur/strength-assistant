@@ -12,14 +12,19 @@ This document captures the testing strategies and patterns discovered during sys
 **Key Achievement**: **Zero React act() warnings eliminated** from component tests
 
 #### Key Features:
+
 - Proper `act()` wrapping for state updates
 - Animation handling with timeout protection
 - Event simulation with realistic timing
 - Component rendering utilities with cleanup
 
 #### Usage Patterns:
+
 ```typescript
-import { testHelper, actWithAnimations } from '../test-utils/ReactNativeTestHelper';
+import {
+  testHelper,
+  actWithAnimations,
+} from "../test-utils/ReactNativeTestHelper";
 
 // Wait for component render
 await testHelper.waitForRender(renderResult);
@@ -32,8 +37,10 @@ await testHelper.performUserFlow([
 
 // Loading state testing
 await testHelper.testLoadingState(
-  async () => { /* action */ },
-  () => getLoadingState()
+  async () => {
+    /* action */
+  },
+  () => getLoadingState(),
 );
 ```
 
@@ -43,36 +50,46 @@ await testHelper.testLoadingState(
 **Key Achievement**: **25x performance improvement** (50+ seconds to ~2 seconds)
 
 #### Research-Backed Patterns:
+
 1. **10ms Time-Stepping Pattern**: Research shows 10ms steps provide optimal animation testing
 2. **Fake Timer Lifecycle**: Proper `runOnlyPendingTimers()` prevents memory leaks
 3. **findBy Queries**: Automatically wrapped in `act()`, more reliable than manual wrapping
 
 #### Usage for Complex Components:
+
 ```typescript
-import { complexAnimationTester } from '../test-utils/ComponentTestUtils';
+import { complexAnimationTester } from "../test-utils/ComponentTestUtils";
 
 // Timeout behavior testing
 await complexAnimationTester.testTimeoutBehavior(
   5000, // timeout duration
-  () => { /* before timeout checks */ },
-  () => { /* after timeout checks */ },
-  { checkBeforeTimeout: 4999 }
+  () => {
+    /* before timeout checks */
+  },
+  () => {
+    /* after timeout checks */
+  },
+  { checkBeforeTimeout: 4999 },
 );
 ```
 
 ## Testing Strategy by Component Type
 
 ### 1. Simple Components
+
 **Use**: `ReactNativeTestHelper`
 **Pattern**: Direct act() wrapping for state changes
+
 ```typescript
 const renderResult = render(<SimpleComponent />);
 await testHelper.waitForRender(renderResult);
 ```
 
 ### 2. Animated Components (AuthAwareLayout, etc.)
+
 **Use**: `ComponentTestUtils` with manual fake timers
 **Pattern**: Evidence-based fake timer management
+
 ```typescript
 test("animated behavior", async () => {
   jest.useFakeTimers();
@@ -86,17 +103,20 @@ test("animated behavior", async () => {
 ```
 
 ### 3. Integration Tests with TestDevice
+
 **Use**: `integrationTestHelper` (extended timeout configuration)
 **Pattern**: Longer timeouts, realistic interaction delays
 
 ## Performance Patterns
 
 ### Before Optimization (Anti-Patterns)
+
 ❌ `waitFor()` with complex async conditions (50+ second timeouts)
 ❌ Complex act() wrapping causing component unmounting
 ❌ Nested animation testing without proper timer management
 
 ### After Optimization (Best Practices)
+
 ✅ Direct assertions after controlled state changes
 ✅ Manual fake timers with proper cleanup
 ✅ 10ms time-stepping for animation testing
@@ -105,26 +125,32 @@ test("animated behavior", async () => {
 ## Constitutional Testing Requirements
 
 ### Amendment v2.6.0 Compliance
+
 Every task completion MUST include:
 
 1. **Test Expectation Declaration**:
+
 ```markdown
 ## Task Completion Validation (Amendment v2.6.0)
+
 **Expected Test Outcome**: [PASS/FAIL] - [Reasoning]
 ```
 
 2. **Validation Execution**:
+
 ```bash
 devbox run test
 echo "Exit code: $?"
 ```
 
 3. **Results Documentation**:
+
 - Actual result (PASS/FAIL with exit code)
 - Performance timing (<60s target)
 - Prediction accuracy
 
 ### Performance Targets
+
 - **Target**: <60 seconds total test suite execution
 - **Current**: Achieved through systematic optimization
 - **Monitoring**: Exit code 0 = constitutional compliance
@@ -132,29 +158,35 @@ echo "Exit code: $?"
 ## Common Issues and Solutions
 
 ### React act() Warnings
+
 **Solution**: Use `ReactNativeTestHelper.actWrap()` for all state changes
 **Evidence**: Achieved zero act() warnings in AddExerciseForm tests
 
 ### Component Timeout Issues
+
 **Solution**: Use `ComponentTestUtils` with manual fake timers
 **Evidence**: AuthAwareLayout tests reduced from 50s to 2s
 
 ### Animation Testing
+
 **Solution**: 10ms time-stepping pattern with proper timer cleanup
 **Evidence**: Research-backed approach from Testing Library documentation
 
 ### Jest Worker Exceptions
+
 **Solution**: Complete mock implementations (30+ Supabase query methods)
 **Evidence**: Eliminated "child process" exceptions
 
 ## Test Infrastructure Stability
 
 ### Mock Consistency
+
 - **Supabase**: Complete query chaining mock (`.eq()`, `.select()`, etc.)
 - **Firebase**: Parallel behavior through `FirebaseMockFactory`
 - **Authentication**: Consistent user state across backends
 
 ### Environment Setup
+
 - **Jest Configuration**: `maxWorkers: 1`, `testTimeout: 8000`
 - **Global Setup**: Proper React Native animation mocking
 - **Cleanup**: Automatic resource management between tests
@@ -162,14 +194,16 @@ echo "Exit code: $?"
 ## Success Metrics
 
 ### Before Systematic Repair
+
 - 122/420 tests failing
 - 50+ second component timeouts
 - React act() warnings throughout
 - Jest worker child process exceptions
 
 ### After Evidence-Based Optimization
+
 - Infrastructure stable for component testing
-- 25x performance improvements achieved  
+- 25x performance improvements achieved
 - Zero React act() warnings
 - Clean test execution without worker exceptions
 
@@ -190,5 +224,5 @@ echo "Exit code: $?"
 
 ---
 
-*Last updated: 2025-09-14*
-*Evidence source: Systematic test improvement work achieving 25x performance gains*
+_Last updated: 2025-09-14_
+_Evidence source: Systematic test improvement work achieving 25x performance gains_

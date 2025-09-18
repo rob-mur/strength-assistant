@@ -1,6 +1,6 @@
 /**
  * ExerciseActions Tests - Comprehensive Coverage
- * 
+ *
  * Essential test coverage for the ExerciseActions class focusing on:
  * - Exercise CRUD operations with optimistic updates
  * - Authentication operations and state management
@@ -9,40 +9,43 @@
  * - Helper functions and state access
  */
 
-import ExerciseActionsImpl, { 
-  exerciseActions, 
-  getExercises, 
-  getCurrentUser, 
-  getSyncState, 
-  getFeatureFlags 
-} from '../../../lib/data/legend-state/ExerciseActions';
+import ExerciseActionsImpl, {
+  exerciseActions,
+  getExercises,
+  getCurrentUser,
+  getSyncState,
+  getFeatureFlags,
+} from "../../../lib/data/legend-state/ExerciseActions";
 
 // Mock dependencies
-jest.mock('../../../lib/data/legend-state/ExerciseStore', () => {
+jest.mock("../../../lib/data/legend-state/ExerciseStore", () => {
   // Create a mock function that can be overridden in tests
   const mockExercisesGet = jest.fn(() => ({}));
-  
+
   // Create a proxy that handles dynamic property access for exercises
-  const exercisesProxy = new Proxy({}, {
-    get: function(target: any, prop: string | symbol) {
-      if (typeof prop === 'string') {
-        if (prop === 'get') {
-          return mockExercisesGet;
-        } else if (prop === 'set') {
-          return jest.fn();
-        } else {
-          // Dynamic exercise ID - return mock with get, set, delete methods
-          return {
-            get: jest.fn(),
-            set: jest.fn(),
-            delete: jest.fn(),
-          };
+  const exercisesProxy = new Proxy(
+    {},
+    {
+      get: function (target: any, prop: string | symbol) {
+        if (typeof prop === "string") {
+          if (prop === "get") {
+            return mockExercisesGet;
+          } else if (prop === "set") {
+            return jest.fn();
+          } else {
+            // Dynamic exercise ID - return mock with get, set, delete methods
+            return {
+              get: jest.fn(),
+              set: jest.fn(),
+              delete: jest.fn(),
+            };
+          }
         }
-      }
-      // Default return for symbol props or other cases
-      return undefined;
-    }
-  });
+        // Default return for symbol props or other cases
+        return undefined;
+      },
+    },
+  );
 
   return {
     exerciseStore: {
@@ -86,7 +89,7 @@ jest.mock('../../../lib/data/legend-state/ExerciseStore', () => {
   };
 });
 
-jest.mock('../../../lib/data/StorageManager', () => ({
+jest.mock("../../../lib/data/StorageManager", () => ({
   storageManager: {
     getAuthBackend: jest.fn(),
     validateDataConsistency: jest.fn(),
@@ -98,10 +101,13 @@ jest.mock('../../../lib/data/StorageManager', () => ({
 }));
 
 // Import mocked modules for type safety
-import { exerciseStore, reinitializeSync } from '../../../lib/data/legend-state/ExerciseStore';
-import { storageManager } from '../../../lib/data/StorageManager';
+import {
+  exerciseStore,
+  reinitializeSync,
+} from "../../../lib/data/legend-state/ExerciseStore";
+import { storageManager } from "../../../lib/data/StorageManager";
 
-describe('ExerciseActions', () => {
+describe("ExerciseActions", () => {
   const originalConsole = console;
   const mockConsole = {
     info: jest.fn(),
@@ -111,18 +117,18 @@ describe('ExerciseActions', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     Object.assign(console, mockConsole);
-    
+
     // Reset all mocks to default state
     (reinitializeSync as jest.Mock).mockImplementation(() => {});
-    
+
     // Setup default mock returns
     (exerciseStore.user.get as jest.Mock).mockReturnValue({
-      id: 'user123',
-      email: 'test@example.com',
+      id: "user123",
+      email: "test@example.com",
       isAnonymous: false,
       isAuthenticated: true,
     });
-    
+
     (exerciseStore.exercises.get as jest.Mock).mockReturnValue({});
   });
 
@@ -130,106 +136,132 @@ describe('ExerciseActions', () => {
     Object.assign(console, originalConsole);
   });
 
-  describe('Singleton Pattern', () => {
-    it('should export a singleton instance', () => {
+  describe("Singleton Pattern", () => {
+    it("should export a singleton instance", () => {
       expect(exerciseActions).toBeInstanceOf(ExerciseActionsImpl);
-      expect(typeof exerciseActions.addExercise).toBe('function');
-      expect(typeof exerciseActions.signIn).toBe('function');
+      expect(typeof exerciseActions.addExercise).toBe("function");
+      expect(typeof exerciseActions.signIn).toBe("function");
     });
 
-    it('should export the class for testing', () => {
+    it("should export the class for testing", () => {
       expect(ExerciseActionsImpl).toBeDefined();
       const instance = new ExerciseActionsImpl();
       expect(instance).toBeInstanceOf(ExerciseActionsImpl);
     });
   });
 
-  describe('Exercise CRUD Operations', () => {
-    describe('addExercise', () => {
-      it('should handle add exercise workflow', async () => {
-        await exerciseActions.addExercise('Push Up');
+  describe("Exercise CRUD Operations", () => {
+    describe("addExercise", () => {
+      it("should handle add exercise workflow", async () => {
+        await exerciseActions.addExercise("Push Up");
 
-        expect(exerciseStore.syncState.isSyncing.set).toHaveBeenCalledWith(true);
-        expect(exerciseStore.syncState.isSyncing.set).toHaveBeenCalledWith(false);
+        expect(exerciseStore.syncState.isSyncing.set).toHaveBeenCalledWith(
+          true,
+        );
+        expect(exerciseStore.syncState.isSyncing.set).toHaveBeenCalledWith(
+          false,
+        );
       });
 
-      it('should handle errors during add exercise', async () => {
-        const error = new Error('Add failed');
+      it("should handle errors during add exercise", async () => {
+        const error = new Error("Add failed");
         (exerciseStore.user.get as jest.Mock).mockImplementation(() => {
           throw error;
         });
 
-        await exerciseActions.addExercise('Push Up');
+        await exerciseActions.addExercise("Push Up");
 
-        expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(expect.any(Function));
-        expect(exerciseStore.syncState.isSyncing.set).toHaveBeenCalledWith(false);
+        expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(
+          expect.any(Function),
+        );
+        expect(exerciseStore.syncState.isSyncing.set).toHaveBeenCalledWith(
+          false,
+        );
       });
     });
 
-    describe('updateExercise', () => {
-      it('should handle update exercise workflow', async () => {
+    describe("updateExercise", () => {
+      it("should handle update exercise workflow", async () => {
         // Mock that exercise exists
-        const mockExercise = { id: 'ex123', name: 'Old Name', createdAt: '2023-01-01T00:00:00.000Z' };
+        const mockExercise = {
+          id: "ex123",
+          name: "Old Name",
+          createdAt: "2023-01-01T00:00:00.000Z",
+        };
         const mockExerciseGet = jest.fn().mockReturnValue(mockExercise);
         const mockExerciseSet = jest.fn();
-        
+
         // Mock the store structure correctly
-        (exerciseStore.exercises as any)['ex123'] = { 
+        (exerciseStore.exercises as any)["ex123"] = {
           get: mockExerciseGet,
-          set: mockExerciseSet
+          set: mockExerciseSet,
         };
 
-        await exerciseActions.updateExercise('ex123', 'New Name');
+        await exerciseActions.updateExercise("ex123", "New Name");
 
-        expect(exerciseStore.syncState.isSyncing.set).toHaveBeenCalledWith(true);
-        expect(exerciseStore.syncState.isSyncing.set).toHaveBeenCalledWith(false);
+        expect(exerciseStore.syncState.isSyncing.set).toHaveBeenCalledWith(
+          true,
+        );
+        expect(exerciseStore.syncState.isSyncing.set).toHaveBeenCalledWith(
+          false,
+        );
       });
 
-      it('should handle error when exercise not found', async () => {
+      it("should handle error when exercise not found", async () => {
         const mockExerciseGet = jest.fn().mockReturnValue(null);
-        (exerciseStore.exercises as any)['nonexistent'] = { get: mockExerciseGet };
+        (exerciseStore.exercises as any)["nonexistent"] = {
+          get: mockExerciseGet,
+        };
 
-        await exerciseActions.updateExercise('nonexistent', 'New Name');
+        await exerciseActions.updateExercise("nonexistent", "New Name");
 
-        expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(expect.any(Function));
+        expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(
+          expect.any(Function),
+        );
       });
-
     });
 
-    describe('deleteExercise', () => {
-      it('should handle delete exercise workflow', async () => {
-        const mockExercise = { id: 'ex123', name: 'Exercise' };
+    describe("deleteExercise", () => {
+      it("should handle delete exercise workflow", async () => {
+        const mockExercise = { id: "ex123", name: "Exercise" };
         const mockExerciseGet = jest.fn().mockReturnValue(mockExercise);
         const mockExerciseDelete = jest.fn();
-        (exerciseStore.exercises as any)['ex123'] = { 
+        (exerciseStore.exercises as any)["ex123"] = {
           get: mockExerciseGet,
-          delete: mockExerciseDelete 
+          delete: mockExerciseDelete,
         };
 
-        await exerciseActions.deleteExercise('ex123');
+        await exerciseActions.deleteExercise("ex123");
 
-        expect(exerciseStore.syncState.isSyncing.set).toHaveBeenCalledWith(true);
-        expect(exerciseStore.syncState.isSyncing.set).toHaveBeenCalledWith(false);
+        expect(exerciseStore.syncState.isSyncing.set).toHaveBeenCalledWith(
+          true,
+        );
+        expect(exerciseStore.syncState.isSyncing.set).toHaveBeenCalledWith(
+          false,
+        );
       });
 
-      it('should handle error when exercise not found for delete', async () => {
+      it("should handle error when exercise not found for delete", async () => {
         const mockExerciseGet = jest.fn().mockReturnValue(null);
-        (exerciseStore.exercises as any)['nonexistent'] = { get: mockExerciseGet };
+        (exerciseStore.exercises as any)["nonexistent"] = {
+          get: mockExerciseGet,
+        };
 
-        await exerciseActions.deleteExercise('nonexistent');
+        await exerciseActions.deleteExercise("nonexistent");
 
-        expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(expect.any(Function));
+        expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(
+          expect.any(Function),
+        );
       });
-
     });
   });
 
-  describe('Authentication Operations', () => {
-    describe('signIn', () => {
-      it('should sign in user and update state', async () => {
+  describe("Authentication Operations", () => {
+    describe("signIn", () => {
+      it("should sign in user and update state", async () => {
         const mockUserAccount = {
-          id: 'user123',
-          email: 'test@example.com',
+          id: "user123",
+          email: "test@example.com",
           isAnonymous: false,
         };
 
@@ -237,38 +269,49 @@ describe('ExerciseActions', () => {
           signInWithEmail: jest.fn().mockResolvedValue(mockUserAccount),
         };
 
-        (storageManager.getAuthBackend as jest.Mock).mockReturnValue(mockAuthBackend);
+        (storageManager.getAuthBackend as jest.Mock).mockReturnValue(
+          mockAuthBackend,
+        );
 
-        await exerciseActions.signIn('test@example.com', 'password123');
+        await exerciseActions.signIn("test@example.com", "password123");
 
-        expect(mockAuthBackend.signInWithEmail).toHaveBeenCalledWith('test@example.com', 'password123');
+        expect(mockAuthBackend.signInWithEmail).toHaveBeenCalledWith(
+          "test@example.com",
+          "password123",
+        );
         expect(exerciseStore.user.set).toHaveBeenCalledWith({
-          id: 'user123',
-          email: 'test@example.com',
+          id: "user123",
+          email: "test@example.com",
           isAnonymous: false,
           isAuthenticated: true,
         });
         expect(reinitializeSync).toHaveBeenCalled();
       });
 
-      it('should handle sign in errors', async () => {
-        const error = new Error('Invalid credentials');
+      it("should handle sign in errors", async () => {
+        const error = new Error("Invalid credentials");
         const mockAuthBackend = {
           signInWithEmail: jest.fn().mockRejectedValue(error),
         };
 
-        (storageManager.getAuthBackend as jest.Mock).mockReturnValue(mockAuthBackend);
+        (storageManager.getAuthBackend as jest.Mock).mockReturnValue(
+          mockAuthBackend,
+        );
 
-        await expect(exerciseActions.signIn('test@example.com', 'wrong')).rejects.toThrow('Invalid credentials');
-        expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(expect.any(Function));
+        await expect(
+          exerciseActions.signIn("test@example.com", "wrong"),
+        ).rejects.toThrow("Invalid credentials");
+        expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(
+          expect.any(Function),
+        );
       });
     });
 
-    describe('signUp', () => {
-      it('should sign up new user and update state', async () => {
+    describe("signUp", () => {
+      it("should sign up new user and update state", async () => {
         const mockUserAccount = {
-          id: 'newuser123',
-          email: 'new@example.com',
+          id: "newuser123",
+          email: "new@example.com",
           isAnonymous: false,
         };
 
@@ -276,37 +319,48 @@ describe('ExerciseActions', () => {
           signUpWithEmail: jest.fn().mockResolvedValue(mockUserAccount),
         };
 
-        (storageManager.getAuthBackend as jest.Mock).mockReturnValue(mockAuthBackend);
+        (storageManager.getAuthBackend as jest.Mock).mockReturnValue(
+          mockAuthBackend,
+        );
 
-        await exerciseActions.signUp('new@example.com', 'password123');
+        await exerciseActions.signUp("new@example.com", "password123");
 
-        expect(mockAuthBackend.signUpWithEmail).toHaveBeenCalledWith('new@example.com', 'password123');
+        expect(mockAuthBackend.signUpWithEmail).toHaveBeenCalledWith(
+          "new@example.com",
+          "password123",
+        );
         expect(exerciseStore.user.set).toHaveBeenCalledWith({
-          id: 'newuser123',
-          email: 'new@example.com',
+          id: "newuser123",
+          email: "new@example.com",
           isAnonymous: false,
           isAuthenticated: true,
         });
         expect(reinitializeSync).toHaveBeenCalled();
       });
 
-      it('should handle sign up errors', async () => {
-        const error = new Error('Email already exists');
+      it("should handle sign up errors", async () => {
+        const error = new Error("Email already exists");
         const mockAuthBackend = {
           signUpWithEmail: jest.fn().mockRejectedValue(error),
         };
 
-        (storageManager.getAuthBackend as jest.Mock).mockReturnValue(mockAuthBackend);
+        (storageManager.getAuthBackend as jest.Mock).mockReturnValue(
+          mockAuthBackend,
+        );
 
-        await expect(exerciseActions.signUp('existing@example.com', 'password')).rejects.toThrow('Email already exists');
-        expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(expect.any(Function));
+        await expect(
+          exerciseActions.signUp("existing@example.com", "password"),
+        ).rejects.toThrow("Email already exists");
+        expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(
+          expect.any(Function),
+        );
       });
     });
 
-    describe('signInAnonymously', () => {
-      it('should sign in anonymously and update state', async () => {
+    describe("signInAnonymously", () => {
+      it("should sign in anonymously and update state", async () => {
         const mockUserAccount = {
-          id: 'anon123',
+          id: "anon123",
           email: undefined,
           isAnonymous: true,
         };
@@ -315,39 +369,49 @@ describe('ExerciseActions', () => {
           signInAnonymously: jest.fn().mockResolvedValue(mockUserAccount),
         };
 
-        (storageManager.getAuthBackend as jest.Mock).mockReturnValue(mockAuthBackend);
+        (storageManager.getAuthBackend as jest.Mock).mockReturnValue(
+          mockAuthBackend,
+        );
 
         await exerciseActions.signInAnonymously();
 
         expect(mockAuthBackend.signInAnonymously).toHaveBeenCalled();
         expect(exerciseStore.user.set).toHaveBeenCalledWith({
-          id: 'anon123',
+          id: "anon123",
           email: undefined,
           isAnonymous: true,
           isAuthenticated: false,
         });
       });
 
-      it('should handle anonymous sign in errors', async () => {
-        const error = new Error('Anonymous auth failed');
+      it("should handle anonymous sign in errors", async () => {
+        const error = new Error("Anonymous auth failed");
         const mockAuthBackend = {
           signInAnonymously: jest.fn().mockRejectedValue(error),
         };
 
-        (storageManager.getAuthBackend as jest.Mock).mockReturnValue(mockAuthBackend);
+        (storageManager.getAuthBackend as jest.Mock).mockReturnValue(
+          mockAuthBackend,
+        );
 
-        await expect(exerciseActions.signInAnonymously()).rejects.toThrow('Anonymous auth failed');
-        expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(expect.any(Function));
+        await expect(exerciseActions.signInAnonymously()).rejects.toThrow(
+          "Anonymous auth failed",
+        );
+        expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(
+          expect.any(Function),
+        );
       });
     });
 
-    describe('signOut', () => {
-      it('should sign out user and clear state', async () => {
+    describe("signOut", () => {
+      it("should sign out user and clear state", async () => {
         const mockAuthBackend = {
           signOut: jest.fn().mockResolvedValue(undefined),
         };
 
-        (storageManager.getAuthBackend as jest.Mock).mockReturnValue(mockAuthBackend);
+        (storageManager.getAuthBackend as jest.Mock).mockReturnValue(
+          mockAuthBackend,
+        );
 
         await exerciseActions.signOut();
 
@@ -356,45 +420,59 @@ describe('ExerciseActions', () => {
         expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith([]);
       });
 
-      it('should handle sign out errors', async () => {
-        const error = new Error('Sign out failed');
+      it("should handle sign out errors", async () => {
+        const error = new Error("Sign out failed");
         const mockAuthBackend = {
           signOut: jest.fn().mockRejectedValue(error),
         };
 
-        (storageManager.getAuthBackend as jest.Mock).mockReturnValue(mockAuthBackend);
+        (storageManager.getAuthBackend as jest.Mock).mockReturnValue(
+          mockAuthBackend,
+        );
 
-        await expect(exerciseActions.signOut()).rejects.toThrow('Sign out failed');
-        expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(expect.any(Function));
+        await expect(exerciseActions.signOut()).rejects.toThrow(
+          "Sign out failed",
+        );
+        expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(
+          expect.any(Function),
+        );
       });
     });
   });
 
-  describe('Sync Operations', () => {
-    describe('forceSync', () => {
-      it('should force sync by reinitializing', async () => {
+  describe("Sync Operations", () => {
+    describe("forceSync", () => {
+      it("should force sync by reinitializing", async () => {
         await exerciseActions.forceSync();
 
-        expect(exerciseStore.syncState.isSyncing.set).toHaveBeenCalledWith(true);
+        expect(exerciseStore.syncState.isSyncing.set).toHaveBeenCalledWith(
+          true,
+        );
         expect(reinitializeSync).toHaveBeenCalled();
-        expect(exerciseStore.syncState.isSyncing.set).toHaveBeenCalledWith(false);
+        expect(exerciseStore.syncState.isSyncing.set).toHaveBeenCalledWith(
+          false,
+        );
       });
 
-      it('should handle force sync errors', async () => {
-        const error = new Error('Sync failed');
+      it("should handle force sync errors", async () => {
+        const error = new Error("Sync failed");
         (reinitializeSync as jest.Mock).mockImplementation(() => {
           throw error;
         });
 
         await exerciseActions.forceSync();
 
-        expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(expect.any(Function));
-        expect(exerciseStore.syncState.isSyncing.set).toHaveBeenCalledWith(false);
+        expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(
+          expect.any(Function),
+        );
+        expect(exerciseStore.syncState.isSyncing.set).toHaveBeenCalledWith(
+          false,
+        );
       });
     });
 
-    describe('clearSyncErrors', () => {
-      it('should clear sync errors', () => {
+    describe("clearSyncErrors", () => {
+      it("should clear sync errors", () => {
         exerciseActions.clearSyncErrors();
 
         expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith([]);
@@ -402,11 +480,13 @@ describe('ExerciseActions', () => {
     });
   });
 
-  describe('Migration Operations', () => {
-    describe('validateConsistency', () => {
-      it('should validate data consistency', async () => {
+  describe("Migration Operations", () => {
+    describe("validateConsistency", () => {
+      it("should validate data consistency", async () => {
         const mockResult = { isConsistent: true, errors: [] };
-        (storageManager.validateDataConsistency as jest.Mock).mockResolvedValue(mockResult);
+        (storageManager.validateDataConsistency as jest.Mock).mockResolvedValue(
+          mockResult,
+        );
 
         const result = await exerciseActions.validateConsistency();
 
@@ -414,120 +494,156 @@ describe('ExerciseActions', () => {
         expect(result).toEqual(mockResult);
       });
 
-      it('should handle validation errors', async () => {
-        const error = new Error('Validation failed');
-        (storageManager.validateDataConsistency as jest.Mock).mockRejectedValue(error);
+      it("should handle validation errors", async () => {
+        const error = new Error("Validation failed");
+        (storageManager.validateDataConsistency as jest.Mock).mockRejectedValue(
+          error,
+        );
 
         const result = await exerciseActions.validateConsistency();
 
         expect(result).toEqual({
           isConsistent: false,
-          errors: ['Validation failed'],
+          errors: ["Validation failed"],
         });
       });
 
-      it('should handle string errors', async () => {
-        (storageManager.validateDataConsistency as jest.Mock).mockRejectedValue('String error');
+      it("should handle string errors", async () => {
+        (storageManager.validateDataConsistency as jest.Mock).mockRejectedValue(
+          "String error",
+        );
 
         const result = await exerciseActions.validateConsistency();
 
         expect(result).toEqual({
           isConsistent: false,
-          errors: ['String error'],
+          errors: ["String error"],
         });
       });
     });
 
-    describe('migrateToSupabase', () => {
-      it('should migrate data to Supabase', async () => {
-        (exerciseStore.featureFlags.useSupabaseData.get as jest.Mock).mockReturnValue(false);
-        (storageManager.migrateUserData as jest.Mock).mockResolvedValue(undefined);
+    describe("migrateToSupabase", () => {
+      it("should migrate data to Supabase", async () => {
+        (
+          exerciseStore.featureFlags.useSupabaseData.get as jest.Mock
+        ).mockReturnValue(false);
+        (storageManager.migrateUserData as jest.Mock).mockResolvedValue(
+          undefined,
+        );
 
         await exerciseActions.migrateToSupabase();
 
         expect(storageManager.migrateUserData).toHaveBeenCalled();
-        expect(exerciseStore.syncState.isSyncing.set).toHaveBeenCalledWith(true);
-        expect(exerciseStore.syncState.isSyncing.set).toHaveBeenCalledWith(false);
+        expect(exerciseStore.syncState.isSyncing.set).toHaveBeenCalledWith(
+          true,
+        );
+        expect(exerciseStore.syncState.isSyncing.set).toHaveBeenCalledWith(
+          false,
+        );
       });
 
-      it('should throw error if already using Supabase', async () => {
-        (exerciseStore.featureFlags.useSupabaseData.get as jest.Mock).mockReturnValue(true);
+      it("should throw error if already using Supabase", async () => {
+        (
+          exerciseStore.featureFlags.useSupabaseData.get as jest.Mock
+        ).mockReturnValue(true);
 
-        await expect(exerciseActions.migrateToSupabase()).rejects.toThrow('Already using Supabase backend');
-        expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(expect.any(Function));
+        await expect(exerciseActions.migrateToSupabase()).rejects.toThrow(
+          "Already using Supabase backend",
+        );
+        expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(
+          expect.any(Function),
+        );
       });
 
-      it('should handle migration errors', async () => {
-        (exerciseStore.featureFlags.useSupabaseData.get as jest.Mock).mockReturnValue(false);
-        const error = new Error('Migration failed');
+      it("should handle migration errors", async () => {
+        (
+          exerciseStore.featureFlags.useSupabaseData.get as jest.Mock
+        ).mockReturnValue(false);
+        const error = new Error("Migration failed");
         (storageManager.migrateUserData as jest.Mock).mockRejectedValue(error);
 
-        await expect(exerciseActions.migrateToSupabase()).rejects.toThrow('Migration failed');
-        expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(expect.any(Function));
+        await expect(exerciseActions.migrateToSupabase()).rejects.toThrow(
+          "Migration failed",
+        );
+        expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(
+          expect.any(Function),
+        );
       });
     });
 
-    describe('switchBackend', () => {
-      it('should switch backend in non-production environments', () => {
-        jest.replaceProperty(process.env, 'NODE_ENV', 'development');
+    describe("switchBackend", () => {
+      it("should switch backend in non-production environments", () => {
+        jest.replaceProperty(process.env, "NODE_ENV", "development");
 
         exerciseActions.switchBackend(true);
 
         expect(storageManager.switchBackend).toHaveBeenCalledWith(true);
-        expect(exerciseStore.featureFlags.useSupabaseData.set).toHaveBeenCalledWith(true);
+        expect(
+          exerciseStore.featureFlags.useSupabaseData.set,
+        ).toHaveBeenCalledWith(true);
         expect(reinitializeSync).toHaveBeenCalled();
       });
 
-      it('should switch to Firebase backend', () => {
-        jest.replaceProperty(process.env, 'NODE_ENV', 'test');
+      it("should switch to Firebase backend", () => {
+        jest.replaceProperty(process.env, "NODE_ENV", "test");
 
         exerciseActions.switchBackend(false);
 
         expect(storageManager.switchBackend).toHaveBeenCalledWith(false);
-        expect(exerciseStore.featureFlags.useSupabaseData.set).toHaveBeenCalledWith(false);
+        expect(
+          exerciseStore.featureFlags.useSupabaseData.set,
+        ).toHaveBeenCalledWith(false);
         expect(reinitializeSync).toHaveBeenCalled();
       });
 
-      it('should throw error in production', () => {
-        jest.replaceProperty(process.env, 'NODE_ENV', 'production');
+      it("should throw error in production", () => {
+        jest.replaceProperty(process.env, "NODE_ENV", "production");
 
-        expect(() => exerciseActions.switchBackend(true)).toThrow('Backend switching is not allowed in production');
+        expect(() => exerciseActions.switchBackend(true)).toThrow(
+          "Backend switching is not allowed in production",
+        );
       });
 
-      it('should handle switch backend errors', () => {
-        jest.replaceProperty(process.env, 'NODE_ENV', 'test');
-        const error = new Error('Switch failed');
+      it("should handle switch backend errors", () => {
+        jest.replaceProperty(process.env, "NODE_ENV", "test");
+        const error = new Error("Switch failed");
         (storageManager.switchBackend as jest.Mock).mockImplementation(() => {
           throw error;
         });
 
-        expect(() => exerciseActions.switchBackend(true)).toThrow('Switch failed');
-        expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(expect.any(Function));
+        expect(() => exerciseActions.switchBackend(true)).toThrow(
+          "Switch failed",
+        );
+        expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(
+          expect.any(Function),
+        );
       });
     });
   });
 
-  describe('Helper Functions', () => {
-    describe('getExercises', () => {
-      it('should return exercises as array', () => {
+  describe("Helper Functions", () => {
+    describe("getExercises", () => {
+      it("should return exercises as array", () => {
         const mockExercises = {
-          ex1: { id: 'ex1', name: 'Push Up' },
-          ex2: { id: 'ex2', name: 'Squats' },
+          ex1: { id: "ex1", name: "Push Up" },
+          ex2: { id: "ex2", name: "Squats" },
         };
 
         // Set up the mock and test directly with the current module
-        (exerciseStore.exercises.get as jest.Mock).mockReturnValue(mockExercises);
+        (exerciseStore.exercises.get as jest.Mock).mockReturnValue(
+          mockExercises,
+        );
 
         const result = getExercises();
 
         expect(result).toEqual([
-          { id: 'ex1', name: 'Push Up' },
-          { id: 'ex2', name: 'Squats' },
+          { id: "ex1", name: "Push Up" },
+          { id: "ex2", name: "Squats" },
         ]);
         expect(exerciseStore.exercises.get).toHaveBeenCalled();
       });
 
-      it('should return empty array when no exercises', () => {
+      it("should return empty array when no exercises", () => {
         (exerciseStore.exercises.get as jest.Mock).mockReturnValue({});
 
         const result = getExercises();
@@ -536,11 +652,11 @@ describe('ExerciseActions', () => {
       });
     });
 
-    describe('getCurrentUser', () => {
-      it('should return current user', () => {
+    describe("getCurrentUser", () => {
+      it("should return current user", () => {
         const mockUser = {
-          id: 'user123',
-          email: 'test@example.com',
+          id: "user123",
+          email: "test@example.com",
           isAnonymous: false,
           isAuthenticated: true,
         };
@@ -553,7 +669,7 @@ describe('ExerciseActions', () => {
         expect(exerciseStore.user.get).toHaveBeenCalled();
       });
 
-      it('should return null when no user', () => {
+      it("should return null when no user", () => {
         (exerciseStore.user.get as jest.Mock).mockReturnValue(null);
 
         const result = getCurrentUser();
@@ -562,17 +678,19 @@ describe('ExerciseActions', () => {
       });
     });
 
-    describe('getSyncState', () => {
-      it('should return sync state', () => {
+    describe("getSyncState", () => {
+      it("should return sync state", () => {
         const mockSyncState = {
           isOnline: true,
           isSyncing: false,
-          lastSyncAt: '2024-01-01T00:00:00.000Z',
+          lastSyncAt: "2024-01-01T00:00:00.000Z",
           pendingChanges: 2,
           errors: [],
         };
 
-        (exerciseStore.syncState.get as jest.Mock).mockReturnValue(mockSyncState);
+        (exerciseStore.syncState.get as jest.Mock).mockReturnValue(
+          mockSyncState,
+        );
 
         const result = getSyncState();
 
@@ -581,13 +699,15 @@ describe('ExerciseActions', () => {
       });
     });
 
-    describe('getFeatureFlags', () => {
-      it('should return feature flags', () => {
+    describe("getFeatureFlags", () => {
+      it("should return feature flags", () => {
         const mockFlags = {
           useSupabaseData: true,
         };
 
-        (exerciseStore.featureFlags.get as jest.Mock).mockReturnValue(mockFlags);
+        (exerciseStore.featureFlags.get as jest.Mock).mockReturnValue(
+          mockFlags,
+        );
 
         const result = getFeatureFlags();
 
@@ -597,29 +717,33 @@ describe('ExerciseActions', () => {
     });
   });
 
-  describe('Error Handling', () => {
-    it('should handle error strings in handleActionError', async () => {
+  describe("Error Handling", () => {
+    it("should handle error strings in handleActionError", async () => {
       (exerciseStore.user.get as jest.Mock).mockImplementation(() => {
-        throw 'String error message';
+        throw "String error message";
       });
 
-      await exerciseActions.addExercise('Test');
+      await exerciseActions.addExercise("Test");
 
-      expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(expect.any(Function));
+      expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(
+        expect.any(Function),
+      );
     });
 
-    it('should handle unknown error types', async () => {
+    it("should handle unknown error types", async () => {
       (exerciseStore.user.get as jest.Mock).mockImplementation(() => {
-        throw { complex: 'object error' };
+        throw { complex: "object error" };
       });
 
-      await exerciseActions.addExercise('Test');
+      await exerciseActions.addExercise("Test");
 
-      expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(expect.any(Function));
+      expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(
+        expect.any(Function),
+      );
     });
   });
 
-  describe('Development Logging', () => {
+  describe("Development Logging", () => {
     beforeEach(() => {
       (global as any).__DEV__ = true;
     });
@@ -628,10 +752,10 @@ describe('ExerciseActions', () => {
       (global as any).__DEV__ = false;
     });
 
-    it('should log success messages in development', async () => {
+    it("should log success messages in development", async () => {
       const mockUserAccount = {
-        id: 'user123',
-        email: 'test@example.com',
+        id: "user123",
+        email: "test@example.com",
         isAnonymous: false,
       };
 
@@ -639,51 +763,60 @@ describe('ExerciseActions', () => {
         signInWithEmail: jest.fn().mockResolvedValue(mockUserAccount),
       };
 
-      (storageManager.getAuthBackend as jest.Mock).mockReturnValue(mockAuthBackend);
+      (storageManager.getAuthBackend as jest.Mock).mockReturnValue(
+        mockAuthBackend,
+      );
 
-      await exerciseActions.signIn('test@example.com', 'password');
+      await exerciseActions.signIn("test@example.com", "password");
 
-      expect(mockConsole.info).toHaveBeenCalledWith('✅ User signed in successfully');
+      expect(mockConsole.info).toHaveBeenCalledWith(
+        "✅ User signed in successfully",
+      );
     });
 
-    it('should log error messages in development', async () => {
-      const error = new Error('Test error');
+    it("should log error messages in development", async () => {
+      const error = new Error("Test error");
       (exerciseStore.user.get as jest.Mock).mockImplementation(() => {
         throw error;
       });
 
-      await exerciseActions.addExercise('Test');
+      await exerciseActions.addExercise("Test");
 
-      expect(mockConsole.error).toHaveBeenCalledWith('❌', 'Failed to add exercise: Test error');
+      expect(mockConsole.error).toHaveBeenCalledWith(
+        "❌",
+        "Failed to add exercise: Test error",
+      );
     });
   });
 
-  describe('Helper Functions', () => {
+  describe("Helper Functions", () => {
     beforeEach(() => {
       jest.clearAllMocks();
     });
 
-    describe('getExercises', () => {
-      it('should return array of exercises from store', () => {
+    describe("getExercises", () => {
+      it("should return array of exercises from store", () => {
         const mockExercises = {
-          'ex1': { id: 'ex1', name: 'Exercise 1' },
-          'ex2': { id: 'ex2', name: 'Exercise 2' },
+          ex1: { id: "ex1", name: "Exercise 1" },
+          ex2: { id: "ex2", name: "Exercise 2" },
         };
-        (exerciseStore.exercises.get as jest.Mock).mockReturnValue(mockExercises);
+        (exerciseStore.exercises.get as jest.Mock).mockReturnValue(
+          mockExercises,
+        );
 
         const result = getExercises();
 
         expect(result).toEqual([
-          { id: 'ex1', name: 'Exercise 1' },
-          { id: 'ex2', name: 'Exercise 2' },
+          { id: "ex1", name: "Exercise 1" },
+          { id: "ex2", name: "Exercise 2" },
         ]);
         expect(exerciseStore.exercises.get).toHaveBeenCalled();
       });
     });
 
-    describe('getCurrentUser', () => {
-      it('should return current user from store', () => {
-        const mockUser = { id: 'user123', email: 'test@example.com' };
+    describe("getCurrentUser", () => {
+      it("should return current user from store", () => {
+        const mockUser = { id: "user123", email: "test@example.com" };
         (exerciseStore.user.get as jest.Mock).mockReturnValue(mockUser);
 
         const result = getCurrentUser();
@@ -693,10 +826,12 @@ describe('ExerciseActions', () => {
       });
     });
 
-    describe('getSyncState', () => {
-      it('should return sync state from store', () => {
+    describe("getSyncState", () => {
+      it("should return sync state from store", () => {
         const mockSyncState = { isOnline: true, lastSync: new Date() };
-        (exerciseStore.syncState.get as jest.Mock).mockReturnValue(mockSyncState);
+        (exerciseStore.syncState.get as jest.Mock).mockReturnValue(
+          mockSyncState,
+        );
 
         const result = getSyncState();
 
@@ -705,10 +840,12 @@ describe('ExerciseActions', () => {
       });
     });
 
-    describe('getFeatureFlags', () => {
-      it('should return feature flags from store', () => {
+    describe("getFeatureFlags", () => {
+      it("should return feature flags from store", () => {
         const mockFeatureFlags = { newFeature: true, betaFeature: false };
-        (exerciseStore.featureFlags.get as jest.Mock).mockReturnValue(mockFeatureFlags);
+        (exerciseStore.featureFlags.get as jest.Mock).mockReturnValue(
+          mockFeatureFlags,
+        );
 
         const result = getFeatureFlags();
 

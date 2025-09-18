@@ -1,4 +1,4 @@
-import { logger } from '../../../lib/data/firebase/logger';
+import { logger } from "../../../lib/data/firebase/logger";
 
 /**
  * Common logging utilities for repository operations
@@ -10,13 +10,13 @@ export class RepositoryLogger {
   static logSuccess(
     service: string,
     operation: string,
-    additionalContext?: Record<string, unknown>
+    additionalContext?: Record<string, unknown>,
   ): void {
     logger.info(`${operation} completed successfully`, {
       service,
       platform: "mobile",
       operation,
-      ...additionalContext
+      ...additionalContext,
     });
   }
 
@@ -27,14 +27,14 @@ export class RepositoryLogger {
     service: string,
     operation: string,
     error: Error,
-    additionalContext?: Record<string, unknown>
+    additionalContext?: Record<string, unknown>,
   ): void {
     logger.error(`Failed to ${operation}`, {
       service,
       platform: "mobile",
       operation,
       error: { message: error.message, stack: error.stack },
-      ...additionalContext
+      ...additionalContext,
     });
   }
 }

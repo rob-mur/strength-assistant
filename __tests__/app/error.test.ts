@@ -15,7 +15,9 @@ jest.mock("@/lib/data/firebase/logger", () => ({
   },
 }));
 
-const mockSetJSExceptionHandler = setJSExceptionHandler as jest.MockedFunction<typeof setJSExceptionHandler>;
+const mockSetJSExceptionHandler = setJSExceptionHandler as jest.MockedFunction<
+  typeof setJSExceptionHandler
+>;
 
 describe("handleErrors", () => {
   beforeEach(() => {
@@ -26,7 +28,10 @@ describe("handleErrors", () => {
 
   it("should set up JS exception handler", () => {
     handleErrors();
-    expect(mockSetJSExceptionHandler).toHaveBeenCalledWith(expect.any(Function), true);
+    expect(mockSetJSExceptionHandler).toHaveBeenCalledWith(
+      expect.any(Function),
+      true,
+    );
   });
 
   describe("errorHandler", () => {
@@ -46,7 +51,7 @@ describe("handleErrors", () => {
       expect(logger.debug).toHaveBeenCalledWith(`Fatal error: ${testError}`, {
         service: "Error Handler",
         platform: "React Native",
-        operation: "fatal_error"
+        operation: "fatal_error",
       });
     });
 
@@ -62,12 +67,17 @@ describe("handleErrors", () => {
       (global as any).__DEV__ = true;
       const networkError = new Error("Network connection failed");
 
-      expect(() => errorHandler(networkError, false)).toThrow("Network connection failed");
-      expect(logger.debug).toHaveBeenCalledWith(`Fatal error: ${networkError}`, {
-        service: "Error Handler",
-        platform: "React Native",
-        operation: "fatal_error"
-      });
+      expect(() => errorHandler(networkError, false)).toThrow(
+        "Network connection failed",
+      );
+      expect(logger.debug).toHaveBeenCalledWith(
+        `Fatal error: ${networkError}`,
+        {
+          service: "Error Handler",
+          platform: "React Native",
+          operation: "fatal_error",
+        },
+      );
     });
   });
 });

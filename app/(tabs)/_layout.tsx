@@ -31,11 +31,7 @@ const ExercisesTabIcon = (props: TabIconProps) => (
 
 const WorkoutTabIcon = (props: TabIconProps) =>
   props.focused ? (
-    <MaterialCommunityIcons
-      {...props}
-      size={24}
-      name={"weight-lifter"}
-    />
+    <MaterialCommunityIcons {...props} size={24} name={"weight-lifter"} />
   ) : (
     <MaterialIcons {...props} size={24} name={"fitness-center"} />
   );

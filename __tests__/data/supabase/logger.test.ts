@@ -1,9 +1,9 @@
 import { Logger } from "@/lib/data/supabase/supabase/logger";
 
 // Mock console methods
-const mockConsoleLog = jest.spyOn(console, 'log').mockImplementation();
-const mockConsoleWarn = jest.spyOn(console, 'warn').mockImplementation();
-const mockConsoleError = jest.spyOn(console, 'error').mockImplementation();
+const mockConsoleLog = jest.spyOn(console, "log").mockImplementation();
+const mockConsoleWarn = jest.spyOn(console, "warn").mockImplementation();
+const mockConsoleError = jest.spyOn(console, "error").mockImplementation();
 
 describe("Logger", () => {
   beforeEach(() => {
@@ -24,12 +24,12 @@ describe("Logger", () => {
   test("logs info messages with service prefix", () => {
     const logger = new Logger("TestService");
     const message = "Test info message";
-    
+
     logger.info(message);
-    
+
     expect(mockConsoleLog).toHaveBeenCalledWith(
       "[TestService] Test info message",
-      undefined
+      undefined,
     );
   });
 
@@ -37,12 +37,12 @@ describe("Logger", () => {
     const logger = new Logger("TestService");
     const message = "Test info message";
     const context = { operation: "test", duration: 123 };
-    
+
     logger.info(message, context);
-    
+
     expect(mockConsoleLog).toHaveBeenCalledWith(
       "[TestService] Test info message",
-      context
+      context,
     );
   });
 
@@ -50,68 +50,68 @@ describe("Logger", () => {
     const logger = new Logger("TestService");
     const message = "Test warning message";
     const context = { operation: "test" };
-    
+
     logger.warn(message, context);
-    
+
     expect(mockConsoleWarn).toHaveBeenCalledWith(
       "[TestService] Test warning message",
-      context
+      context,
     );
   });
 
   test("logs error messages", () => {
     const logger = new Logger("TestService");
     const message = "Test error message";
-    const context = { 
-      error: { 
-        message: "Something went wrong", 
-        code: "ERR_TEST" 
-      } 
+    const context = {
+      error: {
+        message: "Something went wrong",
+        code: "ERR_TEST",
+      },
     };
-    
+
     logger.error(message, context);
-    
+
     expect(mockConsoleError).toHaveBeenCalledWith(
       "[TestService] Test error message",
-      context
+      context,
     );
   });
 
   test("handles undefined context gracefully", () => {
     const logger = new Logger("TestService");
-    
+
     logger.info("Info without context");
     logger.warn("Warning without context");
     logger.error("Error without context");
-    
+
     expect(mockConsoleLog).toHaveBeenCalledWith(
       "[TestService] Info without context",
-      undefined
+      undefined,
     );
     expect(mockConsoleWarn).toHaveBeenCalledWith(
       "[TestService] Warning without context",
-      undefined
+      undefined,
     );
     expect(mockConsoleError).toHaveBeenCalledWith(
       "[TestService] Error without context",
-      undefined
+      undefined,
     );
   });
 
   test("formats different service names correctly", () => {
     const webLogger = new Logger("SupabaseWebService");
     const nativeLogger = new Logger("SupabaseNativeService");
-    
+
     webLogger.info("Web message");
     nativeLogger.info("Native message");
-    
+
     expect(mockConsoleLog).toHaveBeenCalledWith(
       "[SupabaseWebService] Web message",
-      undefined
+      undefined,
     );
     expect(mockConsoleLog).toHaveBeenCalledWith(
       "[SupabaseNativeService] Native message",
-      undefined
+      undefined,
     );
   });
 });

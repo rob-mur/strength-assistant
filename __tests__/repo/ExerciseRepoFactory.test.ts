@@ -3,25 +3,29 @@ import { FirebaseExerciseRepo } from "@/lib/repo/FirebaseExerciseRepo";
 import { SupabaseExerciseRepo } from "@/lib/repo/SupabaseExerciseRepo";
 
 // Mock @legendapp/state first
-jest.mock('@legendapp/state', () => ({
-  observable: jest.fn(),
-  observe: jest.fn(),
-  computed: jest.fn(),
-}), { virtual: true });
+jest.mock(
+  "@legendapp/state",
+  () => ({
+    observable: jest.fn(),
+    observe: jest.fn(),
+    computed: jest.fn(),
+  }),
+  { virtual: true },
+);
 
 // Mock all Firebase and Supabase dependencies
-jest.mock('@/lib/data/firebase/initializer', () => ({
+jest.mock("@/lib/data/firebase/initializer", () => ({
   initializeFirebaseServices: jest.fn(),
   getDb: jest.fn(),
 }));
 
-jest.mock('@/lib/data/supabase/SupabaseClient', () => ({
+jest.mock("@/lib/data/supabase/SupabaseClient", () => ({
   supabaseClient: {
     getCurrentUser: jest.fn(),
-  }
+  },
 }));
 
-jest.mock('@/lib/data/store', () => ({
+jest.mock("@/lib/data/store", () => ({
   exercises$: {
     get: jest.fn(),
     set: jest.fn(),
@@ -31,7 +35,7 @@ jest.mock('@/lib/data/store', () => ({
   },
 }));
 
-jest.mock('@/lib/data/sync/syncConfig', () => ({
+jest.mock("@/lib/data/sync/syncConfig", () => ({
   syncExerciseToSupabase: jest.fn(),
   deleteExerciseFromSupabase: jest.fn(),
   syncHelpers: {
@@ -41,17 +45,17 @@ jest.mock('@/lib/data/sync/syncConfig', () => ({
     forceSync: jest.fn(),
     hasErrors: jest.fn(),
     getErrorMessage: jest.fn(),
-  }
+  },
 }));
 
-jest.mock('@/lib/models/Exercise', () => ({
+jest.mock("@/lib/models/Exercise", () => ({
   ExerciseValidator: {
     validateExerciseInput: jest.fn(),
     sanitizeExerciseName: jest.fn(),
-  }
+  },
 }));
 
-jest.mock('firebase/firestore', () => ({
+jest.mock("firebase/firestore", () => ({
   collection: jest.fn(),
   addDoc: jest.fn(),
   deleteDoc: jest.fn(),
@@ -61,26 +65,26 @@ jest.mock('firebase/firestore', () => ({
   orderBy: jest.fn(),
 }));
 
-jest.mock('@/lib/data/firebase/logger', () => ({
+jest.mock("@/lib/data/firebase/logger", () => ({
   logger: {
     info: jest.fn(),
     error: jest.fn(),
     warn: jest.fn(),
     debug: jest.fn(),
-  }
+  },
 }));
 
-jest.mock('uuid', () => ({
-  v4: jest.fn(() => 'test-uuid'),
+jest.mock("uuid", () => ({
+  v4: jest.fn(() => "test-uuid"),
 }));
 
 // Mock Expo Constants
-jest.mock('expo-constants', () => ({
+jest.mock("expo-constants", () => ({
   default: {
     expoConfig: {
-      extra: {}
-    }
-  }
+      extra: {},
+    },
+  },
 }));
 
 // Mock process.env
@@ -90,20 +94,20 @@ const originalEnv = process.env;
 const MockedFirebaseExerciseRepo = jest.mocked(FirebaseExerciseRepo);
 const MockedSupabaseExerciseRepo = jest.mocked(SupabaseExerciseRepo);
 
-jest.mock('@/lib/repo/FirebaseExerciseRepo');
-jest.mock('@/lib/repo/SupabaseExerciseRepo');
+jest.mock("@/lib/repo/FirebaseExerciseRepo");
+jest.mock("@/lib/repo/SupabaseExerciseRepo");
 
-describe('ExerciseRepoFactory', () => {
+describe("ExerciseRepoFactory", () => {
   beforeEach(() => {
     // Reset environment variables
     process.env = { ...originalEnv };
-    
+
     // Reset factory instances
     ExerciseRepoFactory.resetInstances();
-    
+
     // Clear all mocks
     jest.clearAllMocks();
-    
+
     // Reset mock implementations
     MockedFirebaseExerciseRepo.getInstance.mockReturnValue({} as any);
     MockedSupabaseExerciseRepo.getInstance.mockReturnValue({} as any);
@@ -113,95 +117,95 @@ describe('ExerciseRepoFactory', () => {
     process.env = originalEnv;
   });
 
-  describe('getInstance', () => {
-    test('returns Firebase implementation when USE_SUPABASE_DATA is false', () => {
-      process.env.USE_SUPABASE_DATA = 'false';
-      
+  describe("getInstance", () => {
+    test("returns Firebase implementation when USE_SUPABASE_DATA is false", () => {
+      process.env.USE_SUPABASE_DATA = "false";
+
       const repo = ExerciseRepoFactory.getInstance();
-      
+
       expect(MockedFirebaseExerciseRepo.getInstance).toHaveBeenCalled();
       expect(MockedSupabaseExerciseRepo.getInstance).not.toHaveBeenCalled();
     });
 
-    test('returns Firebase implementation when USE_SUPABASE_DATA is undefined', () => {
+    test("returns Firebase implementation when USE_SUPABASE_DATA is undefined", () => {
       delete process.env.USE_SUPABASE_DATA;
-      
+
       const repo = ExerciseRepoFactory.getInstance();
-      
+
       expect(MockedFirebaseExerciseRepo.getInstance).toHaveBeenCalled();
       expect(MockedSupabaseExerciseRepo.getInstance).not.toHaveBeenCalled();
     });
 
-    test('returns Supabase implementation when USE_SUPABASE_DATA is true', () => {
-      process.env.USE_SUPABASE_DATA = 'true';
-      
+    test("returns Supabase implementation when USE_SUPABASE_DATA is true", () => {
+      process.env.USE_SUPABASE_DATA = "true";
+
       const repo = ExerciseRepoFactory.getInstance();
-      
+
       expect(MockedSupabaseExerciseRepo.getInstance).toHaveBeenCalled();
       expect(MockedFirebaseExerciseRepo.getInstance).not.toHaveBeenCalled();
     });
 
-    test('returns same Firebase instance on multiple calls', () => {
-      process.env.USE_SUPABASE_DATA = 'false';
-      
+    test("returns same Firebase instance on multiple calls", () => {
+      process.env.USE_SUPABASE_DATA = "false";
+
       const repo1 = ExerciseRepoFactory.getInstance();
       const repo2 = ExerciseRepoFactory.getInstance();
-      
+
       // Should only call getInstance once due to caching
       expect(MockedFirebaseExerciseRepo.getInstance).toHaveBeenCalledTimes(1);
     });
 
-    test('returns same Supabase instance on multiple calls', () => {
-      process.env.USE_SUPABASE_DATA = 'true';
-      
+    test("returns same Supabase instance on multiple calls", () => {
+      process.env.USE_SUPABASE_DATA = "true";
+
       const repo1 = ExerciseRepoFactory.getInstance();
       const repo2 = ExerciseRepoFactory.getInstance();
-      
+
       // Should only call getInstance once due to caching
       expect(MockedSupabaseExerciseRepo.getInstance).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe('getCurrentDataSource', () => {
+  describe("getCurrentDataSource", () => {
     test('returns "firebase" when USE_SUPABASE_DATA is false', () => {
-      process.env.USE_SUPABASE_DATA = 'false';
-      
-      expect(ExerciseRepoFactory.getCurrentDataSource()).toBe('firebase');
+      process.env.USE_SUPABASE_DATA = "false";
+
+      expect(ExerciseRepoFactory.getCurrentDataSource()).toBe("firebase");
     });
 
     test('returns "firebase" when USE_SUPABASE_DATA is undefined', () => {
       delete process.env.USE_SUPABASE_DATA;
-      
-      expect(ExerciseRepoFactory.getCurrentDataSource()).toBe('firebase');
+
+      expect(ExerciseRepoFactory.getCurrentDataSource()).toBe("firebase");
     });
 
     test('returns "supabase" when USE_SUPABASE_DATA is true', () => {
-      process.env.USE_SUPABASE_DATA = 'true';
-      
-      expect(ExerciseRepoFactory.getCurrentDataSource()).toBe('supabase');
+      process.env.USE_SUPABASE_DATA = "true";
+
+      expect(ExerciseRepoFactory.getCurrentDataSource()).toBe("supabase");
     });
 
-    test('handles string case insensitivity', () => {
-      process.env.USE_SUPABASE_DATA = 'TRUE';
-      
-      expect(ExerciseRepoFactory.getCurrentDataSource()).toBe('supabase');
+    test("handles string case insensitivity", () => {
+      process.env.USE_SUPABASE_DATA = "TRUE";
+
+      expect(ExerciseRepoFactory.getCurrentDataSource()).toBe("supabase");
     });
 
     test('treats non-"true" strings as false', () => {
-      process.env.USE_SUPABASE_DATA = 'maybe';
-      
-      expect(ExerciseRepoFactory.getCurrentDataSource()).toBe('firebase');
+      process.env.USE_SUPABASE_DATA = "maybe";
+
+      expect(ExerciseRepoFactory.getCurrentDataSource()).toBe("firebase");
     });
   });
 
-  describe('resetInstances', () => {
-    test('clears cached instances', () => {
-      process.env.USE_SUPABASE_DATA = 'false';
-      
+  describe("resetInstances", () => {
+    test("clears cached instances", () => {
+      process.env.USE_SUPABASE_DATA = "false";
+
       // Get instance to cache it
       ExerciseRepoFactory.getInstance();
       expect(MockedFirebaseExerciseRepo.getInstance).toHaveBeenCalledTimes(1);
-      
+
       // Reset and get again
       ExerciseRepoFactory.resetInstances();
       ExerciseRepoFactory.getInstance();
@@ -209,54 +213,54 @@ describe('ExerciseRepoFactory', () => {
     });
   });
 
-  describe('Expo Constants integration', () => {
-    test('prefers process.env over Expo Constants', () => {
+  describe("Expo Constants integration", () => {
+    test("prefers process.env over Expo Constants", () => {
       // Mock Expo Constants with one value
-      const Constants = require('expo-constants').default;
+      const Constants = require("expo-constants").default;
       Constants.expoConfig.extra.useSupabaseData = true;
-      
+
       // But set process.env to different value
-      process.env.USE_SUPABASE_DATA = 'false';
-      
+      process.env.USE_SUPABASE_DATA = "false";
+
       // Should use process.env value
-      expect(ExerciseRepoFactory.getCurrentDataSource()).toBe('firebase');
+      expect(ExerciseRepoFactory.getCurrentDataSource()).toBe("firebase");
     });
 
-    test('falls back to Expo Constants when process.env not set', () => {
+    test("falls back to Expo Constants when process.env not set", () => {
       // Clear process.env
       delete process.env.USE_SUPABASE_DATA;
-      
+
       // Set Expo Constants value
-      const Constants = require('expo-constants').default;
+      const Constants = require("expo-constants").default;
       Constants.expoConfig.extra.useSupabaseData = true;
-      
-      expect(ExerciseRepoFactory.getCurrentDataSource()).toBe('supabase');
+
+      expect(ExerciseRepoFactory.getCurrentDataSource()).toBe("supabase");
     });
   });
 
-  describe('Dynamic require error handling', () => {
-    test('handles require errors gracefully', () => {
+  describe("Dynamic require error handling", () => {
+    test("handles require errors gracefully", () => {
       // Remove process.env to force Expo Constants path
       delete process.env.USE_SUPABASE_DATA;
 
       // Create a factory method that will trigger the dynamic require
       const result = ExerciseRepoFactory.getCurrentDataSource();
-      
+
       // Should not throw and should return a valid result
-      expect(['firebase', 'supabase']).toContain(result);
+      expect(["firebase", "supabase"]).toContain(result);
     });
 
-    test('covers catch block in shouldUseSupabase', () => {
+    test("covers catch block in shouldUseSupabase", () => {
       // This test ensures the catch block in the dynamic require is covered
       const originalConsoleError = console.error;
       console.error = jest.fn(); // Suppress error logging
-      
+
       try {
         delete process.env.USE_SUPABASE_DATA;
-        
+
         // The dynamic require should handle any errors gracefully
         const result = ExerciseRepoFactory.getCurrentDataSource();
-        expect(typeof result).toBe('string');
+        expect(typeof result).toBe("string");
       } finally {
         console.error = originalConsoleError;
       }

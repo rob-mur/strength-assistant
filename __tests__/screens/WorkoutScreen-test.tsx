@@ -12,9 +12,7 @@ describe("<WorkoutScreen/>", () => {
     // Given
     const selectedExercise = "Squat";
     // When
-    render(
-      <WorkoutScreen selectedExercise={selectedExercise} />,
-    );
+    render(<WorkoutScreen selectedExercise={selectedExercise} />);
     // Then
     expect(await screen.findByText(selectedExercise)).toBeOnTheScreen();
   });

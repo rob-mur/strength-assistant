@@ -4,19 +4,19 @@ import { initSupabase, getSupabaseClient } from "@/lib/data/supabase/supabase";
 // Mock Platform
 jest.mock("react-native", () => ({
   Platform: {
-    OS: "native"
-  }
+    OS: "native",
+  },
 }));
 
 // Mock the platform-specific modules
 jest.mock("@/lib/data/supabase/supabase/supabase.web", () => ({
   initSupabase: jest.fn(),
-  getSupabaseClient: jest.fn()
+  getSupabaseClient: jest.fn(),
 }));
 
 jest.mock("@/lib/data/supabase/supabase/supabase.native", () => ({
   initSupabase: jest.fn(),
-  getSupabaseClient: jest.fn()
+  getSupabaseClient: jest.fn(),
 }));
 
 describe("supabase platform selector", () => {
@@ -31,9 +31,9 @@ describe("supabase platform selector", () => {
 
     test("initSupabase calls web module", () => {
       const webModule = require("@/lib/data/supabase/supabase/supabase.web");
-      
+
       initSupabase();
-      
+
       expect(webModule.initSupabase).toHaveBeenCalledTimes(1);
     });
 
@@ -41,9 +41,9 @@ describe("supabase platform selector", () => {
       const webModule = require("@/lib/data/supabase/supabase/supabase.web");
       const mockClient = { from: jest.fn() };
       webModule.getSupabaseClient.mockReturnValue(mockClient);
-      
+
       const result = getSupabaseClient();
-      
+
       expect(webModule.getSupabaseClient).toHaveBeenCalledTimes(1);
       expect(result).toBe(mockClient);
     });
@@ -56,9 +56,9 @@ describe("supabase platform selector", () => {
 
     test("initSupabase calls native module", () => {
       const nativeModule = require("@/lib/data/supabase/supabase/supabase.native");
-      
+
       initSupabase();
-      
+
       expect(nativeModule.initSupabase).toHaveBeenCalledTimes(1);
     });
 
@@ -66,9 +66,9 @@ describe("supabase platform selector", () => {
       const nativeModule = require("@/lib/data/supabase/supabase/supabase.native");
       const mockClient = { from: jest.fn() };
       nativeModule.getSupabaseClient.mockReturnValue(mockClient);
-      
+
       const result = getSupabaseClient();
-      
+
       expect(nativeModule.getSupabaseClient).toHaveBeenCalledTimes(1);
       expect(result).toBe(mockClient);
     });
@@ -81,9 +81,9 @@ describe("supabase platform selector", () => {
 
     test("initSupabase defaults to native module for android", () => {
       const nativeModule = require("@/lib/data/supabase/supabase/supabase.native");
-      
+
       initSupabase();
-      
+
       expect(nativeModule.initSupabase).toHaveBeenCalledTimes(1);
     });
 
@@ -92,9 +92,9 @@ describe("supabase platform selector", () => {
       const nativeModule = require("@/lib/data/supabase/supabase/supabase.native");
       const mockClient = { from: jest.fn() };
       nativeModule.getSupabaseClient.mockReturnValue(mockClient);
-      
+
       const result = getSupabaseClient();
-      
+
       expect(nativeModule.getSupabaseClient).toHaveBeenCalledTimes(1);
       expect(result).toBe(mockClient);
     });

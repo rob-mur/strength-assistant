@@ -47,9 +47,7 @@
   "errors": [
     "Test suite failed with exit code 1 - Constitutional Amendment v2.5.0 violation"
   ],
-  "warnings": [
-    "Jest worker stability issues detected: 3 instances"
-  ],
+  "warnings": ["Jest worker stability issues detected: 3 instances"],
   "recommendations": [
     "Review Jest configuration and worker settings",
     "Fix failing tests to achieve 100% pass rate",

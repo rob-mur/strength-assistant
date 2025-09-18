@@ -1,12 +1,12 @@
 /**
  * ExerciseService - Local-First Exercise Management
- * 
+ *
  * Contract implementation for local-first exercise operations with sync capabilities.
  * This service provides immediate local responses while managing background sync operations.
  */
 
-import { v4 as uuidv4 } from 'uuid';
-import type { Exercise } from '../models/Exercise';
+import { v4 as uuidv4 } from "uuid";
+import type { Exercise } from "../models/Exercise";
 
 // Type for test persistence global
 interface TestPersistence {
@@ -18,14 +18,13 @@ declare global {
   var testPersistence: TestPersistence | undefined;
 }
 
-
-export type SyncStatus = 'pending' | 'synced' | 'error';
+export type SyncStatus = "pending" | "synced" | "error";
 
 export interface SyncRecord {
   id: string;
   recordId: string;
-  recordType: 'exercise';
-  operation: 'create' | 'update' | 'delete';
+  recordType: "exercise";
+  operation: "create" | "update" | "delete";
   status: SyncStatus;
   createdAt: Date;
   lastAttempt?: Date;
@@ -58,10 +57,10 @@ export class ExerciseService {
   private readonly persistence: boolean;
 
   constructor(options: ExerciseServiceOptions = {}) {
-    this.userId = options.userId || 'default-user';
+    this.userId = options.userId || "default-user";
     this.enableSync = options.enableSync ?? true;
     this.persistence = options.persistence ?? true;
-    
+
     // Load from persistence if enabled
     if (this.persistence) {
       this.loadFromPersistenceSync();
@@ -73,18 +72,21 @@ export class ExerciseService {
   /**
    * Create exercise locally with immediate response
    */
-  async createExercise(name: string, userId?: string): Promise<ExerciseWithSyncStatus> {
+  async createExercise(
+    name: string,
+    userId?: string,
+  ): Promise<ExerciseWithSyncStatus> {
     if (!name || name.trim().length === 0) {
-      throw new Error('Exercise name cannot be empty');
+      throw new Error("Exercise name cannot be empty");
     }
 
     if (name.length > 100) {
-      throw new Error('Exercise name too long');
+      throw new Error("Exercise name too long");
     }
 
     const targetUserId = userId || this.userId;
     const now = new Date();
-    
+
     const exercise: Exercise = {
       id: uuidv4(),
       name: name.trim(),
@@ -96,15 +98,15 @@ export class ExerciseService {
 
     // Store locally immediately
     this.exercises.set(exercise.id, exercise);
-    
+
     // Create sync record if sync is enabled
     if (this.enableSync) {
       const syncRecord: SyncRecord = {
         id: uuidv4(),
         recordId: exercise.id,
-        recordType: 'exercise',
-        operation: 'create',
-        status: 'pending',
+        recordType: "exercise",
+        operation: "create",
+        status: "pending",
         createdAt: now,
         attempts: 0,
         data: exercise,
@@ -122,8 +124,9 @@ export class ExerciseService {
       ...exercise,
       createdAt: new Date(exercise.created_at),
       updatedAt: new Date(exercise.updated_at),
-      userId: exercise.user_id === 'default-user' ? undefined : exercise.user_id,
-      syncStatus: this.enableSync ? 'pending' : 'synced'
+      userId:
+        exercise.user_id === "default-user" ? undefined : exercise.user_id,
+      syncStatus: this.enableSync ? "pending" : "synced",
     };
 
     return exerciseWithSync;
@@ -134,17 +137,28 @@ export class ExerciseService {
    */
   async getExercises(userId?: string): Promise<ExerciseWithSyncStatus[]> {
     const targetUserId = userId || this.userId;
-    
+
     const userExercises = Array.from(this.exercises.values())
-      .filter(exercise => exercise.user_id === targetUserId && !exercise.deleted)
-      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-      .map(exercise => ({
-        ...exercise,
-        createdAt: new Date(exercise.created_at),
-        updatedAt: new Date(exercise.updated_at),
-        userId: exercise.user_id === 'default-user' ? undefined : exercise.user_id,
-        syncStatus: this.enableSync ? 'pending' : 'synced'
-      } as ExerciseWithSyncStatus));
+      .filter(
+        (exercise) => exercise.user_id === targetUserId && !exercise.deleted,
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+      )
+      .map(
+        (exercise) =>
+          ({
+            ...exercise,
+            createdAt: new Date(exercise.created_at),
+            updatedAt: new Date(exercise.updated_at),
+            userId:
+              exercise.user_id === "default-user"
+                ? undefined
+                : exercise.user_id,
+            syncStatus: this.enableSync ? "pending" : "synced",
+          }) as ExerciseWithSyncStatus,
+      );
 
     return userExercises;
   }
@@ -152,27 +166,31 @@ export class ExerciseService {
   /**
    * Get exercise by ID
    */
-  async getExerciseById(id: string, userId?: string): Promise<ExerciseWithSyncStatus> {
+  async getExerciseById(
+    id: string,
+    userId?: string,
+  ): Promise<ExerciseWithSyncStatus> {
     const exercise = this.exercises.get(id);
-    
+
     if (!exercise || exercise.deleted) {
-      throw new Error('Exercise not found');
+      throw new Error("Exercise not found");
     }
 
     const targetUserId = userId || this.userId;
     if (exercise.user_id !== targetUserId) {
-      throw new Error('Exercise not found');
+      throw new Error("Exercise not found");
     }
 
     // Check if this exercise has a sync record to determine status
-    const syncRecord = Array.from(this.syncRecords.values())
-      .find(record => record.recordId === exercise.id);
-    
-  let syncStatus: SyncStatus = 'synced';
+    const syncRecord = Array.from(this.syncRecords.values()).find(
+      (record) => record.recordId === exercise.id,
+    );
+
+    let syncStatus: SyncStatus = "synced";
     if (this.enableSync && syncRecord) {
       syncStatus = syncRecord.status;
     } else if (this.enableSync) {
-      syncStatus = 'pending';
+      syncStatus = "pending";
     }
 
     // Return exercise with contract-expected format
@@ -180,8 +198,9 @@ export class ExerciseService {
       ...exercise,
       createdAt: new Date(exercise.created_at),
       updatedAt: new Date(exercise.updated_at),
-      userId: exercise.user_id === 'default-user' ? undefined : exercise.user_id,
-      syncStatus
+      userId:
+        exercise.user_id === "default-user" ? undefined : exercise.user_id,
+      syncStatus,
     };
 
     return exerciseWithSync;
@@ -190,42 +209,48 @@ export class ExerciseService {
   /**
    * Update exercise locally with immediate response
    */
-  async updateExercise(id: string, updates: Partial<Pick<Exercise, 'name'>>, userId?: string): Promise<ExerciseWithSyncStatus> {
+  async updateExercise(
+    id: string,
+    updates: Partial<Pick<Exercise, "name">>,
+    userId?: string,
+  ): Promise<ExerciseWithSyncStatus> {
     if (!id) {
-      throw new Error('Exercise ID is required');
+      throw new Error("Exercise ID is required");
     }
 
     const targetUserId = userId || this.userId;
     const existingExercise = this.exercises.get(id);
-    
+
     if (!existingExercise) {
-      throw new Error('Exercise not found');
+      throw new Error("Exercise not found");
     }
 
     if (existingExercise.user_id !== targetUserId) {
-      throw new Error('Unauthorized: Cannot update exercise for different user');
+      throw new Error(
+        "Unauthorized: Cannot update exercise for different user",
+      );
     }
 
     if (existingExercise.deleted) {
-      throw new Error('Cannot update deleted exercise');
+      throw new Error("Cannot update deleted exercise");
     }
 
     // Validate that updates is not empty
     if (!updates || Object.keys(updates).length === 0) {
-      throw new Error('No updates provided');
+      throw new Error("No updates provided");
     }
 
     if (updates.name !== undefined) {
       if (!updates.name || updates.name.trim().length === 0) {
-        throw new Error('Exercise name cannot be empty');
+        throw new Error("Exercise name cannot be empty");
       }
       if (updates.name.length > 100) {
-        throw new Error('Exercise name too long');
+        throw new Error("Exercise name too long");
       }
     }
 
     // Apply updates with sufficient delay to ensure updated timestamp is later
-    await new Promise(resolve => setTimeout(resolve, 10));
+    await new Promise((resolve) => setTimeout(resolve, 10));
     const updatedExercise: Exercise = {
       ...existingExercise,
       ...updates,
@@ -241,9 +266,9 @@ export class ExerciseService {
       const syncRecord: SyncRecord = {
         id: uuidv4(),
         recordId: id,
-        recordType: 'exercise',
-        operation: 'update',
-        status: 'pending',
+        recordType: "exercise",
+        operation: "update",
+        status: "pending",
         createdAt: new Date(),
         attempts: 0,
         data: updatedExercise,
@@ -261,8 +286,11 @@ export class ExerciseService {
       ...updatedExercise,
       createdAt: new Date(updatedExercise.created_at),
       updatedAt: new Date(updatedExercise.updated_at),
-      userId: updatedExercise.user_id === 'default-user' ? undefined : updatedExercise.user_id,
-      syncStatus: this.enableSync ? 'pending' : 'synced'
+      userId:
+        updatedExercise.user_id === "default-user"
+          ? undefined
+          : updatedExercise.user_id,
+      syncStatus: this.enableSync ? "pending" : "synced",
     };
 
     return exerciseWithSync;
@@ -273,18 +301,20 @@ export class ExerciseService {
    */
   async deleteExercise(id: string, userId?: string): Promise<boolean> {
     if (!id) {
-      throw new Error('Exercise ID is required');
+      throw new Error("Exercise ID is required");
     }
 
     const targetUserId = userId || this.userId;
     const existingExercise = this.exercises.get(id);
-    
+
     if (!existingExercise) {
-      throw new Error('Exercise not found');
+      throw new Error("Exercise not found");
     }
 
     if (existingExercise.user_id !== targetUserId) {
-      throw new Error('Unauthorized: Cannot delete exercise for different user');
+      throw new Error(
+        "Unauthorized: Cannot delete exercise for different user",
+      );
     }
 
     // Soft delete immediately
@@ -301,9 +331,9 @@ export class ExerciseService {
       const syncRecord: SyncRecord = {
         id: uuidv4(),
         recordId: id,
-        recordType: 'exercise',
-        operation: 'delete',
-        status: 'pending',
+        recordType: "exercise",
+        operation: "delete",
+        status: "pending",
         createdAt: new Date(),
         attempts: 0,
         data: { id, user_id: targetUserId },
@@ -319,14 +349,13 @@ export class ExerciseService {
     return true;
   }
 
-
   // ==================== SYNC STATUS MANAGEMENT ====================
   /**
    * Get all sync records with status 'error' (failed syncs)
    */
   async getFailedSyncs(): Promise<SyncRecord[]> {
     return Array.from(this.syncRecords.values())
-      .filter(record => record.status === 'error')
+      .filter((record) => record.status === "error")
       .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   }
 
@@ -335,26 +364,33 @@ export class ExerciseService {
    */
   async getPendingSyncRecords(): Promise<SyncRecord[]> {
     return Array.from(this.syncRecords.values())
-      .filter(record => record.status === 'pending')
+      .filter((record) => record.status === "pending")
       .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
-      .map(record => ({
+      .map((record) => ({
         ...record,
-        pendingSince: record.createdAt // Add contract-expected property
+        pendingSince: record.createdAt, // Add contract-expected property
       }));
   }
 
   /**
    * Get sync record by exercise ID
    */
-  async getSyncRecordByExerciseId(exerciseId: string): Promise<SyncRecord | undefined> {
-    return Array.from(this.syncRecords.values())
-      .find(record => record.recordId === exerciseId);
+  async getSyncRecordByExerciseId(
+    exerciseId: string,
+  ): Promise<SyncRecord | undefined> {
+    return Array.from(this.syncRecords.values()).find(
+      (record) => record.recordId === exerciseId,
+    );
   }
 
   /**
    * Update sync record status
    */
-  async updateSyncRecordStatus(syncRecordId: string, status: SyncRecord['status'], error?: string): Promise<void> {
+  async updateSyncRecordStatus(
+    syncRecordId: string,
+    status: SyncRecord["status"],
+    error?: string,
+  ): Promise<void> {
     const record = this.syncRecords.get(syncRecordId);
     if (record) {
       record.status = status;
@@ -363,7 +399,7 @@ export class ExerciseService {
       if (error) {
         record.error = error;
       }
-      
+
       if (this.persistence) {
         await this.saveToPersistence();
       }
@@ -378,7 +414,7 @@ export class ExerciseService {
   async clearAll(): Promise<void> {
     this.exercises.clear();
     this.syncRecords.clear();
-    
+
     if (this.persistence) {
       await this.saveToPersistence();
     }
@@ -401,9 +437,12 @@ export class ExerciseService {
   /**
    * Set current user for the service (for testing and user switching)
    */
-  async setCurrentUser(user: { id: string; isAnonymous: boolean }): Promise<void> {
+  async setCurrentUser(user: {
+    id: string;
+    isAnonymous: boolean;
+  }): Promise<void> {
     this.userId = user.id;
-    
+
     // Persist the user change if persistence is enabled
     if (this.persistence) {
       await this.saveToPersistence();
@@ -413,7 +452,10 @@ export class ExerciseService {
   /**
    * Get single exercise by ID (alias for getExerciseById for contract compatibility)
    */
-  async getExercise(id: string, userId?: string): Promise<ExerciseWithSyncStatus> {
+  async getExercise(
+    id: string,
+    userId?: string,
+  ): Promise<ExerciseWithSyncStatus> {
     return this.getExerciseById(id, userId);
   }
 
@@ -421,13 +463,14 @@ export class ExerciseService {
    * Mark exercise as synced (update sync status)
    */
   async markSynced(exerciseId: string): Promise<void> {
-    const syncRecord = Array.from(this.syncRecords.values())
-      .find(record => record.recordId === exerciseId && record.status === 'pending');
-    
+    const syncRecord = Array.from(this.syncRecords.values()).find(
+      (record) => record.recordId === exerciseId && record.status === "pending",
+    );
+
     if (syncRecord) {
-      syncRecord.status = 'synced';
+      syncRecord.status = "synced";
       syncRecord.lastAttempt = new Date();
-      
+
       if (this.persistence) {
         await this.saveToPersistence();
       }
@@ -439,13 +482,14 @@ export class ExerciseService {
    */
   async markSyncComplete(recordId: string): Promise<void> {
     // This can work with either exercise ID or sync record ID
-    const syncRecord = Array.from(this.syncRecords.values())
-      .find(record => record.id === recordId || record.recordId === recordId);
-    
+    const syncRecord = Array.from(this.syncRecords.values()).find(
+      (record) => record.id === recordId || record.recordId === recordId,
+    );
+
     if (syncRecord) {
-      syncRecord.status = 'synced';
+      syncRecord.status = "synced";
       syncRecord.lastAttempt = new Date();
-      
+
       if (this.persistence) {
         await this.saveToPersistence();
       }
@@ -456,15 +500,16 @@ export class ExerciseService {
    * Mark exercise sync as error
    */
   async markSyncError(exerciseId: string, error: string): Promise<void> {
-    const syncRecord = Array.from(this.syncRecords.values())
-      .find(record => record.recordId === exerciseId || record.id === exerciseId);
-    
+    const syncRecord = Array.from(this.syncRecords.values()).find(
+      (record) => record.recordId === exerciseId || record.id === exerciseId,
+    );
+
     if (syncRecord) {
-      syncRecord.status = 'error';
+      syncRecord.status = "error";
       syncRecord.lastAttempt = new Date();
       syncRecord.attempts += 1;
       syncRecord.error = error;
-      
+
       if (this.persistence) {
         await this.saveToPersistence();
       }
@@ -476,14 +521,15 @@ export class ExerciseService {
    * Mark exercise sync as pending (for retry scenarios)
    */
   async markPending(exerciseId: string): Promise<void> {
-    const syncRecord = Array.from(this.syncRecords.values())
-      .find(record => record.recordId === exerciseId);
-    
+    const syncRecord = Array.from(this.syncRecords.values()).find(
+      (record) => record.recordId === exerciseId,
+    );
+
     if (syncRecord) {
-      syncRecord.status = 'pending';
+      syncRecord.status = "pending";
       syncRecord.lastAttempt = new Date();
       syncRecord.error = undefined; // Clear previous error
-      
+
       if (this.persistence) {
         await this.saveToPersistence();
       }
@@ -502,22 +548,26 @@ export class ExerciseService {
       if (exercisesData) {
         this.exercises = new Map(exercisesData);
       }
-      
+
       if (syncData) {
         // Convert date strings back to Date objects
-        const syncRecords = syncData.map(([id, record]: [string, SyncRecord]) => [
-          id,
-          {
-            ...record,
-            createdAt: new Date(record.createdAt),
-            lastAttempt: record.lastAttempt ? new Date(record.lastAttempt) : undefined,
-          }
-        ]);
+        const syncRecords = syncData.map(
+          ([id, record]: [string, SyncRecord]) => [
+            id,
+            {
+              ...record,
+              createdAt: new Date(record.createdAt),
+              lastAttempt: record.lastAttempt
+                ? new Date(record.lastAttempt)
+                : undefined,
+            },
+          ],
+        );
         this.syncRecords = new Map(syncRecords as [string, SyncRecord][]);
       }
     } catch (error) {
       // Handle persistence errors gracefully
-      console.warn('Failed to load from persistence:', error);
+      console.warn("Failed to load from persistence:", error);
     }
   }
 
@@ -530,13 +580,15 @@ export class ExerciseService {
     try {
       // In a real app, this would save to AsyncStorage or similar
       // For tests, we'll use global storage
-  global.testPersistence ??= {};
+      global.testPersistence ??= {};
 
       global.testPersistence.exercises = Array.from(this.exercises.entries());
-      global.testPersistence.syncRecords = Array.from(this.syncRecords.entries());
+      global.testPersistence.syncRecords = Array.from(
+        this.syncRecords.entries(),
+      );
     } catch (error) {
       // Handle persistence errors gracefully
-      console.warn('Failed to save to persistence:', error);
+      console.warn("Failed to save to persistence:", error);
     }
   }
 }

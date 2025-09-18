@@ -62,7 +62,7 @@ export default [
     rules: {
       // Stricter rules for TypeScript infrastructure code
       "@typescript-eslint/no-explicit-any": "error",
-      "complexity": ["error", 10], // Limit complexity for infrastructure code
+      complexity: ["error", 10], // Limit complexity for infrastructure code
       "max-lines-per-function": ["warn", 100], // Keep functions manageable
     },
   },

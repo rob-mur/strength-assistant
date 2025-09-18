@@ -25,7 +25,7 @@ describe("AsyncStorageWeb", () => {
         delete store[key];
       }),
       clear: jest.fn(() => {
-        Object.keys(store).forEach(key => delete store[key]);
+        Object.keys(store).forEach((key) => delete store[key]);
       }),
       length: 0,
       key: jest.fn(),
@@ -37,7 +37,7 @@ describe("AsyncStorageWeb", () => {
 
   afterEach(() => {
     // Clean up any window modifications
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       (window as any).localStorage = undefined;
     }
   });
@@ -85,8 +85,8 @@ describe("AsyncStorageWeb", () => {
 
       expect(result).toBeNull();
       expect(console.warn).toHaveBeenCalledWith(
-        "AsyncStorage.getItem failed:", 
-        expect.any(Error)
+        "AsyncStorage.getItem failed:",
+        expect.any(Error),
       );
     });
 
@@ -117,7 +117,10 @@ describe("AsyncStorageWeb", () => {
 
       await AsyncStorageWeb.setItem("test-key", "test-value");
 
-      expect(mockLocalStorage.setItem).toHaveBeenCalledWith("test-key", "test-value");
+      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+        "test-key",
+        "test-value",
+      );
     });
 
     test("does nothing when window is undefined", async () => {
@@ -149,8 +152,8 @@ describe("AsyncStorageWeb", () => {
       await AsyncStorageWeb.setItem("test-key", "test-value");
 
       expect(console.warn).toHaveBeenCalledWith(
-        "AsyncStorage.setItem failed:", 
-        expect.any(Error)
+        "AsyncStorage.setItem failed:",
+        expect.any(Error),
       );
     });
 
@@ -169,7 +172,10 @@ describe("AsyncStorageWeb", () => {
 
       await AsyncStorageWeb.setItem(specialKey, specialValue);
 
-      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(specialKey, specialValue);
+      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+        specialKey,
+        specialValue,
+      );
     });
   });
 
@@ -211,8 +217,8 @@ describe("AsyncStorageWeb", () => {
       await AsyncStorageWeb.removeItem("test-key");
 
       expect(console.warn).toHaveBeenCalledWith(
-        "AsyncStorage.removeItem failed:", 
-        expect.any(Error)
+        "AsyncStorage.removeItem failed:",
+        expect.any(Error),
       );
     });
 
@@ -221,7 +227,9 @@ describe("AsyncStorageWeb", () => {
 
       await AsyncStorageWeb.removeItem("non-existent-key");
 
-      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith("non-existent-key");
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
+        "non-existent-key",
+      );
       expect(console.warn).not.toHaveBeenCalled();
     });
   });
@@ -264,8 +272,8 @@ describe("AsyncStorageWeb", () => {
       await AsyncStorageWeb.clear();
 
       expect(console.warn).toHaveBeenCalledWith(
-        "AsyncStorage.clear failed:", 
-        expect.any(Error)
+        "AsyncStorage.clear failed:",
+        expect.any(Error),
       );
     });
   });
@@ -314,13 +322,16 @@ describe("AsyncStorageWeb", () => {
 
       // Store JSON string
       await AsyncStorageWeb.setItem("user-data", jsonString);
-      expect(mockLocalStorage.setItem).toHaveBeenCalledWith("user-data", jsonString);
+      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+        "user-data",
+        jsonString,
+      );
 
       // Retrieve and parse JSON string
       mockLocalStorage.getItem = jest.fn().mockReturnValue(jsonString);
       const retrievedJson = await AsyncStorageWeb.getItem("user-data");
       expect(retrievedJson).toBe(jsonString);
-      
+
       // Verify it can be parsed back to object
       const parsedObject = JSON.parse(retrievedJson!);
       expect(parsedObject).toEqual(testObject);
@@ -342,7 +353,12 @@ describe("AsyncStorageWeb", () => {
       expect(clearPromise).toBeInstanceOf(Promise);
 
       // Resolve all promises
-      await Promise.all([getItemPromise, setItemPromise, removeItemPromise, clearPromise]);
+      await Promise.all([
+        getItemPromise,
+        setItemPromise,
+        removeItemPromise,
+        clearPromise,
+      ]);
     });
 
     test("methods can be awaited in sequence", async () => {
@@ -350,8 +366,9 @@ describe("AsyncStorageWeb", () => {
 
       await AsyncStorageWeb.setItem("key1", "value1");
       await AsyncStorageWeb.setItem("key2", "value2");
-      
-      mockLocalStorage.getItem = jest.fn()
+
+      mockLocalStorage.getItem = jest
+        .fn()
         .mockReturnValueOnce("value1")
         .mockReturnValueOnce("value2");
 
@@ -394,13 +411,16 @@ describe("AsyncStorageWeb", () => {
   describe("Edge cases", () => {
     test("handles extremely large keys and values", async () => {
       (global as any).window = { localStorage: mockLocalStorage };
-      
+
       const largeKey = "x".repeat(1000);
       const largeValue = "y".repeat(10000);
 
       await AsyncStorageWeb.setItem(largeKey, largeValue);
 
-      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(largeKey, largeValue);
+      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+        largeKey,
+        largeValue,
+      );
     });
 
     test("handles localStorage quota exceeded gracefully", async () => {
@@ -418,8 +438,8 @@ describe("AsyncStorageWeb", () => {
       expect(console.warn).toHaveBeenCalledWith(
         "AsyncStorage.setItem failed:",
         expect.objectContaining({
-          name: "QuotaExceededError"
-        })
+          name: "QuotaExceededError",
+        }),
       );
     });
 

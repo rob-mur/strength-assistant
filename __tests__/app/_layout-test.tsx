@@ -7,7 +7,9 @@ import { PaperProvider, MD3LightTheme, MD3DarkTheme } from "react-native-paper";
 
 // Create a mock Stack component with Screen property
 const MockScreen = jest.fn(() => null);
-const MockStack = ({ children }: { children: React.ReactNode }) => <>{children}</>;
+const MockStack = ({ children }: { children: React.ReactNode }) => (
+  <>{children}</>
+);
 MockStack.Screen = MockScreen;
 
 jest.mock("expo-router", () => ({
@@ -16,7 +18,9 @@ jest.mock("expo-router", () => ({
     preventAutoHideAsync: jest.fn(),
     hideAsync: jest.fn(),
   },
-  ErrorBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  ErrorBoundary: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
   useRouter: jest.fn(() => ({
     push: jest.fn(),
     replace: jest.fn(),
@@ -77,7 +81,7 @@ describe("RootLayout", () => {
       expect.objectContaining({
         theme: MD3LightTheme,
       }),
-      {}
+      {},
     );
   });
 
@@ -91,7 +95,7 @@ describe("RootLayout", () => {
       expect.objectContaining({
         theme: MD3DarkTheme,
       }),
-      {}
+      {},
     );
   });
 
@@ -105,7 +109,7 @@ describe("RootLayout", () => {
         name: "(tabs)",
         options: { headerShown: false },
       }),
-      {}
+      {},
     );
   });
 });

@@ -1,27 +1,30 @@
 /**
  * Legend State Store Configuration for Exercise Data
- * 
+ *
  * Defines the observable store structure and configuration for exercise data
  * with automatic local persistence and cloud sync capabilities.
  */
 
-import { observable } from '@legendapp/state';
-import { isSupabaseDataEnabled } from '../../config/supabase-env';
+import { observable } from "@legendapp/state";
+import { isSupabaseDataEnabled } from "../../config/supabase-env";
 
 /**
  * Exercise Store Interface
  * Defines the observable store structure for exercise data
  */
 export interface ExerciseStore {
-  exercises: Record<string, {
-    id: string;
-    name: string;
-    createdAt: string; // ISO string for serialization
-    updatedAt: string; // ISO string for serialization
-    userId?: string;
-    syncStatus: 'pending' | 'synced' | 'error';
-  }>;
-  
+  exercises: Record<
+    string,
+    {
+      id: string;
+      name: string;
+      createdAt: string; // ISO string for serialization
+      updatedAt: string; // ISO string for serialization
+      userId?: string;
+      syncStatus: "pending" | "synced" | "error";
+    }
+  >;
+
   // User state
   user: {
     id?: string;
@@ -55,11 +58,11 @@ const initialStoreState: ExerciseStore = {
     isOnline: navigator?.onLine ?? true,
     isSyncing: false,
     pendingChanges: 0,
-    errors: []
+    errors: [],
   },
   featureFlags: {
-    useSupabaseData: isSupabaseDataEnabled()
-  }
+    useSupabaseData: isSupabaseDataEnabled(),
+  },
 };
 
 /**
@@ -79,7 +82,7 @@ function configurePersistence() {
   // For now, we'll use a simplified persistence approach
   // In the full implementation, we'd configure persistence plugins
   if (__DEV__) {
-    console.info('📱 Exercise store persistence configured');
+    console.info("📱 Exercise store persistence configured");
   }
 }
 
@@ -89,20 +92,20 @@ function configurePersistence() {
 export function initializeSync() {
   // Configure persistence
   configurePersistence();
-  
+
   // Monitor online status
-  if (typeof window !== 'undefined') {
-    window.addEventListener('online', () => {
+  if (typeof window !== "undefined") {
+    window.addEventListener("online", () => {
       exerciseStore.syncState.isOnline.set(true);
     });
-    
-    window.addEventListener('offline', () => {
+
+    window.addEventListener("offline", () => {
       exerciseStore.syncState.isOnline.set(false);
     });
   }
-  
+
   if (__DEV__) {
-    console.info('🔄 Legend State store initialized');
+    console.info("🔄 Legend State store initialized");
   }
 }
 
@@ -111,9 +114,9 @@ export function initializeSync() {
  */
 export function reinitializeSync() {
   if (__DEV__) {
-    console.info('🔄 Reinitializing store for backend change');
+    console.info("🔄 Reinitializing store for backend change");
   }
-  
+
   initializeSync();
 }
 
@@ -123,7 +126,7 @@ export function reinitializeSync() {
 export function disposeSync() {
   // Cleanup any resources
   if (__DEV__) {
-    console.info('🗑️ Legend State store disposed');
+    console.info("🗑️ Legend State store disposed");
   }
 }
 

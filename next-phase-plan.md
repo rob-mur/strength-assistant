@@ -13,7 +13,7 @@
    - **Impact**: Development tool, may affect developer experience
    - **Action**: Add basic functionality tests or exclude from coverage if dev-only
 
-2. **`app/(tabs)/_layout.tsx`** (0% coverage) 
+2. **`app/(tabs)/_layout.tsx`** (0% coverage)
    - **Impact**: HIGH - Navigation layout structure
    - **Action**: Create navigation tests, theme tests
 
@@ -78,6 +78,7 @@
 ## 🛠️ Implementation Strategy
 
 ### Phase 2A: Critical 0% Coverage (Week 1)
+
 1. **High Business Impact Components**:
    - `TabBar.tsx` - Main navigation
    - `app/(tabs)/exercises/add.tsx` - Core feature
@@ -85,12 +86,14 @@
    - `lib/data/sync/index.ts` - Data sync
 
 ### Phase 2B: Navigation & Layout (Week 2)
+
 2. **Navigation Infrastructure**:
    - `app/(tabs)/_layout.tsx`
    - `app/(tabs)/exercises/_layout.tsx`
    - Layout component integration tests
 
 ### Phase 2C: Data Layer Improvements (Week 3)
+
 3. **Data & Storage**:
    - Re-enable `SupabaseClient.ts` tests
    - Improve `SupabaseStorage.ts` coverage
@@ -98,6 +101,7 @@
    - Add integration tests for data exports
 
 ### Phase 2D: Forms & Auth Enhancement (Week 4)
+
 4. **User Interaction Components**:
    - Complete `AddExerciseForm.tsx` coverage
    - Improve `SupabaseAuth.ts` coverage
@@ -106,18 +110,21 @@
 ## 📋 Success Criteria
 
 ### Coverage Targets
+
 - **Overall Coverage**: 85%+ (from current 76.22%)
 - **Critical Components**: 90%+ coverage
 - **Business Logic**: 95%+ coverage
 - **Zero 0% coverage files** (except dev tools)
 
 ### Quality Metrics
+
 - All tests passing consistently
 - Comprehensive error handling coverage
 - Integration test coverage for data flows
 - Accessibility test coverage for UI components
 
 ### Performance Targets
+
 - Test suite execution time < 30 seconds
 - No flaky tests
 - Clear test documentation
@@ -135,6 +142,7 @@
 ## 📝 Next Steps
 
 The next immediate task is to begin with **TabBar.tsx** as it's:
+
 - ✅ 0% coverage (high impact)
 - ✅ Core navigation component (critical functionality)
 - ✅ User-facing component (affects UX)

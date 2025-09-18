@@ -36,7 +36,9 @@ describe("TabBar", () => {
           title: "Home",
           tabBarLabel: "Home",
           tabBarIcon: ({ focused }: { focused: boolean }) => (
-            <Text testID={`home-icon-${focused ? 'focused' : 'unfocused'}`}>🏠</Text>
+            <Text testID={`home-icon-${focused ? "focused" : "unfocused"}`}>
+              🏠
+            </Text>
           ),
         },
       },
@@ -48,7 +50,11 @@ describe("TabBar", () => {
           title: "Exercises",
           tabBarLabel: "Exercises",
           tabBarIcon: ({ focused }: { focused: boolean }) => (
-            <Text testID={`exercises-icon-${focused ? 'focused' : 'unfocused'}`}>💪</Text>
+            <Text
+              testID={`exercises-icon-${focused ? "focused" : "unfocused"}`}
+            >
+              💪
+            </Text>
           ),
         },
       },
@@ -66,7 +72,7 @@ describe("TabBar", () => {
         render(
           <TestWrapper>
             <TabBar {...mockProps} />
-          </TestWrapper>
+          </TestWrapper>,
         );
       }).not.toThrow();
     });
@@ -75,7 +81,7 @@ describe("TabBar", () => {
       const { getByTestId } = render(
         <TestWrapper>
           <TabBar {...mockProps} />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       // Home tab should be focused (index 0)
@@ -95,7 +101,7 @@ describe("TabBar", () => {
       const { getByTestId } = render(
         <TestWrapper>
           <TabBar {...propsWithDifferentIndex} />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       expect(getByTestId("home-icon-unfocused")).toBeTruthy();
@@ -123,7 +129,7 @@ describe("TabBar", () => {
         render(
           <TestWrapper>
             <TabBar {...propsWithoutLabel} />
-          </TestWrapper>
+          </TestWrapper>,
         );
       }).not.toThrow();
     });
@@ -147,7 +153,7 @@ describe("TabBar", () => {
         render(
           <TestWrapper>
             <TabBar {...propsWithFunctionLabel} />
-          </TestWrapper>
+          </TestWrapper>,
         );
       }).toThrow("Unsupported Label");
     });
@@ -173,13 +179,15 @@ describe("TabBar", () => {
         render(
           <TestWrapper>
             <TabBar {...propsWithoutIcon} />
-          </TestWrapper>
+          </TestWrapper>,
         );
       }).not.toThrow();
     });
 
     it("passes correct props to tabBarIcon function", () => {
-      const mockIconFunction = jest.fn(() => <Text testID="custom-icon">Icon</Text>);
+      const mockIconFunction = jest.fn(() => (
+        <Text testID="custom-icon">Icon</Text>
+      ));
       const propsWithMockIcon = {
         ...mockProps,
         descriptors: {
@@ -197,7 +205,7 @@ describe("TabBar", () => {
       render(
         <TestWrapper>
           <TabBar {...propsWithMockIcon} />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       expect(mockIconFunction).toHaveBeenCalledWith({
@@ -213,7 +221,7 @@ describe("TabBar", () => {
       render(
         <TestWrapper>
           <TabBar {...mockProps} />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       // Verify that the component accepts the navigation props without error
@@ -233,7 +241,7 @@ describe("TabBar", () => {
         render(
           <TestWrapper>
             <TabBar {...propsWithCustomInsets} />
-          </TestWrapper>
+          </TestWrapper>,
         );
       }).not.toThrow();
     });
@@ -257,7 +265,7 @@ describe("TabBar", () => {
         render(
           <TestWrapper>
             <TabBar {...propsWithEmptyDescriptors} />
-          </TestWrapper>
+          </TestWrapper>,
         );
       }).not.toThrow();
     });
@@ -280,7 +288,7 @@ describe("TabBar", () => {
         render(
           <TestWrapper>
             <TabBar {...propsWithSingleRoute} />
-          </TestWrapper>
+          </TestWrapper>,
         );
       }).not.toThrow();
     });
@@ -302,10 +310,10 @@ describe("TabBar", () => {
         render(
           <TestWrapper>
             <TabBar {...propsWithMismatch} />
-          </TestWrapper>
+          </TestWrapper>,
         );
       };
-      
+
       // The component will fail when trying to access options on undefined descriptor
       // This is expected behavior - the test validates that this scenario is detected
       expect(renderFunction).toThrow();
@@ -318,7 +326,7 @@ describe("TabBar", () => {
         render(
           <TestWrapper>
             <TabBar {...mockProps} />
-          </TestWrapper>
+          </TestWrapper>,
         );
       }).not.toThrow();
     });
@@ -328,7 +336,7 @@ describe("TabBar", () => {
         render(
           <TestWrapper>
             <TabBar {...mockProps} />
-          </TestWrapper>
+          </TestWrapper>,
         );
       }).not.toThrow();
     });

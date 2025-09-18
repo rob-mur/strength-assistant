@@ -5,6 +5,7 @@ This directory contains Terraform configuration for managing Supabase infrastruc
 ## Setup
 
 1. Copy the example variables file:
+
    ```bash
    cp terraform.tfvars.example terraform.tfvars
    ```
@@ -16,22 +17,26 @@ This directory contains Terraform configuration for managing Supabase infrastruc
 ## Usage
 
 ### Initialize Terraform
+
 ```bash
 cd terraform
 terraform init
 ```
 
 ### Plan changes
+
 ```bash
 terraform plan
 ```
 
 ### Apply changes
+
 ```bash
 terraform apply
 ```
 
 ### Destroy infrastructure
+
 ```bash
 terraform destroy
 ```
@@ -49,5 +54,6 @@ The Terraform configuration is automatically applied via GitHub Actions when cha
 ## Required Secrets
 
 Configure these secrets in your GitHub repository:
+
 - `SUPABASE_ACCESS_TOKEN`: Your Supabase access token
 - `SUPABASE_PROJECT_REF`: Your Supabase project reference ID

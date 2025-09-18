@@ -9,106 +9,120 @@ interface IconProps {
   style?: object;
 }
 
-const AccountIcon = (props: IconProps) => <List.Icon {...props} icon="account-circle" />;
+const AccountIcon = (props: IconProps) => (
+  <List.Icon {...props} icon="account-circle" />
+);
 const EmailIcon = (props: IconProps) => <List.Icon {...props} icon="email" />;
-const AccountTypeIcon = ({ isAnonymous, ...props }: IconProps & { isAnonymous?: boolean }) => (
+const AccountTypeIcon = ({
+  isAnonymous,
+  ...props
+}: IconProps & { isAnonymous?: boolean }) => (
   <List.Icon {...props} icon={isAnonymous ? "incognito" : "account-check"} />
 );
 
-const AccountTypeIconComponent = ({ isAnonymous }: { isAnonymous?: boolean }) => {
+const AccountTypeIconComponent = ({
+  isAnonymous,
+}: {
+  isAnonymous?: boolean;
+}) => {
   const AccountTypeIconWithProps = (props: IconProps) => (
     <AccountTypeIcon {...props} isAnonymous={isAnonymous} />
   );
-  AccountTypeIconWithProps.displayName = 'AccountTypeIconWithProps';
+  AccountTypeIconWithProps.displayName = "AccountTypeIconWithProps";
   return AccountTypeIconWithProps;
 };
 
 export default function ProfileScreen() {
-	const { user, signOut } = useAuthContext();
+  const { user, signOut } = useAuthContext();
 
-	const handleSignOut = async () => {
-		await signOut();
-	};
+  const handleSignOut = async () => {
+    await signOut();
+  };
 
-	const userAccountTypeIcon = AccountTypeIconComponent({ isAnonymous: user?.isAnonymous });
+  const userAccountTypeIcon = AccountTypeIconComponent({
+    isAnonymous: user?.isAnonymous,
+  });
 
-	return (
-		<View style={styles.container}>
-			<Card style={styles.card}>
-				<Card.Content>
-					<Text variant="headlineMedium" style={styles.title}>Profile</Text>
-					
-					<View style={styles.userInfo}>
-						<List.Item
-							title="User ID"
-							description={user?.uid || "N/A"}
-							left={AccountIcon}
-						/>
-						<List.Item
-							title="Email"
-							description={user?.email || "Anonymous User"}
-							left={EmailIcon}
-						/>
-						<List.Item
-							title="Account Type"
-							description={user?.isAnonymous ? "Guest Account" : "Registered Account"}
-							left={userAccountTypeIcon}
-						/>
-					</View>
+  return (
+    <View style={styles.container}>
+      <Card style={styles.card}>
+        <Card.Content>
+          <Text variant="headlineMedium" style={styles.title}>
+            Profile
+          </Text>
 
-					<Divider style={styles.divider} />
+          <View style={styles.userInfo}>
+            <List.Item
+              title="User ID"
+              description={user?.uid || "N/A"}
+              left={AccountIcon}
+            />
+            <List.Item
+              title="Email"
+              description={user?.email || "Anonymous User"}
+              left={EmailIcon}
+            />
+            <List.Item
+              title="Account Type"
+              description={
+                user?.isAnonymous ? "Guest Account" : "Registered Account"
+              }
+              left={userAccountTypeIcon}
+            />
+          </View>
 
-					<View style={styles.actions}>
-						<Text variant="bodyMedium" style={styles.signOutDescription}>
-							{user?.isAnonymous 
-								? "Sign out of your guest account. Your data will be lost unless you create a permanent account first."
-								: "Sign out of your account. You can sign back in anytime."
-							}
-						</Text>
-						
-						<Button
-							mode="contained"
-							onPress={handleSignOut}
-							style={styles.signOutButton}
-							buttonColor="#d32f2f"
-						>
-							Sign Out
-						</Button>
-					</View>
-				</Card.Content>
-			</Card>
-		</View>
-	);
+          <Divider style={styles.divider} />
+
+          <View style={styles.actions}>
+            <Text variant="bodyMedium" style={styles.signOutDescription}>
+              {user?.isAnonymous
+                ? "Sign out of your guest account. Your data will be lost unless you create a permanent account first."
+                : "Sign out of your account. You can sign back in anytime."}
+            </Text>
+
+            <Button
+              mode="contained"
+              onPress={handleSignOut}
+              style={styles.signOutButton}
+              buttonColor="#d32f2f"
+            >
+              Sign Out
+            </Button>
+          </View>
+        </Card.Content>
+      </Card>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-	container: {
-		flex: 1,
-		padding: 16,
-		backgroundColor: "#f5f5f5",
-	},
-	card: {
-		marginTop: 20,
-	},
-	title: {
-		textAlign: "center",
-		marginBottom: 20,
-	},
-	userInfo: {
-		marginBottom: 16,
-	},
-	divider: {
-		marginVertical: 16,
-	},
-	actions: {
-		alignItems: "center",
-	},
-	signOutDescription: {
-		textAlign: "center",
-		marginBottom: 16,
-		color: "#666",
-	},
-	signOutButton: {
-		minWidth: 150,
-	},
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: "#f5f5f5",
+  },
+  card: {
+    marginTop: 20,
+  },
+  title: {
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  userInfo: {
+    marginBottom: 16,
+  },
+  divider: {
+    marginVertical: 16,
+  },
+  actions: {
+    alignItems: "center",
+  },
+  signOutDescription: {
+    textAlign: "center",
+    marginBottom: 16,
+    color: "#666",
+  },
+  signOutButton: {
+    minWidth: 150,
+  },
 });

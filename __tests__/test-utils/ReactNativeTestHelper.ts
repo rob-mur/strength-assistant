@@ -1,6 +1,6 @@
 /**
  * React Native Test Helper
- * 
+ *
  * Centralized utility for handling React Native specific testing concerns:
  * - Proper act() wrapping for state updates
  * - Animation handling
@@ -8,10 +8,10 @@
  * - Component rendering utilities
  */
 
-import { act, RenderAPI } from '@testing-library/react-native';
+import { act, RenderAPI } from "@testing-library/react-native";
 
 // Use the modern Element type instead of deprecated ReactTestInstance
-type TestElement = ReturnType<RenderAPI['getByTestId']>;
+type TestElement = ReturnType<RenderAPI["getByTestId"]>;
 
 export interface ReactNativeTestOptions {
   /**
@@ -19,13 +19,13 @@ export interface ReactNativeTestOptions {
    * @default 5000
    */
   timeout?: number;
-  
+
   /**
    * Whether to automatically wait for animations to complete
    * @default true
    */
   waitForAnimations?: boolean;
-  
+
   /**
    * Delay between user interactions (ms) to simulate realistic timing
    * @default 50
@@ -35,7 +35,7 @@ export interface ReactNativeTestOptions {
 
 export class ReactNativeTestHelper {
   private readonly options: Required<ReactNativeTestOptions>;
-  
+
   constructor(options: ReactNativeTestOptions = {}) {
     this.options = {
       timeout: options.timeout ?? 5000,
@@ -50,12 +50,12 @@ export class ReactNativeTestHelper {
   async actWrap<T>(fn: () => T | Promise<T>): Promise<T> {
     return act(async () => {
       const result = await fn();
-      
+
       // Wait for any pending animations to complete
       if (this.options.waitForAnimations) {
         await this.waitForAnimations();
       }
-      
+
       return result;
     });
   }
@@ -77,18 +77,20 @@ export class ReactNativeTestHelper {
   async typeText(element: TestElement, text: string): Promise<void> {
     return this.actWrap(async () => {
       // Simulate realistic typing with character delays
-      const chars = text.split('');
+      const chars = text.split("");
       for (let i = 0; i < chars.length; i++) {
-        const currentText = chars.slice(0, i + 1).join('');
-        
+        const currentText = chars.slice(0, i + 1).join("");
+
         // Fire changeText event
-        if ('props' in element && element.props.onChangeText) {
+        if ("props" in element && element.props.onChangeText) {
           element.props.onChangeText(currentText);
         }
-        
+
         // Small delay between characters for realism
         if (i < chars.length - 1 && this.options.interactionDelay > 0) {
-          await new Promise(resolve => setTimeout(resolve, this.options.interactionDelay));
+          await new Promise((resolve) =>
+            setTimeout(resolve, this.options.interactionDelay),
+          );
         }
       }
     });
@@ -100,18 +102,20 @@ export class ReactNativeTestHelper {
   async pressButton(element: TestElement): Promise<void> {
     return this.actWrap(async () => {
       // Fire press events in sequence
-      if ('props' in element) {
+      if ("props" in element) {
         if (element.props.onPressIn) {
           element.props.onPressIn();
         }
-        
+
         // Small delay to simulate press duration
-        await new Promise(resolve => setTimeout(resolve, this.options.interactionDelay));
-        
+        await new Promise((resolve) =>
+          setTimeout(resolve, this.options.interactionDelay),
+        );
+
         if (element.props.onPressOut) {
           element.props.onPressOut();
         }
-        
+
         if (element.props.onPress) {
           await element.props.onPress();
         }
@@ -122,11 +126,14 @@ export class ReactNativeTestHelper {
   /**
    * Wait for component to settle after render with act() wrapping
    */
-  async waitForRender(renderResult?: RenderAPI, _maxWait: number = this.options.timeout): Promise<void> {
+  async waitForRender(
+    renderResult?: RenderAPI,
+    _maxWait: number = this.options.timeout,
+  ): Promise<void> {
     return this.actWrap(async () => {
       // Wait for initial render to complete
-      await new Promise(resolve => setTimeout(resolve, 10));
-      
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
       // Wait for any pending animations to complete
       await this.waitForAnimations();
     });
@@ -136,7 +143,7 @@ export class ReactNativeTestHelper {
    * Simulate realistic user interaction timing
    */
   async delay(ms: number = this.options.interactionDelay): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
@@ -145,33 +152,35 @@ export class ReactNativeTestHelper {
   async testLoadingState<T>(
     action: () => Promise<T>,
     getLoadingState: () => boolean,
-    timeout: number = this.options.timeout
+    timeout: number = this.options.timeout,
   ): Promise<T> {
     return this.actWrap(async () => {
       // Start the action
       const actionPromise = action();
-      
+
       // Wait a bit and check loading state
       await this.delay(10);
-      
+
       // Verify loading state is true
       const isLoading = getLoadingState();
       if (!isLoading) {
-        console.warn('Loading state was not detected - this might indicate a timing issue');
+        console.warn(
+          "Loading state was not detected - this might indicate a timing issue",
+        );
       }
-      
+
       // Wait for action to complete
       const result = await actionPromise;
-      
+
       // Wait for loading state to clear
       let attempts = 0;
       const maxAttempts = Math.floor(timeout / 50);
-      
+
       while (getLoadingState() && attempts < maxAttempts) {
         await this.delay(50);
         attempts++;
       }
-      
+
       return result;
     });
   }
@@ -192,7 +201,9 @@ export class ReactNativeTestHelper {
   /**
    * Create a configured instance with common settings for component tests
    */
-  static forComponentTesting(options: ReactNativeTestOptions = {}): ReactNativeTestHelper {
+  static forComponentTesting(
+    options: ReactNativeTestOptions = {},
+  ): ReactNativeTestHelper {
     return new ReactNativeTestHelper({
       timeout: 3000, // Shorter timeout for component tests
       waitForAnimations: true,
@@ -204,7 +215,9 @@ export class ReactNativeTestHelper {
   /**
    * Create a configured instance with settings optimized for integration tests
    */
-  static forIntegrationTesting(options: ReactNativeTestOptions = {}): ReactNativeTestHelper {
+  static forIntegrationTesting(
+    options: ReactNativeTestOptions = {},
+  ): ReactNativeTestHelper {
     return new ReactNativeTestHelper({
       timeout: 10000, // Longer timeout for integration tests
       waitForAnimations: true,
@@ -218,19 +231,24 @@ export class ReactNativeTestHelper {
 export const testHelper = ReactNativeTestHelper.forComponentTesting();
 
 // Export utilities for specific use cases
-export const integrationTestHelper = ReactNativeTestHelper.forIntegrationTesting();
+export const integrationTestHelper =
+  ReactNativeTestHelper.forIntegrationTesting();
 
 /**
  * Convenience wrapper for act() with animation handling
  */
-export async function actWithAnimations<T>(fn: () => T | Promise<T>): Promise<T> {
+export async function actWithAnimations<T>(
+  fn: () => T | Promise<T>,
+): Promise<T> {
   return testHelper.actWrap(fn);
 }
 
 /**
  * Convenience function for user interactions
  */
-export async function simulateUserInteraction<T>(fn: () => T | Promise<T>): Promise<T> {
+export async function simulateUserInteraction<T>(
+  fn: () => T | Promise<T>,
+): Promise<T> {
   return testHelper.actWrap(fn);
 }
 

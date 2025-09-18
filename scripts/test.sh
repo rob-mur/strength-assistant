@@ -32,8 +32,8 @@ if ! npm run lint; then
 fi
 
 echo "# Formatting"
-if ! npm run format:check > /dev/null; then
-    echo "❌ Formatting check failed"
+if ! npm run format:check; then
+    echo "❌ Formatting failed"
     OVERALL_EXIT_CODE=1
 fi
 

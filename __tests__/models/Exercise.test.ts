@@ -4,19 +4,21 @@ describe("ExerciseValidator", () => {
   describe("validateExerciseInput", () => {
     test("validates valid exercise input", () => {
       const validInput = { name: "Push-ups" };
-      expect(() => ExerciseValidator.validateExerciseInput(validInput)).not.toThrow();
+      expect(() =>
+        ExerciseValidator.validateExerciseInput(validInput),
+      ).not.toThrow();
     });
 
     test("throws error for null input", () => {
-      expect(() => ExerciseValidator.validateExerciseInput(null as any)).toThrow(
-        "Exercise input is required"
-      );
+      expect(() =>
+        ExerciseValidator.validateExerciseInput(null as any),
+      ).toThrow("Exercise input is required");
     });
 
     test("throws error for undefined input", () => {
-      expect(() => ExerciseValidator.validateExerciseInput(undefined as any)).toThrow(
-        "Exercise input is required"
-      );
+      expect(() =>
+        ExerciseValidator.validateExerciseInput(undefined as any),
+      ).toThrow("Exercise input is required");
     });
   });
 
@@ -29,48 +31,50 @@ describe("ExerciseValidator", () => {
         "Pull-ups",
         "Deadlift 123",
         "Bicep Curls - 15 lbs",
-        "Plank (60 sec.)"
+        "Plank (60 sec.)",
       ];
 
-      validNames.forEach(name => {
-        expect(() => ExerciseValidator.validateExerciseName(name)).not.toThrow();
+      validNames.forEach((name) => {
+        expect(() =>
+          ExerciseValidator.validateExerciseName(name),
+        ).not.toThrow();
       });
     });
 
     test("throws error for empty name", () => {
       expect(() => ExerciseValidator.validateExerciseName("")).toThrow(
-        "Exercise name cannot be empty"
+        "Exercise name cannot be empty",
       );
     });
 
     test("throws error for whitespace-only name", () => {
       expect(() => ExerciseValidator.validateExerciseName("   ")).toThrow(
-        "Exercise name cannot be empty"
+        "Exercise name cannot be empty",
       );
     });
 
     test("throws error for null name", () => {
       expect(() => ExerciseValidator.validateExerciseName(null as any)).toThrow(
-        "Exercise name is required and must be a string"
+        "Exercise name is required and must be a string",
       );
     });
 
     test("throws error for undefined name", () => {
-      expect(() => ExerciseValidator.validateExerciseName(undefined as any)).toThrow(
-        "Exercise name is required and must be a string"
-      );
+      expect(() =>
+        ExerciseValidator.validateExerciseName(undefined as any),
+      ).toThrow("Exercise name is required and must be a string");
     });
 
     test("throws error for non-string name", () => {
       expect(() => ExerciseValidator.validateExerciseName(123 as any)).toThrow(
-        "Exercise name is required and must be a string"
+        "Exercise name is required and must be a string",
       );
     });
 
     test("throws error for names exceeding max length", () => {
       const tooLongName = "a".repeat(101);
       expect(() => ExerciseValidator.validateExerciseName(tooLongName)).toThrow(
-        "Exercise name cannot exceed 100 characters"
+        "Exercise name cannot exceed 100 characters",
       );
     });
 
@@ -93,12 +97,12 @@ describe("ExerciseValidator", () => {
         "Exercise ? question",
         "Exercise # hash",
         "Exercise @ at",
-        "Exercise ! exclamation"
+        "Exercise ! exclamation",
       ];
 
-      invalidNames.forEach(name => {
+      invalidNames.forEach((name) => {
         expect(() => ExerciseValidator.validateExerciseName(name)).toThrow(
-          "Exercise name contains invalid characters"
+          "Exercise name contains invalid characters",
         );
       });
     });
@@ -106,15 +110,21 @@ describe("ExerciseValidator", () => {
 
   describe("sanitizeExerciseName", () => {
     test("trims whitespace", () => {
-      expect(ExerciseValidator.sanitizeExerciseName("  Push-ups  ")).toBe("Push-ups");
+      expect(ExerciseValidator.sanitizeExerciseName("  Push-ups  ")).toBe(
+        "Push-ups",
+      );
     });
 
     test("normalizes multiple spaces", () => {
-      expect(ExerciseValidator.sanitizeExerciseName("Bench    Press")).toBe("Bench Press");
+      expect(ExerciseValidator.sanitizeExerciseName("Bench    Press")).toBe(
+        "Bench Press",
+      );
     });
 
     test("handles tabs and newlines", () => {
-      expect(ExerciseValidator.sanitizeExerciseName("Exercise\t\nName")).toBe("Exercise Name");
+      expect(ExerciseValidator.sanitizeExerciseName("Exercise\t\nName")).toBe(
+        "Exercise Name",
+      );
     });
 
     test("handles empty string", () => {
@@ -122,7 +132,9 @@ describe("ExerciseValidator", () => {
     });
 
     test("preserves single spaces", () => {
-      expect(ExerciseValidator.sanitizeExerciseName("Bicep Curls")).toBe("Bicep Curls");
+      expect(ExerciseValidator.sanitizeExerciseName("Bicep Curls")).toBe(
+        "Bicep Curls",
+      );
     });
   });
 });

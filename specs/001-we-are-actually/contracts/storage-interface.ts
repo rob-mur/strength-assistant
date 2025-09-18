@@ -9,7 +9,7 @@ export interface ExerciseRecord {
   createdAt: Date;
   updatedAt: Date;
   userId?: string;
-  syncStatus: 'pending' | 'synced' | 'error';
+  syncStatus: "pending" | "synced" | "error";
 }
 
 export interface UserAccount {
@@ -23,7 +23,7 @@ export interface UserAccount {
 export interface SyncStateRecord {
   recordId: string;
   recordType: string;
-  operation: 'create' | 'update' | 'delete';
+  operation: "create" | "update" | "delete";
   pendingSince: Date;
   attempts: number;
   lastError?: string;
@@ -35,9 +35,17 @@ export interface SyncStateRecord {
  */
 export interface StorageBackend {
   // Exercise CRUD operations
-  createExercise(exercise: Omit<ExerciseRecord, 'id' | 'createdAt' | 'updatedAt' | 'syncStatus'>): Promise<ExerciseRecord>;
+  createExercise(
+    exercise: Omit<
+      ExerciseRecord,
+      "id" | "createdAt" | "updatedAt" | "syncStatus"
+    >,
+  ): Promise<ExerciseRecord>;
   getExercises(userId?: string): Promise<ExerciseRecord[]>;
-  updateExercise(id: string, updates: Partial<Pick<ExerciseRecord, 'name'>>): Promise<ExerciseRecord>;
+  updateExercise(
+    id: string,
+    updates: Partial<Pick<ExerciseRecord, "name">>,
+  ): Promise<ExerciseRecord>;
   deleteExercise(id: string): Promise<void>;
 
   // User management
@@ -51,10 +59,15 @@ export interface StorageBackend {
   getPendingSyncRecords(): Promise<SyncStateRecord[]>;
   markSyncComplete(recordId: string): Promise<void>;
   markSyncError(recordId: string, error: string): Promise<void>;
-  
+
   // Real-time subscriptions
-  subscribeToExercises(userId: string, callback: (exercises: ExerciseRecord[]) => void): () => void;
-  subscribeToAuthState(callback: (user: UserAccount | null) => void): () => void;
+  subscribeToExercises(
+    userId: string,
+    callback: (exercises: ExerciseRecord[]) => void,
+  ): () => void;
+  subscribeToAuthState(
+    callback: (user: UserAccount | null) => void,
+  ): () => void;
 }
 
 /**
@@ -73,8 +86,14 @@ export interface StorageManager {
   // Delegates to active backend based on feature flags
   getActiveStorageBackend(): StorageBackend;
   getAuthBackend(): StorageBackend;
-  
+
   // Migration utilities
-  validateDataConsistency(): Promise<{isConsistent: boolean; errors: string[]}>;
-  migrateUserData(fromBackend: StorageBackend, toBackend: StorageBackend): Promise<void>;
+  validateDataConsistency(): Promise<{
+    isConsistent: boolean;
+    errors: string[];
+  }>;
+  migrateUserData(
+    fromBackend: StorageBackend,
+    toBackend: StorageBackend,
+  ): Promise<void>;
 }

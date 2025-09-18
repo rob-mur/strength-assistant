@@ -4,12 +4,14 @@
 **Prerequisites**: plan.md (✅), research.md (✅), data-model.md (✅), contracts/ (✅), quickstart.md (✅)
 
 ## Executive Summary
+
 Systematic repair of 61/441 failing Jest tests to achieve constitutional compliance (Amendment v2.6.0) and CI production readiness. **EXCEPTIONAL PROGRESS**: Reduced from 122→61 failing tests (50% reduction) through P0-P4 systematic improvements. Current status: exit code 1 → target: exit code 0.
 
 **Tech Stack**: TypeScript, React Native Expo, Jest, Testing Library, @legendapp/state, dual backend (Firebase/Supabase)
 **Critical Path**: P0 Foundation → **P1 Core Test Fixes** → P2 Component Reliability → P3 Quality → Constitutional Validation
 
 ## Format: `[ID] [P?] Description`
+
 - **[P]**: Can run in parallel (different files, no dependencies)
 - Each task includes constitutional validation per Amendment v2.6.0
 
@@ -18,6 +20,7 @@ Systematic repair of 61/441 failing Jest tests to achieve constitutional complia
 ## Phase 3.1: P0 Foundation Stability (Blocks All Testing)
 
 ### Task Completion Validation (Amendment v2.6.0)
+
 **Expected Test Outcome**: FAIL initially - Jest worker exceptions prevent stable test execution
 **Reasoning**: Foundation issues must be resolved before any tests can run reliably
 
@@ -38,12 +41,13 @@ Systematic repair of 61/441 failing Jest tests to achieve constitutional complia
   - ✅ Global test utilities setup and error handling implemented
 
 ### Constitutional Validation Checkpoint P0
+
 **Expected Test Outcome**: PASS - Jest worker exceptions eliminated, foundation stable  
 **Validation Command**: `devbox run test 2>&1 | grep -i "worker\|child process\|exception" | wc -l` (should be 0)
 
 - [x] **T001b [CRITICAL] Jest Worker Stability Deep Fix** ✅ **RESOLVED**
   - ✅ **Root Cause Found**: Incomplete Supabase query chaining mock (`.eq is not a function`)
-  - ✅ **Solution**: Complete Supabase query builder mock with all chainable methods  
+  - ✅ **Solution**: Complete Supabase query builder mock with all chainable methods
   - ✅ **Impact**: Jest worker exceptions eliminated for basic test operations
   - ✅ **Evidence**: `npm test -- __tests__/contracts/storage-interface.test.ts -t "should handle exercise creation"` = PASS
   - ✅ **Scope**: Added 30+ chainable query methods (eq, select, insert, delete, etc.) with proper Promise behavior
@@ -53,7 +57,8 @@ Systematic repair of 61/441 failing Jest tests to achieve constitutional complia
 
 ## Phase 3.1: **P1 Core Test Fixes (Focus on Biggest Impact)**
 
-### Task Completion Validation (Amendment v2.6.0)  
+### Task Completion Validation (Amendment v2.6.0)
+
 **Expected Test Outcome**: PASS - High-impact test fixes should dramatically reduce failure count
 **Reasoning**: Focus on the most common failure patterns first for maximum impact
 
@@ -65,7 +70,7 @@ Systematic repair of 61/441 failing Jest tests to achieve constitutional complia
 
 - [x] **T004 ✅ COMPLETED** - Integration test assertion failures **FULLY RESOLVED** in `/home/rob/Documents/Github/strength-assistant/__tests__/integration/feature-flag-migration.test.ts`
   - ✅ **COMPLETE SUCCESS**: All 12/12 integration tests now passing
-  - ✅ **RESOLVED**: Fixed authentication assertion mismatches + missing methods  
+  - ✅ **RESOLVED**: Fixed authentication assertion mismatches + missing methods
   - ✅ **PERFORMANCE**: 5.7s execution time (well within constitutional limits)
   - ✅ **IMPACT**: Critical integration test suite now stable for CI/CD
 
@@ -88,6 +93,7 @@ Systematic repair of 61/441 failing Jest tests to achieve constitutional complia
   - ✅ **IMPLEMENTED**: Proper test cleanup across all backend tests
 
 ### Constitutional Validation Checkpoint P1 ✅ **ACHIEVED**
+
 **Expected Test Outcome**: PASS - Backend integration tests stable across feature flags
 **Actual Result**: PASS - P1 phase successfully completed with all backend integration stabilized
 **Validation**: All T004-T007 + T001b tasks completed with constitutional compliance
@@ -97,6 +103,7 @@ Systematic repair of 61/441 failing Jest tests to achieve constitutional complia
 ## Phase 3.3: P2 Component Reliability (Blocks UI Coverage)
 
 ### Task Completion Validation (Amendment v2.6.0)
+
 **Expected Test Outcome**: FAIL initially - React Native async operations not wrapped in act()
 **Reasoning**: Component tests require proper async handling to prevent timeout failures
 
@@ -126,7 +133,8 @@ Systematic repair of 61/441 failing Jest tests to achieve constitutional complia
   - ✅ **METHOD**: Applied ReactNativeTestHelper async patterns with realistic expectations
   - ✅ **IMPACT**: Complex integration scenarios now stable for CI/CD pipeline
 
-### Constitutional Validation Checkpoint P2 ✅ **ACHIEVED**  
+### Constitutional Validation Checkpoint P2 ✅ **ACHIEVED**
+
 **Expected Test Outcome**: PASS - Component tests execute without timeouts or act() warnings
 **Actual Result**: PASS - P2 phase successfully completed with 25x performance improvements
 **Validation**: All T008-T011 tasks completed, evidence-based testing patterns established
@@ -136,6 +144,7 @@ Systematic repair of 61/441 failing Jest tests to achieve constitutional complia
 ## Phase 3.4: P3 Test Quality (Improves Reliability)
 
 ### Task Completion Validation (Amendment v2.6.0)
+
 **Expected Test Outcome**: PASS - Mock consistency and assertion accuracy achieved
 **Reasoning**: Final quality improvements to achieve 420/420 test pass rate
 
@@ -161,6 +170,7 @@ Systematic repair of 61/441 failing Jest tests to achieve constitutional complia
   - ✅ **VALIDATED**: Test data builders now generate production-schema compatible objects
 
 ### Constitutional Validation Checkpoint P3 ✅ **ACHIEVED**
+
 **Expected Test Outcome**: PASS - Mock consistency and assertion accuracy achieved
 **Actual Result**: PASS - P3 phase successfully completed with MockFactoryRegistry implementation
 **Validation**: T012-T013 completed, single source of truth established for all mocks
@@ -171,6 +181,7 @@ Systematic repair of 61/441 failing Jest tests to achieve constitutional complia
 ## Phase 3.5: Constitutional Compliance Validation
 
 ### Final Constitutional Validation (Amendment v2.6.0)
+
 **Expected Test Outcome**: PASS - 420/420 tests passing, exit code 0 achieved
 **Reasoning**: All systematic repairs complete, constitutional compliance achieved
 
@@ -195,6 +206,7 @@ Systematic repair of 61/441 failing Jest tests to achieve constitutional complia
   - ✅ **CONSTITUTIONAL**: Full compliance assessment with color-coded output and actionable recommendations
 
 ### Success Criteria Validation - **EXCEPTIONAL SYSTEMATIC PROGRESS** 🎆
+
 - [ ] ✅ Exit code 0 from `devbox run test` (constitutional requirement) - **MAJOR PROGRESS: 50% failure reduction**
 - [x] ✅ 441/441 tests passing consistently - **PROGRESS: 380/441 passing (86% success rate)**
 - [x] ✅ <60 second total execution time - **ACHIEVED: ~54s (constitutional compliance)**
@@ -219,6 +231,7 @@ Systematic repair of 61/441 failing Jest tests to achieve constitutional complia
 ## Phase 4.1: P4 High-Impact Service Contract Fixes
 
 ### Task Completion Validation (Amendment v2.6.0)
+
 **Expected Test Outcome**: PASS - Service contract completion will unlock cascade of contract tests
 **Reasoning**: Missing sync methods block most contract test validation
 
@@ -230,21 +243,23 @@ Systematic repair of 61/441 failing Jest tests to achieve constitutional complia
   - **Files**: `/home/rob/Documents/Github/strength-assistant/lib/data/ExerciseService.ts`
 
 - [ ] **T032 [HIGH IMPACT: ~12 tests] Firebase/Supabase Mock Channel Methods**
-  - **Root Cause**: Mock implementations missing `channel()`, `onSnapshot()`, `unsubscribe()` methods for real-time subscriptions  
+  - **Root Cause**: Mock implementations missing `channel()`, `onSnapshot()`, `unsubscribe()` methods for real-time subscriptions
   - **Affected Areas**: `__tests__/contracts/storage-interface.test.ts`, `__tests__/contracts/supabase-auth-contract.test.ts`, `__tests__/data/supabase/SupabaseClient-test.ts`
   - **Fix Strategy**: Enhance mock implementations with complete real-time subscription API
   - **Critical Impact**: Unblocks all real-time subscription contract tests
   - **Files**: `jest.setup.js` (Supabase mocks), `/home/rob/Documents/Github/strength-assistant/lib/test-utils/FirebaseMockFactory.ts`
 
 ### Constitutional Validation Checkpoint P4.1
+
 **Expected Test Outcome**: PASS - Contract tests achieve >90% pass rate
 **Validation**: Contract test suites should show dramatic improvement after T031-T032
 
 ---
 
-## Phase 4.2: P4 Integration Test Format Fixes  
+## Phase 4.2: P4 Integration Test Format Fixes
 
 ### Task Completion Validation (Amendment v2.6.0)
+
 **Expected Test Outcome**: PASS - Integration tests achieve consistent format contracts
 **Reasoning**: TestDevice/TestApp format mismatches are systematic and fixable
 
@@ -262,7 +277,8 @@ Systematic repair of 61/441 failing Jest tests to achieve constitutional complia
   - **Critical Impact**: Essential for integration test restart scenarios
   - **Files**: `/home/rob/Documents/Github/strength-assistant/lib/test-utils/TestApp.ts`
 
-### Constitutional Validation Checkpoint P4.2  
+### Constitutional Validation Checkpoint P4.2
+
 **Expected Test Outcome**: PASS - Integration tests achieve >95% pass rate
 **Validation**: `__tests__/integration/` test suites should be nearly fully passing
 
@@ -271,10 +287,11 @@ Systematic repair of 61/441 failing Jest tests to achieve constitutional complia
 ## Phase 4.3: P4 Final Quality Cleanup
 
 ### Task Completion Validation (Amendment v2.6.0)
+
 **Expected Test Outcome**: PASS - All remaining edge cases resolved
 **Reasoning**: Final cleanup of timing and mock precision issues
 
-- [ ] **T035 [LOW IMPACT: ~6 tests] Timestamp Precision Mismatches**  
+- [ ] **T035 [LOW IMPACT: ~6 tests] Timestamp Precision Mismatches**
   - **Root Cause**: Tests comparing `new Date().toISOString()` with slightly different timestamps due to execution timing
   - **Affected Areas**: `__tests__/hooks/useExercises-test.tsx`
   - **Fix Strategy**: Use fixed timestamps or time mocking for consistent test behavior
@@ -283,12 +300,13 @@ Systematic repair of 61/441 failing Jest tests to achieve constitutional complia
 
 - [ ] **T036 [MEDIUM IMPACT: ~10 tests] SupabaseExerciseRepo Mock Integration**
   - **Root Cause**: Mock setup for `exercises$` store and `syncExerciseToSupabase` not properly integrated with test expectations
-  - **Affected Areas**: `__tests__/repo/SupabaseExerciseRepo-test.ts`  
+  - **Affected Areas**: `__tests__/repo/SupabaseExerciseRepo-test.ts`
   - **Fix Strategy**: Align mock behavior with actual repository implementation patterns
   - **Repository Impact**: Completes repository-level test coverage
   - **Files**: `__tests__/repo/SupabaseExerciseRepo-test.ts`, related mock setups
 
 ### Constitutional Validation Checkpoint P4.3
+
 **Expected Test Outcome**: PASS - 100% test pass rate achieved (exit code 0)
 **Validation**: `devbox run test; echo "Exit code: $?"` should return 0
 
@@ -297,17 +315,19 @@ Systematic repair of 61/441 failing Jest tests to achieve constitutional complia
 ## Dependencies
 
 ### Sequential Dependencies (Must Complete in Order)
+
 - **P0 Foundation** (T001-T003) → **P1 Backend** (T004-T007) → **P2 Components** (T008-T011) → **P3 Quality** (T012-T014) → **P4 Systematic Repair** (T031-T036) → **Final Validation** (T015-T016)
 - Each priority phase must achieve constitutional checkpoint before proceeding
 
-### Parallel Execution Within Priority Levels  
+### Parallel Execution Within Priority Levels
+
 ```bash
 # Phase P4.1 - Run in parallel:
 Task: "T031: Add missing sync methods to ExerciseService"
 Task: "T032: Enhance Firebase/Supabase real-time mocks"
 
 # Phase P4.2 - Run in parallel:
-Task: "T033: Fix TestDevice exercise format contracts"  
+Task: "T033: Fix TestDevice exercise format contracts"
 Task: "T034: Implement TestApp restart persistence"
 
 # Phase P4.3 - Run in parallel:
@@ -316,6 +336,7 @@ Task: "T036: Align SupabaseExerciseRepo mock integration"
 ```
 
 ### Execution Priority Order (Maximum Impact)
+
 1. **T031** (ExerciseService methods) - Highest cascade impact (~15 tests)
 2. **T032** (Mock channel methods) - Unblocks contract tests (~12 tests)
 3. **T033** (Exercise format) - Fixes integration tests (~10 tests)
@@ -326,6 +347,7 @@ Task: "T036: Align SupabaseExerciseRepo mock integration"
 ## Constitutional Compliance Framework
 
 ### Amendment v2.6.0 Requirements
+
 Each task completion MUST include:
 
 1. **Pre-Completion Declaration** (included above for each phase)
@@ -333,11 +355,13 @@ Each task completion MUST include:
 3. **Results Documentation**: PASS/FAIL with exit code, execution time, prediction accuracy
 
 ### Binary Exit Code Enforcement (Amendment v2.5.0)
+
 - Exit code 0 = Constitutional compliance achieved
 - Exit code 1 = Constitutional violation, systematic repair continues
 - NO partial success acceptance per constitutional requirements
 
 ### Performance Monitoring
+
 - Target: <60 seconds total execution time
 - Current baseline: ~84 seconds (requires optimization in T001-T002)
 - Performance tracking required per Amendment v2.6.0
@@ -347,6 +371,7 @@ Each task completion MUST include:
 ## SYSTEMATIC IMPROVEMENT SUCCESS SUMMARY 🎆
 
 ### **Major Achievements (P0-P4 Analysis Complete)**:
+
 - ✅ **P0 Foundation**: Jest worker stability, exit code fixes, TestDevice/TestApp infrastructure
 - ✅ **P1 Backend**: Complete Supabase/Firebase mock integration (T004-T007)
 - ✅ **P2 Component Reliability**: 25x performance gains, evidence-based patterns (T008-T011)
@@ -354,14 +379,18 @@ Each task completion MUST include:
 - ✅ **P4 Analysis**: Systematic failure pattern analysis identifies 6 focused repair tasks (T031-T036)
 
 ### **Constitutional Compliance Progress**:
+
 - **Test Count**: **61/441 failing** (down from 122/441) = **50% reduction in failures**
 - **Test Suites**: **27/35 passing** (77% success rate, up from 26/35)
 - **Infrastructure**: Jest worker stability, TypeScript compilation, performance <60s all achieved
 - **Analysis**: Comprehensive root cause analysis completed for remaining 61 tests
 
 ### **Phase 4 Ready**: T031-T036 systematic repair tasks available for execution
+
 ### **Estimated Impact**: T031-T036 will address all 61 remaining test failures with focused high-impact fixes
+
 ### **Notes**:
+
 - [P] tasks = different files, no dependencies, can run parallel
 - Constitutional validation checkpoints achieved for P0-P3
 - Exit code 0 from `devbox run test` remains the ultimate success criterion
@@ -372,12 +401,14 @@ Each task completion MUST include:
 ## Phase 5: Code Coverage Enhancement (SonarQube Compliance)
 
 ### Coverage Analysis Results
+
 **Current Status**: 48.5% overall coverage (Target: 75%+)
 **Critical Gap**: Multiple 0% coverage files blocking production readiness
 
 ### Coverage Priorities by Impact
 
 #### P5.1: Critical Infrastructure Coverage (0% → 80%+)
+
 **Target Impact**: Unblock production deployment by covering core infrastructure
 
 - [ ] **T051 [CRITICAL] AuthProvider Component Coverage**
@@ -399,6 +430,7 @@ Each task completion MUST include:
   - **Impact**: Application startup reliability
 
 #### P5.2: State Management Coverage (0% → 70%+)
+
 **Target Impact**: Cover reactive state and observable patterns
 
 - [ ] **T054 [HIGH] Legend-State Actions Coverage**
@@ -420,6 +452,7 @@ Each task completion MUST include:
   - **Impact**: State management optimization
 
 #### P5.3: Model Enhancement Coverage (2-28% → 80%+)
+
 **Target Impact**: Critical data models used throughout application
 
 - [ ] **T057 [HIGH] SyncStateRecord Model Coverage**
@@ -435,6 +468,7 @@ Each task completion MUST include:
   - **Impact**: User identity and permissions
 
 #### P5.4: Component Coverage (0% → 60%+)
+
 **Target Impact**: UI component reliability and user experience
 
 - [ ] **T059 [HIGH] AuthScreen Component Coverage**
@@ -456,6 +490,7 @@ Each task completion MUST include:
   - **Impact**: User profile management
 
 #### P5.5: Service Integration Coverage (0% → 70%+)
+
 **Target Impact**: External service reliability
 
 - [ ] **T062 [HIGH] Supabase Client Coverage**
@@ -467,6 +502,7 @@ Each task completion MUST include:
 ### Coverage Implementation Strategy
 
 #### Testing Approach
+
 - **Unit Tests**: Isolated function and class testing with comprehensive mocking
 - **Integration Tests**: Component interactions and data flow validation
 - **Mock Strategy**: Heavy use of existing MockFactoryCollection infrastructure
@@ -474,18 +510,21 @@ Each task completion MUST include:
 - **Error Scenarios**: Comprehensive error handling and edge case coverage
 
 #### Expected Outcomes
+
 - **Current Coverage**: 48.5% overall
 - **Phase 5 Target**: 75%+ overall coverage
 - **SonarQube Compliance**: Address coverage-related quality gate failures
 - **Production Readiness**: Meet enterprise code quality standards
 
 #### Execution Priority
+
 1. **T051-T053**: Critical infrastructure (enables everything else)
 2. **T054-T056**: State management (core functionality)
 3. **T057-T058**: Enhanced models (data integrity)
 4. **T059-T062**: Component and service coverage (user experience)
 
 ### Constitutional Validation P5
+
 **Expected Outcome**: 75%+ code coverage, SonarQube quality gate passing
 **Validation**: Coverage reports show targeted improvement across all priority areas
 **Impact**: Production deployment readiness achieved
@@ -493,7 +532,8 @@ Each task completion MUST include:
 ---
 
 ## Validation Checklist
-*GATE: All items must be checked before marking feature complete*
+
+_GATE: All items must be checked before marking feature complete_
 
 - [ ] All P0 foundation issues resolved (Jest worker stability)
 - [ ] All P1 backend integration tests passing (Supabase/Firebase mocks)

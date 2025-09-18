@@ -1,13 +1,13 @@
 /**
  * Legend State Actions for Exercise Operations
- * 
+ *
  * Defines actions that can be performed on the exercise store,
  * with automatic local-first updates and background cloud sync.
  */
 
-import { exerciseStore, reinitializeSync } from './ExerciseStore';
-import { storageManager } from '../StorageManager';
-import type { UserAccount } from '../../models/UserAccount';
+import { exerciseStore, reinitializeSync } from "./ExerciseStore";
+import { storageManager } from "../StorageManager";
+import type { UserAccount } from "../../models/UserAccount";
 
 /**
  * Exercise Actions Interface
@@ -17,19 +17,22 @@ export interface ExerciseActions {
   addExercise: (name: string) => Promise<void>;
   updateExercise: (id: string, name: string) => Promise<void>;
   deleteExercise: (id: string) => Promise<void>;
-  
+
   // Authentication operations
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signInAnonymously: () => Promise<void>;
   signOut: () => Promise<void>;
-  
+
   // Sync operations
   forceSync: () => Promise<void>;
   clearSyncErrors: () => void;
-  
+
   // Migration operations
-  validateConsistency: () => Promise<{isConsistent: boolean; errors: string[]}>;
+  validateConsistency: () => Promise<{
+    isConsistent: boolean;
+    errors: string[];
+  }>;
   migrateToSupabase: () => Promise<void>;
   switchBackend: (useSupabase: boolean) => void;
 }
@@ -38,15 +41,14 @@ export interface ExerciseActions {
  * Exercise Actions Implementation
  */
 class ExerciseActionsImpl implements ExerciseActions {
-  
   // Exercise operations
   async addExercise(name: string): Promise<void> {
     try {
       exerciseStore.syncState.isSyncing.set(true);
-      
+
       const currentUser = exerciseStore.user.get();
       const exerciseId = `temp-${Date.now()}-${Math.random()}`;
-      
+
       // Optimistic update - add to local store immediately
       exerciseStore.exercises[exerciseId].set({
         id: exerciseId,
@@ -54,16 +56,15 @@ class ExerciseActionsImpl implements ExerciseActions {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         userId: currentUser?.id,
-        syncStatus: 'pending'
+        syncStatus: "pending",
       });
-      
-      exerciseStore.syncState.pendingChanges.set(prev => prev + 1);
+
+      exerciseStore.syncState.pendingChanges.set((prev) => prev + 1);
 
       // Background sync will handle cloud update automatically
       // Legend State sync engine will replace temp ID with real ID from backend
-      
     } catch (error) {
-      this.handleActionError('Failed to add exercise', error);
+      this.handleActionError("Failed to add exercise", error);
     } finally {
       exerciseStore.syncState.isSyncing.set(false);
     }
@@ -72,10 +73,10 @@ class ExerciseActionsImpl implements ExerciseActions {
   async updateExercise(id: string, name: string): Promise<void> {
     try {
       exerciseStore.syncState.isSyncing.set(true);
-      
+
       const existingExercise = exerciseStore.exercises[id].get();
       if (!existingExercise) {
-        throw new Error('Exercise not found');
+        throw new Error("Exercise not found");
       }
 
       // Optimistic update
@@ -83,15 +84,14 @@ class ExerciseActionsImpl implements ExerciseActions {
         ...existingExercise,
         name: name.trim(),
         updatedAt: new Date().toISOString(),
-        syncStatus: 'pending'
+        syncStatus: "pending",
       });
-      
-      exerciseStore.syncState.pendingChanges.set(prev => prev + 1);
+
+      exerciseStore.syncState.pendingChanges.set((prev) => prev + 1);
 
       // Background sync will handle cloud update automatically
-      
     } catch (error) {
-      this.handleActionError('Failed to update exercise', error);
+      this.handleActionError("Failed to update exercise", error);
     } finally {
       exerciseStore.syncState.isSyncing.set(false);
     }
@@ -100,20 +100,19 @@ class ExerciseActionsImpl implements ExerciseActions {
   async deleteExercise(id: string): Promise<void> {
     try {
       exerciseStore.syncState.isSyncing.set(true);
-      
+
       const exercise = exerciseStore.exercises[id].get();
       if (!exercise) {
-        throw new Error('Exercise not found');
+        throw new Error("Exercise not found");
       }
 
       // Optimistic delete - remove from local store immediately
       exerciseStore.exercises[id].delete();
-      exerciseStore.syncState.pendingChanges.set(prev => prev + 1);
+      exerciseStore.syncState.pendingChanges.set((prev) => prev + 1);
 
       // Background sync will handle cloud deletion automatically
-      
     } catch (error) {
-      this.handleActionError('Failed to delete exercise', error);
+      this.handleActionError("Failed to delete exercise", error);
     } finally {
       exerciseStore.syncState.isSyncing.set(false);
     }
@@ -123,21 +122,20 @@ class ExerciseActionsImpl implements ExerciseActions {
   async signIn(email: string, password: string): Promise<void> {
     try {
       exerciseStore.syncState.isSyncing.set(true);
-      
+
       const authBackend = storageManager.getAuthBackend();
       const userAccount = await authBackend.signInWithEmail(email, password);
-      
+
       this.updateUserState(userAccount);
-      
+
       // Reinitialize sync for authenticated user
       reinitializeSync();
-      
+
       if (__DEV__) {
-        console.info('✅ User signed in successfully');
+        console.info("✅ User signed in successfully");
       }
-      
     } catch (error) {
-      this.handleActionError('Sign in failed', error);
+      this.handleActionError("Sign in failed", error);
       throw error; // Re-throw for UI error handling
     } finally {
       exerciseStore.syncState.isSyncing.set(false);
@@ -147,21 +145,20 @@ class ExerciseActionsImpl implements ExerciseActions {
   async signUp(email: string, password: string): Promise<void> {
     try {
       exerciseStore.syncState.isSyncing.set(true);
-      
+
       const authBackend = storageManager.getAuthBackend();
       const userAccount = await authBackend.signUpWithEmail(email, password);
-      
+
       this.updateUserState(userAccount);
-      
+
       // Reinitialize sync for new authenticated user
       reinitializeSync();
-      
+
       if (__DEV__) {
-        console.info('✅ User signed up successfully');
+        console.info("✅ User signed up successfully");
       }
-      
     } catch (error) {
-      this.handleActionError('Sign up failed', error);
+      this.handleActionError("Sign up failed", error);
       throw error; // Re-throw for UI error handling
     } finally {
       exerciseStore.syncState.isSyncing.set(false);
@@ -171,18 +168,17 @@ class ExerciseActionsImpl implements ExerciseActions {
   async signInAnonymously(): Promise<void> {
     try {
       exerciseStore.syncState.isSyncing.set(true);
-      
+
       const authBackend = storageManager.getAuthBackend();
       const userAccount = await authBackend.signInAnonymously();
-      
+
       this.updateUserState(userAccount);
-      
+
       if (__DEV__) {
-        console.info('✅ Anonymous sign in successful');
+        console.info("✅ Anonymous sign in successful");
       }
-      
     } catch (error) {
-      this.handleActionError('Anonymous sign in failed', error);
+      this.handleActionError("Anonymous sign in failed", error);
       throw error; // Re-throw for UI error handling
     } finally {
       exerciseStore.syncState.isSyncing.set(false);
@@ -192,25 +188,24 @@ class ExerciseActionsImpl implements ExerciseActions {
   async signOut(): Promise<void> {
     try {
       exerciseStore.syncState.isSyncing.set(true);
-      
+
       const authBackend = storageManager.getAuthBackend();
       await authBackend.signOut();
-      
+
       // Clear user state
       exerciseStore.user.set(null);
-      
+
       // Clear exercises (they belonged to the signed-out user)
       exerciseStore.exercises.set({});
-      
+
       // Clear sync errors
       this.clearSyncErrors();
-      
+
       if (__DEV__) {
-        console.info('✅ User signed out successfully');
+        console.info("✅ User signed out successfully");
       }
-      
     } catch (error) {
-      this.handleActionError('Sign out failed', error);
+      this.handleActionError("Sign out failed", error);
       throw error; // Re-throw for UI error handling
     } finally {
       exerciseStore.syncState.isSyncing.set(false);
@@ -221,16 +216,15 @@ class ExerciseActionsImpl implements ExerciseActions {
   async forceSync(): Promise<void> {
     try {
       exerciseStore.syncState.isSyncing.set(true);
-      
+
       // Force sync by reinitializing the sync engine
       reinitializeSync();
-      
+
       if (__DEV__) {
-        console.info('🔄 Force sync completed');
+        console.info("🔄 Force sync completed");
       }
-      
     } catch (error) {
-      this.handleActionError('Force sync failed', error);
+      this.handleActionError("Force sync failed", error);
     } finally {
       exerciseStore.syncState.isSyncing.set(false);
     }
@@ -241,14 +235,18 @@ class ExerciseActionsImpl implements ExerciseActions {
   }
 
   // Migration operations
-  async validateConsistency(): Promise<{isConsistent: boolean; errors: string[]}> {
+  async validateConsistency(): Promise<{
+    isConsistent: boolean;
+    errors: string[];
+  }> {
     try {
       return await storageManager.validateDataConsistency();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       return {
         isConsistent: false,
-        errors: [errorMessage]
+        errors: [errorMessage],
       };
     }
   }
@@ -256,24 +254,23 @@ class ExerciseActionsImpl implements ExerciseActions {
   async migrateToSupabase(): Promise<void> {
     try {
       exerciseStore.syncState.isSyncing.set(true);
-      
+
       if (exerciseStore.featureFlags.useSupabaseData.get()) {
-        throw new Error('Already using Supabase backend');
+        throw new Error("Already using Supabase backend");
       }
-      
+
       // Get Firebase and Supabase backends
-      const firebaseStorage = storageManager['firebaseStorage']; // Access private member for migration
-      const supabaseStorage = storageManager['supabaseStorage']; // Access private member for migration
-      
+      const firebaseStorage = storageManager["firebaseStorage"]; // Access private member for migration
+      const supabaseStorage = storageManager["supabaseStorage"]; // Access private member for migration
+
       // Migrate data from Firebase to Supabase
       await storageManager.migrateUserData(firebaseStorage, supabaseStorage);
-      
+
       if (__DEV__) {
-        console.info('✅ Migration to Supabase completed');
+        console.info("✅ Migration to Supabase completed");
       }
-      
     } catch (error) {
-      this.handleActionError('Migration to Supabase failed', error);
+      this.handleActionError("Migration to Supabase failed", error);
       throw error; // Re-throw for UI error handling
     } finally {
       exerciseStore.syncState.isSyncing.set(false);
@@ -281,26 +278,27 @@ class ExerciseActionsImpl implements ExerciseActions {
   }
 
   switchBackend(useSupabase: boolean): void {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('Backend switching is not allowed in production');
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("Backend switching is not allowed in production");
     }
 
     try {
       // Switch backend in storage manager
       storageManager.switchBackend(useSupabase);
-      
+
       // Update feature flag in store
       exerciseStore.featureFlags.useSupabaseData.set(useSupabase);
-      
+
       // Reinitialize sync with new backend
       reinitializeSync();
-      
+
       if (__DEV__) {
-        console.info(`🔄 Switched to ${useSupabase ? 'Supabase' : 'Firebase'} backend`);
+        console.info(
+          `🔄 Switched to ${useSupabase ? "Supabase" : "Firebase"} backend`,
+        );
       }
-      
     } catch (error) {
-      this.handleActionError('Backend switch failed', error);
+      this.handleActionError("Backend switch failed", error);
       throw error;
     }
   }
@@ -311,9 +309,9 @@ class ExerciseActionsImpl implements ExerciseActions {
       id: userAccount.id,
       email: userAccount.email,
       isAnonymous: userAccount.isAnonymous,
-      isAuthenticated: !userAccount.isAnonymous
+      isAuthenticated: !userAccount.isAnonymous,
     });
-    
+
     // Update last sync time
     exerciseStore.syncState.lastSyncAt.set(new Date().toISOString());
   }
@@ -321,12 +319,12 @@ class ExerciseActionsImpl implements ExerciseActions {
   private handleActionError(message: string, error: unknown): void {
     const errorMessage = error instanceof Error ? error.message : String(error);
     const fullMessage = `${message}: ${errorMessage}`;
-    
+
     // Add error to sync state
-    exerciseStore.syncState.errors.set(prev => [...prev, fullMessage]);
-    
+    exerciseStore.syncState.errors.set((prev) => [...prev, fullMessage]);
+
     if (__DEV__) {
-      console.error('❌', fullMessage);
+      console.error("❌", fullMessage);
     }
   }
 }

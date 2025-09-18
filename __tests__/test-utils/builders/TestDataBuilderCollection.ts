@@ -1,13 +1,17 @@
 /**
  * Test Data Builder Collection Implementation
- * 
+ *
  * Comprehensive test data builders for creating complex test scenarios
  * using the builder pattern with fluent API for maximum flexibility.
  */
 
-import { v4 as uuidv4 } from 'uuid';
-import { Exercise } from '../../../lib/models/Exercise';
-import { UserAccount, createAnonymousUser, createAuthenticatedUser } from '../../../lib/models/UserAccount';
+import { v4 as uuidv4 } from "uuid";
+import { Exercise } from "../../../lib/models/Exercise";
+import {
+  UserAccount,
+  createAnonymousUser,
+  createAuthenticatedUser,
+} from "../../../lib/models/UserAccount";
 import type {
   TestDataBuilderCollection,
   ScenarioBuilder,
@@ -18,8 +22,8 @@ import type {
   TestDeviceConfig,
   SyncStatus,
   SyncState,
-  SyncOperationType
-} from '../../../specs/001-we-are-actually/contracts/test-infrastructure';
+  SyncOperationType,
+} from "../../../specs/001-we-are-actually/contracts/test-infrastructure";
 
 /**
  * Exercise Builder Implementation - Fluent API for exercise creation
@@ -40,14 +44,17 @@ export class ExerciseBuilderImpl implements ExerciseBuilder {
 
   withSyncStatus(status: SyncStatus): ExerciseBuilder {
     // Store sync status as metadata for testing
-    (this.exercise as Exercise & { syncStatus: SyncStatus }).syncStatus = status;
+    (this.exercise as Exercise & { syncStatus: SyncStatus }).syncStatus =
+      status;
     return this;
   }
 
   withTimestamps(createdAt: Date, updatedAt?: Date): ExerciseBuilder {
     this.exercise.created_at = createdAt.toISOString();
     // Exercise model has updated_at field for sync tracking
-    this.exercise.updated_at = updatedAt ? updatedAt.toISOString() : createdAt.toISOString();
+    this.exercise.updated_at = updatedAt
+      ? updatedAt.toISOString()
+      : createdAt.toISOString();
     return this;
   }
 
@@ -61,11 +68,11 @@ export class ExerciseBuilderImpl implements ExerciseBuilder {
     const now = new Date().toISOString();
     const defaultExercise: Exercise = {
       id: this.exercise.id || uuidv4(),
-      name: this.exercise.name || 'Default Exercise',
-      user_id: this.exercise.user_id || 'default-user',
+      name: this.exercise.name || "Default Exercise",
+      user_id: this.exercise.user_id || "default-user",
       created_at: this.exercise.created_at || now,
       updated_at: this.exercise.updated_at || now,
-      deleted: this.exercise.deleted || false
+      deleted: this.exercise.deleted || false,
     };
 
     return { ...defaultExercise, ...this.exercise } as Exercise;
@@ -105,7 +112,7 @@ export class UserBuilderImpl implements UserBuilder {
   build(): UserAccount {
     // Create base user based on whether it's anonymous or authenticated
     let baseUser: UserAccount;
-    
+
     if (this.user.isAnonymous === false && this.user.email) {
       baseUser = createAuthenticatedUser(this.user.email);
     } else {
@@ -126,7 +133,7 @@ export class SyncDataBuilderImpl implements SyncDataBuilder {
 
   forExercise(exercise: Exercise): SyncDataBuilder {
     this.syncState.recordId = exercise.id;
-    this.syncState.recordType = 'exercise';
+    this.syncState.recordType = "exercise";
     return this;
   }
 
@@ -154,11 +161,11 @@ export class SyncDataBuilderImpl implements SyncDataBuilder {
     // Provide defaults for required fields
     const defaultSyncState: SyncState = {
       recordId: this.syncState.recordId || uuidv4(),
-      recordType: this.syncState.recordType || 'exercise',
-      operation: this.syncState.operation || 'create',
-      status: this.syncState.status || 'pending',
+      recordType: this.syncState.recordType || "exercise",
+      operation: this.syncState.operation || "create",
+      status: this.syncState.status || "pending",
       attempts: this.syncState.attempts || 0,
-      pendingSince: new Date()
+      pendingSince: new Date(),
     };
 
     return { ...defaultSyncState, ...this.syncState };
@@ -173,50 +180,53 @@ export class ScenarioBuilderImpl implements ScenarioBuilder {
     const anonymousUser = new UserBuilderImpl().asAnonymous().build();
     const exercises = [
       new ExerciseBuilderImpl()
-        .withName('Push-ups')
+        .withName("Push-ups")
         .withUserId(anonymousUser.id)
         .build(),
       new ExerciseBuilderImpl()
-        .withName('Squats')
+        .withName("Squats")
         .withUserId(anonymousUser.id)
-        .build()
+        .build(),
     ];
 
     return {
-      name: 'Anonymous User Scenario',
-      description: 'Test scenario with anonymous user performing local-only operations',
-      devices: [{
-        defaultNetworkStatus: true,
-        defaultAuthState: {
-          authenticated: false,
-          currentUser: anonymousUser
+      name: "Anonymous User Scenario",
+      description:
+        "Test scenario with anonymous user performing local-only operations",
+      devices: [
+        {
+          defaultNetworkStatus: true,
+          defaultAuthState: {
+            authenticated: false,
+            currentUser: anonymousUser,
+          },
+          mockServices: {
+            firebase: { auth: true, firestore: false, config: {} },
+            supabase: { auth: false, database: false, config: {} },
+            reactNative: { asyncStorage: true, navigation: true, config: {} },
+          },
+          testDataConfig: {
+            deterministic: true,
+            prePopulatedData: {
+              exercises,
+              users: [anonymousUser],
+            },
+          },
         },
-        mockServices: {
-          firebase: { auth: true, firestore: false, config: {} },
-          supabase: { auth: false, database: false, config: {} },
-          reactNative: { asyncStorage: true, navigation: true, config: {} }
-        },
-        testDataConfig: {
-          deterministic: true,
-          prePopulatedData: {
-            exercises,
-            users: [anonymousUser]
-          }
-        }
-      }],
+      ],
       initialData: {
         exercises,
-        users: [anonymousUser]
+        users: [anonymousUser],
       },
       steps: [
         {
-          name: 'Initialize Device',
-          description: 'Set up anonymous device with local storage',
-          deviceName: 'Device-1',
-          action: { type: 'addExercise', parameters: { name: 'Burpees' } },
-          expectedResult: { exerciseCount: 3, syncStatus: 'local-only' }
-        }
-      ]
+          name: "Initialize Device",
+          description: "Set up anonymous device with local storage",
+          deviceName: "Device-1",
+          action: { type: "addExercise", parameters: { name: "Burpees" } },
+          expectedResult: { exerciseCount: 3, syncStatus: "local-only" },
+        },
+      ],
     };
   }
 
@@ -228,198 +238,225 @@ export class ScenarioBuilderImpl implements ScenarioBuilder {
 
     const exercises = [
       new ExerciseBuilderImpl()
-        .withName('Bench Press')
+        .withName("Bench Press")
         .withUserId(authenticatedUser.id)
-        .withSyncStatus('synced')
+        .withSyncStatus("synced")
         .build(),
       new ExerciseBuilderImpl()
-        .withName('Deadlift')
+        .withName("Deadlift")
         .withUserId(authenticatedUser.id)
-        .withSyncStatus('pending')
-        .build()
+        .withSyncStatus("pending")
+        .build(),
     ];
 
     return {
-      name: 'Authenticated User Scenario',
-      description: 'Test scenario with authenticated user and cloud sync capabilities',
-      devices: [{
-        defaultNetworkStatus: true,
-        defaultAuthState: {
-          authenticated: true,
-          currentUser: authenticatedUser
+      name: "Authenticated User Scenario",
+      description:
+        "Test scenario with authenticated user and cloud sync capabilities",
+      devices: [
+        {
+          defaultNetworkStatus: true,
+          defaultAuthState: {
+            authenticated: true,
+            currentUser: authenticatedUser,
+          },
+          mockServices: {
+            firebase: { auth: true, firestore: true, config: {} },
+            supabase: { auth: true, database: true, config: {} },
+            reactNative: { asyncStorage: true, navigation: true, config: {} },
+          },
+          testDataConfig: {
+            deterministic: true,
+            prePopulatedData: {
+              exercises,
+              users: [authenticatedUser],
+            },
+          },
         },
-        mockServices: {
-          firebase: { auth: true, firestore: true, config: {} },
-          supabase: { auth: true, database: true, config: {} },
-          reactNative: { asyncStorage: true, navigation: true, config: {} }
-        },
-        testDataConfig: {
-          deterministic: true,
-          prePopulatedData: {
-            exercises,
-            users: [authenticatedUser]
-          }
-        }
-      }],
+      ],
       initialData: {
         exercises,
-        users: [authenticatedUser]
+        users: [authenticatedUser],
       },
       steps: [
         {
-          name: 'Sign In',
-          description: 'Authenticate user and verify session',
-          deviceName: 'Device-1',
-          action: { type: 'signIn', parameters: { email, password: 'testpass123' } },
-          expectedResult: { authenticated: true, user: authenticatedUser }
+          name: "Sign In",
+          description: "Authenticate user and verify session",
+          deviceName: "Device-1",
+          action: {
+            type: "signIn",
+            parameters: { email, password: "testpass123" },
+          },
+          expectedResult: { authenticated: true, user: authenticatedUser },
         },
         {
-          name: 'Add Exercise',
-          description: 'Create new exercise and verify sync',
-          deviceName: 'Device-1',
-          action: { type: 'addExercise', parameters: { name: 'Overhead Press' } },
-          expectedResult: { exerciseCount: 3, syncStatus: 'synced' }
-        }
-      ]
+          name: "Add Exercise",
+          description: "Create new exercise and verify sync",
+          deviceName: "Device-1",
+          action: {
+            type: "addExercise",
+            parameters: { name: "Overhead Press" },
+          },
+          expectedResult: { exerciseCount: 3, syncStatus: "synced" },
+        },
+      ],
     };
   }
 
-  multiDeviceSyncScenario(deviceCount: number, userEmail: string): TestScenario {
+  multiDeviceSyncScenario(
+    deviceCount: number,
+    userEmail: string,
+  ): TestScenario {
     const user = new UserBuilderImpl()
       .withEmail(userEmail)
       .withTimestamps(new Date(Date.now() - 48 * 60 * 60 * 1000))
       .build();
 
-    const devices: TestDeviceConfig[] = Array.from({ length: deviceCount }, () => ({
-      defaultNetworkStatus: true,
-      defaultAuthState: {
-        authenticated: true,
-        currentUser: user
-      },
-      mockServices: {
-        firebase: { auth: true, firestore: true, config: {} },
-        supabase: { auth: true, database: true, config: {} },
-        reactNative: { asyncStorage: true, navigation: true, config: {} }
-      },
-      testDataConfig: {
-        deterministic: true,
-        randomSeed: 12345,
-        prePopulatedData: {
-          exercises: [],
-          users: [user]
-        }
-      }
-    }));
+    const devices: TestDeviceConfig[] = Array.from(
+      { length: deviceCount },
+      () => ({
+        defaultNetworkStatus: true,
+        defaultAuthState: {
+          authenticated: true,
+          currentUser: user,
+        },
+        mockServices: {
+          firebase: { auth: true, firestore: true, config: {} },
+          supabase: { auth: true, database: true, config: {} },
+          reactNative: { asyncStorage: true, navigation: true, config: {} },
+        },
+        testDataConfig: {
+          deterministic: true,
+          randomSeed: 12345,
+          prePopulatedData: {
+            exercises: [],
+            users: [user],
+          },
+        },
+      }),
+    );
 
     return {
-      name: 'Multi-Device Sync Scenario',
+      name: "Multi-Device Sync Scenario",
       description: `Test cross-device synchronization with ${deviceCount} devices`,
       devices,
       initialData: {
         exercises: [],
-        users: [user]
+        users: [user],
       },
       steps: [
         {
-          name: 'Sign In All Devices',
-          description: 'Authenticate the same user on all devices',
-          deviceName: 'Device-A',
-          action: { type: 'signIn', parameters: { email: userEmail, password: 'testpass123' } },
-          expectedResult: { authenticated: true, deviceCount }
-        },
-        {
-          name: 'Create Exercise on Device A',
-          description: 'Add exercise and verify sync to other devices',
-          deviceName: 'Device-A',
-          action: { type: 'addExercise', parameters: { name: 'Pull-ups' } },
-          expectedResult: { exerciseCount: 1, syncedToAllDevices: true }
-        },
-        {
-          name: 'Modify Exercise on Device B',
-          description: 'Edit exercise and verify sync back to Device A',
-          deviceName: 'Device-B',
-          action: { 
-            type: 'updateExercise', 
-            parameters: { name: 'Assisted Pull-ups' } 
+          name: "Sign In All Devices",
+          description: "Authenticate the same user on all devices",
+          deviceName: "Device-A",
+          action: {
+            type: "signIn",
+            parameters: { email: userEmail, password: "testpass123" },
           },
-          expectedResult: { exerciseUpdated: true, syncedToAllDevices: true }
-        }
-      ]
+          expectedResult: { authenticated: true, deviceCount },
+        },
+        {
+          name: "Create Exercise on Device A",
+          description: "Add exercise and verify sync to other devices",
+          deviceName: "Device-A",
+          action: { type: "addExercise", parameters: { name: "Pull-ups" } },
+          expectedResult: { exerciseCount: 1, syncedToAllDevices: true },
+        },
+        {
+          name: "Modify Exercise on Device B",
+          description: "Edit exercise and verify sync back to Device A",
+          deviceName: "Device-B",
+          action: {
+            type: "updateExercise",
+            parameters: { name: "Assisted Pull-ups" },
+          },
+          expectedResult: { exerciseUpdated: true, syncedToAllDevices: true },
+        },
+      ],
     };
   }
 
   offlineToOnlineScenario(offlineActionsCount: number): TestScenario {
     const user = new UserBuilderImpl()
-      .withEmail('offline.user@example.com')
+      .withEmail("offline.user@example.com")
       .build();
 
     // Note: Offline exercises are generated on-demand during test execution for better memory management
 
     return {
-      name: 'Offline to Online Scenario',
-      description: 'Test offline operation queue and sync when coming back online',
-      devices: [{
-        defaultNetworkStatus: false, // Start offline
-        defaultAuthState: {
-          authenticated: true,
-          currentUser: user
+      name: "Offline to Online Scenario",
+      description:
+        "Test offline operation queue and sync when coming back online",
+      devices: [
+        {
+          defaultNetworkStatus: false, // Start offline
+          defaultAuthState: {
+            authenticated: true,
+            currentUser: user,
+          },
+          mockServices: {
+            firebase: { auth: true, firestore: true, config: {} },
+            supabase: { auth: true, database: true, config: {} },
+            reactNative: { asyncStorage: true, navigation: true, config: {} },
+          },
+          testDataConfig: {
+            deterministic: true,
+            prePopulatedData: {
+              exercises: [],
+              users: [user],
+            },
+          },
         },
-        mockServices: {
-          firebase: { auth: true, firestore: true, config: {} },
-          supabase: { auth: true, database: true, config: {} },
-          reactNative: { asyncStorage: true, navigation: true, config: {} }
-        },
-        testDataConfig: {
-          deterministic: true,
-          prePopulatedData: {
-            exercises: [],
-            users: [user]
-          }
-        }
-      }],
+      ],
       initialData: {
         exercises: [],
-        users: [user]
+        users: [user],
       },
       steps: [
         {
-          name: 'Perform Offline Actions',
+          name: "Perform Offline Actions",
           description: `Create ${offlineActionsCount} exercises while offline`,
-          deviceName: 'OfflineDevice',
-          action: { type: 'addExercise', parameters: { name: 'Offline Exercise' } },
-          expectedResult: { 
-            exerciseCount: offlineActionsCount, 
-            syncStatus: 'queued',
-            networkStatus: false 
-          }
+          deviceName: "OfflineDevice",
+          action: {
+            type: "addExercise",
+            parameters: { name: "Offline Exercise" },
+          },
+          expectedResult: {
+            exerciseCount: offlineActionsCount,
+            syncStatus: "queued",
+            networkStatus: false,
+          },
         },
         {
-          name: 'Go Online',
-          description: 'Enable network and trigger sync of queued operations',
-          deviceName: 'OfflineDevice',
-          action: { type: 'setNetworkStatus', parameters: { online: true } },
-          expectedResult: { 
-            networkStatus: true, 
-            pendingSyncOperations: offlineActionsCount 
-          }
+          name: "Go Online",
+          description: "Enable network and trigger sync of queued operations",
+          deviceName: "OfflineDevice",
+          action: { type: "setNetworkStatus", parameters: { online: true } },
+          expectedResult: {
+            networkStatus: true,
+            pendingSyncOperations: offlineActionsCount,
+          },
         },
         {
-          name: 'Wait for Sync',
-          description: 'Wait for all queued operations to sync',
-          deviceName: 'OfflineDevice',
-          action: { type: 'waitForSync', parameters: {} },
-          expectedResult: { 
-            allSynced: true, 
-            pendingSyncOperations: 0 
-          }
-        }
-      ]
+          name: "Wait for Sync",
+          description: "Wait for all queued operations to sync",
+          deviceName: "OfflineDevice",
+          action: { type: "waitForSync", parameters: {} },
+          expectedResult: {
+            allSynced: true,
+            pendingSyncOperations: 0,
+          },
+        },
+      ],
     };
   }
 
-  performanceTestScenario(exerciseCount: number, deviceCount: number): TestScenario {
+  performanceTestScenario(
+    exerciseCount: number,
+    deviceCount: number,
+  ): TestScenario {
     const user = new UserBuilderImpl()
-      .withEmail('performance.user@example.com')
+      .withEmail("performance.user@example.com")
       .build();
 
     // Create large dataset for performance testing
@@ -429,63 +466,77 @@ export class ScenarioBuilderImpl implements ScenarioBuilder {
         .withUserId(user.id)
         .withTimestamps(
           new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000),
-          new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
+          new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
         )
-        .build()
+        .build(),
     );
 
-    const devices: TestDeviceConfig[] = Array.from({ length: deviceCount }, (_, i) => ({
-      defaultNetworkStatus: true,
-      defaultAuthState: {
-        authenticated: true,
-        currentUser: user
-      },
-      mockServices: {
-        firebase: { auth: true, firestore: true, config: { enablePersistence: true } },
-        supabase: { auth: true, database: true, config: { enableRealtime: true } },
-        reactNative: { asyncStorage: true, navigation: true, config: {} }
-      },
-      testDataConfig: {
-        deterministic: false, // Use random data for performance testing
-        prePopulatedData: {
-          exercises: i === 0 ? exercises : [], // Only populate first device
-          users: [user]
-        }
-      }
-    }));
+    const devices: TestDeviceConfig[] = Array.from(
+      { length: deviceCount },
+      (_, i) => ({
+        defaultNetworkStatus: true,
+        defaultAuthState: {
+          authenticated: true,
+          currentUser: user,
+        },
+        mockServices: {
+          firebase: {
+            auth: true,
+            firestore: true,
+            config: { enablePersistence: true },
+          },
+          supabase: {
+            auth: true,
+            database: true,
+            config: { enableRealtime: true },
+          },
+          reactNative: { asyncStorage: true, navigation: true, config: {} },
+        },
+        testDataConfig: {
+          deterministic: false, // Use random data for performance testing
+          prePopulatedData: {
+            exercises: i === 0 ? exercises : [], // Only populate first device
+            users: [user],
+          },
+        },
+      }),
+    );
 
     return {
-      name: 'Performance Test Scenario',
+      name: "Performance Test Scenario",
       description: `Performance test with ${exerciseCount} exercises across ${deviceCount} devices`,
       devices,
       initialData: {
         exercises,
-        users: [user]
+        users: [user],
       },
       steps: [
         {
-          name: 'Load Large Dataset',
+          name: "Load Large Dataset",
           description: `Load ${exerciseCount} exercises and measure performance`,
-          deviceName: 'PerfDevice-1',
-          action: { type: 'addExercise', parameters: { name: 'Performance Test Exercise' } },
-          expectedResult: { 
-            exerciseCount, 
-            loadTimeMs: '<100',
-            memoryUsageMB: '<50'
-          }
+          deviceName: "PerfDevice-1",
+          action: {
+            type: "addExercise",
+            parameters: { name: "Performance Test Exercise" },
+          },
+          expectedResult: {
+            exerciseCount,
+            loadTimeMs: "<100",
+            memoryUsageMB: "<50",
+          },
         },
         {
-          name: 'Sync to All Devices',
-          description: 'Measure sync performance across multiple devices',
-          deviceName: 'PerfDevice-1',
-          action: { type: 'waitForSync', parameters: {} },
-          expectedResult: { 
+          name: "Sync to All Devices",
+          description: "Measure sync performance across multiple devices",
+          deviceName: "PerfDevice-1",
+          action: { type: "waitForSync", parameters: {} },
+          expectedResult: {
             allDevicesSynced: true,
-            syncTimeMs: '<5000',
-            consistencyCheck: 'passed'
-          }
-        }
-      ]
+            syncTimeMs: "<5000",
+            consistencyCheck: "passed",
+          },
+        },
+      ],
     };
   }
 }
@@ -493,7 +544,9 @@ export class ScenarioBuilderImpl implements ScenarioBuilder {
 /**
  * Main Test Data Builder Collection Implementation
  */
-export class TestDataBuilderCollectionImpl implements TestDataBuilderCollection {
+export class TestDataBuilderCollectionImpl
+  implements TestDataBuilderCollection
+{
   readonly scenarioBuilder: ScenarioBuilder;
   readonly exerciseBuilder: ExerciseBuilder;
   readonly userBuilder: UserBuilder;

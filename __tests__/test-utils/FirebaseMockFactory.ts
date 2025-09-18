@@ -1,6 +1,6 @@
 /**
  * Firebase Mock Factory
- * 
+ *
  * Provides standardized Firebase service mocking with parallel behavior to Supabase mocks.
  * Ensures consistent authentication state management and error handling across backends.
  */
@@ -23,7 +23,8 @@ interface FirebaseAuthResponse {
 export class FirebaseMockFactory {
   private static currentUser: FirebaseUser | null = null;
   private static userCounter = 0;
-  private static authStateListeners: ((user: FirebaseUser | null) => void)[] = [];
+  private static authStateListeners: ((user: FirebaseUser | null) => void)[] =
+    [];
 
   static reset(): void {
     this.currentUser = null;
@@ -35,8 +36,8 @@ export class FirebaseMockFactory {
     const now = new Date().toISOString();
     // Use consistent IDs with other test systems for cross-backend compatibility
     return {
-      uid: isAnonymous ? 'test-anon-uid' : 'test-uid',
-      email: isAnonymous ? undefined : email || 'test@example.com',
+      uid: isAnonymous ? "test-anon-uid" : "test-uid",
+      email: isAnonymous ? undefined : email || "test@example.com",
       isAnonymous,
       metadata: {
         creationTime: now,
@@ -46,11 +47,11 @@ export class FirebaseMockFactory {
   }
 
   static notifyAuthStateChange(user: FirebaseUser | null): void {
-    this.authStateListeners.forEach(listener => {
+    this.authStateListeners.forEach((listener) => {
       try {
         listener(user);
       } catch (error) {
-        console.error('Firebase Auth State Listener Error:', error);
+        console.error("Firebase Auth State Listener Error:", error);
       }
     });
   }
@@ -60,18 +61,20 @@ export class FirebaseMockFactory {
    */
   static createAuthMock() {
     return {
-      onAuthStateChanged: jest.fn((callback: (user: FirebaseUser | null) => void) => {
-        this.authStateListeners.push(callback);
-        // Immediately call with current user
-        callback(this.currentUser);
-        // Return unsubscribe function
-        return jest.fn(() => {
-          const index = this.authStateListeners.indexOf(callback);
-          if (index > -1) {
-            this.authStateListeners.splice(index, 1);
-          }
-        });
-      }),
+      onAuthStateChanged: jest.fn(
+        (callback: (user: FirebaseUser | null) => void) => {
+          this.authStateListeners.push(callback);
+          // Immediately call with current user
+          callback(this.currentUser);
+          // Return unsubscribe function
+          return jest.fn(() => {
+            const index = this.authStateListeners.indexOf(callback);
+            if (index > -1) {
+              this.authStateListeners.splice(index, 1);
+            }
+          });
+        },
+      ),
 
       signInAnonymously: jest.fn((): Promise<FirebaseAuthResponse> => {
         const user = this.createMockUser(undefined, true);
@@ -80,29 +83,35 @@ export class FirebaseMockFactory {
         return Promise.resolve({ user });
       }),
 
-      createUserWithEmailAndPassword: jest.fn((email: string, password: string): Promise<FirebaseAuthResponse> => {
-        // Validate password strength
-        if (password.length < 6) {
-          return Promise.reject(new Error('Password should be at least 6 characters'));
-        }
-        
-        const user = this.createMockUser(email, false);
-        this.currentUser = user;
-        this.notifyAuthStateChange(user);
-        return Promise.resolve({ user });
-      }),
+      createUserWithEmailAndPassword: jest.fn(
+        (email: string, password: string): Promise<FirebaseAuthResponse> => {
+          // Validate password strength
+          if (password.length < 6) {
+            return Promise.reject(
+              new Error("Password should be at least 6 characters"),
+            );
+          }
 
-      signInWithEmailAndPassword: jest.fn((email: string, password: string): Promise<FirebaseAuthResponse> => {
-        // Simulate failed auth for wrong credentials
-        if (email === 'wrong@example.com' || password === 'wrongpassword') {
-          return Promise.reject(new Error('Invalid login credentials'));
-        }
-        
-        const user = this.createMockUser(email, false);
-        this.currentUser = user;
-        this.notifyAuthStateChange(user);
-        return Promise.resolve({ user });
-      }),
+          const user = this.createMockUser(email, false);
+          this.currentUser = user;
+          this.notifyAuthStateChange(user);
+          return Promise.resolve({ user });
+        },
+      ),
+
+      signInWithEmailAndPassword: jest.fn(
+        (email: string, password: string): Promise<FirebaseAuthResponse> => {
+          // Simulate failed auth for wrong credentials
+          if (email === "wrong@example.com" || password === "wrongpassword") {
+            return Promise.reject(new Error("Invalid login credentials"));
+          }
+
+          const user = this.createMockUser(email, false);
+          this.currentUser = user;
+          this.notifyAuthStateChange(user);
+          return Promise.resolve({ user });
+        },
+      ),
 
       signOut: jest.fn((): Promise<void> => {
         this.currentUser = null;
@@ -123,11 +132,13 @@ export class FirebaseMockFactory {
    */
   static createFirestoreMock(): unknown {
     const mockDoc = {
-      get: jest.fn(() => Promise.resolve({
-        exists: true,
-        data: jest.fn(() => ({ name: 'Test Exercise' })),
-        id: `doc-${this.userCounter}`,
-      })),
+      get: jest.fn(() =>
+        Promise.resolve({
+          exists: true,
+          data: jest.fn(() => ({ name: "Test Exercise" })),
+          id: `doc-${this.userCounter}`,
+        }),
+      ),
       set: jest.fn(() => Promise.resolve()),
       update: jest.fn(() => Promise.resolve()),
       delete: jest.fn(() => Promise.resolve()),
@@ -136,7 +147,7 @@ export class FirebaseMockFactory {
         setTimeout(() => {
           callback({
             exists: true,
-            data: () => ({ name: 'Test Exercise' }),
+            data: () => ({ name: "Test Exercise" }),
             id: `doc-${this.userCounter}`,
           });
         }, 0);
@@ -150,11 +161,13 @@ export class FirebaseMockFactory {
       where: jest.fn(() => mockCollection),
       orderBy: jest.fn(() => mockCollection),
       limit: jest.fn(() => mockCollection),
-      get: jest.fn(() => Promise.resolve({
-        docs: [],
-        forEach: jest.fn(),
-        size: 0,
-      })),
+      get: jest.fn(() =>
+        Promise.resolve({
+          docs: [],
+          forEach: jest.fn(),
+          size: 0,
+        }),
+      ),
       onSnapshot: jest.fn((callback) => {
         // Simulate immediate callback with empty query result
         setTimeout(() => {
@@ -183,10 +196,10 @@ export class FirebaseMockFactory {
    */
   static createAppMock() {
     return {
-      name: 'test-firebase-app',
+      name: "test-firebase-app",
       options: {
-        apiKey: 'test-api-key',
-        projectId: 'test-project',
+        apiKey: "test-api-key",
+        projectId: "test-project",
       },
       auth: this.createAuthMock,
       firestore: this.createFirestoreMock,
@@ -198,17 +211,17 @@ export class FirebaseMockFactory {
    */
   static getReactNativeFirebaseMock() {
     const authMock = this.createAuthMock();
-    
+
     // React Native Firebase structure is slightly different
     return {
       __esModule: true,
       default: () => authMock,
       FirebaseAuthTypes: {
         AuthErrorCode: {
-          INVALID_EMAIL: 'auth/invalid-email',
-          USER_NOT_FOUND: 'auth/user-not-found',
-          WRONG_PASSWORD: 'auth/wrong-password',
-          WEAK_PASSWORD: 'auth/weak-password',
+          INVALID_EMAIL: "auth/invalid-email",
+          USER_NOT_FOUND: "auth/user-not-found",
+          WRONG_PASSWORD: "auth/wrong-password",
+          WEAK_PASSWORD: "auth/weak-password",
         },
       },
     };
