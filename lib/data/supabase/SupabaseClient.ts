@@ -14,9 +14,7 @@ export class SupabaseClient {
   private client: BaseSupabaseClient<Database> | null = null;
 
   private getClient(): BaseSupabaseClient<Database> {
-    if (!this.client) {
-      this.client = this.initializeClient();
-    }
+    this.client ??= this.initializeClient();
     return this.client;
   }
 
@@ -26,11 +24,7 @@ export class SupabaseClient {
       return this.createMockClient();
     }
 
-    try {
-      return this.createValidatedClient();
-    } catch (error) {
-      throw error;
-    }
+    return this.createValidatedClient();
   }
 
   private createValidatedClient(): BaseSupabaseClient<Database> {
