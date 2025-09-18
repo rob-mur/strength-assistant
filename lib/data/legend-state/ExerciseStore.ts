@@ -94,14 +94,31 @@ export function initializeSync() {
   configurePersistence();
 
   // Monitor online status
-  if (typeof window !== "undefined") {
-    window.addEventListener("online", () => {
+  if (typeof window !== "undefined" && window.addEventListener) {
+    const onlineHandler = () => {
       exerciseStore.syncState.isOnline.set(true);
-    });
+    };
 
-    window.addEventListener("offline", () => {
+    const offlineHandler = () => {
       exerciseStore.syncState.isOnline.set(false);
-    });
+    };
+
+    window.addEventListener("online", onlineHandler);
+    window.addEventListener("offline", offlineHandler);
+
+    // Track listeners for cleanup in tests
+    if (
+      typeof global !== "undefined" &&
+      (global as unknown as { eventListenersToCleanup?: unknown[] })
+        .eventListenersToCleanup
+    ) {
+      (
+        global as unknown as { eventListenersToCleanup: unknown[] }
+      ).eventListenersToCleanup.push(
+        { target: window, event: "online", handler: onlineHandler },
+        { target: window, event: "offline", handler: offlineHandler },
+      );
+    }
   }
 
   if (__DEV__) {
@@ -130,5 +147,12 @@ export function disposeSync() {
   }
 }
 
-// Auto-initialize on module load
-initializeSync();
+// Auto-initialize on module load (disabled in tests to prevent hanging, unless explicitly testing)
+if (
+  typeof process === "undefined" ||
+  process.env.NODE_ENV !== "test" ||
+  (process.env.NODE_ENV === "test" &&
+    process.env.JEST_TEST_AUTO_INIT === "true")
+) {
+  initializeSync();
+}

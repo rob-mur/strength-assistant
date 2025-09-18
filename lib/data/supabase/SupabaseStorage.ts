@@ -75,18 +75,21 @@ export interface StorageBackend {
 }
 
 export class SupabaseStorage implements StorageBackend {
-  private readonly client: SupabaseClient;
+  private client: SupabaseClient | null = null;
   private currentUser: UserAccount | null = null;
 
-  constructor() {
-    const config = getSupabaseEnvConfig();
-    this.client = createClient(getSupabaseUrl(), config.anonKey, {
-      auth: {
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true,
-      },
-    });
+  private getClient(): SupabaseClient {
+    if (!this.client) {
+      const config = getSupabaseEnvConfig();
+      this.client = createClient(getSupabaseUrl(), config.anonKey, {
+        auth: {
+          autoRefreshToken: true,
+          persistSession: true,
+          detectSessionInUrl: true,
+        },
+      });
+    }
+    return this.client;
   }
   /**
    * Call this after construction to initialize the session asynchronously.
@@ -110,7 +113,7 @@ export class SupabaseStorage implements StorageBackend {
     const newExercise = createExerciseRecord(input);
     validateExerciseRecord(newExercise);
 
-    const { data, error } = await this.client
+    const { data, error } = await this.getClient()
       .from("exercises")
       .insert(exerciseToDb(newExercise))
       .select()
@@ -124,7 +127,7 @@ export class SupabaseStorage implements StorageBackend {
   }
 
   async getExercises(userId?: string): Promise<ExerciseRecord[]> {
-    let query = this.client.from("exercises").select("*");
+    let query = this.getClient().from("exercises").select("*");
 
     if (userId) {
       query = query.eq("user_id", userId);
@@ -149,7 +152,7 @@ export class SupabaseStorage implements StorageBackend {
     updates: Partial<Pick<ExerciseRecord, "name">>,
   ): Promise<ExerciseRecord> {
     // First get the existing exercise
-    const { data: existingData, error: fetchError } = await this.client
+    const { data: existingData, error: fetchError } = await this.getClient()
       .from("exercises")
       .select("*")
       .eq("id", id)
@@ -165,7 +168,7 @@ export class SupabaseStorage implements StorageBackend {
       updates as ExerciseRecordUpdate,
     );
 
-    const { data, error } = await this.client
+    const { data, error } = await this.getClient()
       .from("exercises")
       .update(exerciseToDb(updated))
       .eq("id", id)
@@ -181,7 +184,7 @@ export class SupabaseStorage implements StorageBackend {
 
   async deleteExercise(id: string): Promise<void> {
     // Check if exercise exists
-    const { data: existingData, error: fetchError } = await this.client
+    const { data: existingData, error: fetchError } = await this.getClient()
       .from("exercises")
       .select("id")
       .eq("id", id)
@@ -191,7 +194,10 @@ export class SupabaseStorage implements StorageBackend {
       throw new Error("Exercise not found");
     }
 
-    const { error } = await this.client.from("exercises").delete().eq("id", id);
+    const { error } = await this.getClient()
+      .from("exercises")
+      .delete()
+      .eq("id", id);
 
     if (error) {
       throw new Error(`Failed to delete exercise: ${error.message}`);
@@ -206,7 +212,7 @@ export class SupabaseStorage implements StorageBackend {
 
     const {
       data: { session },
-    } = await this.client.auth.getSession();
+    } = await this.getClient().auth.getSession();
 
     if (!session?.user) {
       return null;
@@ -218,7 +224,7 @@ export class SupabaseStorage implements StorageBackend {
   async signInWithEmail(email: string, password: string): Promise<UserAccount> {
     validateCredentials({ email, password });
 
-    const { data, error } = await this.client.auth.signInWithPassword({
+    const { data, error } = await this.getClient().auth.signInWithPassword({
       email: email.toLowerCase().trim(),
       password,
     });
@@ -240,7 +246,7 @@ export class SupabaseStorage implements StorageBackend {
   async signUpWithEmail(email: string, password: string): Promise<UserAccount> {
     validateCredentials({ email, password });
 
-    const { data, error } = await this.client.auth.signUp({
+    const { data, error } = await this.getClient().auth.signUp({
       email: email.toLowerCase().trim(),
       password,
     });
@@ -268,7 +274,7 @@ export class SupabaseStorage implements StorageBackend {
   }
 
   async signOut(): Promise<void> {
-    const { error } = await this.client.auth.signOut();
+    const { error } = await this.getClient().auth.signOut();
 
     if (error) {
       throw new Error(`Sign out failed: ${error.message}`);
@@ -279,7 +285,7 @@ export class SupabaseStorage implements StorageBackend {
 
   // Sync management
   async getPendingSyncRecords(): Promise<SyncStateRecord[]> {
-    const { data, error } = await this.client
+    const { data, error } = await this.getClient()
       .from("sync_states")
       .select("*")
       .order("pending_since", { ascending: true });
@@ -292,7 +298,7 @@ export class SupabaseStorage implements StorageBackend {
   }
 
   async markSyncComplete(recordId: string): Promise<void> {
-    const { error } = await this.client
+    const { error } = await this.getClient()
       .from("sync_states")
       .delete()
       .eq("record_id", recordId);
@@ -304,7 +310,7 @@ export class SupabaseStorage implements StorageBackend {
 
   async markSyncError(recordId: string, errorMessage: string): Promise<void> {
     // First get the existing sync record
-    const { data: existing, error: fetchError } = await this.client
+    const { data: existing, error: fetchError } = await this.getClient()
       .from("sync_states")
       .select("*")
       .eq("record_id", recordId)
@@ -324,7 +330,7 @@ export class SupabaseStorage implements StorageBackend {
 
       const failedState = recordSyncFailure(syncState, errorMessage);
 
-      const { error: insertError } = await this.client
+      const { error: insertError } = await this.getClient()
         .from("sync_states")
         .insert(syncToDb(failedState));
 
@@ -340,7 +346,7 @@ export class SupabaseStorage implements StorageBackend {
     const syncState = syncFromDb(existing);
     const failedState = recordSyncFailure(syncState, errorMessage);
 
-    const { error } = await this.client
+    const { error } = await this.getClient()
       .from("sync_states")
       .update(syncToDb(failedState))
       .eq("record_id", recordId);
@@ -355,7 +361,7 @@ export class SupabaseStorage implements StorageBackend {
     userId: string,
     callback: (exercises: ExerciseRecord[]) => void,
   ): () => void {
-    const subscription = this.client
+    const subscription = this.getClient()
       .channel("exercises_changes")
       .on(
         "postgres_changes",
@@ -384,7 +390,7 @@ export class SupabaseStorage implements StorageBackend {
   ): () => void {
     const {
       data: { subscription },
-    } = this.client.auth.onAuthStateChange(async (event, session) => {
+    } = this.getClient().auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         const userAccount = this.mapSupabaseUserToAccount(session.user);
         this.currentUser = userAccount;
@@ -416,7 +422,7 @@ export class SupabaseStorage implements StorageBackend {
 
   async forceSessionExpiry(): Promise<void> {
     // For testing purposes - force session to expire
-    await this.client.auth.signOut();
+    await this.getClient().auth.signOut();
     this.currentUser = null;
   }
 
@@ -425,7 +431,7 @@ export class SupabaseStorage implements StorageBackend {
     try {
       const {
         data: { session },
-      } = await this.client.auth.getSession();
+      } = await this.getClient().auth.getSession();
 
       if (session?.user) {
         this.currentUser = this.mapSupabaseUserToAccount(session.user);
@@ -456,7 +462,7 @@ export class SupabaseStorage implements StorageBackend {
       throw new Error("clearAllData is not available in production");
     }
 
-    await this.client.from("exercises").delete().neq("id", "");
-    await this.client.from("sync_states").delete().neq("record_id", "");
+    await this.getClient().from("exercises").delete().neq("id", "");
+    await this.getClient().from("sync_states").delete().neq("record_id", "");
   }
 }

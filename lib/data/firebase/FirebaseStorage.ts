@@ -64,21 +64,27 @@ import {
 // Use the actual Firebase Auth type
 
 export class FirebaseStorage implements StorageBackend {
-  private readonly firestore: Firestore;
+  private firestore: Firestore | null = null;
   private readonly auth: Auth | null;
   private currentUser: UserAccount | null = null;
 
   constructor() {
-    // Initialize Firebase
-    initFirebase();
-    this.firestore = getDb() as Firestore;
-
+    // Lazy initialization to prevent hanging during module import
     // For now, we'll use a simplified auth approach
     // In a full implementation, we'd use the existing Firebase auth setup
     this.auth = null;
 
     // Note: User session initialization should be done asynchronously
     // after constructor completes via getCurrentUser() or auth state listener
+  }
+
+  private getFirestore(): Firestore {
+    if (!this.firestore) {
+      // Initialize Firebase only when needed
+      initFirebase();
+      this.firestore = getDb() as Firestore;
+    }
+    return this.firestore;
   }
 
   // Exercise CRUD operations
@@ -97,7 +103,7 @@ export class FirebaseStorage implements StorageBackend {
     validateExerciseRecord(newExercise);
 
     const docRef = await addDoc(
-      collection(this.firestore, "exercises"),
+      collection(this.getFirestore(), "exercises"),
       exerciseToDb(newExercise),
     );
 
@@ -113,14 +119,14 @@ export class FirebaseStorage implements StorageBackend {
 
     if (userId) {
       exercisesQuery = query(
-        collection(this.firestore, "exercises"),
+        collection(this.getFirestore(), "exercises"),
         where("user_id", "==", userId),
         orderBy("created_at", "asc"),
       );
     } else {
       // Get exercises for anonymous user (no user_id or null user_id)
       exercisesQuery = query(
-        collection(this.firestore, "exercises"),
+        collection(this.getFirestore(), "exercises"),
         where("user_id", "in", [null, undefined]),
         orderBy("created_at", "asc"),
       );
@@ -141,7 +147,7 @@ export class FirebaseStorage implements StorageBackend {
     id: string,
     updates: Partial<Pick<ExerciseRecord, "name">>,
   ): Promise<ExerciseRecord> {
-    const docRef = doc(this.firestore, "exercises", id);
+    const docRef = doc(this.getFirestore(), "exercises", id);
     const docSnap = await getDoc(docRef);
 
     if (!docSnap.exists()) {
@@ -164,7 +170,7 @@ export class FirebaseStorage implements StorageBackend {
   }
 
   async deleteExercise(id: string): Promise<void> {
-    const docRef = doc(this.firestore, "exercises", id);
+    const docRef = doc(this.getFirestore(), "exercises", id);
     const docSnap = await getDoc(docRef);
 
     if (!docSnap.exists()) {
@@ -269,7 +275,7 @@ export class FirebaseStorage implements StorageBackend {
   async getPendingSyncRecords(): Promise<SyncStateRecord[]> {
     const querySnapshot = await getDocs(
       query(
-        collection(this.firestore, "sync_states"),
+        collection(this.getFirestore(), "sync_states"),
         orderBy("pending_since", "asc"),
       ),
     );
@@ -289,12 +295,12 @@ export class FirebaseStorage implements StorageBackend {
   }
 
   async markSyncComplete(recordId: string): Promise<void> {
-    const docRef = doc(this.firestore, "sync_states", recordId);
+    const docRef = doc(this.getFirestore(), "sync_states", recordId);
     await deleteDoc(docRef);
   }
 
   async markSyncError(recordId: string, errorMessage: string): Promise<void> {
-    const docRef = doc(this.firestore, "sync_states", recordId);
+    const docRef = doc(this.getFirestore(), "sync_states", recordId);
     const docSnap = await getDoc(docRef);
 
     if (!docSnap.exists()) {
@@ -307,7 +313,7 @@ export class FirebaseStorage implements StorageBackend {
 
       const failedState = recordSyncFailure(syncState, errorMessage);
       await addDoc(
-        collection(this.firestore, "sync_states"),
+        collection(this.getFirestore(), "sync_states"),
         syncToDb(failedState),
       );
       return;
@@ -332,13 +338,13 @@ export class FirebaseStorage implements StorageBackend {
 
     if (userId) {
       exercisesQuery = query(
-        collection(this.firestore, "exercises"),
+        collection(this.getFirestore(), "exercises"),
         where("user_id", "==", userId),
         orderBy("created_at", "asc"),
       );
     } else {
       exercisesQuery = query(
-        collection(this.firestore, "exercises"),
+        collection(this.getFirestore(), "exercises"),
         where("user_id", "in", [null, undefined]),
         orderBy("created_at", "asc"),
       );
@@ -414,8 +420,12 @@ export class FirebaseStorage implements StorageBackend {
     }
 
     // This is a simplified implementation - in practice you'd batch delete
-    const exercises = await getDocs(collection(this.firestore, "exercises"));
-    const syncStates = await getDocs(collection(this.firestore, "sync_states"));
+    const exercises = await getDocs(
+      collection(this.getFirestore(), "exercises"),
+    );
+    const syncStates = await getDocs(
+      collection(this.getFirestore(), "sync_states"),
+    );
 
     const deletePromises: Promise<void>[] = [];
 

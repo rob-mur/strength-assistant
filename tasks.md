@@ -113,3 +113,162 @@ This document outlines tasks to improve the test coverage of the project, based 
 - **Location**: `lib/data/supabase/SupabaseAuth.ts` lines 50 and 166
 - **Fix Applied**: Removed redundant `| undefined` from `unknown | undefined` types
 - **Result**: Code quality improved, ready for CI analysis
+
+---
+
+# 🚨 CRITICAL: Production-Blocking Test Issues - URGENT FIX REQUIRED
+
+**Current Status**: ❌ **NOT PRODUCTION READY** - Multiple critical test failures and hanging tests
+
+## Critical Issues Overview
+
+### Jest Hanging Issues ⚠️ PARTIALLY FIXED
+
+- **Status**: Jest hanging partially resolved but still occurring in contract tests
+- **Impact**: CI/CD pipeline will timeout and fail
+- **Root Causes Identified**:
+  - ✅ Timer cleanup implemented but insufficient
+  - ✅ Event listener cleanup added
+  - ❌ Contract tests still hanging due to complex async operations
+  - ❌ ExerciseService global persistence causing infinite loops
+  - ❌ TestDevice initialization blocking test execution
+
+### Contract Test Failures 🔴 CRITICAL
+
+**Impact**: 39+ test failures blocking production deployment
+
+#### 1. Exercise CRUD Contract Test (**tests**/contracts/exercise-crud-contract.test.ts)
+
+- **Status**: FAILING - Timeout after 15s
+- **Root Cause**: ExerciseService.clearAll() method hanging in global.testPersistence
+- **Line**: Line 172 - "should mark previously synced exercise as pending after update"
+- **Priority**: 🔴 HIGH - Core functionality testing
+
+#### 2. Test Infrastructure Contract (**tests**/contracts/test-infrastructure.test.ts)
+
+- **Status**: FAILING - Multiple timeout failures
+- **Root Cause**: TestDevice.cleanup() method taking >15s
+- **Lines**: Lines 79, 155, 174, 200 - Multiple test methods timing out
+- **Priority**: 🔴 HIGH - Test infrastructure critical for all testing
+
+#### 3. Storage Backend Contract (**tests**/contracts/storage-backend-contract.test.ts)
+
+- **Status**: FAILING - Timeout after 15s
+- **Root Cause**: SupabaseStorage operations hanging
+- **Line**: Line 71 - "should update an exercise"
+- **Priority**: 🔴 HIGH - Core data layer testing
+
+#### 4. Supabase Auth Contract (**tests**/contracts/supabase-auth-contract.test.ts)
+
+- **Status**: FAILING - Assertion failures + timeouts
+- **Root Causes**:
+  - Anonymous user ID generation not unique (line 96)
+  - Auth state subscription cleanup hanging (line 158)
+- **Priority**: 🔴 HIGH - Authentication critical for production
+
+## Immediate Action Items (Production Blockers)
+
+### Phase 1: Fix Jest Hanging Issues (ETA: 2-4 hours)
+
+- [ ] **Task 1.1**: Fix ExerciseService global.testPersistence infinite loops
+  - Location: `lib/data/ExerciseService.ts:541` (loadFromPersistenceSync)
+  - Action: Add timeout protection and circular reference detection
+  - Priority: 🔴 CRITICAL
+
+- [ ] **Task 1.2**: Fix TestDevice.cleanup() hanging
+  - Location: `__tests__/test-utils/TestDevice.ts`
+  - Action: Add timeout limits and async operation cancellation
+  - Priority: 🔴 CRITICAL
+
+- [ ] **Task 1.3**: Improve timer cleanup in jest.setup.js
+  - Current: Basic timer clearing implemented
+  - Action: Add more aggressive cleanup for contract tests specifically
+  - Priority: 🔴 CRITICAL
+
+### Phase 2: Fix Contract Test Implementation (ETA: 4-6 hours)
+
+- [ ] **Task 2.1**: Fix ExerciseService clearAll() method
+  - Issue: Hanging in beforeEach/afterEach cleanup
+  - Action: Implement proper async cleanup with timeouts
+  - File: `lib/data/ExerciseService.ts:414`
+  - Priority: 🔴 CRITICAL
+
+- [ ] **Task 2.2**: Fix SupabaseStorage async operations
+  - Issue: CRUD operations hanging in mock environment
+  - Action: Review and fix Supabase client mock chains
+  - File: `jest.setup.js:96-372` (Supabase mock section)
+  - Priority: 🔴 CRITICAL
+
+- [ ] **Task 2.3**: Fix anonymous user ID generation
+  - Issue: Duplicate IDs for anonymous users failing assertion
+  - Action: Implement proper unique ID generation in mock
+  - File: `jest.setup.js:157` (signInAnonymously mock)
+  - Priority: 🔴 HIGH
+
+- [ ] **Task 2.4**: Fix auth state subscription cleanup
+  - Issue: Subscription unsubscribe operations hanging
+  - Action: Implement immediate cleanup for auth listeners
+  - File: `jest.setup.js:174-176` (onAuthStateChange mock)
+  - Priority: 🔴 HIGH
+
+### Phase 3: Implement Proper Test Architecture (ETA: 2-3 hours)
+
+- [ ] **Task 3.1**: Add contract test timeout controls
+  - Action: Implement per-test timeout overrides for complex operations
+  - File: All contract test files
+  - Priority: 🟡 MEDIUM
+
+- [ ] **Task 3.2**: Add test isolation improvements
+  - Action: Ensure complete state reset between contract tests
+  - Files: `jest.setup.js`, all contract test files
+  - Priority: 🟡 MEDIUM
+
+- [ ] **Task 3.3**: Add comprehensive test monitoring
+  - Action: Add detectOpenHandles and logging for hanging operations
+  - File: `jest.config.js`
+  - Priority: 🟡 MEDIUM
+
+### Phase 4: Validation and Coverage (ETA: 1-2 hours)
+
+- [ ] **Task 4.1**: Restore all skipped tests
+  - Action: Remove all .skip() calls once fixes are implemented
+  - Priority: 🔴 CRITICAL
+
+- [ ] **Task 4.2**: Verify full test suite passes
+  - Action: Run complete test suite without timeouts or failures
+  - Target: 0 failing tests, 0 hanging tests
+  - Priority: 🔴 CRITICAL
+
+- [ ] **Task 4.3**: Validate coverage requirements
+  - Action: Ensure all contract tests contribute to coverage goals
+  - Target: Maintain current coverage levels
+  - Priority: 🟡 MEDIUM
+
+## Success Criteria for Production Readiness
+
+### ✅ Required for Production Deployment:
+
+1. **Zero test failures** - All tests must pass
+2. **Zero hanging tests** - All tests must complete within timeout limits
+3. **Jest exits cleanly** - No "force exit" warnings
+4. **Contract tests enabled** - All .skip() calls removed
+5. **CI/CD compatibility** - Tests run successfully in automated environments
+
+### 📊 Performance Targets:
+
+- **Individual test timeout**: <15s (currently failing)
+- **Full test suite**: <10 minutes (currently timing out)
+- **Jest exit time**: <5s after completion (currently requires force exit)
+
+## Risk Assessment
+
+### 🔴 HIGH RISK - Production Deployment Blocked
+
+- Contract tests are core functionality validation
+- Multiple critical paths failing (auth, storage, CRUD operations)
+- Jest hanging will break CI/CD pipelines
+- Current state would cause production deployment failures
+
+### ⚠️ Recommended Action
+
+**STOP** all non-test-related development until these issues are resolved. The current test failures indicate potential runtime issues that could affect production stability.

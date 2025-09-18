@@ -492,12 +492,17 @@ describe("ExerciseStore", () => {
       });
 
       const originalDev = (global as any).__DEV__;
+      const originalAutoInit = process.env.JEST_TEST_AUTO_INIT;
       (global as any).__DEV__ = true;
+      process.env.JEST_TEST_AUTO_INIT = "true";
 
       // Re-import to trigger auto-initialization
       jest.isolateModules(() => {
         require("../../../lib/data/legend-state/ExerciseStore");
       });
+
+      // Restore environment
+      process.env.JEST_TEST_AUTO_INIT = originalAutoInit;
 
       expect(mockConsole.info).toHaveBeenCalledWith(
         "📱 Exercise store persistence configured",

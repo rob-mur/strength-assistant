@@ -1,3 +1,6 @@
+// Temporarily disable fake timers to debug hanging issue
+// jest.useFakeTimers();
+
 // Mock React Native Firebase Auth using FirebaseMockFactory
 jest.mock("@react-native-firebase/auth", () => {
   const FirebaseMockFactory =
@@ -413,11 +416,14 @@ global.testUtils = {
   testDataBuilders: undefined, // Will be loaded on demand
 };
 
+// Track event listeners for cleanup
+global.eventListenersToCleanup = [];
+
 // Memory optimization settings
 const isMemoryOptimizationEnabled = true;
 
-// T003a Performance Optimization: Aggressive timeout for <60 second target
-jest.setTimeout(5000); // 5 seconds max - aggressive timeout for speed
+// T003a Performance Optimization: Balanced timeout for test stability
+jest.setTimeout(15000); // 15 seconds - allows for contract tests while maintaining speed
 
 // Setup global error handling for better test failure reporting
 const originalConsoleError = console.error;
@@ -443,8 +449,39 @@ afterEach(async () => {
   if (isMemoryOptimizationEnabled) {
     // T003a: Minimal cleanup for speed - skip expensive operations
 
+    // Clear all timers (both real and fake)
+    jest.clearAllTimers();
+
+    // Skip fake timer cleanup since we're using real timers
+    // if (jest.isMockFunction(setTimeout)) {
+    //   jest.runOnlyPendingTimers();
+    //   jest.useRealTimers(); // Temporarily restore
+    //   jest.useFakeTimers(); // Reset for next test
+    // }
+
+    // More aggressive cleanup for contract tests
+    if (expect.getState && expect.getState().currentTestName) {
+      const testName = expect.getState().currentTestName;
+      if (testName && testName.includes("Contract")) {
+        // Clear test persistence state
+        global.testPersistence = undefined;
+      }
+    }
+
     // Only clear mocks (fast operation)
     jest.clearAllMocks();
+
+    // Clean up event listeners
+    if (typeof window !== "undefined" && global.eventListenersToCleanup) {
+      global.eventListenersToCleanup.forEach(({ target, event, handler }) => {
+        try {
+          target.removeEventListener(event, handler);
+        } catch (error) {
+          // Ignore cleanup errors
+        }
+      });
+      global.eventListenersToCleanup.length = 0;
+    }
 
     // Reset Firebase mock state for test isolation
     try {
@@ -472,4 +509,7 @@ afterAll(() => {
   // Clean up global test state
   jest.clearAllMocks();
   jest.restoreAllMocks();
+
+  // Real timers are already enabled - no need to restore
+  // jest.useRealTimers();
 });

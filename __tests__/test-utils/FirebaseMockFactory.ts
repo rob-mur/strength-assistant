@@ -143,14 +143,12 @@ export class FirebaseMockFactory {
       update: jest.fn(() => Promise.resolve()),
       delete: jest.fn(() => Promise.resolve()),
       onSnapshot: jest.fn((callback) => {
-        // Simulate immediate callback with mock data
-        setTimeout(() => {
-          callback({
-            exists: true,
-            data: () => ({ name: "Test Exercise" }),
-            id: `doc-${this.userCounter}`,
-          });
-        }, 0);
+        // Execute callback immediately without any async delay
+        callback({
+          exists: true,
+          data: () => ({ name: "Test Exercise" }),
+          id: `doc-${this.userCounter}`,
+        });
         return jest.fn(); // Return unsubscribe function
       }),
     };
@@ -169,15 +167,13 @@ export class FirebaseMockFactory {
         }),
       ),
       onSnapshot: jest.fn((callback) => {
-        // Simulate immediate callback with empty query result
-        setTimeout(() => {
-          callback({
-            docs: [],
-            forEach: jest.fn(),
-            size: 0,
-            docChanges: jest.fn(() => []),
-          });
-        }, 0);
+        // Execute callback immediately without any async delay
+        callback({
+          docs: [],
+          forEach: jest.fn(),
+          size: 0,
+          docChanges: jest.fn(() => []),
+        });
         return jest.fn(); // Return unsubscribe function
       }),
     };

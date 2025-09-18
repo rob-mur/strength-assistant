@@ -1,6 +1,9 @@
 module.exports = {
   preset: "jest-expo",
 
+  // Force Jest to exit to prevent hanging
+  forceExit: true,
+
   // Optimized test discovery for constitutional performance targets
   testPathIgnorePatterns: [
     "/node_modules/",

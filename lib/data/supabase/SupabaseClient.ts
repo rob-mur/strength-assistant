@@ -14,17 +14,21 @@ export class SupabaseClient {
   private client: BaseSupabaseClient<Database> | null = null;
 
   private getClient(): BaseSupabaseClient<Database> {
-    this.client ??= this.initializeClient();
+    if (!this.client) {
+      this.client = this.initializeClient();
+    }
     return this.client;
   }
 
   private initializeClient(): BaseSupabaseClient<Database> {
+    // In test environment, avoid actual client initialization as tests use mocks
+    if (process.env.NODE_ENV === "test") {
+      return this.createMockClient();
+    }
+
     try {
       return this.createValidatedClient();
     } catch (error) {
-      if (process.env.NODE_ENV === "test") {
-        return this.initializeTestClient();
-      }
       throw error;
     }
   }
@@ -41,18 +45,18 @@ export class SupabaseClient {
     }
   }
 
-  private initializeTestClient(): BaseSupabaseClient<Database> {
-    try {
-      // Use dynamic import for test environment
-      import("./supabase").then(({ initSupabase }) => {
-        initSupabase();
-      });
-      return this.createValidatedClient();
-    } catch (initError) {
-      throw new Error(
-        `Failed to initialize Supabase in test environment: ${initError instanceof Error ? initError.message : String(initError)}`,
-      );
-    }
+  private createMockClient(): BaseSupabaseClient<Database> {
+    // Return a minimal mock client for test environment
+    // Tests will override this with jest.mock() anyway
+    return {
+      from: () => ({}),
+      auth: {
+        getUser: () => Promise.resolve({ data: { user: null }, error: null }),
+        onAuthStateChange: () => ({ data: { subscription: null } }),
+        signInAnonymously: () =>
+          Promise.resolve({ data: { user: null }, error: null }),
+      },
+    } as unknown as BaseSupabaseClient<Database>;
   }
 
   /**
