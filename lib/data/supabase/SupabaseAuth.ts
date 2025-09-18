@@ -47,7 +47,7 @@ export class SupabaseAuth {
     if (this.client?.auth?.onAuthStateChange) {
       // Set up auth state listener with Supabase
       this.client.auth.onAuthStateChange((event: string, session: unknown) => {
-        let user: unknown | undefined = undefined;
+        let user: unknown = undefined;
         if (session && typeof session === 'object' && 'user' in session) {
           user = (session as { user?: unknown }).user;
         }
@@ -163,7 +163,7 @@ export class SupabaseAuth {
    */
   async getCurrentUser(): Promise<UserAccount | null> {
     const { data } = await this.client.auth.getUser();
-    let user: unknown | undefined = undefined;
+    let user: unknown = undefined;
     if (data && typeof data === 'object' && 'user' in data) {
       user = (data as { user?: unknown }).user;
     }
