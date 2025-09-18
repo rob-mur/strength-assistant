@@ -8,6 +8,7 @@
 import { exerciseStore, reinitializeSync } from "./ExerciseStore";
 import { storageManager } from "../StorageManager";
 import type { UserAccount } from "../../models/UserAccount";
+import { v4 as uuidv4 } from "uuid";
 
 /**
  * Exercise Actions Interface
@@ -47,7 +48,7 @@ class ExerciseActionsImpl implements ExerciseActions {
       exerciseStore.syncState.isSyncing.set(true);
 
       const currentUser = exerciseStore.user.get();
-      const exerciseId = `temp-${Date.now()}-${Math.random()}`;
+      const exerciseId = `temp-${Date.now()}-${uuidv4()}`;
 
       // Optimistic update - add to local store immediately
       exerciseStore.exercises[exerciseId].set({

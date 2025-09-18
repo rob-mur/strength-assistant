@@ -4,6 +4,7 @@
  * Represents user's workout and exercise data with comprehensive validation
  * and sync status tracking for local-first architecture.
  */
+import { v4 as uuidv4 } from "uuid";
 
 export interface ExerciseRecord {
   id: string;
@@ -251,12 +252,7 @@ export function fromDbFormat(
  * Generates a new UUID for exercise ID
  */
 function generateExerciseId(): string {
-  // Simple UUID v4 generation (in production, use a proper UUID library)
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-    const r = (Math.random() * 16) | 0;
-    const v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
+  return uuidv4();
 }
 
 /**
