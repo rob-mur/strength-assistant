@@ -1,10 +1,12 @@
 /**
- * StorageManager Basic Tests
+ * StorageManager Enhanced Tests
  * 
- * Essential test coverage for the StorageManager class focusing on:
+ * Comprehensive test coverage for the StorageManager class focusing on:
  * - Backend switching based on feature flags
- * - Initialization and configuration
- * - Basic functionality without complex mocking
+ * - Data validation and consistency checking
+ * - User data migration functionality
+ * - Error handling and edge cases
+ * - Production safety measures
  */
 
 import { StorageManager, FeatureFlags } from '../../lib/data/StorageManager';
@@ -12,27 +14,76 @@ import * as supabaseEnv from '../../lib/config/supabase-env';
 
 // Mock the environment configuration
 jest.mock('../../lib/config/supabase-env');
+
+// Create comprehensive mock storage backends
+const mockSupabaseBackend = {
+  // Async initialization (Supabase specific)
+  init: jest.fn(),
+  
+  // Exercise CRUD operations
+  createExercise: jest.fn(),
+  getExercises: jest.fn(),
+  updateExercise: jest.fn(),
+  deleteExercise: jest.fn(),
+
+  // User management
+  getCurrentUser: jest.fn(),
+  signInWithEmail: jest.fn(),
+  signUpWithEmail: jest.fn(),
+  signInAnonymously: jest.fn(),
+  signOut: jest.fn(),
+
+  // Sync management
+  getPendingSyncRecords: jest.fn(),
+  markSyncComplete: jest.fn(),
+  markSyncError: jest.fn(),
+  
+  // Real-time subscriptions
+  subscribeToExercises: jest.fn(),
+  subscribeToAuthState: jest.fn(),
+  
+  // Testing utilities
+  clearAllData: jest.fn(),
+};
+
+const mockFirebaseBackend = {
+  // Exercise CRUD operations
+  createExercise: jest.fn(),
+  getExercises: jest.fn(),
+  updateExercise: jest.fn(),
+  deleteExercise: jest.fn(),
+
+  // User management
+  getCurrentUser: jest.fn(),
+  signInWithEmail: jest.fn(),
+  signUpWithEmail: jest.fn(),
+  signInAnonymously: jest.fn(),
+  signOut: jest.fn(),
+
+  // Sync management
+  getPendingSyncRecords: jest.fn(),
+  markSyncComplete: jest.fn(),
+  markSyncError: jest.fn(),
+  
+  // Real-time subscriptions
+  subscribeToExercises: jest.fn(),
+  subscribeToAuthState: jest.fn(),
+  
+  // Testing utilities
+  clearAllData: jest.fn(),
+};
+
 jest.mock('../../lib/data/supabase/SupabaseStorage', () => ({
-  SupabaseStorage: jest.fn().mockImplementation(() => ({
-    init: jest.fn(),
-    getCurrentUser: jest.fn(),
-    getExercises: jest.fn(),
-    createExercise: jest.fn(),
-    clearAllData: jest.fn(),
-  }))
+  SupabaseStorage: jest.fn(() => mockSupabaseBackend)
 }));
+
 jest.mock('../../lib/data/firebase/FirebaseStorage', () => ({
-  FirebaseStorage: jest.fn().mockImplementation(() => ({
-    getCurrentUser: jest.fn(),
-    getExercises: jest.fn(),
-    createExercise: jest.fn(),
-    clearAllData: jest.fn(),
-  }))
+  FirebaseStorage: jest.fn(() => mockFirebaseBackend)
 }));
 
 const mockSupabaseEnv = supabaseEnv as jest.Mocked<typeof supabaseEnv>;
 
-describe('StorageManager - Basic Functionality', () => {
+describe('StorageManager - Enhanced Functionality', () => {
   let storageManager: StorageManager;
   const originalConsole = console;
   const mockConsole = {
@@ -43,6 +94,18 @@ describe('StorageManager - Basic Functionality', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Clear all mock functions for Supabase backend
+    Object.values(mockSupabaseBackend).forEach((mockFn: any) => {
+      if (jest.isMockFunction(mockFn)) {
+        mockFn.mockClear();
+      }
+    });
+    // Clear all mock functions for Firebase backend
+    Object.values(mockFirebaseBackend).forEach((mockFn: any) => {
+      if (jest.isMockFunction(mockFn)) {
+        mockFn.mockClear();
+      }
+    });
     Object.assign(console, mockConsole);
   });
 
@@ -88,6 +151,7 @@ describe('StorageManager - Basic Functionality', () => {
       storageManager = new StorageManager();
       
       await expect(storageManager.init()).resolves.not.toThrow();
+      expect(mockSupabaseBackend.init).toHaveBeenCalled();
     });
   });
 
@@ -97,7 +161,7 @@ describe('StorageManager - Basic Functionality', () => {
       storageManager = new StorageManager();
       
       const activeBackend = storageManager.getActiveStorageBackend();
-      expect(activeBackend).toBeDefined();
+      expect(activeBackend).toBe(mockSupabaseBackend);
     });
 
     it('should return correct active backend for Firebase', () => {
@@ -105,7 +169,7 @@ describe('StorageManager - Basic Functionality', () => {
       storageManager = new StorageManager();
       
       const activeBackend = storageManager.getActiveStorageBackend();
-      expect(activeBackend).toBeDefined();
+      expect(activeBackend).toBe(mockFirebaseBackend);
     });
 
     it('should return same backend for auth as for storage', () => {
@@ -198,28 +262,249 @@ describe('StorageManager - Basic Functionality', () => {
     });
   });
 
-  describe('Error Handling', () => {
-    it('should handle validation errors gracefully', async () => {
+  describe('Data Validation and Consistency', () => {
+    beforeEach(() => {
       mockSupabaseEnv.isSupabaseDataEnabled.mockReturnValue(true);
       storageManager = new StorageManager();
+    });
+
+    it('should validate consistent user data across backends', async () => {
+      const originalDev = __DEV__;
+      (global as any).__DEV__ = true;
       
-      // This will likely fail due to mock setup, but should not crash
+      // Mock consistent user data
+      const mockUser = { id: '123', email: 'test@example.com', isAnonymous: false };
+      mockSupabaseBackend.getCurrentUser.mockResolvedValue(mockUser);
+      mockFirebaseBackend.getCurrentUser.mockResolvedValue(mockUser);
+      
+      // Mock consistent exercise data
+      const mockExercises = [{ name: 'Push-ups', userId: '123' }, { name: 'Squats', userId: '123' }];
+      mockSupabaseBackend.getExercises.mockResolvedValue(mockExercises);
+      mockFirebaseBackend.getExercises.mockResolvedValue(mockExercises);
+      
+      const result = await storageManager.validateDataConsistency();
+      
+      expect(result.isConsistent).toBe(true);
+      expect(result.errors).toHaveLength(0);
+      expect(mockConsole.info).toHaveBeenCalledWith('✅ Data consistency validation passed');
+      
+      (global as any).__DEV__ = originalDev;
+    });
+
+    it('should detect user email mismatch', async () => {
+      const originalDev = __DEV__;
+      (global as any).__DEV__ = true;
+      
+      // Mock inconsistent user data
+      mockSupabaseBackend.getCurrentUser.mockResolvedValue({ id: '123', email: 'user1@example.com', isAnonymous: false });
+      mockFirebaseBackend.getCurrentUser.mockResolvedValue({ id: '123', email: 'user2@example.com', isAnonymous: false });
+      
+      // Mock exercise data
+      mockSupabaseBackend.getExercises.mockResolvedValue([]);
+      mockFirebaseBackend.getExercises.mockResolvedValue([]);
+      
+      const result = await storageManager.validateDataConsistency();
+      
+      expect(result.isConsistent).toBe(false);
+      expect(result.errors).toContain('User email mismatch: Supabase(user1@example.com) vs Firebase(user2@example.com)');
+      expect(mockConsole.warn).toHaveBeenCalledWith('⚠️ Data consistency issues detected:', expect.any(Array));
+      
+      (global as any).__DEV__ = originalDev;
+    });
+
+    it('should detect user anonymous status mismatch', async () => {
+      // Mock inconsistent anonymous status
+      mockSupabaseBackend.getCurrentUser.mockResolvedValue({ id: '123', email: null, isAnonymous: true });
+      mockFirebaseBackend.getCurrentUser.mockResolvedValue({ id: '123', email: null, isAnonymous: false });
+      
+      mockSupabaseBackend.getExercises.mockResolvedValue([]);
+      mockFirebaseBackend.getExercises.mockResolvedValue([]);
+      
+      const result = await storageManager.validateDataConsistency();
+      
+      expect(result.isConsistent).toBe(false);
+      expect(result.errors).toContain('User anonymous status mismatch: Supabase(true) vs Firebase(false)');
+    });
+
+    it('should detect user presence mismatch', async () => {
+      // Mock user presence mismatch
+      mockSupabaseBackend.getCurrentUser.mockResolvedValue({ id: '123', email: 'test@example.com', isAnonymous: false });
+      mockFirebaseBackend.getCurrentUser.mockResolvedValue(null);
+      
+      mockSupabaseBackend.getExercises.mockResolvedValue([]);
+      mockFirebaseBackend.getExercises.mockResolvedValue([]);
+      
+      const result = await storageManager.validateDataConsistency();
+      
+      expect(result.isConsistent).toBe(false);
+      expect(result.errors).toContain('User presence mismatch: Supabase(true) vs Firebase(false)');
+    });
+
+    it('should detect exercise count mismatch', async () => {
+      // Mock consistent users
+      const mockUser = { id: '123', email: 'test@example.com', isAnonymous: false };
+      mockSupabaseBackend.getCurrentUser.mockResolvedValue(mockUser);
+      mockFirebaseBackend.getCurrentUser.mockResolvedValue(mockUser);
+      
+      // Mock different exercise counts
+      mockSupabaseBackend.getExercises.mockResolvedValue([{ name: 'Push-ups' }, { name: 'Squats' }]);
+      mockFirebaseBackend.getExercises.mockResolvedValue([{ name: 'Push-ups' }]);
+      
+      const result = await storageManager.validateDataConsistency();
+      
+      expect(result.isConsistent).toBe(false);
+      expect(result.errors).toContain('Exercise count mismatch: Supabase(2) vs Firebase(1)');
+    });
+
+    it('should detect missing exercises in Firebase', async () => {
+      // Mock consistent users
+      const mockUser = { id: '123', email: 'test@example.com', isAnonymous: false };
+      mockSupabaseBackend.getCurrentUser.mockResolvedValue(mockUser);
+      mockFirebaseBackend.getCurrentUser.mockResolvedValue(mockUser);
+      
+      // Mock different exercise names
+      mockSupabaseBackend.getExercises.mockResolvedValue([{ name: 'Push-ups' }, { name: 'Squats' }]);
+      mockFirebaseBackend.getExercises.mockResolvedValue([{ name: 'Push-ups' }]);
+      
+      const result = await storageManager.validateDataConsistency();
+      
+      expect(result.isConsistent).toBe(false);
+      expect(result.errors).toContain('Exercise "Squats" exists in Supabase but not Firebase');
+    });
+
+    it('should detect missing exercises in Supabase', async () => {
+      // Mock consistent users
+      const mockUser = { id: '123', email: 'test@example.com', isAnonymous: false };
+      mockSupabaseBackend.getCurrentUser.mockResolvedValue(mockUser);
+      mockFirebaseBackend.getCurrentUser.mockResolvedValue(mockUser);
+      
+      // Mock different exercise names
+      mockSupabaseBackend.getExercises.mockResolvedValue([{ name: 'Push-ups' }]);
+      mockFirebaseBackend.getExercises.mockResolvedValue([{ name: 'Push-ups' }, { name: 'Deadlifts' }]);
+      
+      const result = await storageManager.validateDataConsistency();
+      
+      expect(result.isConsistent).toBe(false);
+      expect(result.errors).toContain('Exercise "Deadlifts" exists in Firebase but not Supabase');
+    });
+
+    it('should handle validation errors gracefully', async () => {
+      // Mock backends to throw errors
+      mockSupabaseBackend.getCurrentUser.mockRejectedValue(new Error('Supabase connection error'));
+      mockFirebaseBackend.getCurrentUser.mockRejectedValue(new Error('Firebase connection error'));
+      
       const result = await storageManager.validateDataConsistency();
       expect(result).toHaveProperty('isConsistent');
       expect(result).toHaveProperty('errors');
       expect(Array.isArray(result.errors)).toBe(true);
+      expect(result.isConsistent).toBe(false);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('User Data Migration', () => {
+    beforeEach(() => {
+      mockSupabaseEnv.isSupabaseDataEnabled.mockReturnValue(true);
+      storageManager = new StorageManager();
+    });
+
+    it('should successfully migrate user data', async () => {
+      const originalDev = __DEV__;
+      (global as any).__DEV__ = true;
+      
+      // Mock successful migration scenario
+      const mockUser = { id: '123', email: 'test@example.com', isAnonymous: false };
+      const mockExercises = [
+        { name: 'Push-ups', userId: '123' },
+        { name: 'Squats', userId: '123' }
+      ];
+      
+      mockSupabaseBackend.getCurrentUser.mockResolvedValue(mockUser);
+      mockSupabaseBackend.getExercises.mockResolvedValue(mockExercises);
+      mockFirebaseBackend.createExercise.mockResolvedValue(undefined);
+      
+      await storageManager.migrateUserData(mockSupabaseBackend, mockFirebaseBackend);
+      
+      expect(mockSupabaseBackend.getCurrentUser).toHaveBeenCalled();
+      expect(mockSupabaseBackend.getExercises).toHaveBeenCalledWith('123');
+      expect(mockFirebaseBackend.createExercise).toHaveBeenCalledTimes(2);
+      expect(mockFirebaseBackend.createExercise).toHaveBeenCalledWith({ name: 'Push-ups', userId: '123' });
+      expect(mockFirebaseBackend.createExercise).toHaveBeenCalledWith({ name: 'Squats', userId: '123' });
+      expect(mockConsole.info).toHaveBeenCalledWith('🔄 Migrating 2 exercises for user test@example.com');
+      expect(mockConsole.info).toHaveBeenCalledWith('✅ User data migration completed successfully');
+      
+      (global as any).__DEV__ = originalDev;
+    });
+
+    it('should handle migration with anonymous user', async () => {
+      const originalDev = __DEV__;
+      (global as any).__DEV__ = true;
+      
+      // Mock anonymous user
+      const mockUser = { id: '123', email: null, isAnonymous: true };
+      const mockExercises = [{ name: 'Push-ups', userId: '123' }];
+      
+      mockSupabaseBackend.getCurrentUser.mockResolvedValue(mockUser);
+      mockSupabaseBackend.getExercises.mockResolvedValue(mockExercises);
+      mockFirebaseBackend.createExercise.mockResolvedValue(undefined);
+      
+      await storageManager.migrateUserData(mockSupabaseBackend, mockFirebaseBackend);
+      
+      expect(mockConsole.info).toHaveBeenCalledWith('🔄 Migrating 1 exercises for user anonymous');
+      
+      (global as any).__DEV__ = originalDev;
+    });
+
+    it('should skip exercises that already exist', async () => {
+      const originalDev = __DEV__;
+      (global as any).__DEV__ = true;
+      
+      const mockUser = { id: '123', email: 'test@example.com', isAnonymous: false };
+      const mockExercises = [{ name: 'Push-ups', userId: '123' }];
+      
+      mockSupabaseBackend.getCurrentUser.mockResolvedValue(mockUser);
+      mockSupabaseBackend.getExercises.mockResolvedValue(mockExercises);
+      
+      // Mock "already exists" error
+      const alreadyExistsError = new Error('Exercise already exists');
+      mockFirebaseBackend.createExercise.mockRejectedValue(alreadyExistsError);
+      
+      await storageManager.migrateUserData(mockSupabaseBackend, mockFirebaseBackend);
+      
+      expect(mockConsole.info).toHaveBeenCalledWith('✅ User data migration completed successfully');
+      
+      (global as any).__DEV__ = originalDev;
+    });
+
+    it('should handle migration errors during exercise creation', async () => {
+      const originalDev = __DEV__;
+      (global as any).__DEV__ = true;
+      
+      const mockUser = { id: '123', email: 'test@example.com', isAnonymous: false };
+      const mockExercises = [{ name: 'Push-ups', userId: '123' }];
+      
+      mockSupabaseBackend.getCurrentUser.mockResolvedValue(mockUser);
+      mockSupabaseBackend.getExercises.mockResolvedValue(mockExercises);
+      
+      // Mock general error during creation
+      const creationError = new Error('Database connection failed');
+      mockFirebaseBackend.createExercise.mockRejectedValue(creationError);
+      
+      await expect(storageManager.migrateUserData(mockSupabaseBackend, mockFirebaseBackend))
+        .rejects.toThrow('User data migration failed: Database connection failed');
+      
+      expect(mockConsole.error).toHaveBeenCalledWith('❌', 'User data migration failed: Database connection failed');
+      
+      (global as any).__DEV__ = originalDev;
     });
 
     it('should handle migration errors gracefully', async () => {
-      mockSupabaseEnv.isSupabaseDataEnabled.mockReturnValue(true);
-      storageManager = new StorageManager();
-      
-      const fromBackend = storageManager.getActiveStorageBackend();
-      const toBackend = storageManager.getActiveStorageBackend();
+      // Mock getCurrentUser to return null (no user found)
+      mockSupabaseBackend.getCurrentUser.mockResolvedValue(null);
       
       // This should throw due to no user, but in a controlled way
-      await expect(storageManager.migrateUserData(fromBackend, toBackend))
-        .rejects.toThrow('User data migration failed');
+      await expect(storageManager.migrateUserData(mockSupabaseBackend, mockFirebaseBackend))
+        .rejects.toThrow('User data migration failed: No user found in source backend');
     });
   });
 
