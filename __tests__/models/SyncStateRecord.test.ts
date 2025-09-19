@@ -859,6 +859,37 @@ describe("SyncStateRecord Model", () => {
 
         expect(nextTime).toBeNull();
       });
+
+      it("should return earliest retry time when multiple states have retry times", () => {
+        const now = new Date();
+        const early = new Date(now.getTime() + 1000); // 1 second from now
+        const later = new Date(now.getTime() + 5000); // 5 seconds from now
+
+        const states = [
+          {
+            id: "later-retry",
+            operation: "CREATE",
+            attempts: 1,
+            nextRetryAt: later,
+            lastAttemptAt: now,
+            createdAt: now,
+            updatedAt: now,
+          } as SyncStateRecord,
+          {
+            id: "early-retry",
+            operation: "UPDATE",
+            attempts: 1,
+            nextRetryAt: early,
+            lastAttemptAt: now,
+            createdAt: now,
+            updatedAt: now,
+          } as SyncStateRecord,
+        ];
+
+        const nextTime = SyncStateUtils.getNextRetryTime(states);
+
+        expect(nextTime).toEqual(early);
+      });
     });
 
     describe("estimateCompletionTime", () => {
@@ -883,6 +914,19 @@ describe("SyncStateRecord Model", () => {
         const completion = SyncStateUtils.estimateCompletionTime(failedStates);
 
         expect(completion).toBeNull();
+      });
+
+      it("should return estimated time when earlier than next retry", () => {
+        // Create ready states with no retry time to trigger line 403
+        const readyStates = SyncStateUtils.getReadyForSync(sampleSyncStates);
+
+        const completion = SyncStateUtils.estimateCompletionTime(readyStates);
+
+        // Should return estimated time (around current time + ready states count in seconds)
+        expect(completion).toBeInstanceOf(Date);
+        const now = new Date();
+        const timeDiff = Math.abs(completion!.getTime() - now.getTime());
+        expect(timeDiff).toBeLessThan(10000); // Within 10 seconds
       });
     });
   });

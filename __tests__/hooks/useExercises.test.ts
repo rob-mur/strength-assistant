@@ -32,7 +32,7 @@ describe("useExercises", () => {
         service: "useExercises",
         platform: "React Native",
         operation: "fetch_exercises",
-      })
+      }),
     );
   });
 
@@ -42,8 +42,29 @@ describe("useExercises", () => {
     expect(mockGetInstance).toHaveBeenCalled();
     expect(mockSubscribeToExercises).toHaveBeenCalledWith(
       "user123",
-      expect.any(Function)
+      expect.any(Function),
     );
     expect(result.current.exercises).toEqual([]);
+  });
+
+  it("should handle subscription callback properly", () => {
+    let subscriptionCallback: ((exercises: any[]) => void) | undefined;
+
+    const mockSubscribe = jest.fn().mockImplementation((uid, callback) => {
+      subscriptionCallback = callback;
+      // Immediately call the callback to simulate subscription
+      callback([{ id: "1", name: "Exercise 1" }]);
+      return mockUnsubscribe;
+    });
+
+    mockGetInstance.mockReturnValue({
+      subscribeToExercises: mockSubscribe,
+    });
+
+    const { result } = renderHook(() => useExercises("user123"));
+
+    // Should have been called with exercises
+    expect(mockSubscribe).toHaveBeenCalled();
+    expect(subscriptionCallback).toBeDefined();
   });
 });
