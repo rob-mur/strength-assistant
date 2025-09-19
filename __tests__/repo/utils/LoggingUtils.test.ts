@@ -31,7 +31,7 @@ describe("RepositoryLogger", () => {
           platform: "mobile",
           operation: "testOperation",
           userId: "123",
-        }
+        },
       );
     });
   });
@@ -45,16 +45,13 @@ describe("RepositoryLogger", () => {
 
       RepositoryLogger.logError(service, operation, error, additionalContext);
 
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        "Failed to testOperation",
-        {
-          service: "TestService",
-          platform: "mobile",
-          operation: "testOperation",
-          error: { message: "Test error", stack: error.stack },
-          userId: "123",
-        }
-      );
+      expect(mockLogger.error).toHaveBeenCalledWith("Failed to testOperation", {
+        service: "TestService",
+        platform: "mobile",
+        operation: "testOperation",
+        error: { message: "Test error", stack: error.stack },
+        userId: "123",
+      });
     });
   });
 });
