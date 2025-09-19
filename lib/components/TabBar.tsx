@@ -3,50 +3,49 @@ import { CommonActions } from "@react-navigation/native";
 import React from "react";
 import { BottomNavigation } from "react-native-paper";
 
-const TabBar = (props: BottomTabBarProps) => (
-  <BottomNavigation.Bar
-    shifting
-    navigationState={props.state}
-    safeAreaInsets={props.insets}
-    onTabPress={({ route, preventDefault }) => {
-      const event = props.navigation.emit({
-        type: "tabPress",
-        target: route.key,
-        canPreventDefault: true,
-      });
+const TabBar = (props: BottomTabBarProps) => {
+  const { state, navigation, descriptors, insets } = props;
 
-      if (event.defaultPrevented) {
-        preventDefault();
-      } else {
-        props.navigation.dispatch({
-          ...CommonActions.navigate(route.name, route.params),
-          target: props.state.key,
+  return (
+    <BottomNavigation.Bar
+      shifting
+      navigationState={state}
+      safeAreaInsets={insets}
+      onTabPress={({ route, preventDefault }) => {
+        const event = navigation.emit({
+          type: "tabPress",
+          target: route.key,
+          canPreventDefault: true,
         });
-      }
-    }}
-    renderIcon={({ route, focused, color }) => {
-      const { options } = props.descriptors[route.key];
-      if (options.tabBarIcon) {
-        return options.tabBarIcon({ focused, color, size: 24 });
-      }
 
-      return null;
-    }}
-    getLabelText={({ route }) => {
-      const { options } = props.descriptors[route.key];
-      if (typeof options.tabBarLabel === "function") {
-        throw "Unsupported Label";
-      }
-      const label =
-        options.tabBarLabel !== undefined
-          ? options.tabBarLabel
-          : options.title !== undefined
-            ? options.title
-            : route.name;
+        if (event.defaultPrevented) {
+          preventDefault();
+        } else {
+          navigation.dispatch({
+            ...CommonActions.navigate(route.name, route.params),
+            target: state.key,
+          });
+        }
+      }}
+      renderIcon={({ route, focused, color }) => {
+        const { options } = descriptors[route.key];
+        if (options.tabBarIcon) {
+          return options.tabBarIcon({ focused, color, size: 24 });
+        }
 
-      return label;
-    }}
-  />
-);
+        return null;
+      }}
+      getLabelText={({ route }) => {
+        const { options } = descriptors[route.key];
+        if (typeof options.tabBarLabel === "function") {
+          throw new Error("Unsupported Label");
+        }
+        const label = options.tabBarLabel ?? options.title ?? route.name;
+
+        return label;
+      }}
+    />
+  );
+};
 
 export default TabBar;

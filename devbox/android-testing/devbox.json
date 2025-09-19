@@ -1,25 +1,23 @@
 {
-	"$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.14.2/.schema/devbox.schema.json",
-	"packages": [
-		"path:flakes/androidsdk",
-		"maestro@latest",
-		"nodejs@latest",
-		"firebase-tools@latest",
-		"jdk17@latest",
-		"supabase-cli@latest"
-	],
-	"shell": {
-		"scripts": {
-			"integration_test_android": [
-				"../../scripts/integration_test_android.sh"
-			],
-			"sync_devbox": [
-				"bash ../../scripts/sync-devbox.sh"
-			]
-		}
-	},
-	"env": {
-		"ANDROID_HOME": "$PWD/.devbox/nix/profile/default/libexec/android-sdk/",
-		"GRADLE_OPTS": "-Dorg.gradle.project.android.aapt2FromMavenOverride=$PWD/.devbox/nix/profile/default/bin/aapt2"
-	}
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.14.2/.schema/devbox.schema.json",
+  "packages": [
+    "path:flakes/androidsdk",
+    "maestro@latest",
+    "nodejs@latest",
+    "firebase-tools@latest",
+    "jdk17@latest",
+    "supabase-cli@latest"
+  ],
+  "shell": {
+    "scripts": {
+      "integration_test_android": ["../../scripts/integration_test_android.sh"],
+      "sync_devbox": ["bash ../../scripts/sync-devbox.sh"]
+    }
+  },
+  "env": {
+    "ANDROID_HOME": "$PWD/.devbox/nix/profile/default/libexec/android-sdk/",
+    "GRADLE_OPTS": "-Dorg.gradle.project.android.aapt2FromMavenOverride=$PWD/.devbox/nix/profile/default/bin/aapt2",
+    "EXPO_PUBLIC_USE_SUPABASE": "false",
+    "USE_SUPABASE_DATA": "false"
+  }
 }

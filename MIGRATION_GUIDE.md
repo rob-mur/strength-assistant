@@ -28,15 +28,17 @@ USE_SUPABASE_DATA=false
 ### Development Setup
 
 1. Copy the example environment file:
+
    ```bash
    cp .env.example .env
    ```
 
 2. Set your preferred data layer in `.env`:
+
    ```bash
    # For development with Firebase
    USE_SUPABASE_DATA=false
-   
+
    # For development with Supabase
    USE_SUPABASE_DATA=true
    ```
@@ -62,10 +64,10 @@ The implementation uses the Repository pattern with a factory:
 
 ```typescript
 // Factory selects implementation based on feature flag
-ExerciseRepoFactory.getInstance() // Returns Firebase or Supabase repo
+ExerciseRepoFactory.getInstance(); // Returns Firebase or Supabase repo
 
 // Main repository delegates to selected implementation
-ExerciseRepo.getInstance() // Always works, internally uses factory
+ExerciseRepo.getInstance(); // Always works, internally uses factory
 ```
 
 ### Implementation Classes
@@ -90,6 +92,7 @@ const repo = ExerciseRepo.getInstance();
 ### Manual Testing
 
 1. **Test Firebase**:
+
    ```bash
    # Set in .env
    USE_SUPABASE_DATA=false
@@ -98,8 +101,9 @@ const repo = ExerciseRepo.getInstance();
    ```
 
 2. **Test Supabase**:
+
    ```bash
-   # Set in .env  
+   # Set in .env
    USE_SUPABASE_DATA=true
    npm start
    # Test the same CRUD operations
@@ -138,6 +142,7 @@ console.log(`Add operation took: ${duration}ms`);
 If issues arise with Supabase:
 
 1. **Immediate rollback**:
+
    ```bash
    USE_SUPABASE_DATA=false
    ```

@@ -7,6 +7,11 @@ import { Exercise, ExerciseInput } from "../models/Exercise";
  */
 export interface IExerciseRepo {
   /**
+   * Initializes the repository and sets up the synchronization with the backend.
+   */
+  initialize(): Promise<void>;
+
+  /**
    * Get all exercises for a user as an Observable
    * @param userId - The user ID
    * @returns Observable array of exercises that updates in real-time
@@ -19,7 +24,10 @@ export interface IExerciseRepo {
    * @param userId - The user ID
    * @returns Promise that resolves to the exercise or undefined if not found
    */
-  getExerciseById(exerciseId: string, userId: string): Promise<Exercise | undefined>;
+  getExerciseById(
+    exerciseId: string,
+    userId: string,
+  ): Promise<Exercise | undefined>;
 
   /**
    * Subscribe to real-time exercise updates for a user
@@ -27,7 +35,10 @@ export interface IExerciseRepo {
    * @param callback - Function called when exercises change
    * @returns Unsubscribe function
    */
-  subscribeToExercises(userId: string, callback: (exercises: Exercise[]) => void): () => void;
+  subscribeToExercises(
+    userId: string,
+    callback: (exercises: Exercise[]) => void,
+  ): () => void;
 
   /**
    * Add a new exercise for a user

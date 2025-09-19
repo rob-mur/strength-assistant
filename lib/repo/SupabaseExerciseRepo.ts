@@ -2,220 +2,297 @@ import { Exercise, ExerciseInput, ExerciseValidator } from "../models/Exercise";
 import { IExerciseRepo } from "./IExerciseRepo";
 import { Observable, observe, computed } from "@legendapp/state";
 import { exercises$, user$ } from "../data/store";
-import { syncExerciseToSupabase, deleteExerciseFromSupabase, syncHelpers } from "../data/sync/syncConfig";
 import { supabaseClient } from "../data/supabase/SupabaseClient";
-import { v4 as uuidv4 } from 'uuid';
+import {
+  syncExerciseToSupabase,
+  deleteExerciseFromSupabase,
+  syncHelpers,
+} from "../data/sync/syncConfig";
+import { v4 as uuidv4 } from "uuid";
 import { RepositoryUtils } from "./utils/RepositoryUtils";
+// Note: Using basic legend-state without sync for now
+// Sync will be implemented when the library supports it. Currently using basic legend-state without sync.
+
+// Supabase database row interface for exercises
+interface SupabaseExerciseRow {
+  id: string;
+  name: string;
+  user_id: string;
+  created_at?: string;
+  updated_at?: string;
+  deleted?: boolean;
+}
+
 /**
  * Legend State + Supabase implementation of ExerciseRepo
  * Provides offline-first data access with automatic sync
  */
 export class SupabaseExerciseRepo implements IExerciseRepo {
-	private static instance: SupabaseExerciseRepo;
+  private static instance: SupabaseExerciseRepo;
+  private readonly syncInstance: object | null = null;
+  private _realtimeChannel: object | null = null;
 
-	private constructor() { }
+  private constructor() {}
 
-	public static getInstance(): SupabaseExerciseRepo {
-		if (!SupabaseExerciseRepo.instance) {
-			SupabaseExerciseRepo.instance = new SupabaseExerciseRepo();
-		}
-		return SupabaseExerciseRepo.instance;
-	}
+  public static getInstance(): SupabaseExerciseRepo {
+    if (!SupabaseExerciseRepo.instance) {
+      SupabaseExerciseRepo.instance = new SupabaseExerciseRepo();
+    }
+    return SupabaseExerciseRepo.instance;
+  }
 
-	/**
-	 * Add a new exercise with optimistic updates and error recovery
-	 * Changes are immediately visible in UI and synced in background
-	 * Note: userId parameter is kept for backwards compatibility but Supabase user ID is used internally
-	 */
-	async addExercise(userId: string, exercise: ExerciseInput): Promise<void> {
-		// Validate and prepare exercise data
-		const sanitizedName = this.validateAndSanitizeExercise(exercise);
-		const authenticatedUser = await this.validateUserAuthentication(userId);
-		const newExercise = this.createNewExercise(sanitizedName, authenticatedUser.id);
+  async initialize(): Promise<void> {
+    // Initialize the repository and load data
+    // Set up real-time subscription for changes
+    this._realtimeChannel = supabaseClient
+      .getSupabaseClient()
+      .channel("exercises-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "exercises" },
+        async (_payload) => {
+          // Refresh exercises when data changes on server
+          await this.refreshExercises();
+        },
+      )
+      .subscribe();
 
-		// Perform optimistic update with rollback capability
-		await this.performOptimisticUpdate(newExercise, () => syncExerciseToSupabase(newExercise));
-	}
+    // Initial load of exercises
+    await this.refreshExercises();
+  }
 
-	/**
-	 * Validate and sanitize exercise input
-	 */
-	private validateAndSanitizeExercise(exercise: ExerciseInput): string {
-		ExerciseValidator.validateExerciseInput(exercise);
-		return ExerciseValidator.sanitizeExerciseName(exercise.name);
-	}
+  /**
+   * Refresh exercises from Supabase and update the observable store
+   */
+  private async refreshExercises(): Promise<void> {
+    try {
+      const currentUser = await supabaseClient.getCurrentUser();
+      if (!currentUser) return;
 
-	/**
-	 * Validate user authentication and consistency
-	 */
-	private async validateUserAuthentication(userId: string): Promise<{ id: string }> {
-		const supabaseUser = await supabaseClient.getCurrentUser();
-		if (!supabaseUser) {
-			throw new Error('User not authenticated with Supabase');
-		}
+      const { data, error } = await supabaseClient.exercises
+        .select("*")
+        .eq("user_id", currentUser.id)
+        .eq("deleted", false);
 
-		if (userId && userId !== supabaseUser.id) {
-			throw new Error(`User ID mismatch: Expected ${userId}, but Supabase user is ${supabaseUser.id}. This may indicate a user mapping issue during Firebase-to-Supabase migration.`);
-		}
+      if (error) throw error;
 
-		return supabaseUser;
-	}
+      const exercises = (data || []).map((ex: SupabaseExerciseRow) => ({
+        id: ex.id,
+        name: ex.name,
+        user_id: ex.user_id,
+        created_at: ex.created_at || new Date().toISOString(),
+        updated_at: ex.updated_at || new Date().toISOString(),
+        deleted: ex.deleted || false,
+      }));
 
-	/**
-	 * Create new exercise object
-	 */
-	private createNewExercise(sanitizedName: string, userId: string): Exercise {
-		return {
-			id: uuidv4(),
-			name: sanitizedName,
-			user_id: userId,
-			created_at: new Date().toISOString()
-		};
-	}
+      // Update the global store
+      exercises$.set(exercises);
+    } catch (error) {
+      console.error("Failed to refresh exercises:", error);
+    }
+  }
 
-	/**
-	 * Perform optimistic update with rollback on failure
-	 */
-	private async performOptimisticUpdate<T>(newItem: T, syncOperation: () => Promise<void>): Promise<void> {
-		const currentExercises = exercises$.get();
-		const rollbackOperation = () => exercises$.set(currentExercises);
+  /**
+   * Add a new exercise with optimistic updates and error recovery
+   * Changes are immediately visible in UI and synced in background
+   * Note: userId parameter is kept for backwards compatibility but Supabase user ID is used internally
+   */
+  async addExercise(userId: string, exercise: ExerciseInput): Promise<void> {
+    // Validate and prepare exercise data
+    const sanitizedName = this.validateAndSanitizeExercise(exercise);
+    const authenticatedUser = await this.validateUserAuthentication(userId);
+    const newExercise = this.createNewExercise(
+      sanitizedName,
+      authenticatedUser.id,
+    );
 
-		// Optimistic update
-		exercises$.set([...currentExercises, newItem] as Exercise[]);
+    // Store original state for rollback
+    const originalExercises = exercises$.get();
 
-		try {
-			await syncOperation();
-		} catch (syncError) {
-			rollbackOperation();
-			throw syncError;
-		}
-	}
+    // Optimistic update
+    exercises$.set((current) => [...current, newExercise]);
 
-	/**
-	 * Get exercise by ID from local store (works offline)
-	 */
-	async getExerciseById(id: string, uid: string): Promise<Exercise | undefined> {
-		// With Legend State, we can get data immediately from local store
-		const exercises = exercises$.get();
-		return exercises.find(exercise => exercise.id === id && exercise.user_id === uid);
-	}
+    try {
+      // Use sync function instead of direct Supabase client
+      await syncExerciseToSupabase(newExercise);
+    } catch (error) {
+      // Revert optimistic update on error
+      exercises$.set(originalExercises);
+      throw error;
+    }
+  }
 
-	/**
-	 * Get all exercises as a reactive observable
-	 * Filtered for the authenticated Supabase user
-	 * Note: userId parameter is kept for backwards compatibility but Supabase user ID is used internally
-	 */
-	getExercises(_userId: string): Observable<Exercise[]> {
-		// Create a computed observable that filters exercises for the current Supabase user
-		return computed(() => {
-			const currentUser = user$.get();
-			if (!currentUser) return [];
-			return exercises$.get().filter(ex => ex.user_id === currentUser.id);
-		});
-	}
+  /**
+   * Validate and sanitize exercise input
+   */
+  private validateAndSanitizeExercise(exercise: ExerciseInput): string {
+    ExerciseValidator.validateExerciseInput(exercise);
+    return ExerciseValidator.sanitizeExerciseName(exercise.name);
+  }
 
-	/**
-	 * Delete exercise with optimistic updates and error recovery
-	 * Note: userId parameter is kept for backwards compatibility but Supabase user ID is used internally
-	 */
-	async deleteExercise(userId: string, exerciseId: string): Promise<void> {
-		// Validate inputs and user authentication
-		RepositoryUtils.validateExerciseId(exerciseId);
-		const authenticatedUser = await this.validateUserAuthentication(userId);
+  /**
+   * Validate user authentication and consistency
+   */
+  private async validateUserAuthentication(
+    userId: string,
+  ): Promise<{ id: string }> {
+    const supabaseUser = await supabaseClient.getCurrentUser();
+    if (!supabaseUser) {
+      throw new Error("User not authenticated with Supabase");
+    }
 
-		// Perform optimistic delete with rollback capability
-		await this.performOptimisticDelete(exerciseId, authenticatedUser.id);
-	}
+    if (userId && userId !== supabaseUser.id) {
+      throw new Error(
+        `User ID mismatch: Expected ${userId}, but Supabase user is ${supabaseUser.id}. This may indicate a user mapping issue during Firebase-to-Supabase migration.`,
+      );
+    }
 
+    return supabaseUser;
+  }
 
-	/**
-	 * Perform optimistic delete with rollback on failure
-	 */
-	private async performOptimisticDelete(exerciseId: string, userId: string): Promise<void> {
-		const currentExercises = exercises$.get();
-		const rollbackOperation = () => exercises$.set(currentExercises);
+  /**
+   * Create new exercise object
+   */
+  private createNewExercise(sanitizedName: string, userId: string): Exercise {
+    const now = new Date().toISOString();
+    return {
+      id: uuidv4(),
+      name: sanitizedName,
+      user_id: userId,
+      created_at: now,
+      updated_at: now,
+      deleted: false,
+    };
+  }
 
-		// Optimistic delete - remove from local store immediately
-		const updatedExercises = currentExercises.filter(
-			exercise => !(exercise.id === exerciseId && exercise.user_id === userId)
-		);
-		exercises$.set(updatedExercises);
+  /**
+   * Get exercise by ID from local store (works offline)
+   */
+  async getExerciseById(
+    id: string,
+    uid: string,
+  ): Promise<Exercise | undefined> {
+    // With Legend State, we can get data immediately from local store
+    const exercises = exercises$.get();
+    return exercises.find(
+      (exercise) => exercise.id === id && exercise.user_id === uid,
+    );
+  }
 
-		try {
-			await deleteExerciseFromSupabase(exerciseId, userId);
-		} catch (syncError) {
-			rollbackOperation();
-			throw syncError;
-		}
-	}
+  /**
+   * Get all exercises as a reactive observable
+   * Filtered for the authenticated Supabase user
+   * Note: userId parameter is kept for backwards compatibility but Supabase user ID is used internally
+   */
+  getExercises(_userId: string): Observable<Exercise[]> {
+    // Create a computed observable that filters exercises for the current Supabase user
+    return computed(() => {
+      const currentUser = user$.get();
+      if (!currentUser) return [];
+      return exercises$
+        .get()
+        .filter((ex) => ex.user_id === currentUser.id && !ex.deleted);
+    }) as unknown as Observable<Exercise[]>;
+  }
 
-	/**
-	 * Subscribe to exercises changes (for backwards compatibility)
-	 * With Legend State, the observable itself provides real-time updates
-	 * Note: uid parameter is kept for backwards compatibility but Supabase user ID is used internally
-	 */
-	subscribeToExercises(uid: string, callback: (exercises: Exercise[]) => void): () => void {
-		// Use Legend State's observe method for reactive updates with Supabase user filtering
-		return observe(() => {
-			const currentUser = user$.get();
-			if (!currentUser) {
-				callback([]);
-				return;
-			}
-			const filteredExercises = exercises$.get().filter(ex => ex.user_id === currentUser.id);
-			callback(filteredExercises);
-		});
-	}
+  /**
+   * Delete exercise with optimistic updates and error recovery
+   * Note: userId parameter is kept for backwards compatibility but Supabase user ID is used internally
+   */
+  async deleteExercise(userId: string, exerciseId: string): Promise<void> {
+    // Validate inputs and user authentication
+    RepositoryUtils.validateExerciseId(exerciseId);
+    const authenticatedUser = await this.validateUserAuthentication(userId);
 
-	/**
-	 * Legacy methods for backwards compatibility with tests
-	 */
+    // Store original state for rollback
+    const originalExercises = exercises$.get();
 
+    // Optimistic delete - remove from local list (only for current user)
+    const updatedExercises = originalExercises.filter(
+      (ex) => !(ex.id === exerciseId && ex.user_id === authenticatedUser.id),
+    );
+    exercises$.set(updatedExercises);
 
+    try {
+      // Use sync function instead of direct Supabase client
+      await deleteExerciseFromSupabase(exerciseId, authenticatedUser.id);
+    } catch (error) {
+      // Revert optimistic update on error
+      exercises$.set(originalExercises);
+      throw error;
+    }
+  }
 
-	/**
-	 * New methods for offline-first capabilities
-	 */
+  /**
+   * Subscribe to exercises changes (for backwards compatibility)
+   * With Legend State, the observable itself provides real-time updates
+   * Note: uid parameter is kept for backwards compatibility but Supabase user ID is used internally
+   */
+  subscribeToExercises(
+    uid: string,
+    callback: (exercises: Exercise[]) => void,
+  ): () => void {
+    // Use Legend State's observe method for reactive updates with Supabase user filtering
+    return observe(() => {
+      const currentUser = user$.get();
+      if (!currentUser) {
+        callback([]);
+        return;
+      }
+      const filteredExercises = exercises$
+        .get()
+        .filter((ex) => ex.user_id === currentUser.id && !ex.deleted);
+      callback(filteredExercises);
+    });
+  }
 
-	/**
-	 * Check if we're currently online and syncing
-	 */
-	isSyncing(): boolean {
-		return syncHelpers.isSyncing();
-	}
+  /**
+   * Legacy methods for backwards compatibility with tests
+   */
 
-	/**
-	 * Check online status
-	 */
-	isOnline(): boolean {
-		return syncHelpers.isOnline();
-	}
+  /**
+   * New methods for offline-first capabilities
+   */
 
-	/**
-	 * Get count of pending changes waiting to sync
-	 */
-	getPendingChangesCount(): number {
-		return syncHelpers.getPendingChangesCount();
-	}
+  /**
+   * Check if we're currently online and syncing
+   */
+  isSyncing(): boolean {
+    return syncHelpers.isSyncing();
+  }
 
-	/**
-	 * Force manual sync (useful for pull-to-refresh)
-	 */
-	async forceSync(): Promise<void> {
-		await syncHelpers.forceSync();
-	}
+  /**
+   * Check online status
+   */
+  isOnline(): boolean {
+    return syncHelpers.isOnline();
+  }
 
-	/**
-	 * Check if there are sync errors
-	 */
-	hasErrors(): boolean {
-		return syncHelpers.hasErrors();
-	}
+  /**
+   * Get count of pending changes waiting to sync
+   */
+  getPendingChangesCount(): number {
+    return syncHelpers.getPendingChangesCount();
+  }
 
-	/**
-	 * Get current sync error message
-	 */
-	getErrorMessage(): string | null {
-		return syncHelpers.getErrorMessage() ?? null;
-	}
+  /**
+   * Force manual sync (useful for pull-to-refresh)
+   */
+  async forceSync(): Promise<void> {
+    return syncHelpers.forceSync();
+  }
+
+  /**
+   * Check if there are sync errors
+   */
+  hasErrors(): boolean {
+    return syncHelpers.hasErrors();
+  }
+
+  /**
+   * Get current sync error message
+   */
+  getErrorMessage(): string | null {
+    return syncHelpers.getErrorMessage() || null;
+  }
 }

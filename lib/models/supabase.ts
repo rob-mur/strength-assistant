@@ -12,18 +12,24 @@ export interface Database {
           name: string;
           user_id: string;
           created_at: string;
+          updated_at: string;
+          deleted: boolean;
         };
         Insert: {
           id?: string;
           name: string;
           user_id: string;
           created_at?: string;
+          updated_at?: string;
+          deleted?: boolean;
         };
         Update: {
           id?: string;
           name?: string;
           user_id?: string;
           created_at?: string;
+          updated_at?: string;
+          deleted?: boolean;
         };
       };
     };
@@ -43,16 +49,18 @@ export interface Database {
 }
 
 // Export table types for convenience
-export type ExerciseRow = Database['public']['Tables']['exercises']['Row'];
-export type ExerciseInsert = Database['public']['Tables']['exercises']['Insert'];
-export type ExerciseUpdate = Database['public']['Tables']['exercises']['Update'];
+export type ExerciseRow = Database["public"]["Tables"]["exercises"]["Row"];
+export type ExerciseInsert =
+  Database["public"]["Tables"]["exercises"]["Insert"];
+export type ExerciseUpdate =
+  Database["public"]["Tables"]["exercises"]["Update"];
 
 // User type for store (from Supabase Auth)
 export interface User {
   id: string;
   email?: string;
-  user_metadata?: Record<string, any>;
-  app_metadata?: Record<string, any>;
+  user_metadata?: Record<string, unknown>;
+  app_metadata?: Record<string, unknown>;
   aud: string;
   created_at?: string;
 }

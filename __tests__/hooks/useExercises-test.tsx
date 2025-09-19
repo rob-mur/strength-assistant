@@ -6,24 +6,28 @@ import { mock, mockReset } from "jest-mock-extended";
 import { logger } from "@/lib/data/firebase/logger";
 
 // Mock dependencies
-jest.mock('@legendapp/state', () => ({
-  observable: jest.fn(),
-  observe: jest.fn(),
-  computed: jest.fn(),
-}), { virtual: true });
+jest.mock(
+  "@legendapp/state",
+  () => ({
+    observable: jest.fn(),
+    observe: jest.fn(),
+    computed: jest.fn(),
+  }),
+  { virtual: true },
+);
 
-jest.mock('@/lib/data/firebase/initializer', () => ({
+jest.mock("@/lib/data/firebase/initializer", () => ({
   initializeFirebaseServices: jest.fn(),
   getDb: jest.fn(),
 }));
 
-jest.mock('@/lib/data/supabase/SupabaseClient', () => ({
+jest.mock("@/lib/data/supabase/SupabaseClient", () => ({
   supabaseClient: {
     getCurrentUser: jest.fn(),
-  }
+  },
 }));
 
-jest.mock('@/lib/data/store', () => ({
+jest.mock("@/lib/data/store", () => ({
   exercises$: {
     get: jest.fn(),
     set: jest.fn(),
@@ -33,7 +37,7 @@ jest.mock('@/lib/data/store', () => ({
   },
 }));
 
-jest.mock('@/lib/data/sync/syncConfig', () => ({
+jest.mock("@/lib/data/sync/syncConfig", () => ({
   syncExerciseToSupabase: jest.fn(),
   deleteExerciseFromSupabase: jest.fn(),
   syncHelpers: {
@@ -43,17 +47,17 @@ jest.mock('@/lib/data/sync/syncConfig', () => ({
     forceSync: jest.fn(),
     hasErrors: jest.fn(),
     getErrorMessage: jest.fn(),
-  }
+  },
 }));
 
-jest.mock('@/lib/models/Exercise', () => ({
+jest.mock("@/lib/models/Exercise", () => ({
   ExerciseValidator: {
     validateExerciseInput: jest.fn(),
     sanitizeExerciseName: jest.fn(),
-  }
+  },
 }));
 
-jest.mock('firebase/firestore', () => ({
+jest.mock("firebase/firestore", () => ({
   collection: jest.fn(),
   addDoc: jest.fn(),
   deleteDoc: jest.fn(),
@@ -63,8 +67,8 @@ jest.mock('firebase/firestore', () => ({
   orderBy: jest.fn(),
 }));
 
-jest.mock('uuid', () => ({
-  v4: jest.fn(() => 'test-uuid'),
+jest.mock("uuid", () => ({
+  v4: jest.fn(() => "test-uuid"),
 }));
 
 jest.mock("@/lib/data/firebase");
@@ -88,7 +92,9 @@ describe("useExercises", () => {
 
   test("adding an exercise refreshes the exercise list", async () => {
     const testUid = "test-user-uid";
-    
+    // Use fixed timestamp to prevent timing-related test failures
+    const fixedTimestamp = "2023-01-01T12:00:00.000Z";
+
     // Mock the subscription method
     mockRepo.subscribeToExercises.mockReturnValue(jest.fn());
 
@@ -110,16 +116,44 @@ describe("useExercises", () => {
     // Simulate the repo calling back with updated exercise list
     act(() => {
       subscriptionCallback([
-        { id: "1", name: "Squats", user_id: testUid, created_at: "2023-01-01T00:00:00Z" }, 
-        { id: "2", name: "Push-ups", user_id: testUid, created_at: "2023-01-01T00:00:00Z" }
+        {
+          id: "1",
+          name: "Squats",
+          user_id: testUid,
+          created_at: "2023-01-01T00:00:00Z",
+          updated_at: fixedTimestamp,
+          deleted: false,
+        },
+        {
+          id: "2",
+          name: "Push-ups",
+          user_id: testUid,
+          created_at: "2023-01-01T00:00:00Z",
+          updated_at: fixedTimestamp,
+          deleted: false,
+        },
       ]);
     });
 
     // Verify the exercises list was updated
     await waitFor(() => {
       expect(result.current.exercises.exercises).toEqual([
-        { id: "1", name: "Squats", user_id: testUid, created_at: "2023-01-01T00:00:00Z" },
-        { id: "2", name: "Push-ups", user_id: testUid, created_at: "2023-01-01T00:00:00Z" },
+        {
+          id: "1",
+          name: "Squats",
+          user_id: testUid,
+          created_at: "2023-01-01T00:00:00Z",
+          updated_at: fixedTimestamp,
+          deleted: false,
+        },
+        {
+          id: "2",
+          name: "Push-ups",
+          user_id: testUid,
+          created_at: "2023-01-01T00:00:00Z",
+          updated_at: fixedTimestamp,
+          deleted: false,
+        },
       ]);
     });
   });
@@ -134,21 +168,24 @@ describe("useExercises", () => {
       expect.objectContaining({
         service: "useExercises",
         platform: "React Native",
-        operation: "fetch_exercises"
-      })
+        operation: "fetch_exercises",
+      }),
     );
   });
 
   test("cleans up subscription on unmount", () => {
     const testUid = "test-user-uid";
     const mockUnsubscribe = jest.fn();
-    
+
     mockRepo.subscribeToExercises.mockReturnValue(mockUnsubscribe);
 
     const { unmount } = renderHook(() => useExercises(testUid));
 
-    expect(mockRepo.subscribeToExercises).toHaveBeenCalledWith(testUid, expect.any(Function));
-    
+    expect(mockRepo.subscribeToExercises).toHaveBeenCalledWith(
+      testUid,
+      expect.any(Function),
+    );
+
     unmount();
 
     expect(mockUnsubscribe).toHaveBeenCalled();

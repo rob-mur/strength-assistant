@@ -1,19 +1,19 @@
-name: 'Setup Development Environment'
-description: 'Sets up the development environment with devbox, npm caching, and config files'
+name: "Setup Development Environment"
+description: "Sets up the development environment with devbox, npm caching, and config files"
 inputs:
   firebase-config:
-    description: 'Firebase web configuration JSON'
+    description: "Firebase web configuration JSON"
     required: false
   google-services-config:
-    description: 'Google services configuration JSON'
+    description: "Google services configuration JSON"
     required: false
   devbox-config:
-    description: 'Devbox configuration folder to use (minimal, android-build, android-testing, dev)'
+    description: "Devbox configuration folder to use (minimal, android-build, android-testing, dev)"
     required: false
-    default: 'minimal'
+    default: "minimal"
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Check devbox.lock exists
       shell: bash

@@ -7,7 +7,7 @@ const errorHandler = (e: Error, _: boolean) => {
     logger.debug(`Fatal error: ${e}`, {
       service: "Error Handler",
       platform: "React Native",
-      operation: "fatal_error"
+      operation: "fatal_error",
     });
     throw e;
   }

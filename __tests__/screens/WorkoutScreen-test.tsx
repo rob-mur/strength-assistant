@@ -1,4 +1,3 @@
-import { CommonTestState } from "@/__test_utils__/utils";
 import WorkoutScreen from "@/app/(tabs)/workout";
 import { render, screen } from "@testing-library/react-native";
 
@@ -13,9 +12,7 @@ describe("<WorkoutScreen/>", () => {
     // Given
     const selectedExercise = "Squat";
     // When
-    render(
-      <WorkoutScreen selectedExercise={selectedExercise} />,
-    );
+    render(<WorkoutScreen selectedExercise={selectedExercise} />);
     // Then
     expect(await screen.findByText(selectedExercise)).toBeOnTheScreen();
   });

@@ -10,14 +10,17 @@ export default function ExerciseScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { exercises } = useExercises(user?.uid || "");
-  
+
   // Debug logging for Chrome tests
   React.useEffect(() => {
-    if (process.env.CHROME_TEST === 'true' || process.env.CI === 'true') {
-      console.log("🔍 ExerciseScreen: Component rendered", { userId: user?.uid, exerciseCount: exercises.length });
+    if (process.env.CHROME_TEST === "true" || process.env.CI === "true") {
+      console.log("🔍 ExerciseScreen: Component rendered", {
+        userId: user?.uid,
+        exerciseCount: exercises.length,
+      });
     }
   }, [user, exercises]);
-  
+
   return (
     <View style={{ flex: 1, position: "relative" }} testID="exercise-screen">
       <ExerciseList exercises={exercises} />
@@ -27,7 +30,7 @@ export default function ExerciseScreen() {
         testID="add-exercise"
         onPress={(_) => {
           // Debug logging for Chrome tests
-          if (process.env.CHROME_TEST === 'true' || process.env.CI === 'true') {
+          if (process.env.CHROME_TEST === "true" || process.env.CI === "true") {
             console.log("🔍 ExerciseScreen: Add exercise button tapped");
           }
           router.navigate("/exercises/add");

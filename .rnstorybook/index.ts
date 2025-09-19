@@ -3,7 +3,7 @@ import { view } from "./storybook.requires";
 
 // Use platform-specific AsyncStorage
 const getAsyncStorage = () => {
-  if (Platform.OS === 'web') {
+  if (Platform.OS === "web") {
     // Use web-compatible storage to avoid "window is not defined" errors
     return require("../lib/utils/asyncStorage.web").default;
   } else {

@@ -15,7 +15,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     environment: Dev
-    
+
     steps:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
@@ -38,7 +38,6 @@ jobs:
           name: Release v${{ github.run_number }}
           body: |
             Production build from commit ${{ github.sha }}
-            
+
             Changes: ${{ github.event.head_commit.message }}
           files: ./build_production.apk
-

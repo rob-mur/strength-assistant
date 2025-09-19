@@ -8,11 +8,14 @@ export const useExercises = (uid: string) => {
 
   useEffect(() => {
     if (!uid) {
-      logger.warn("useExercises: User not authenticated, exercises will be empty", {
-        service: "useExercises",
-        platform: "React Native",
-        operation: "fetch_exercises"
-      });
+      logger.warn(
+        "useExercises: User not authenticated, exercises will be empty",
+        {
+          service: "useExercises",
+          platform: "React Native",
+          operation: "fetch_exercises",
+        },
+      );
       setExercises([]);
       return;
     }

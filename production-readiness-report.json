@@ -1,0 +1,58 @@
+{
+  "timestamp": "2025-09-14T20:29:10Z",
+  "constitutionalCompliance": {
+    "amendment_v2_5_0_binary_exit_code": false,
+    "amendment_v2_6_0_task_validation": true,
+    "typescript_compilation": true,
+    "test_suite_success": false,
+    "performance_targets": true
+  },
+  "metrics": {
+    "typescript_compilation_time": 2,
+    "total_test_time": 54,
+    "test_results": {
+      "total_tests": 441,
+      "passing_tests": 378,
+      "failing_tests": 62,
+      "test_suites": 35,
+      "passing_suites": 26,
+      "failing_suites": 9
+    },
+    "performance": {
+      "target_execution_time": 60,
+      "actual_execution_time": 54,
+      "meets_performance_target": true
+    }
+  },
+  "validationSteps": [
+    {
+      "step": "typescript_compilation",
+      "status": "PASS",
+      "details": "TypeScript compilation successful",
+      "executionTime": 2
+    },
+    {
+      "step": "jest_worker_stability",
+      "status": "WARN",
+      "details": "3 worker exceptions detected",
+      "executionTime": 0
+    },
+    {
+      "step": "binary_exit_code",
+      "status": "FAIL",
+      "details": "Exit code 1 - Constitutional violation",
+      "executionTime": 54
+    }
+  ],
+  "errors": [
+    "Test suite failed with exit code 1 - Constitutional Amendment v2.5.0 violation"
+  ],
+  "warnings": ["Jest worker stability issues detected: 3 instances"],
+  "recommendations": [
+    "Review Jest configuration and worker settings",
+    "Fix failing tests to achieve 100% pass rate",
+    "Resolve all constitutional violations before deploying to production"
+  ],
+  "overallStatus": "NOT_READY",
+  "cicd_ready": false
+}

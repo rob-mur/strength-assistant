@@ -28,6 +28,7 @@ To add additional pre-commit checks:
 3. Make sure it exits with code 0 on success, non-zero on failure
 
 Example:
+
 ```bash
 # Create a new hook
 echo '#!/bin/bash
@@ -49,6 +50,7 @@ git commit --no-verify
 ## Troubleshooting
 
 If hooks aren't running:
+
 1. Ensure they're executable: `chmod +x scripts/hooks/pre-commit`
 2. Re-run setup: `./scripts/setup-hooks.sh`
 3. Check git hooks are installed: `ls -la .git/hooks/pre-commit`

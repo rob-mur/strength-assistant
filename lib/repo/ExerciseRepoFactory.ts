@@ -16,7 +16,7 @@ export class ExerciseRepoFactory {
    */
   static getInstance(): IExerciseRepo {
     const useSupabase = this.shouldUseSupabase();
-    
+
     if (useSupabase) {
       this.supabaseInstance ??= SupabaseExerciseRepo.getInstance();
       return this.supabaseInstance;
@@ -32,33 +32,34 @@ export class ExerciseRepoFactory {
   private static shouldUseSupabase(): boolean {
     // Check process.env first (preferred for web builds and testing)
     const useSupabaseProcess = process.env.USE_SUPABASE_DATA;
-    
+
     // Fall back to expo-constants if process.env not set
     let useSupabaseEnv;
     try {
-      // Use require for compatibility with Jest mocking
-      const { default: Constants } = require('expo-constants');
+      // Use require for synchronous behavior needed by factory
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { default: Constants } = require("expo-constants");
       useSupabaseEnv = Constants.expoConfig?.extra?.useSupabaseData;
     } catch {
       useSupabaseEnv = undefined;
     }
-    
+
     // Prefer process.env, fall back to expo config
     const useSupabase = useSupabaseProcess ?? useSupabaseEnv;
-    
+
     // Convert string values to boolean
-    if (typeof useSupabase === 'string') {
-      return useSupabase.toLowerCase() === 'true';
+    if (typeof useSupabase === "string") {
+      return useSupabase.toLowerCase() === "true";
     }
-    
+
     return Boolean(useSupabase);
   }
 
   /**
    * Get the current data source being used
    */
-  static getCurrentDataSource(): 'firebase' | 'supabase' {
-    return this.shouldUseSupabase() ? 'supabase' : 'firebase';
+  static getCurrentDataSource(): "firebase" | "supabase" {
+    return this.shouldUseSupabase() ? "supabase" : "firebase";
   }
 
   /**

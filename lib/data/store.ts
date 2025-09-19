@@ -9,10 +9,10 @@ import { User } from "../models/supabase";
 export interface AppStore {
   /** Observable array of exercises for the current user - synced with Supabase */
   exercises: Exercise[];
-  
+
   /** Observable user state - null when not authenticated */
   user: User | null;
-  
+
   /** Connection status for offline-first capabilities */
   isOnline: boolean;
 }

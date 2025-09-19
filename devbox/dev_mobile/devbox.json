@@ -1,59 +1,43 @@
 {
-	"$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.14.2/.schema/devbox.schema.json",
-	"packages": [
-		"maestro@latest",
-		"nodejs@latest",
-		"chromium@latest",
-		"chromedriver@latest",
-		"firebase-tools@latest",
-		"jdk17@latest",
-		"claude-code@latest",
-		"gh@latest",
-		"git@latest",
-		"supabase-cli@latest",
-		"android-tools@latest"
-	],
-	"shell": {
-		"init_hook": [
-			"cd $PROJECT_ROOT 2>/dev/null || cd ../..",
-			"alias sync-devbox='bash $PROJECT_ROOT/scripts/sync-devbox.sh'"
-		],
-		"scripts": {
-			"test": [
-				"../../scripts/test.sh"
-			],
-			"build_preview": [
-				"../../scripts/build.sh preview"
-			],
-			"build_production": [
-				"../../scripts/build.sh production"
-			],
-			"integration_test_android": [
-				"../../scripts/integration_test_android.sh"
-			],
-			"sync_devbox": [
-				"../../scripts/sync-devbox.sh"
-			],
-			"adb_devices": [
-				"adb devices -l"
-			],
-			"adb_logs": [
-				"adb logcat | tee adb-session-$(date +%Y%m%d_%H%M%S).log"
-			],
-			"maestro_device_test": [
-				"maestro test flows/ --device $(adb devices | grep -E 'device$' | head -1 | cut -f1) || echo 'No device connected or maestro flows not found'"
-			],
-			"adb_version": [
-				"adb version"
-			]
-		}
-	},
-	"env": {
-		"ANDROID_HOME": "$PWD/.devbox/nix/profile/default/libexec/android-sdk/",
-		"GRADLE_OPTS": "-Dorg.gradle.project.android.aapt2FromMavenOverride=$PWD/.devbox/nix/profile/default/bin/aapt2",
-		"EXPO_PUBLIC_USE_EMULATOR": "true",
-		"EXPO_PUBLIC_USE_SUPABASE_EMULATOR": "true",
-		"DEVBOX_SHELL_ENABLED": "true",
-		"ADB_VENDOR_KEYS": "$HOME/.android"
-	}
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.14.2/.schema/devbox.schema.json",
+  "packages": [
+    "maestro@latest",
+    "nodejs@latest",
+    "chromium@latest",
+    "chromedriver@latest",
+    "firebase-tools@latest",
+    "jdk17@latest",
+    "claude-code@latest",
+    "gh@latest",
+    "git@latest",
+    "supabase-cli@latest",
+    "android-tools@latest"
+  ],
+  "shell": {
+    "init_hook": [
+      "cd $PROJECT_ROOT 2>/dev/null || cd ../..",
+      "alias sync-devbox='bash $PROJECT_ROOT/scripts/sync-devbox.sh'"
+    ],
+    "scripts": {
+      "test": ["../../scripts/test.sh"],
+      "build_preview": ["../../scripts/build.sh preview"],
+      "build_production": ["../../scripts/build.sh production"],
+      "integration_test_android": ["../../scripts/integration_test_android.sh"],
+      "sync_devbox": ["../../scripts/sync-devbox.sh"],
+      "adb_devices": ["adb devices -l"],
+      "adb_logs": ["adb logcat | tee adb-session-$(date +%Y%m%d_%H%M%S).log"],
+      "maestro_device_test": [
+        "maestro test flows/ --device $(adb devices | grep -E 'device$' | head -1 | cut -f1) || echo 'No device connected or maestro flows not found'"
+      ],
+      "adb_version": ["adb version"]
+    }
+  },
+  "env": {
+    "ANDROID_HOME": "$PWD/.devbox/nix/profile/default/libexec/android-sdk/",
+    "GRADLE_OPTS": "-Dorg.gradle.project.android.aapt2FromMavenOverride=$PWD/.devbox/nix/profile/default/bin/aapt2",
+    "EXPO_PUBLIC_USE_EMULATOR": "true",
+    "EXPO_PUBLIC_USE_SUPABASE_EMULATOR": "true",
+    "DEVBOX_SHELL_ENABLED": "true",
+    "ADB_VENDOR_KEYS": "$HOME/.android"
+  }
 }

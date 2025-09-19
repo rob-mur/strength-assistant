@@ -5,11 +5,12 @@ export class RepositoryUtils {
   /**
    * Validate exercise data structure
    */
-  static validateExerciseData(data: any): boolean {
+  static validateExerciseData(data: unknown): boolean {
     if (data === null || data === undefined) return false;
-    if (typeof data !== 'object') return false;
-    if (typeof data.name !== 'string') return false;
-    if (data.name.trim().length === 0) return false;
+    if (typeof data !== "object") return false;
+    const obj = data as Record<string, unknown>;
+    if (typeof obj.name !== "string") return false;
+    if (obj.name.trim().length === 0) return false;
     return true;
   }
 
@@ -24,8 +25,12 @@ export class RepositoryUtils {
    * Validate exercise ID input
    */
   static validateExerciseId(exerciseId: string): void {
-    if (!exerciseId || typeof exerciseId !== 'string' || exerciseId.trim().length === 0) {
-      throw new Error('Valid exerciseId is required');
+    if (
+      !exerciseId ||
+      typeof exerciseId !== "string" ||
+      exerciseId.trim().length === 0
+    ) {
+      throw new Error("Valid exerciseId is required");
     }
   }
 }
