@@ -30,8 +30,6 @@ module.exports = {
     "src/**/*.{ts,tsx}", // Include our TypeScript infrastructure
     "!**/*.d.ts",
     "!**/*.stories.{ts,tsx}",
-    "!lib/repo/FirebaseExerciseRepo.ts",
-    "!lib/data/firebase/**",
     "!__tests__/test-utils/**", // Exclude test infrastructure from coverage
     "!**/*.test.{ts,tsx}",
     "!**/*.spec.{ts,tsx}",

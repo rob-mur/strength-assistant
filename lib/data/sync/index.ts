@@ -1,6 +1,5 @@
 import { configureSyncEngine } from "./syncConfig";
 import { initSupabase } from "../supabase/supabase";
-import { initFirebase } from "../firebase";
 
 /**
  * Initialize the offline-first data layer
@@ -8,10 +7,7 @@ import { initFirebase } from "../firebase";
  */
 export async function initializeDataLayer(): Promise<void> {
   try {
-    // Initialize both Firebase and Supabase during transition period
-    console.log("🔥 Initializing Firebase...");
-    initFirebase();
-
+    // Initialize Supabase
     console.log("📊 Initializing Supabase...");
     initSupabase();
 

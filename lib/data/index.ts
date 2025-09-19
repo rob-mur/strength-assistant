@@ -7,7 +7,6 @@
 
 // Storage backends and management
 export { StorageBackend, SupabaseStorage } from "./supabase/SupabaseStorage";
-export { FirebaseStorage } from "./firebase/FirebaseStorage";
 export {
   StorageManager,
   IStorageManager,

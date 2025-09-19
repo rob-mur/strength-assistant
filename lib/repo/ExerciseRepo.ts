@@ -2,17 +2,17 @@ import { IExerciseRepo } from "./IExerciseRepo";
 import { ExerciseRepoFactory } from "./ExerciseRepoFactory";
 
 /**
- * Factory-based ExerciseRepo that delegates to appropriate implementation
- * Uses ExerciseRepoFactory to determine whether to use Firebase or Supabase
+ * Factory-based ExerciseRepo that delegates to Supabase implementation
+ * Uses ExerciseRepoFactory to get SupabaseExerciseRepo instance
  *
- * This class maintains backwards compatibility while enabling feature flag switching
+ * This class maintains backwards compatibility for existing code
  */
 export class ExerciseRepo implements IExerciseRepo {
   private static instance: ExerciseRepo;
   private delegate: IExerciseRepo;
 
   private constructor() {
-    // Initialize delegate - will be refreshed on each getInstance() call
+    // Initialize Supabase delegate
     this.delegate = ExerciseRepoFactory.getInstance();
   }
 
@@ -20,21 +20,20 @@ export class ExerciseRepo implements IExerciseRepo {
     if (!ExerciseRepo.instance) {
       ExerciseRepo.instance = new ExerciseRepo();
     }
-    // Always refresh the delegate to respect environment variable changes
-    // This ensures the repo uses the correct implementation even if USE_SUPABASE_DATA changes at runtime
+    // Always refresh the delegate to ensure singleton consistency
     ExerciseRepo.instance.delegate = ExerciseRepoFactory.getInstance();
     return ExerciseRepo.instance;
   }
 
   /**
-   * Initialize the repository - delegates to the configured implementation
+   * Initialize the repository - delegates to Supabase implementation
    */
   async initialize(): Promise<void> {
     return this.delegate.initialize();
   }
 
   /**
-   * Add a new exercise - delegates to the configured implementation
+   * Add a new exercise - delegates to Supabase implementation
    */
   async addExercise(
     userId: string,
@@ -44,7 +43,7 @@ export class ExerciseRepo implements IExerciseRepo {
   }
 
   /**
-   * Get all exercises as a reactive observable - delegates to the configured implementation
+   * Get all exercises as a reactive observable - delegates to Supabase implementation
    */
   getExercises(
     userId: string,
@@ -55,7 +54,7 @@ export class ExerciseRepo implements IExerciseRepo {
   }
 
   /**
-   * Subscribe to real-time exercise updates - delegates to the configured implementation
+   * Subscribe to real-time exercise updates - delegates to Supabase implementation
    */
   subscribeToExercises(
     uid: string,
@@ -65,14 +64,14 @@ export class ExerciseRepo implements IExerciseRepo {
   }
 
   /**
-   * Delete an exercise - delegates to the configured implementation
+   * Delete an exercise - delegates to Supabase implementation
    */
   async deleteExercise(userId: string, exerciseId: string): Promise<void> {
     return this.delegate.deleteExercise(userId, exerciseId);
   }
 
   /**
-   * Get a specific exercise by ID - delegates to the configured implementation
+   * Get a specific exercise by ID - delegates to Supabase implementation
    */
   async getExerciseById(
     exerciseId: string,
@@ -81,7 +80,7 @@ export class ExerciseRepo implements IExerciseRepo {
     return this.delegate.getExerciseById(exerciseId, userId);
   }
 
-  // Offline-first capabilities - delegates to the configured implementation
+  // Offline-first capabilities - delegates to Supabase implementation
   /**
    * Check if the repository is currently syncing data
    */
@@ -125,9 +124,9 @@ export class ExerciseRepo implements IExerciseRepo {
   }
 
   /**
-   * Get the current data source being used
+   * Get the current data source being used (always Supabase)
    */
-  getCurrentDataSource(): "firebase" | "supabase" {
+  getCurrentDataSource(): "supabase" {
     return ExerciseRepoFactory.getCurrentDataSource();
   }
 }

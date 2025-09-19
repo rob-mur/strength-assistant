@@ -5,11 +5,12 @@ import { useFonts } from "expo-font";
 import { SplashScreen } from "expo-router";
 import { useEffect, useState } from "react";
 
-import { logger } from "@/lib/data/firebase/logger";
+import { Logger } from "@/lib/data/supabase/supabase/logger";
 import { initializeDataLayer } from "@/lib/data/sync";
 
 export const useAppInit = () => {
   const [isAppReady, setIsAppReady] = useState(false);
+  const logger = new Logger("AppInit");
 
   const [fontsLoaded, fontError] = useFonts({
     NotoSans_400Regular,

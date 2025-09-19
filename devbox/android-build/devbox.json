@@ -1,11 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.14.2/.schema/devbox.schema.json",
-  "packages": [
-    "path:flakes/androidsdk",
-    "nodejs@latest",
-    "firebase-tools@latest",
-    "jdk17@latest"
-  ],
+  "packages": ["path:flakes/androidsdk", "nodejs@latest", "jdk17@latest"],
   "shell": {
     "scripts": {
       "build_preview": ["../../scripts/build.sh preview"],

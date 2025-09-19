@@ -23,8 +23,6 @@ jobs:
       - name: 🛠 Setup development environment
         uses: ./.github/actions/setup-dev-environment
         with:
-          firebase-config: ${{ secrets.FIREBASE_WEB_CONFIG }}
-          google-services-config: ${{ secrets.GOOGLE_SERVICES }}
           devbox-config: android-build
 
       - name: Build production APK

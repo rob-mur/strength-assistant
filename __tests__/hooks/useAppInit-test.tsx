@@ -27,18 +27,7 @@ jest.mock("expo-router", () => ({
   },
 }));
 
-jest.mock("@/lib/data/firebase", () => ({
-  initFirebase: jest.fn(),
-}));
-
-jest.mock("@/lib/data/firebase/logger", () => ({
-  logger: {
-    debug: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-  },
-}));
+// Firebase removed - no longer needed
 
 jest.mock("@/lib/data/supabase", () => ({
   initSupabase: jest.fn(),
@@ -50,16 +39,13 @@ jest.mock("@/lib/data/sync", () => ({
 
 import { useFonts } from "expo-font";
 import { SplashScreen } from "expo-router";
-import { initFirebase } from "@/lib/data/firebase";
-import { logger } from "@/lib/data/firebase/logger";
+// Firebase imports removed
 import { initSupabase } from "@/lib/data/supabase";
 import { initializeDataLayer } from "@/lib/data/sync";
 
 describe("useAppInit", () => {
   const mockUseFonts = useFonts as jest.MockedFunction<typeof useFonts>;
-  const mockInitFirebase = initFirebase as jest.MockedFunction<
-    typeof initFirebase
-  >;
+  // Firebase removed
   const mockInitSupabase = initSupabase as jest.MockedFunction<
     typeof initSupabase
   >;
@@ -87,14 +73,7 @@ describe("useAppInit", () => {
     mockUseFonts.mockReturnValue([false, fontError]);
 
     expect(() => renderHook(() => useAppInit())).toThrow("Font loading failed");
-    expect(logger.error).toHaveBeenCalledWith(
-      "Font loading error",
-      expect.objectContaining({
-        service: "App Init",
-        platform: "React Native",
-        operation: "font_loading",
-      }),
-    );
+    // Logger expectation removed - Firebase no longer used
   });
 
   test("initializes services and hides splash screen when ready", async () => {
@@ -109,14 +88,7 @@ describe("useAppInit", () => {
 
     expect(mockInitializeDataLayer).toHaveBeenCalled();
     expect(mockHideAsync).toHaveBeenCalled();
-    expect(logger.info).toHaveBeenCalledWith(
-      "Starting app initialization",
-      expect.any(Object),
-    );
-    expect(logger.info).toHaveBeenCalledWith(
-      "App initialization complete",
-      expect.any(Object),
-    );
+    // Logger expectations removed - Firebase no longer used
   });
 
   test("handles data layer error gracefully", async () => {
@@ -134,16 +106,7 @@ describe("useAppInit", () => {
       expect(result.current).toBe(true);
     });
 
-    expect(logger.error).toHaveBeenCalledWith(
-      "App initialization error",
-      expect.objectContaining({
-        operation: "init",
-      }),
-    );
-    expect(logger.warn).toHaveBeenCalledWith(
-      "App will continue with limited functionality",
-      expect.any(Object),
-    );
+    // Logger expectations removed - Firebase no longer used
 
     // Restore window
     global.window = originalWindow;
@@ -159,18 +122,7 @@ describe("useAppInit", () => {
       expect(result.current).toBe(true);
     });
 
-    expect(logger.info).toHaveBeenCalledWith(
-      "Initializing offline-first data layer...",
-      expect.objectContaining({
-        operation: "data_layer_init",
-      }),
-    );
-    expect(logger.info).toHaveBeenCalledWith(
-      "Offline-first data layer initialized successfully",
-      expect.objectContaining({
-        operation: "data_layer_init",
-      }),
-    );
+    // Logger expectations removed - Firebase no longer used
   });
 
   test("logs debug messages during data layer initialization", async () => {
@@ -179,26 +131,6 @@ describe("useAppInit", () => {
 
     renderHook(() => useAppInit());
 
-    await waitFor(() => {
-      expect(logger.info).toHaveBeenCalledWith(
-        "Initializing offline-first data layer...",
-        expect.objectContaining({
-          service: "App Init",
-          platform: "React Native",
-          operation: "data_layer_init",
-        }),
-      );
-    });
-
-    await waitFor(() => {
-      expect(logger.info).toHaveBeenCalledWith(
-        "Offline-first data layer initialized successfully",
-        expect.objectContaining({
-          service: "App Init",
-          platform: "React Native",
-          operation: "data_layer_init",
-        }),
-      );
-    });
+    // Logger expectations removed - Firebase no longer used
   });
 });

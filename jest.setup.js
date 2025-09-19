@@ -1,36 +1,6 @@
 // Temporarily disable fake timers to debug hanging issue
 // jest.useFakeTimers();
 
-// Mock React Native Firebase Auth using FirebaseMockFactory
-jest.mock("@react-native-firebase/auth", () => {
-  const FirebaseMockFactory =
-    require("./__tests__/test-utils/FirebaseMockFactory").default;
-  return FirebaseMockFactory.getReactNativeFirebaseMock();
-});
-
-// Mock Firebase web SDK using FirebaseMockFactory
-jest.mock("firebase/auth", () => {
-  const FirebaseMockFactory =
-    require("./__tests__/test-utils/FirebaseMockFactory").default;
-  return FirebaseMockFactory.getWebFirebaseMock();
-});
-
-// Mock Firebase Firestore web SDK
-jest.mock("firebase/firestore", () => {
-  const FirebaseMockFactory =
-    require("./__tests__/test-utils/FirebaseMockFactory").default;
-  return {
-    getFirestore: jest.fn(() => FirebaseMockFactory.createFirestoreMock()),
-    collection: jest.fn(),
-    doc: jest.fn(),
-    addDoc: jest.fn(),
-    updateDoc: jest.fn(),
-    deleteDoc: jest.fn(),
-    onSnapshot: jest.fn(() => jest.fn()),
-    connectFirestoreEmulator: jest.fn(),
-  };
-});
-
 // Mock platform detection and React Native animations
 jest.mock("react-native", () => {
   const RN = jest.requireActual("react-native");

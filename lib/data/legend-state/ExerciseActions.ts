@@ -29,13 +29,11 @@ export interface ExerciseActions {
   forceSync: () => Promise<void>;
   clearSyncErrors: () => void;
 
-  // Migration operations
+  // Migration operations (deprecated - Firebase removed)
   validateConsistency: () => Promise<{
     isConsistent: boolean;
     errors: string[];
   }>;
-  migrateToSupabase: () => Promise<void>;
-  switchBackend: (useSupabase: boolean) => void;
 }
 
 /**
@@ -240,68 +238,11 @@ class ExerciseActionsImpl implements ExerciseActions {
     isConsistent: boolean;
     errors: string[];
   }> {
-    try {
-      return await storageManager.validateDataConsistency();
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      return {
-        isConsistent: false,
-        errors: [errorMessage],
-      };
-    }
-  }
-
-  async migrateToSupabase(): Promise<void> {
-    try {
-      exerciseStore.syncState.isSyncing.set(true);
-
-      if (exerciseStore.featureFlags.useSupabaseData.get()) {
-        throw new Error("Already using Supabase backend");
-      }
-
-      // Get Firebase and Supabase backends
-      const firebaseStorage = storageManager["firebaseStorage"]; // Access private member for migration
-      const supabaseStorage = storageManager["supabaseStorage"]; // Access private member for migration
-
-      // Migrate data from Firebase to Supabase
-      await storageManager.migrateUserData(firebaseStorage, supabaseStorage);
-
-      if (__DEV__) {
-        console.info("✅ Migration to Supabase completed");
-      }
-    } catch (error) {
-      this.handleActionError("Migration to Supabase failed", error);
-      throw error; // Re-throw for UI error handling
-    } finally {
-      exerciseStore.syncState.isSyncing.set(false);
-    }
-  }
-
-  switchBackend(useSupabase: boolean): void {
-    if (process.env.NODE_ENV === "production") {
-      throw new Error("Backend switching is not allowed in production");
-    }
-
-    try {
-      // Switch backend in storage manager
-      storageManager.switchBackend(useSupabase);
-
-      // Update feature flag in store
-      exerciseStore.featureFlags.useSupabaseData.set(useSupabase);
-
-      // Reinitialize sync with new backend
-      reinitializeSync();
-
-      if (__DEV__) {
-        console.info(
-          `🔄 Switched to ${useSupabase ? "Supabase" : "Firebase"} backend`,
-        );
-      }
-    } catch (error) {
-      this.handleActionError("Backend switch failed", error);
-      throw error;
-    }
+    // Firebase removed - Supabase is always consistent with itself
+    return {
+      isConsistent: true,
+      errors: [],
+    };
   }
 
   // Private helper methods

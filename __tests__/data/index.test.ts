@@ -2,7 +2,7 @@ import {
   // Storage backends
   StorageBackend,
   SupabaseStorage,
-  FirebaseStorage,
+  // FirebaseStorage removed
   StorageManager,
   IStorageManager,
   FeatureFlags,
@@ -48,7 +48,7 @@ import {
 
 // Mock all the dependencies
 jest.mock("../../lib/data/supabase/SupabaseStorage");
-jest.mock("../../lib/data/firebase/FirebaseStorage");
+// Firebase storage mock removed
 jest.mock("../../lib/data/StorageManager");
 jest.mock("../../lib/data/legend-state/ExerciseStore");
 jest.mock("../../lib/data/legend-state/ExerciseActions");
@@ -79,7 +79,7 @@ describe("lib/data/index", () => {
   describe("exports", () => {
     test("exports all storage backend classes and interfaces", () => {
       expect(SupabaseStorage).toBeDefined();
-      expect(FirebaseStorage).toBeDefined();
+      // FirebaseStorage check removed
       expect(StorageManager).toBeDefined();
       expect(storageManager).toBeDefined();
     });

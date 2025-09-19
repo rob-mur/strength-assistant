@@ -1,12 +1,6 @@
 name: "Setup Development Environment"
 description: "Sets up the development environment with devbox, npm caching, and config files"
 inputs:
-  firebase-config:
-    description: "Firebase web configuration JSON"
-    required: false
-  google-services-config:
-    description: "Google services configuration JSON"
-    required: false
   devbox-config:
     description: "Devbox configuration folder to use (minimal, android-build, android-testing, dev)"
     required: false
@@ -23,22 +17,6 @@ runs:
           echo "Please generate it locally with: cd devbox/${{ inputs.devbox-config }} && devbox install"
           exit 1
         fi
-
-    - name: Populate Firebase web config
-      if: inputs.firebase-config != ''
-      shell: bash
-      run: |
-        cat << 'EOF' > firebase.web.config.json
-        ${{ inputs.firebase-config }}
-        EOF
-
-    - name: Populate Google services config
-      if: inputs.google-services-config != ''
-      shell: bash
-      run: |
-        cat << 'EOF' > google-services.json
-        ${{ inputs.google-services-config }}
-        EOF
 
     - name: Install devbox
       uses: jetify-com/devbox-install-action@v0.11.0
