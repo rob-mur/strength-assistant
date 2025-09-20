@@ -4,8 +4,20 @@ set -e
 
 echo "🌐 Starting Chrome Integration Tests"
 
+# Debug: Log working directory info
+echo "🔍 Working Directory Debug:"
+echo "Current working directory: $(pwd)"
+echo "Script location: $(dirname "$0")"
+echo "Contents of current directory:"
+ls -la | head -10
+
 # Change to project root directory (relative to scripts folder)
 cd "$(dirname "$0")/.."
+
+echo "🔍 After directory change:"
+echo "New working directory: $(pwd)"
+echo "package.json exists: $([ -f package.json ] && echo "YES" || echo "NO")"
+echo "devbox.json exists: $([ -f devbox.json ] && echo "YES" || echo "NO")"
 
 # Cleanup function
 cleanup() {
@@ -73,10 +85,64 @@ echo "🔄 Applying Supabase migrations..."
 supabase db reset --local
 echo "✅ Migrations applied"
 
-# Start Expo web server
-echo "🚀 Starting Expo web server..."
+# Debug: Log environment variables
+echo "🔍 Environment Variables Debug:"
+echo "EXPO_PUBLIC_SUPABASE_URL=${EXPO_PUBLIC_SUPABASE_URL:-[NOT SET]}"
+echo "EXPO_PUBLIC_SUPABASE_ANON_KEY=${EXPO_PUBLIC_SUPABASE_ANON_KEY:-[NOT SET]}"
+echo "EXPO_PUBLIC_USE_SUPABASE=${EXPO_PUBLIC_USE_SUPABASE:-[NOT SET]}"
+echo "USE_SUPABASE_DATA=${USE_SUPABASE_DATA:-[NOT SET]}"
+echo "CHROME_TEST=${CHROME_TEST:-[NOT SET]}"
+echo "EXPO_PUBLIC_CHROME_TEST=${EXPO_PUBLIC_CHROME_TEST:-[NOT SET]}"
+echo "NODE_ENV=${NODE_ENV:-[NOT SET]}"
+echo "CI=${CI:-[NOT SET]}"
+echo "GITHUB_ACTIONS=${GITHUB_ACTIONS:-[NOT SET]}"
+echo "RUNNER_OS=${RUNNER_OS:-[NOT SET]}"
+
+# Debug: Check .env file
+echo "🔍 .env File Debug:"
+if [ -f .env ]; then
+    echo ".env file exists with content:"
+    cat .env | head -10
+else
+    echo ".env file does not exist"
+fi
+
+# Debug: Check if running inside devbox
+echo "🔍 Devbox Environment Debug:"
+echo "DEVBOX_SHELL_ENABLED=${DEVBOX_SHELL_ENABLED:-[NOT SET]}"
+echo "Which node: $(which node 2>/dev/null || echo 'node not found')"
+echo "Which npm: $(which npm 2>/dev/null || echo 'npm not found')"
+
+# Ensure critical environment variables are set (fallback for CI)
+echo "🔧 Setting critical environment variables..."
 export CHROME_TEST=true
 export EXPO_PUBLIC_CHROME_TEST=true
+
+# Fallback for Supabase variables if not set by devbox
+if [ -z "$EXPO_PUBLIC_SUPABASE_URL" ]; then
+    echo "⚠️ EXPO_PUBLIC_SUPABASE_URL not set, using fallback"
+    export EXPO_PUBLIC_SUPABASE_URL="http://127.0.0.1:54321"
+fi
+
+if [ -z "$EXPO_PUBLIC_SUPABASE_ANON_KEY" ]; then
+    echo "⚠️ EXPO_PUBLIC_SUPABASE_ANON_KEY not set, using fallback"
+    export EXPO_PUBLIC_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0"
+fi
+
+if [ -z "$EXPO_PUBLIC_USE_SUPABASE" ]; then
+    echo "⚠️ EXPO_PUBLIC_USE_SUPABASE not set, using fallback"
+    export EXPO_PUBLIC_USE_SUPABASE="true"
+fi
+
+if [ -z "$USE_SUPABASE_DATA" ]; then
+    echo "⚠️ USE_SUPABASE_DATA not set, using fallback"
+    export USE_SUPABASE_DATA="true"
+fi
+
+echo "✅ Environment variables configured for Chrome testing"
+
+# Start Expo web server
+echo "🚀 Starting Expo web server..."
 npx expo start --web --port 8081 > expo-server.log 2>&1 &
 EXPO_PID=$!
 
@@ -107,16 +173,56 @@ CHROME_WRAPPER_SCRIPT="/tmp/chrome-wrapper-$$"
 cat > "$CHROME_WRAPPER_SCRIPT" << 'EOF'
 #!/bin/bash
 echo "🚀 Starting Chrome for Maestro testing..."
+
+# Debug: Log environment and available browsers
+echo "🔍 Chrome Environment Debug:"
+echo "DISPLAY=${DISPLAY:-[NOT SET]}"
+echo "HOME=${HOME:-[NOT SET]}"
+echo "USER=${USER:-[NOT SET]}"
+echo "PATH=$PATH"
+
+echo "🔍 Available browser executables:"
+command -v chromium >/dev/null 2>&1 && echo "  - chromium: $(chromium --version 2>/dev/null || echo 'version check failed')"
+command -v google-chrome >/dev/null 2>&1 && echo "  - google-chrome: $(google-chrome --version 2>/dev/null || echo 'version check failed')"
+command -v chrome >/dev/null 2>&1 && echo "  - chrome: $(chrome --version 2>/dev/null || echo 'version check failed')"
+
 # Force use of devbox-provided chromium to match chromedriver version
 if command -v chromium >/dev/null 2>&1; then
-    echo "📱 Using devbox Chromium browser ($(chromium --version 2>/dev/null || echo 'version unknown'))"
-    exec chromium --no-sandbox --headless --disable-dev-shm-usage --disable-gpu --user-data-dir=/tmp/chrome-test-$$ "$@"
+    echo "📱 Using devbox Chromium browser"
+    # Add extra flags for CI environment stability
+    exec chromium \
+        --no-sandbox \
+        --headless \
+        --disable-dev-shm-usage \
+        --disable-gpu \
+        --disable-background-timer-throttling \
+        --disable-backgrounding-occluded-windows \
+        --disable-renderer-backgrounding \
+        --no-first-run \
+        --no-default-browser-check \
+        --user-data-dir=/tmp/chrome-test-$$ \
+        "$@"
 else
     echo "❌ Chromium not found in devbox environment"
-    echo "Available browsers:"
-    command -v google-chrome >/dev/null 2>&1 && echo "  - google-chrome: $(google-chrome --version 2>/dev/null || echo 'version unknown')"
-    command -v chrome >/dev/null 2>&1 && echo "  - chrome: $(chrome --version 2>/dev/null || echo 'version unknown')"
-    exit 1
+    echo "Falling back to system Chrome if available..."
+    if command -v google-chrome >/dev/null 2>&1; then
+        echo "📱 Using system google-chrome as fallback"
+        exec google-chrome \
+            --no-sandbox \
+            --headless \
+            --disable-dev-shm-usage \
+            --disable-gpu \
+            --disable-background-timer-throttling \
+            --disable-backgrounding-occluded-windows \
+            --disable-renderer-backgrounding \
+            --no-first-run \
+            --no-default-browser-check \
+            --user-data-dir=/tmp/chrome-test-$$ \
+            "$@"
+    else
+        echo "❌ No suitable Chrome browser found"
+        exit 1
+    fi
 fi
 EOF
 chmod +x "$CHROME_WRAPPER_SCRIPT"
