@@ -187,15 +187,116 @@ echo "Debug output will be saved to maestro-debug-output/"
 adb logcat -c
 echo "Cleared logcat buffer, starting fresh capture during tests..."
 
-# Run Maestro with debug output and capture console output
-maestro test .maestro/android --debug-output maestro-debug-output 2>&1 | tee maestro-debug-output/maestro-console.log
+# Take screenshot before starting tests
+echo "📸 Taking screenshot before starting tests..."
+adb shell screencap -p /sdcard/pre-test-screenshot.png
+adb pull /sdcard/pre-test-screenshot.png maestro-debug-output/pre-test-screenshot.png || echo "Failed to capture pre-test screenshot"
 
-# Capture final status (using PIPESTATUS to get maestro's exit code, not tee's)
-MAESTRO_EXIT_CODE=${PIPESTATUS[0]}
+# Take screenshot of current screen and save UI dump
+echo "📸 Capturing UI state before tests..."
+adb shell uiautomator dump /sdcard/ui-dump-pre-test.xml
+adb pull /sdcard/ui-dump-pre-test.xml maestro-debug-output/ui-dump-pre-test.xml || echo "Failed to capture UI dump"
+
+# Run individual Maestro tests with enhanced debugging
+echo "🧪 Running Maestro tests individually with debug screenshots..."
+MAESTRO_EXIT_CODE=0
+TEST_COUNT=0
+PASSED_COUNT=0
+
+# Create test results summary
+echo "=== ANDROID INTEGRATION TEST RESULTS ===" > maestro-debug-output/test-summary.txt
+echo "Start time: $(date)" >> maestro-debug-output/test-summary.txt
+echo "" >> maestro-debug-output/test-summary.txt
+
+for test_file in .maestro/android/*.yml; do
+    if [ -f "$test_file" ]; then
+        TEST_COUNT=$((TEST_COUNT + 1))
+        TEST_NAME=$(basename "$test_file" .yml)
+        echo ""
+        echo "🧪 Running test: $TEST_NAME"
+        echo "Test: $TEST_NAME" >> maestro-debug-output/test-summary.txt
+        
+        # Take screenshot before test
+        echo "📸 Taking screenshot before test: $TEST_NAME"
+        adb shell screencap -p /sdcard/before-${TEST_NAME}.png
+        adb pull /sdcard/before-${TEST_NAME}.png maestro-debug-output/before-${TEST_NAME}.png || echo "Failed to capture before screenshot"
+        
+        # Run individual test with timeout and capture output
+        set +e  # Don't exit on command failure
+        echo "Starting test execution at $(date)..."
+        
+        timeout 300 maestro test "$test_file" \
+          --debug-output maestro-debug-output \
+          --format junit \
+          2>&1 | tee "maestro-debug-output/maestro-${TEST_NAME}.log"
+        
+        INDIVIDUAL_EXIT_CODE=${PIPESTATUS[0]}
+        set -e  # Re-enable exit on error
+        
+        # Take screenshot after test (regardless of success/failure)
+        echo "📸 Taking screenshot after test: $TEST_NAME"
+        adb shell screencap -p /sdcard/after-${TEST_NAME}.png
+        adb pull /sdcard/after-${TEST_NAME}.png maestro-debug-output/after-${TEST_NAME}.png || echo "Failed to capture after screenshot"
+        
+        # Capture UI state after test
+        adb shell uiautomator dump /sdcard/ui-dump-after-${TEST_NAME}.xml
+        adb pull /sdcard/ui-dump-after-${TEST_NAME}.xml maestro-debug-output/ui-dump-after-${TEST_NAME}.xml || echo "Failed to capture UI dump"
+        
+        # Log test result
+        if [ $INDIVIDUAL_EXIT_CODE -eq 0 ]; then
+            echo "✅ Test $TEST_NAME passed"
+            echo "Status: PASSED" >> maestro-debug-output/test-summary.txt
+            PASSED_COUNT=$((PASSED_COUNT + 1))
+        else
+            echo "❌ Test $TEST_NAME failed with exit code $INDIVIDUAL_EXIT_CODE"
+            echo "Status: FAILED (exit code $INDIVIDUAL_EXIT_CODE)" >> maestro-debug-output/test-summary.txt
+            MAESTRO_EXIT_CODE=$INDIVIDUAL_EXIT_CODE
+            
+            # Enhanced debugging for failed tests
+            echo "🔍 Capturing enhanced debug info for failed test..."
+            
+            # Capture detailed app logs
+            echo "App logs during test failure:" >> maestro-debug-output/test-summary.txt
+            adb logcat -d | grep -E "ReactNativeJS|Supabase|Legend|Error|Exception" | tail -20 >> maestro-debug-output/test-summary.txt || echo "No relevant logs" >> maestro-debug-output/test-summary.txt
+            
+            # Capture app state
+            echo "App processes:" >> maestro-debug-output/test-summary.txt
+            adb shell ps | grep -i strength >> maestro-debug-output/test-summary.txt || echo "No strength process found" >> maestro-debug-output/test-summary.txt
+            
+            # Take additional failure screenshot
+            adb shell screencap -p /sdcard/failure-${TEST_NAME}.png
+            adb pull /sdcard/failure-${TEST_NAME}.png maestro-debug-output/failure-${TEST_NAME}.png || echo "Failed to capture failure screenshot"
+        fi
+        
+        echo "End time: $(date)" >> maestro-debug-output/test-summary.txt
+        echo "Duration: $(date)" >> maestro-debug-output/test-summary.txt
+        echo "---" >> maestro-debug-output/test-summary.txt
+        
+        # Brief wait between tests
+        sleep 2
+    fi
+done
+
+# Final summary
+echo "" >> maestro-debug-output/test-summary.txt
+echo "=== FINAL SUMMARY ===" >> maestro-debug-output/test-summary.txt
+echo "Tests passed: $PASSED_COUNT/$TEST_COUNT" >> maestro-debug-output/test-summary.txt
+echo "Overall result: $([ $MAESTRO_EXIT_CODE -eq 0 ] && echo "SUCCESS" || echo "FAILURE")" >> maestro-debug-output/test-summary.txt
+echo "Final exit code: $MAESTRO_EXIT_CODE" >> maestro-debug-output/test-summary.txt
 
 echo "=== POST-TEST DIAGNOSTICS ==="
 echo "Maestro tests completed with exit code: $MAESTRO_EXIT_CODE"
+echo "Tests passed: $PASSED_COUNT/$TEST_COUNT"
 
+echo ""
+echo "📊 Test Summary from file:"
+if [ -f "maestro-debug-output/test-summary.txt" ]; then
+    cat maestro-debug-output/test-summary.txt
+else
+    echo "⚠️ Test summary file not found"
+fi
+
+echo ""
 echo "App logs during test execution:"
 adb logcat -d | grep -E "ReactNativeJS|Supabase|Legend|Error|Exception" | tail -30 || echo "No relevant logs found"
 echo ""
@@ -208,18 +309,63 @@ echo "Final logcat entries:"
 adb logcat -d | tail -30
 echo ""
 
+# Take final screenshot
+echo "📸 Taking final screenshot for debugging..."
+adb shell screencap -p /sdcard/final-screenshot.png
+adb pull /sdcard/final-screenshot.png maestro-debug-output/final-screenshot.png || echo "Failed to capture final screenshot"
+
 echo "Debug artifacts saved in maestro-debug-output/"
 
-# List any screenshots or debug files created
+# List all screenshots and debug files created
 if [ -d "maestro-debug-output" ]; then
-    echo "Debug artifacts created:"
+    echo ""
+    echo "📂 All debug artifacts created:"
     ls -la maestro-debug-output/
+    
+    echo ""
+    echo "📸 Screenshots captured:"
+    find maestro-debug-output -name "*.png" -exec basename {} \; | sort | while read screenshot; do
+        if [ -n "$screenshot" ]; then
+            SIZE=$(stat -c%s "maestro-debug-output/$screenshot" 2>/dev/null || echo "unknown")
+            echo "  📷 $screenshot ($SIZE bytes)"
+        fi
+    done
+    
+    echo ""
+    echo "📋 Log files captured:"
+    find maestro-debug-output -name "*.log" -exec basename {} \; | sort | while read logfile; do
+        if [ -n "$logfile" ]; then
+            LINES=$(wc -l < "maestro-debug-output/$logfile" 2>/dev/null || echo "unknown")
+            echo "  📝 $logfile ($LINES lines)"
+        fi
+    done
+    
+    echo ""
+    echo "🔧 UI dumps captured:"
+    find maestro-debug-output -name "*.xml" -exec basename {} \; | sort | while read xmlfile; do
+        if [ -n "$xmlfile" ]; then
+            SIZE=$(stat -c%s "maestro-debug-output/$xmlfile" 2>/dev/null || echo "unknown")
+            echo "  📄 $xmlfile ($SIZE bytes)"
+        fi
+    done
+    
+    echo ""
+    echo "📊 Debug artifact summary:"
+    SCREENSHOT_COUNT=$(find maestro-debug-output -name "*.png" | wc -l)
+    LOG_COUNT=$(find maestro-debug-output -name "*.log" | wc -l)
+    XML_COUNT=$(find maestro-debug-output -name "*.xml" | wc -l)
+    echo "  Screenshots: $SCREENSHOT_COUNT"
+    echo "  Log files: $LOG_COUNT"
+    echo "  UI dumps: $XML_COUNT"
+    echo "  Total files: $(ls maestro-debug-output/ | wc -l)"
+else
+    echo "⚠️ maestro-debug-output directory not found"
 fi
 
-if [ -f "*.png" ]; then
-    echo "Screenshots created:"
-    ls -la *.png
-fi
+# Cleanup temporary files on device
+echo ""
+echo "🧹 Cleaning up temporary files on device..."
+adb shell rm -f /sdcard/*.png /sdcard/*.xml 2>/dev/null || true
 
 # Explicitly fail if any tests failed
 if [ $MAESTRO_EXIT_CODE -ne 0 ]; then
