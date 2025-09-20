@@ -1,6 +1,6 @@
 url: com.jimmy_solutions.strength_assistant.test
 ---
-# Debug test to understand app state in CI
+# Debug test to understand app state in CI - simplified for Android Maestro
 - runScript: ../../scripts/clear_emulator.js
 - launchApp
 
@@ -12,23 +12,10 @@ url: com.jimmy_solutions.strength_assistant.test
 # Take screenshot of initial state
 - takeScreenshot: debug-initial-app-state.png
 
-# Try to find common UI elements and log what we see
-- runScript: |
-    output.log('=== DEBUG: App State Analysis ===');
-    output.log('Current screen elements visible');
-    
-    // Log if we can find expected elements
-    const elements = ['get-started', 'continue-as-guest', 'add-exercise', 'exercise-screen', 'add-workout'];
-    elements.forEach(id => {
-      try {
-        const element = maestro.findElement({id: id});
-        if (element) {
-          output.log('Found element: ' + id + ' - visible: ' + element.isDisplayed());
-        }
-      } catch (e) {
-        output.log('Element not found: ' + id);
-      }
-    });
+# Check for continue as guest button
+- assertVisible:
+    id: "continue-as-guest"
+    optional: true
 
 # Try to tap continue as guest if visible
 - tapOn:
@@ -38,40 +25,15 @@ url: com.jimmy_solutions.strength_assistant.test
 # Wait and see what screen we're on
 - extendedWaitUntil:
     visible: "*"
-    timeout: 10000
+    timeout: 15000
 
 # Take another screenshot after guest login attempt
 - takeScreenshot: debug-after-guest-login.png
 
-# Log what we see now
-- runScript: |
-    output.log('=== DEBUG: After Guest Login Attempt ===');
-    
-    // Check for main screen elements
-    const mainElements = ['get-started', 'add-exercise', 'exercisesTab', 'workoutTab'];
-    mainElements.forEach(id => {
-      try {
-        const element = maestro.findElement({id: id});
-        if (element) {
-          output.log('Main screen element found: ' + id + ' - visible: ' + element.isDisplayed());
-        }
-      } catch (e) {
-        output.log('Main screen element not found: ' + id);
-      }
-    });
-    
-    // Check for error/loading states
-    const stateElements = ['loading', 'error', 'retry'];
-    stateElements.forEach(id => {
-      try {
-        const element = maestro.findElement({id: id});
-        if (element) {
-          output.log('State element found: ' + id + ' - visible: ' + element.isDisplayed());
-        }
-      } catch (e) {
-        output.log('State element not found: ' + id);
-      }
-    });
+# Check for get started button
+- assertVisible:
+    id: "get-started"
+    optional: true
 
 # Try to tap get started if visible
 - tapOn:
@@ -81,24 +43,25 @@ url: com.jimmy_solutions.strength_assistant.test
 # Wait for response
 - extendedWaitUntil:
     visible: "*"
-    timeout: 10000
+    timeout: 15000
+
+# Take screenshot after get started
+- takeScreenshot: debug-after-get-started.png
+
+# Check for main app elements
+- assertVisible:
+    id: "add-exercise"
+    optional: true
+
+- assertVisible:
+    id: "add-workout"
+    optional: true
+
+- assertVisible:
+    id: "exercise-screen"
+    optional: true
 
 # Take final screenshot
 - takeScreenshot: debug-final-app-state.png
 
-# Log final state
-- runScript: |
-    output.log('=== DEBUG: Final App State ===');
-    output.log('Debug test completed - screenshots and logs captured');
-    
-    // Check if we reached the main app screen
-    try {
-      const addExercise = maestro.findElement({id: 'add-exercise'});
-      if (addExercise) {
-        output.log('SUCCESS: Reached main app screen with add-exercise button');
-      }
-    } catch (e) {
-      output.log('INFO: add-exercise button not found - may be on different screen');
-    }
-    
-    output.log('=== DEBUG TEST COMPLETED ===');
+# This test will complete successfully if we get through all steps
