@@ -10,10 +10,6 @@ cd "$(dirname "$0")/.."
 # Cleanup function
 cleanup() {
     echo "🧹 Cleaning up processes..."
-    if [ ! -z "$FIREBASE_PID" ]; then
-        kill $FIREBASE_PID 2>/dev/null || true
-    fi
-
     supabase stop 2>/dev/null || true
 
     if [ ! -z "$EXPO_PID" ]; then
@@ -31,28 +27,46 @@ cleanup() {
 
 trap cleanup EXIT ERR
 
-# Start Firebase emulators
-echo "🔥 Starting Firebase emulators..."
-firebase emulators:start &
-FIREBASE_PID=$!
-
-# Start Supabase emulators
+# Start Supabase emulators with database reset if needed
 echo "🔥 Starting Supabase emulators..."
+
+# Check if we need to reset due to PostgreSQL version incompatibility
+if docker volume ls | grep -q supabase_db_strength-assistant; then
+    echo "🔍 Checking existing database volume compatibility..."
+    # Try to start and check for version issues
+    supabase start > /tmp/supabase_start.log 2>&1 || true
+    if docker logs supabase_db_strength-assistant 2>&1 | grep -q "database files are incompatible"; then
+        echo "⚠️ PostgreSQL version incompatibility detected. Resetting database volume..."
+        supabase stop || true
+        docker volume rm supabase_db_strength-assistant || true
+        echo "✅ Database volume reset"
+    fi
+fi
+
+# Start Supabase
+echo "🚀 Starting Supabase..."
 supabase start
 
-# Wait for Firebase emulators
-echo "⏳ Waiting for Firebase emulators to be ready..."
-timeout=30
+# Wait for Supabase to be ready
+echo "⏳ Waiting for Supabase to be ready..."
+timeout=120
 counter=0
-while ! curl -s http://localhost:8080 > /dev/null; do
-    sleep 1
-    counter=$((counter + 1))
+while ! supabase status > /dev/null 2>&1; do
+    sleep 2
+    counter=$((counter + 2))
     if [ $counter -ge $timeout ]; then
-        echo "❌ Firebase emulators failed to start within $timeout seconds"
+        echo "❌ Supabase failed to start within $timeout seconds"
+        echo "🔍 Checking Supabase status for debugging..."
+        supabase status || true
+        echo "🔍 Checking container logs..."
+        docker logs supabase_db_strength-assistant 2>&1 | tail -10 || true
         exit 1
     fi
+    if [ $((counter % 10)) -eq 0 ]; then
+        echo "⏳ Still waiting for Supabase... ($counter/$timeout seconds)"
+    fi
 done
-echo "✅ Firebase emulators ready"
+echo "✅ Supabase ready"
 
 # Apply migrations
 echo "🔄 Applying Supabase migrations..."
@@ -61,7 +75,9 @@ echo "✅ Migrations applied"
 
 # Start Expo web server
 echo "🚀 Starting Expo web server..."
-npx expo start --web --port 8081 &
+export CHROME_TEST=true
+export EXPO_PUBLIC_CHROME_TEST=true
+npx expo start --web --port 8081 > expo-server.log 2>&1 &
 EXPO_PID=$!
 
 
@@ -78,6 +94,12 @@ while ! curl -s http://localhost:8081 > /dev/null; do
     fi
 done
 echo "✅ Expo web server ready"
+
+# Check for critical startup errors in Expo logs
+if grep -q "CRITICAL STARTUP ERROR\|🚨" expo-server.log 2>/dev/null; then
+    echo "🚨 WARNING: Critical startup errors detected in Expo server logs:"
+    grep -E "CRITICAL STARTUP ERROR|🚨|ERROR|Error" expo-server.log | tail -5
+fi
 
 # Create Chrome wrapper script
 CHROME_WRAPPER_SCRIPT="/tmp/chrome-wrapper-$$"

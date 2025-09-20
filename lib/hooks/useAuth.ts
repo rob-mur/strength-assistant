@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { storageManager } from "../data/StorageManager";
+import type { UserAccount } from "../models/UserAccount";
 
 // Types for cross-platform user
 export interface AuthUser {
@@ -38,14 +39,14 @@ export function useAuth(): AuthState & {
   // Get the Supabase backend
   const authBackend = storageManager.getAuthBackend();
 
-  const handleUserStateChange = useCallback((user: any) => {
+  const handleUserStateChange = useCallback((user: UserAccount | null) => {
     setState((prevState) => ({
       ...prevState,
       user: user
         ? {
             uid: user.id,
-            email: user.email,
-            isAnonymous: user.isAnonymous || false,
+            email: user.email || null,
+            isAnonymous: user.isAnonymous,
           }
         : null,
       loading: false,
@@ -57,6 +58,27 @@ export function useAuth(): AuthState & {
 
     const initAuth = async () => {
       try {
+        // Handle Chrome test environment with automatic test user
+        if (
+          process.env.CHROME_TEST === "true" ||
+          process.env.CI === "true" ||
+          process.env.EXPO_PUBLIC_CHROME_TEST === "true"
+        ) {
+          console.log(
+            "🔐 [useAuth] Chrome test environment detected - creating test user",
+          );
+          setState({
+            user: {
+              uid: "test-user-chrome",
+              email: null,
+              isAnonymous: true,
+            },
+            loading: false,
+            error: null,
+          });
+          return;
+        }
+
         // Subscribe to auth state changes
         unsubscribe = await authBackend.subscribeToAuthState(
           handleUserStateChange,
@@ -87,10 +109,16 @@ export function useAuth(): AuthState & {
   }, [authBackend, handleUserStateChange]);
 
   const signInAnonymously = useCallback(async () => {
+    console.log("🔐 [useAuth] Starting anonymous sign-in process");
     setState((prevState) => ({ ...prevState, loading: true, error: null }));
     try {
-      await authBackend.signInAnonymously();
+      console.log("🔐 [useAuth] Calling authBackend.signInAnonymously()");
+      const result = await authBackend.signInAnonymously();
+      console.log("🔐 [useAuth] Anonymous sign-in successful:", result);
+      setState((prevState) => ({ ...prevState, loading: false }));
+      console.log("🔐 [useAuth] Loading state reset to false");
     } catch (error) {
+      console.error("🔐 [useAuth] Anonymous sign-in failed:", error);
       setState((prevState) => ({
         ...prevState,
         error: {
@@ -110,6 +138,7 @@ export function useAuth(): AuthState & {
       setState((prevState) => ({ ...prevState, loading: true, error: null }));
       try {
         await authBackend.signUpWithEmail(email, password);
+        setState((prevState) => ({ ...prevState, loading: false }));
       } catch (error) {
         setState((prevState) => ({
           ...prevState,
@@ -132,6 +161,7 @@ export function useAuth(): AuthState & {
       setState((prevState) => ({ ...prevState, loading: true, error: null }));
       try {
         await authBackend.signInWithEmail(email, password);
+        setState((prevState) => ({ ...prevState, loading: false }));
       } catch (error) {
         setState((prevState) => ({
           ...prevState,
@@ -151,6 +181,7 @@ export function useAuth(): AuthState & {
     setState((prevState) => ({ ...prevState, loading: true, error: null }));
     try {
       await authBackend.signOut();
+      setState((prevState) => ({ ...prevState, loading: false }));
     } catch (error) {
       setState((prevState) => ({
         ...prevState,

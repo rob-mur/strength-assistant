@@ -14,10 +14,7 @@ jest.mock(
   { virtual: true },
 );
 
-jest.mock("@/lib/data/firebase/initializer", () => ({
-  initializeFirebaseServices: jest.fn(),
-  getDb: jest.fn(),
-}));
+// Firebase mocks removed - using Supabase only
 
 jest.mock("@/lib/data/supabase/SupabaseClient", () => ({
   supabaseClient: {
@@ -53,16 +50,6 @@ jest.mock("@/lib/models/Exercise", () => ({
     validateExerciseInput: jest.fn(),
     sanitizeExerciseName: jest.fn(),
   },
-}));
-
-jest.mock("firebase/firestore", () => ({
-  collection: jest.fn(),
-  addDoc: jest.fn(),
-  deleteDoc: jest.fn(),
-  doc: jest.fn(),
-  onSnapshot: jest.fn(),
-  query: jest.fn(),
-  orderBy: jest.fn(),
 }));
 
 jest.mock("uuid", () => ({

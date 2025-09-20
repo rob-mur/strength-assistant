@@ -1,5 +1,12 @@
-// There is a magic import for maestro
+// Clear Supabase local database for testing
+// This script now works with Supabase instead of Firebase
 // eslint-disable-next-line no-undef
-http.delete(
-  "http://localhost:4400/emulator/v1/projects/strengthassistantdev/databases/(default)/documents",
-);
+http.delete("http://127.0.0.1:54321/rest/v1/exercises", {
+  headers: {
+    Authorization:
+      "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU",
+    apikey:
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU",
+    "Content-Type": "application/json",
+  },
+});

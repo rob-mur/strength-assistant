@@ -166,7 +166,12 @@ export class SupabaseAuth {
     error: unknown,
     operation: string,
   ): UserAccount {
+    console.log(`🔐 [SupabaseAuth] handleAuthResponse for ${operation}:`, {
+      data,
+      error,
+    });
     if (error) {
+      console.error(`🔐 [SupabaseAuth] ${operation} error:`, error);
       throw new Error(
         `${operation} failed: ${(error as { message: string }).message}`,
       );
@@ -216,7 +221,16 @@ export class SupabaseAuth {
    * Create anonymous user session
    */
   async signInAnonymously(): Promise<UserAccount> {
+    console.log(
+      "🔐 [SupabaseAuth] Starting anonymous sign-in with Supabase client",
+    );
     const { data, error } = await this.client.auth.signInAnonymously();
+    console.log(
+      "🔐 [SupabaseAuth] Supabase response - data:",
+      data,
+      "error:",
+      error,
+    );
 
     return this.handleAuthResponse(data, error, "Anonymous sign in");
   }

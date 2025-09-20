@@ -5,9 +5,17 @@ url: http://localhost:8081
 - takeScreenshot: "01-app-launched.png"
 # Handle optional auth step (only if not already authenticated)
 - tapOn:
-    id: "continue-as-guest"
+    text: "Continue as Guest"
     optional: true
 - takeScreenshot: "02-after-auth-attempt.png"
+# Try alternative click methods if the first didn't work
+- tapOn:
+    id: "continue-as-guest"
+    optional: true
+- takeScreenshot: "02b-after-second-auth-attempt.png"
+# Wait a moment for auth to complete
+- waitForAnimationToEnd
+- takeScreenshot: "02c-after-auth-animation.png"
 # Handle optional onboarding step (only if not already seen)
 - tapOn:
     id: "get-started"

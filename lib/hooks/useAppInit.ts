@@ -3,14 +3,14 @@ import { NotoSans_400Regular } from "@expo-google-fonts/noto-sans";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useFonts } from "expo-font";
 import { SplashScreen } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Logger } from "@/lib/data/supabase/supabase/logger";
 import { initializeDataLayer } from "@/lib/data/sync";
 
 export const useAppInit = () => {
   const [isAppReady, setIsAppReady] = useState(false);
-  const logger = new Logger("AppInit");
+  const logger = useMemo(() => new Logger("AppInit"), []);
 
   const [fontsLoaded, fontError] = useFonts({
     NotoSans_400Regular,
@@ -31,7 +31,7 @@ export const useAppInit = () => {
       });
       throw fontError;
     }
-  }, [fontError]);
+  }, [fontError, logger]);
 
   useEffect(() => {
     const prepare = async () => {
@@ -59,19 +59,40 @@ export const useAppInit = () => {
           duration: Date.now() - startTime,
         });
       } catch (error: unknown) {
+        const errorMessage = (error as Error).message;
+
         logger.error("App initialization error", {
           service: "App Init",
           platform: "React Native",
           operation: "init",
           duration: Date.now() - startTime,
           error: {
-            message: (error as Error).message,
+            message: errorMessage,
             stack: (error as Error).stack,
           },
         });
 
-        // In web/Chrome testing environments, continue with degraded functionality
+        // IMPROVED ERROR VISIBILITY: Show critical startup errors prominently
+        console.error("🚨 CRITICAL STARTUP ERROR:", errorMessage);
+        console.error("🔧 This may prevent the app from working correctly");
+
+        // In Chrome/test environments, show error in DOM for easier debugging
         if (typeof window !== "undefined") {
+          console.error(
+            "🧪 CHROME TEST ENVIRONMENT - Startup error detected:",
+            errorMessage,
+          );
+
+          // Create visible error indicator for integration tests
+          const errorDiv = document.createElement("div");
+          errorDiv.style.cssText = `
+            position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+            background: #ff4444; color: white; padding: 10px;
+            font-family: monospace; font-size: 14px;
+          `;
+          errorDiv.innerHTML = `🚨 STARTUP ERROR: ${errorMessage}`;
+          document.body?.appendChild(errorDiv);
+
           logger.warn(
             "Web environment detected, continuing with degraded functionality for testing",
             {
@@ -99,7 +120,7 @@ export const useAppInit = () => {
     };
 
     prepare();
-  }, []);
+  }, [logger]);
 
   useEffect(() => {
     if (fontsLoaded && isAppReady) {
@@ -110,7 +131,7 @@ export const useAppInit = () => {
       });
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, isAppReady]);
+  }, [fontsLoaded, isAppReady, logger]);
 
   return fontsLoaded && isAppReady;
 };
