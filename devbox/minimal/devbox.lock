@@ -73,54 +73,6 @@
         }
       }
     },
-    "firebase-tools@latest": {
-      "last_modified": "2025-08-08T08:05:48Z",
-      "resolved": "github:NixOS/nixpkgs/a3f3e3f2c983e957af6b07a1db98bafd1f87b7a1#firebase-tools",
-      "source": "devbox-search",
-      "version": "14.11.2",
-      "systems": {
-        "aarch64-darwin": {
-          "outputs": [
-            {
-              "name": "out",
-              "path": "/nix/store/zf8q36g73lakbil2ri5w999p8l6y2hi4-firebase-tools-14.11.2",
-              "default": true
-            }
-          ],
-          "store_path": "/nix/store/zf8q36g73lakbil2ri5w999p8l6y2hi4-firebase-tools-14.11.2"
-        },
-        "aarch64-linux": {
-          "outputs": [
-            {
-              "name": "out",
-              "path": "/nix/store/s1nvrwwynvpl4xaxyvydhxkwnsyjk4hh-firebase-tools-14.11.2",
-              "default": true
-            }
-          ],
-          "store_path": "/nix/store/s1nvrwwynvpl4xaxyvydhxkwnsyjk4hh-firebase-tools-14.11.2"
-        },
-        "x86_64-darwin": {
-          "outputs": [
-            {
-              "name": "out",
-              "path": "/nix/store/p0azzz6gdpgq8r6xxajmlagpgvz2kgxy-firebase-tools-14.11.2",
-              "default": true
-            }
-          ],
-          "store_path": "/nix/store/p0azzz6gdpgq8r6xxajmlagpgvz2kgxy-firebase-tools-14.11.2"
-        },
-        "x86_64-linux": {
-          "outputs": [
-            {
-              "name": "out",
-              "path": "/nix/store/s6sgsylhy32asrr2bpm7v3sv9pvdy40x-firebase-tools-14.11.2",
-              "default": true
-            }
-          ],
-          "store_path": "/nix/store/s6sgsylhy32asrr2bpm7v3sv9pvdy40x-firebase-tools-14.11.2"
-        }
-      }
-    },
     "github:NixOS/nixpkgs/nixpkgs-unstable": {
       "last_modified": "2025-09-05T01:14:44Z",
       "resolved": "github:NixOS/nixpkgs/ca77296380960cd497a765102eeb1356eb80fed0?lastModified=1757034884&narHash=sha256-PgLSZDBEWUHpfTRfFyklmiiLBE1i1aGCtz4eRA3POao%3D"
