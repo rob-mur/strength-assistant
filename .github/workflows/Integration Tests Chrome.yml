@@ -27,7 +27,6 @@ jobs:
 
       - name: Upload debug artifacts
         if: always()
-        working-directory: .
         uses: actions/upload-artifact@v4
         with:
           name: chrome-integration-test-debug-artifacts
