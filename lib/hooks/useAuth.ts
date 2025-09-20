@@ -67,7 +67,7 @@ export function useAuth(): AuthState & {
           console.log(
             "🔐 [useAuth] Chrome test environment detected - creating anonymous test user",
           );
-          
+
           // Subscribe to auth state changes first
           unsubscribe = await authBackend.subscribeToAuthState(
             handleUserStateChange,
