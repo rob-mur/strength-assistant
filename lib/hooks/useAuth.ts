@@ -58,24 +58,37 @@ export function useAuth(): AuthState & {
 
     const initAuth = async () => {
       try {
-        // Handle Chrome test environment with automatic test user
+        // Handle Chrome test environment with automatic anonymous sign-in
         if (
           process.env.CHROME_TEST === "true" ||
           process.env.CI === "true" ||
           process.env.EXPO_PUBLIC_CHROME_TEST === "true"
         ) {
           console.log(
-            "🔐 [useAuth] Chrome test environment detected - creating test user",
+            "🔐 [useAuth] Chrome test environment detected - creating anonymous test user",
           );
-          setState({
-            user: {
-              uid: "test-user-chrome",
-              email: null,
-              isAnonymous: true,
-            },
-            loading: false,
-            error: null,
-          });
+          
+          // Subscribe to auth state changes first
+          unsubscribe = await authBackend.subscribeToAuthState(
+            handleUserStateChange,
+          );
+
+          // Check if user is already authenticated
+          const currentUser = await authBackend.getCurrentUser();
+          if (currentUser) {
+            console.log(
+              "🔐 [useAuth] Test user already authenticated:",
+              currentUser.id,
+            );
+            handleUserStateChange(currentUser);
+          } else {
+            console.log(
+              "🔐 [useAuth] No authenticated user found, signing in anonymously",
+            );
+            // Sign in anonymously to get a real Supabase user
+            await authBackend.signInAnonymously();
+            // handleUserStateChange will be called automatically via subscription
+          }
           return;
         }
 
