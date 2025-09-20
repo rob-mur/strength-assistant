@@ -27,10 +27,13 @@ jobs:
 
       - name: Upload debug artifacts
         if: always()
+        working-directory: .
         uses: actions/upload-artifact@v4
         with:
-          name: maestro-chrome-debug-artifacts
+          name: chrome-integration-test-debug-artifacts
           path: |
             maestro-debug-output/
             *.png
-          retention-days: 7
+            *.log
+            expo-server.log
+          retention-days: 14

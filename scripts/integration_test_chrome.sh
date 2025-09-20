@@ -244,6 +244,12 @@ echo "📄 Console output will be captured through Expo web server logs"
 echo "🧪 Running Maestro Chrome tests..."
 mkdir -p maestro-debug-output
 
+# Create test summary file
+echo "=== CHROME INTEGRATION TEST RESULTS ===" > maestro-debug-output/test-summary.txt
+echo "Start time: $(date)" >> maestro-debug-output/test-summary.txt
+echo "Working directory: $(pwd)" >> maestro-debug-output/test-summary.txt
+echo "" >> maestro-debug-output/test-summary.txt
+
 FIRST_FAILED_EXIT_CODE=""
 TEST_COUNT=0
 PASSED_COUNT=0
@@ -251,14 +257,17 @@ PASSED_COUNT=0
 for test_file in .maestro/web/*.yml; do
     if [ -f "$test_file" ]; then
         TEST_COUNT=$((TEST_COUNT + 1))
-        echo "🧪 Running test: $(basename "$test_file")"
+        TEST_NAME=$(basename "$test_file" .yml)
+        echo ""
+        echo "🧪 Running test: $TEST_NAME"
+        echo "Test: $TEST_NAME" >> maestro-debug-output/test-summary.txt
         
         # Create unique Chrome user data directory
         CHROME_USER_DATA_DIR=$(mktemp -d -t maestro-chrome-test-XXXXXX)
         export MAESTRO_CHROME_USER_DATA_DIR="$CHROME_USER_DATA_DIR"
         
         # Clear log marker for this test
-        echo "=== Starting test: $(basename "$test_file") at $(date) ==="
+        echo "=== Starting test: $TEST_NAME at $(date) ==="
         
         # Run test with debug output and console capture
         echo "🔍 Running test with Maestro debug output..."
@@ -267,13 +276,14 @@ for test_file in .maestro/web/*.yml; do
         # Set enhanced logging environment
         export MAESTRO_CLI_LOG_LEVEL=DEBUG
         
-        # Run maestro with valid CLI options and full logging
-        maestro test "$test_file" \
+        # Run maestro with timeout and enhanced logging
+        echo "Starting test execution at $(date)..." >> maestro-debug-output/test-summary.txt
+        timeout 300 maestro test "$test_file" \
           --headless \
           --debug-output maestro-debug-output \
           --format junit \
           --env MAESTRO_CLI_LOG_LEVEL=DEBUG \
-          2>&1 | tee "maestro-debug-output/maestro-console-$(basename "$test_file" .yml).log"
+          2>&1 | tee "maestro-debug-output/maestro-console-${TEST_NAME}.log"
         INDIVIDUAL_EXIT_CODE=${PIPESTATUS[0]}  # Get maestro's exit code, not tee's
         
         set -e  # Re-enable exit on error
@@ -325,29 +335,49 @@ Screenshot Files:
 $SCREENSHOT_LIST
 EOF
         
+        # Log test results with enhanced debugging
         if [ $INDIVIDUAL_EXIT_CODE -eq 0 ]; then
-            echo "✅ $(basename "$test_file") passed"
+            echo "✅ Test $TEST_NAME passed"
+            echo "Status: PASSED" >> maestro-debug-output/test-summary.txt
             PASSED_COUNT=$((PASSED_COUNT + 1))
         else
-            echo "❌ $(basename "$test_file") failed with exit code $INDIVIDUAL_EXIT_CODE"
+            echo "❌ Test $TEST_NAME failed with exit code $INDIVIDUAL_EXIT_CODE"
+            echo "Status: FAILED (exit code $INDIVIDUAL_EXIT_CODE)" >> maestro-debug-output/test-summary.txt
             FIRST_FAILED_EXIT_CODE=${FIRST_FAILED_EXIT_CODE:-$INDIVIDUAL_EXIT_CODE}
+            
+            # Enhanced debugging for failed tests
+            echo "🔍 Capturing enhanced debug info for failed test..."
             
             # Show debug information for failed tests
             echo "📋 Debug information for failed test:"
             echo "🌐 Browser console output available through Expo web server logs"
             
+            # Capture Expo server logs for this test
+            echo "Expo server logs during test failure:" >> maestro-debug-output/test-summary.txt
+            if [ -f "expo-server.log" ]; then
+                tail -20 expo-server.log >> maestro-debug-output/test-summary.txt 2>/dev/null || echo "No Expo logs available" >> maestro-debug-output/test-summary.txt
+            fi
+            
             # Show Maestro debug output
             if [ -f "maestro-debug-output/maestro-console-${TEST_NAME}.log" ]; then
                 echo "🤖 Recent Maestro output (last 15 lines):"
                 tail -15 "maestro-debug-output/maestro-console-${TEST_NAME}.log" 2>/dev/null || echo "No Maestro output available"
+                
+                # Add to summary
+                echo "Maestro output (last 15 lines):" >> maestro-debug-output/test-summary.txt
+                tail -15 "maestro-debug-output/maestro-console-${TEST_NAME}.log" >> maestro-debug-output/test-summary.txt 2>/dev/null || echo "No Maestro output available" >> maestro-debug-output/test-summary.txt
             else
                 echo "⚠️ No Maestro console log available"
+                echo "No Maestro console log available" >> maestro-debug-output/test-summary.txt
             fi
             
             # List all available debug files
             echo "📂 Available debug artifacts:"
             ls -la maestro-debug-output/ 2>/dev/null || echo "No debug artifacts found"
         fi
+        
+        echo "End time: $(date)" >> maestro-debug-output/test-summary.txt
+        echo "---" >> maestro-debug-output/test-summary.txt
         
         # Cleanup
         rm -rf "$CHROME_USER_DATA_DIR" 2>/dev/null || true
@@ -364,7 +394,24 @@ if [ $TEST_COUNT -eq 0 ]; then
     exit 1
 fi
 
+# Add final summary to test summary file
+echo "" >> maestro-debug-output/test-summary.txt
+echo "=== FINAL SUMMARY ===" >> maestro-debug-output/test-summary.txt
+echo "Tests passed: $PASSED_COUNT/$TEST_COUNT" >> maestro-debug-output/test-summary.txt
+echo "Overall result: $([ -z "$FIRST_FAILED_EXIT_CODE" ] && echo "SUCCESS" || echo "FAILURE")" >> maestro-debug-output/test-summary.txt
+echo "Working directory: $(pwd)" >> maestro-debug-output/test-summary.txt
+echo "End time: $(date)" >> maestro-debug-output/test-summary.txt
+
 echo "🏁 Test Summary: $PASSED_COUNT/$TEST_COUNT tests passed"
+
+# Show test summary file content
+echo ""
+echo "📊 Complete Test Summary:"
+if [ -f "maestro-debug-output/test-summary.txt" ]; then
+    cat maestro-debug-output/test-summary.txt
+else
+    echo "⚠️ Test summary file not found"
+fi
 
 # Final debug artifacts summary
 echo ""
