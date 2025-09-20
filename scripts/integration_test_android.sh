@@ -44,37 +44,15 @@ echo "✅ Android AVD created and optimized successfully"
 adb start-server
 
 # Clean up any existing processes and Docker resources to save disk space
-pkill -f "firebase emulators" || true
 supabase stop || true
-npx kill-port 9099 || true
-npx kill-port 5000 || true  
-npx kill-port 8080 || true
 
 # Clean up Docker resources to free disk space
 echo "🧹 Cleaning up Docker resources to save disk space..."
 docker system prune -f || true
 sleep 2
 
-# Start services sequentially to avoid Docker resource contention
-echo "🔄 Starting Firebase emulators at $(date)..."
-firebase emulators:start &
-FIREBASE_PID=$!
-
-# Wait for Firebase to be ready before starting Supabase
-echo "⏳ Waiting for Firebase emulators to initialize..."
-timeout=30
-counter=0
-while ! curl -s http://localhost:8080 > /dev/null; do
-    sleep 1
-    counter=$((counter + 1))
-    if [ $counter -ge $timeout ]; then
-        echo "❌ Firebase emulators failed to start within $timeout seconds"
-        exit 1
-    fi
-done
-echo "✅ Firebase emulators ready"
-
-echo "🔄 Starting Supabase (blocking to ensure clean initialization) at $(date)..."
+# Start Supabase
+echo "🔄 Starting Supabase at $(date)..."
 supabase start
 echo "✅ Supabase started successfully at $(date)"
 
@@ -85,10 +63,7 @@ echo "launched emulator in background"
 
 errorhandler () {
     kill $EMULATOR_PID 2>/dev/null || true
-    kill $FIREBASE_PID 2>/dev/null || true
     supabase stop 2>/dev/null || true
-    npx kill-port 8080 2>/dev/null || true
-    pkill -f "firebase emulators" 2>/dev/null || true
 }
 trap errorhandler ERR EXIT
 
@@ -104,12 +79,10 @@ done
 
 echo "Emulator is ready!"
 
-# Firebase already confirmed ready in sequential startup above
-
-# Verify Supabase is responding (should be ready since we started it blocking)
+# Verify Supabase is responding
 echo "⏳ Verifying Supabase is ready..."
-if ! curl -s http://localhost:54321/health > /dev/null; then
-    echo "❌ Supabase health check failed despite blocking start"
+if ! curl -s http://localhost:54321 > /dev/null; then
+    echo "❌ Supabase health check failed"
     echo "Docker container status:"
     docker ps -a | grep supabase || echo "No supabase containers found"
     exit 1
@@ -161,7 +134,7 @@ echo "Testing host connectivity from emulator:"
 
 # First verify Supabase is actually running on host
 echo "Verifying Supabase is running on host..."
-if curl -s http://localhost:54321/health >/dev/null 2>&1; then
+if curl -s http://localhost:54321 >/dev/null 2>&1; then
     echo "✅ Supabase confirmed running on host"
 else
     echo "❌ Supabase not reachable on host - this will cause Android tests to fail"
@@ -185,9 +158,9 @@ fi
 echo ""
 
 echo "Environment variables for Supabase:"
-echo "EXPO_PUBLIC_USE_SUPABASE_EMULATOR: $EXPO_PUBLIC_USE_SUPABASE_EMULATOR"  
-echo "EXPO_PUBLIC_SUPABASE_EMULATOR_HOST: $EXPO_PUBLIC_SUPABASE_EMULATOR_HOST"
-echo "EXPO_PUBLIC_SUPABASE_EMULATOR_PORT: $EXPO_PUBLIC_SUPABASE_EMULATOR_PORT"
+echo "EXPO_PUBLIC_USE_SUPABASE: $EXPO_PUBLIC_USE_SUPABASE"  
+echo "EXPO_PUBLIC_SUPABASE_URL: $EXPO_PUBLIC_SUPABASE_URL"
+echo "EXPO_PUBLIC_SUPABASE_ANON_KEY: $EXPO_PUBLIC_SUPABASE_ANON_KEY"
 echo ""
 
 echo "Current running processes:"
