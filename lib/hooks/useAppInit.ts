@@ -12,11 +12,16 @@ export const useAppInit = () => {
   const [isAppReady, setIsAppReady] = useState(false);
   const logger = useMemo(() => new Logger("AppInit"), []);
 
+  // Enhanced debugging for Chrome tests
+  console.log("🔄 useAppInit: Hook initialized");
+  
   const [fontsLoaded, fontError] = useFonts({
     NotoSans_400Regular,
     JetBrainsMono_400Regular,
     ...MaterialCommunityIcons.font,
   });
+  
+  console.log("🔄 useAppInit: Fonts state -", { fontsLoaded, fontError: !!fontError });
 
   useEffect(() => {
     if (fontError) {
@@ -36,6 +41,7 @@ export const useAppInit = () => {
   useEffect(() => {
     const prepare = async () => {
       const startTime = Date.now();
+      console.log("🚀 useAppInit: Starting app initialization");
 
       logger.info("Starting app initialization", {
         service: "App Init",
@@ -44,6 +50,7 @@ export const useAppInit = () => {
       });
 
       try {
+        console.log("🔄 useAppInit: Initializing data layer...");
         logger.info("Initializing offline-first data layer...", {
           service: "App Init",
           platform: "React Native",
@@ -51,6 +58,7 @@ export const useAppInit = () => {
         });
 
         await initializeDataLayer();
+        console.log("✅ useAppInit: Data layer initialized successfully");
 
         logger.info("Offline-first data layer initialized successfully", {
           service: "App Init",
@@ -109,6 +117,7 @@ export const useAppInit = () => {
           });
         }
       } finally {
+        console.log("🏁 useAppInit: Setting app ready to true");
         setIsAppReady(true);
         logger.info("App initialization complete", {
           service: "App Init",
@@ -116,6 +125,7 @@ export const useAppInit = () => {
           operation: "init",
           duration: Date.now() - startTime,
         });
+        console.log("✅ useAppInit: App initialization complete");
       }
     };
 
@@ -123,15 +133,25 @@ export const useAppInit = () => {
   }, [logger]);
 
   useEffect(() => {
+    console.log("🔄 useAppInit: Checking readiness -", { fontsLoaded, isAppReady });
     if (fontsLoaded && isAppReady) {
+      console.log("✅ useAppInit: App fully ready, hiding splash screen");
       logger.info("Fonts loaded and app ready, hiding splash screen", {
         service: "App Init",
         platform: "React Native",
         operation: "splash_screen",
       });
       SplashScreen.hideAsync();
+    } else {
+      console.log("⏳ useAppInit: Not ready yet -", { 
+        fontsLoaded, 
+        isAppReady, 
+        willReturn: fontsLoaded && isAppReady 
+      });
     }
   }, [fontsLoaded, isAppReady, logger]);
 
-  return fontsLoaded && isAppReady;
+  const returnValue = fontsLoaded && isAppReady;
+  console.log("🔄 useAppInit: Returning", returnValue);
+  return returnValue;
 };

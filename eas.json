@@ -5,15 +5,15 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
-      },
-      "environment": "development"
+      }
+      // No environment variables - uses local .env and devbox configs
     },
     "preview": {
       "distribution": "internal",
       "android": {
         "buildType": "apk"
-      },
-      "environment": "preview"
+      }
+      // No environment variables - CI will set them per test platform
     },
     "production": {
       "distribution": "internal",
@@ -21,6 +21,7 @@
         "buildType": "apk"
       },
       "environment": "production"
+      // Only production uses EAS environment variables
     }
   }
 }

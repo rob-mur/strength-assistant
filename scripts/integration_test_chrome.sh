@@ -4,24 +4,13 @@ set -e
 
 echo "🌐 Starting Chrome Integration Tests"
 
-# Debug: Log working directory info
-echo "🔍 Working Directory Debug:"
-echo "Current working directory: $(pwd)"
-echo "Script location: $(dirname "$0")"
-echo "Contents of current directory:"
-ls -la | head -10
-
 # Change to project root directory (relative to scripts folder)
 cd "$(dirname "$0")/.."
-
-echo "🔍 After directory change:"
-echo "New working directory: $(pwd)"
-echo "package.json exists: $([ -f package.json ] && echo "YES" || echo "NO")"
-echo "devbox.json exists: $([ -f devbox.json ] && echo "YES" || echo "NO")"
 
 # Cleanup function
 cleanup() {
     echo "🧹 Cleaning up processes..."
+
     supabase stop 2>/dev/null || true
 
     if [ ! -z "$EXPO_PID" ]; then
@@ -39,111 +28,25 @@ cleanup() {
 
 trap cleanup EXIT ERR
 
-# Start Supabase emulators with database reset if needed
+# Start Supabase emulators
 echo "🔥 Starting Supabase emulators..."
-
-# Check if we need to reset due to PostgreSQL version incompatibility
-if docker volume ls | grep -q supabase_db_strength-assistant; then
-    echo "🔍 Checking existing database volume compatibility..."
-    # Try to start and check for version issues
-    supabase start > /tmp/supabase_start.log 2>&1 || true
-    if docker logs supabase_db_strength-assistant 2>&1 | grep -q "database files are incompatible"; then
-        echo "⚠️ PostgreSQL version incompatibility detected. Resetting database volume..."
-        supabase stop || true
-        docker volume rm supabase_db_strength-assistant || true
-        echo "✅ Database volume reset"
-    fi
-fi
-
-# Start Supabase
-echo "🚀 Starting Supabase..."
 supabase start
-
-# Wait for Supabase to be ready
-echo "⏳ Waiting for Supabase to be ready..."
-timeout=120
-counter=0
-while ! supabase status > /dev/null 2>&1; do
-    sleep 2
-    counter=$((counter + 2))
-    if [ $counter -ge $timeout ]; then
-        echo "❌ Supabase failed to start within $timeout seconds"
-        echo "🔍 Checking Supabase status for debugging..."
-        supabase status || true
-        echo "🔍 Checking container logs..."
-        docker logs supabase_db_strength-assistant 2>&1 | tail -10 || true
-        exit 1
-    fi
-    if [ $((counter % 10)) -eq 0 ]; then
-        echo "⏳ Still waiting for Supabase... ($counter/$timeout seconds)"
-    fi
-done
-echo "✅ Supabase ready"
 
 # Apply migrations
 echo "🔄 Applying Supabase migrations..."
 supabase db reset --local
 echo "✅ Migrations applied"
 
-# Debug: Log environment variables
-echo "🔍 Environment Variables Debug:"
-echo "EXPO_PUBLIC_SUPABASE_URL=${EXPO_PUBLIC_SUPABASE_URL:-[NOT SET]}"
-echo "EXPO_PUBLIC_SUPABASE_ANON_KEY=${EXPO_PUBLIC_SUPABASE_ANON_KEY:-[NOT SET]}"
-echo "EXPO_PUBLIC_USE_SUPABASE=${EXPO_PUBLIC_USE_SUPABASE:-[NOT SET]}"
-echo "USE_SUPABASE_DATA=${USE_SUPABASE_DATA:-[NOT SET]}"
-echo "CHROME_TEST=${CHROME_TEST:-[NOT SET]}"
-echo "EXPO_PUBLIC_CHROME_TEST=${EXPO_PUBLIC_CHROME_TEST:-[NOT SET]}"
-echo "NODE_ENV=${NODE_ENV:-[NOT SET]}"
-echo "CI=${CI:-[NOT SET]}"
-echo "GITHUB_ACTIONS=${GITHUB_ACTIONS:-[NOT SET]}"
-echo "RUNNER_OS=${RUNNER_OS:-[NOT SET]}"
-
-# Debug: Check .env file
-echo "🔍 .env File Debug:"
-if [ -f .env ]; then
-    echo ".env file exists with content:"
-    cat .env | head -10
-else
-    echo ".env file does not exist"
-fi
-
-# Debug: Check if running inside devbox
-echo "🔍 Devbox Environment Debug:"
-echo "DEVBOX_SHELL_ENABLED=${DEVBOX_SHELL_ENABLED:-[NOT SET]}"
-echo "Which node: $(which node 2>/dev/null || echo 'node not found')"
-echo "Which npm: $(which npm 2>/dev/null || echo 'npm not found')"
-
-# Ensure critical environment variables are set (fallback for CI)
-echo "🔧 Setting critical environment variables..."
-export CHROME_TEST=true
-export EXPO_PUBLIC_CHROME_TEST=true
-
-# Fallback for Supabase variables if not set by devbox
-if [ -z "$EXPO_PUBLIC_SUPABASE_URL" ]; then
-    echo "⚠️ EXPO_PUBLIC_SUPABASE_URL not set, using fallback"
-    export EXPO_PUBLIC_SUPABASE_URL="http://127.0.0.1:54321"
-fi
-
-if [ -z "$EXPO_PUBLIC_SUPABASE_ANON_KEY" ]; then
-    echo "⚠️ EXPO_PUBLIC_SUPABASE_ANON_KEY not set, using fallback"
-    export EXPO_PUBLIC_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0"
-fi
-
-if [ -z "$EXPO_PUBLIC_USE_SUPABASE" ]; then
-    echo "⚠️ EXPO_PUBLIC_USE_SUPABASE not set, using fallback"
-    export EXPO_PUBLIC_USE_SUPABASE="true"
-fi
-
-if [ -z "$USE_SUPABASE_DATA" ]; then
-    echo "⚠️ USE_SUPABASE_DATA not set, using fallback"
-    export USE_SUPABASE_DATA="true"
-fi
-
-echo "✅ Environment variables configured for Chrome testing"
+# Set environment variables for Chrome testing
+export EXPO_PUBLIC_SUPABASE_URL="http://127.0.0.1:54321"
+export EXPO_PUBLIC_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0"
+# Enable more verbose logging for debugging app initialization
+export DEBUG="*"
+export NODE_ENV="development"
 
 # Start Expo web server
 echo "🚀 Starting Expo web server..."
-npx expo start --web --port 8081 > expo-server.log 2>&1 &
+npx expo start --web --port 8081 &
 EXPO_PID=$!
 
 
@@ -161,68 +64,34 @@ while ! curl -s http://localhost:8081 > /dev/null; do
 done
 echo "✅ Expo web server ready"
 
-# Check for critical startup errors in Expo logs
-if grep -q "CRITICAL STARTUP ERROR\|🚨" expo-server.log 2>/dev/null; then
-    echo "🚨 WARNING: Critical startup errors detected in Expo server logs:"
-    grep -E "CRITICAL STARTUP ERROR|🚨|ERROR|Error" expo-server.log | tail -5
-fi
-
 # Create Chrome wrapper script
 CHROME_WRAPPER_SCRIPT="/tmp/chrome-wrapper-$$"
 
 cat > "$CHROME_WRAPPER_SCRIPT" << 'EOF'
 #!/bin/bash
 echo "🚀 Starting Chrome for Maestro testing..."
-
-# Debug: Log environment and available browsers
-echo "🔍 Chrome Environment Debug:"
-echo "DISPLAY=${DISPLAY:-[NOT SET]}"
-echo "HOME=${HOME:-[NOT SET]}"
-echo "USER=${USER:-[NOT SET]}"
-echo "PATH=$PATH"
-
-echo "🔍 Available browser executables:"
-command -v chromium >/dev/null 2>&1 && echo "  - chromium: $(chromium --version 2>/dev/null || echo 'version check failed')"
-command -v google-chrome >/dev/null 2>&1 && echo "  - google-chrome: $(google-chrome --version 2>/dev/null || echo 'version check failed')"
-command -v chrome >/dev/null 2>&1 && echo "  - chrome: $(chrome --version 2>/dev/null || echo 'version check failed')"
-
 # Force use of devbox-provided chromium to match chromedriver version
 if command -v chromium >/dev/null 2>&1; then
-    echo "📱 Using devbox Chromium browser"
-    # Add extra flags for CI environment stability
-    exec chromium \
-        --no-sandbox \
-        --headless \
-        --disable-dev-shm-usage \
-        --disable-gpu \
+    echo "📱 Using devbox Chromium browser ($(chromium --version 2>/dev/null || echo 'version unknown'))"
+    # Enable extensive logging and remote debugging for console capture
+    exec chromium --no-sandbox --headless --disable-dev-shm-usage --disable-gpu \
+        --user-data-dir=/tmp/chrome-test-$$ \
+        --enable-logging --log-level=0 --v=1 \
+        --remote-debugging-port=9222 \
+        --enable-automation \
         --disable-background-timer-throttling \
         --disable-backgrounding-occluded-windows \
         --disable-renderer-backgrounding \
-        --no-first-run \
-        --no-default-browser-check \
-        --user-data-dir=/tmp/chrome-test-$$ \
+        --disable-features=VizDisplayCompositor \
+        --run-all-compositor-stages-before-draw \
+        --disable-extensions \
         "$@"
 else
     echo "❌ Chromium not found in devbox environment"
-    echo "Falling back to system Chrome if available..."
-    if command -v google-chrome >/dev/null 2>&1; then
-        echo "📱 Using system google-chrome as fallback"
-        exec google-chrome \
-            --no-sandbox \
-            --headless \
-            --disable-dev-shm-usage \
-            --disable-gpu \
-            --disable-background-timer-throttling \
-            --disable-backgrounding-occluded-windows \
-            --disable-renderer-backgrounding \
-            --no-first-run \
-            --no-default-browser-check \
-            --user-data-dir=/tmp/chrome-test-$$ \
-            "$@"
-    else
-        echo "❌ No suitable Chrome browser found"
-        exit 1
-    fi
+    echo "Available browsers:"
+    command -v google-chrome >/dev/null 2>&1 && echo "  - google-chrome: $(google-chrome --version 2>/dev/null || echo 'version unknown')"
+    command -v chrome >/dev/null 2>&1 && echo "  - chrome: $(chrome --version 2>/dev/null || echo 'version unknown')"
+    exit 1
 fi
 EOF
 chmod +x "$CHROME_WRAPPER_SCRIPT"
@@ -244,12 +113,6 @@ echo "📄 Console output will be captured through Expo web server logs"
 echo "🧪 Running Maestro Chrome tests..."
 mkdir -p maestro-debug-output
 
-# Create test summary file
-echo "=== CHROME INTEGRATION TEST RESULTS ===" > maestro-debug-output/test-summary.txt
-echo "Start time: $(date)" >> maestro-debug-output/test-summary.txt
-echo "Working directory: $(pwd)" >> maestro-debug-output/test-summary.txt
-echo "" >> maestro-debug-output/test-summary.txt
-
 FIRST_FAILED_EXIT_CODE=""
 TEST_COUNT=0
 PASSED_COUNT=0
@@ -257,17 +120,14 @@ PASSED_COUNT=0
 for test_file in .maestro/web/*.yml; do
     if [ -f "$test_file" ]; then
         TEST_COUNT=$((TEST_COUNT + 1))
-        TEST_NAME=$(basename "$test_file" .yml)
-        echo ""
-        echo "🧪 Running test: $TEST_NAME"
-        echo "Test: $TEST_NAME" >> maestro-debug-output/test-summary.txt
+        echo "🧪 Running test: $(basename "$test_file")"
         
         # Create unique Chrome user data directory
         CHROME_USER_DATA_DIR=$(mktemp -d -t maestro-chrome-test-XXXXXX)
         export MAESTRO_CHROME_USER_DATA_DIR="$CHROME_USER_DATA_DIR"
         
         # Clear log marker for this test
-        echo "=== Starting test: $TEST_NAME at $(date) ==="
+        echo "=== Starting test: $(basename "$test_file") at $(date) ==="
         
         # Run test with debug output and console capture
         echo "🔍 Running test with Maestro debug output..."
@@ -276,15 +136,73 @@ for test_file in .maestro/web/*.yml; do
         # Set enhanced logging environment
         export MAESTRO_CLI_LOG_LEVEL=DEBUG
         
-        # Run maestro with timeout and enhanced logging
-        echo "Starting test execution at $(date)..." >> maestro-debug-output/test-summary.txt
-        timeout 300 maestro test "$test_file" \
+        # Capture Chrome console logs and run maestro
+        CONSOLE_LOG_FILE="maestro-debug-output/chrome-console-$(basename "$test_file" .yml).log"
+        
+        # Start chrome console log capture in background
+        (
+            echo "=== Starting Chrome console capture at $(date) ===" >> "$CONSOLE_LOG_FILE"
+            sleep 4  # Give Chrome time to start
+            
+            # Test Chrome DevTools connection
+            echo "=== Testing Chrome DevTools connection ===" >> "$CONSOLE_LOG_FILE"
+            if curl -s http://localhost:9222/json 2>/dev/null | head -5 >> "$CONSOLE_LOG_FILE"; then
+                echo "✅ Chrome DevTools responding" >> "$CONSOLE_LOG_FILE"
+                
+                # Get tab info
+                echo "=== Chrome tabs ===" >> "$CONSOLE_LOG_FILE"
+                curl -s http://localhost:9222/json 2>/dev/null | head -10 >> "$CONSOLE_LOG_FILE"
+                
+                # Try to get page console messages (if available)
+                echo "=== Attempting console capture ===" >> "$CONSOLE_LOG_FILE"
+                for i in {1..10}; do
+                    echo "--- Console check $i ---" >> "$CONSOLE_LOG_FILE"
+                    curl -s http://localhost:9222/json/list 2>/dev/null | head -3 >> "$CONSOLE_LOG_FILE"
+                    sleep 2
+                done
+            else
+                echo "❌ Chrome DevTools not responding on port 9222" >> "$CONSOLE_LOG_FILE"
+            fi
+            
+            # Also capture Chrome log files as fallback
+            echo "=== Checking Chrome system logs ===" >> "$CONSOLE_LOG_FILE"
+            CHROME_LOG_DIR="/tmp/chrome-test-$$"
+            if [ -d "$CHROME_LOG_DIR" ]; then
+                echo "Chrome user data dir exists: $CHROME_LOG_DIR" >> "$CONSOLE_LOG_FILE"
+                find "$CHROME_LOG_DIR" -name "*.log" -type f 2>/dev/null | while read logfile; do
+                    echo "=== Chrome System Log: $logfile ===" >> "$CONSOLE_LOG_FILE"
+                    tail -20 "$logfile" >> "$CONSOLE_LOG_FILE" 2>/dev/null || echo "Could not read $logfile" >> "$CONSOLE_LOG_FILE"
+                done
+            else
+                echo "Chrome user data dir not found: $CHROME_LOG_DIR" >> "$CONSOLE_LOG_FILE"
+            fi
+            
+            # Monitor Expo logs for any JavaScript errors
+            echo "=== Expo logs during test ===" >> "$CONSOLE_LOG_FILE"
+            if [ -f expo-server.log ]; then
+                tail -f expo-server.log | grep -E "(ERROR|error|Error|WARN|warn|Warning)" >> "$CONSOLE_LOG_FILE" &
+                EXPO_MONITOR_PID=$!
+            fi
+        ) &
+        CONSOLE_CAPTURE_PID=$!
+        
+        # Run maestro with valid CLI options and full logging
+        maestro test "$test_file" \
           --headless \
           --debug-output maestro-debug-output \
           --format junit \
           --env MAESTRO_CLI_LOG_LEVEL=DEBUG \
-          2>&1 | tee "maestro-debug-output/maestro-console-${TEST_NAME}.log"
+          2>&1 | tee "maestro-debug-output/maestro-console-$(basename "$test_file" .yml).log"
         INDIVIDUAL_EXIT_CODE=${PIPESTATUS[0]}  # Get maestro's exit code, not tee's
+        
+        # Stop console capture
+        kill $CONSOLE_CAPTURE_PID 2>/dev/null || true
+        
+        # Also try to capture any Expo dev server console output during the test
+        echo "=== Expo Server Console During Test ===" >> "$CONSOLE_LOG_FILE"
+        if [ -f expo-server.log ]; then
+            tail -50 expo-server.log >> "$CONSOLE_LOG_FILE" 2>/dev/null || true
+        fi
         
         set -e  # Re-enable exit on error
         
@@ -335,49 +253,36 @@ Screenshot Files:
 $SCREENSHOT_LIST
 EOF
         
-        # Log test results with enhanced debugging
         if [ $INDIVIDUAL_EXIT_CODE -eq 0 ]; then
-            echo "✅ Test $TEST_NAME passed"
-            echo "Status: PASSED" >> maestro-debug-output/test-summary.txt
+            echo "✅ $(basename "$test_file") passed"
             PASSED_COUNT=$((PASSED_COUNT + 1))
         else
-            echo "❌ Test $TEST_NAME failed with exit code $INDIVIDUAL_EXIT_CODE"
-            echo "Status: FAILED (exit code $INDIVIDUAL_EXIT_CODE)" >> maestro-debug-output/test-summary.txt
+            echo "❌ $(basename "$test_file") failed with exit code $INDIVIDUAL_EXIT_CODE"
             FIRST_FAILED_EXIT_CODE=${FIRST_FAILED_EXIT_CODE:-$INDIVIDUAL_EXIT_CODE}
-            
-            # Enhanced debugging for failed tests
-            echo "🔍 Capturing enhanced debug info for failed test..."
             
             # Show debug information for failed tests
             echo "📋 Debug information for failed test:"
-            echo "🌐 Browser console output available through Expo web server logs"
             
-            # Capture Expo server logs for this test
-            echo "Expo server logs during test failure:" >> maestro-debug-output/test-summary.txt
-            if [ -f "expo-server.log" ]; then
-                tail -20 expo-server.log >> maestro-debug-output/test-summary.txt 2>/dev/null || echo "No Expo logs available" >> maestro-debug-output/test-summary.txt
+            # Show Chrome console output
+            if [ -f "maestro-debug-output/chrome-console-${TEST_NAME}.log" ]; then
+                echo "🌐 Chrome console output (last 20 lines):"
+                tail -20 "maestro-debug-output/chrome-console-${TEST_NAME}.log" 2>/dev/null || echo "No Chrome console output available"
+            else
+                echo "⚠️ No Chrome console log available"
             fi
             
             # Show Maestro debug output
             if [ -f "maestro-debug-output/maestro-console-${TEST_NAME}.log" ]; then
                 echo "🤖 Recent Maestro output (last 15 lines):"
                 tail -15 "maestro-debug-output/maestro-console-${TEST_NAME}.log" 2>/dev/null || echo "No Maestro output available"
-                
-                # Add to summary
-                echo "Maestro output (last 15 lines):" >> maestro-debug-output/test-summary.txt
-                tail -15 "maestro-debug-output/maestro-console-${TEST_NAME}.log" >> maestro-debug-output/test-summary.txt 2>/dev/null || echo "No Maestro output available" >> maestro-debug-output/test-summary.txt
             else
                 echo "⚠️ No Maestro console log available"
-                echo "No Maestro console log available" >> maestro-debug-output/test-summary.txt
             fi
             
             # List all available debug files
             echo "📂 Available debug artifacts:"
             ls -la maestro-debug-output/ 2>/dev/null || echo "No debug artifacts found"
         fi
-        
-        echo "End time: $(date)" >> maestro-debug-output/test-summary.txt
-        echo "---" >> maestro-debug-output/test-summary.txt
         
         # Cleanup
         rm -rf "$CHROME_USER_DATA_DIR" 2>/dev/null || true
@@ -394,24 +299,7 @@ if [ $TEST_COUNT -eq 0 ]; then
     exit 1
 fi
 
-# Add final summary to test summary file
-echo "" >> maestro-debug-output/test-summary.txt
-echo "=== FINAL SUMMARY ===" >> maestro-debug-output/test-summary.txt
-echo "Tests passed: $PASSED_COUNT/$TEST_COUNT" >> maestro-debug-output/test-summary.txt
-echo "Overall result: $([ -z "$FIRST_FAILED_EXIT_CODE" ] && echo "SUCCESS" || echo "FAILURE")" >> maestro-debug-output/test-summary.txt
-echo "Working directory: $(pwd)" >> maestro-debug-output/test-summary.txt
-echo "End time: $(date)" >> maestro-debug-output/test-summary.txt
-
 echo "🏁 Test Summary: $PASSED_COUNT/$TEST_COUNT tests passed"
-
-# Show test summary file content
-echo ""
-echo "📊 Complete Test Summary:"
-if [ -f "maestro-debug-output/test-summary.txt" ]; then
-    cat maestro-debug-output/test-summary.txt
-else
-    echo "⚠️ Test summary file not found"
-fi
 
 # Final debug artifacts summary
 echo ""
