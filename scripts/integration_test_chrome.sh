@@ -10,7 +10,6 @@ cd "$(dirname "$0")/.."
 # Cleanup function
 cleanup() {
     echo "🧹 Cleaning up processes..."
-
     supabase stop 2>/dev/null || true
 
     if [ ! -z "$EXPO_PID" ]; then
@@ -38,11 +37,22 @@ supabase db reset --local
 echo "✅ Migrations applied"
 
 # Set environment variables for Chrome testing
+echo "🔧 Setting Chrome test environment variables..."
+export CHROME_TEST=true
+export EXPO_PUBLIC_CHROME_TEST=true
 export EXPO_PUBLIC_SUPABASE_URL="http://127.0.0.1:54321"
-export EXPO_PUBLIC_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0"
-# Enable more verbose logging for debugging app initialization
-export DEBUG="*"
-export NODE_ENV="development"
+export EXPO_PUBLIC_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMAs_-ApJY"
+export EXPO_PUBLIC_USE_SUPABASE=true
+export USE_SUPABASE_DATA=true
+export NODE_ENV=development
+
+echo "🔍 Environment Variables Debug:"
+echo "CHROME_TEST=${CHROME_TEST}"
+echo "EXPO_PUBLIC_CHROME_TEST=${EXPO_PUBLIC_CHROME_TEST}"
+echo "EXPO_PUBLIC_SUPABASE_URL=${EXPO_PUBLIC_SUPABASE_URL}"
+echo "EXPO_PUBLIC_USE_SUPABASE=${EXPO_PUBLIC_USE_SUPABASE}"
+echo "USE_SUPABASE_DATA=${USE_SUPABASE_DATA}"
+echo "NODE_ENV=${NODE_ENV}"
 
 # Start Expo web server
 echo "🚀 Starting Expo web server..."
@@ -73,19 +83,7 @@ echo "🚀 Starting Chrome for Maestro testing..."
 # Force use of devbox-provided chromium to match chromedriver version
 if command -v chromium >/dev/null 2>&1; then
     echo "📱 Using devbox Chromium browser ($(chromium --version 2>/dev/null || echo 'version unknown'))"
-    # Enable extensive logging and remote debugging for console capture
-    exec chromium --no-sandbox --headless --disable-dev-shm-usage --disable-gpu \
-        --user-data-dir=/tmp/chrome-test-$$ \
-        --enable-logging --log-level=0 --v=1 \
-        --remote-debugging-port=9222 \
-        --enable-automation \
-        --disable-background-timer-throttling \
-        --disable-backgrounding-occluded-windows \
-        --disable-renderer-backgrounding \
-        --disable-features=VizDisplayCompositor \
-        --run-all-compositor-stages-before-draw \
-        --disable-extensions \
-        "$@"
+    exec chromium --no-sandbox --headless --disable-dev-shm-usage --disable-gpu --user-data-dir=/tmp/chrome-test-$$ "$@"
 else
     echo "❌ Chromium not found in devbox environment"
     echo "Available browsers:"
@@ -122,10 +120,6 @@ for test_file in .maestro/web/*.yml; do
         TEST_COUNT=$((TEST_COUNT + 1))
         echo "🧪 Running test: $(basename "$test_file")"
         
-        # Create unique Chrome user data directory
-        CHROME_USER_DATA_DIR=$(mktemp -d -t maestro-chrome-test-XXXXXX)
-        export MAESTRO_CHROME_USER_DATA_DIR="$CHROME_USER_DATA_DIR"
-        
         # Clear log marker for this test
         echo "=== Starting test: $(basename "$test_file") at $(date) ==="
         
@@ -136,56 +130,6 @@ for test_file in .maestro/web/*.yml; do
         # Set enhanced logging environment
         export MAESTRO_CLI_LOG_LEVEL=DEBUG
         
-        # Capture Chrome console logs and run maestro
-        CONSOLE_LOG_FILE="maestro-debug-output/chrome-console-$(basename "$test_file" .yml).log"
-        
-        # Start chrome console log capture in background
-        (
-            echo "=== Starting Chrome console capture at $(date) ===" >> "$CONSOLE_LOG_FILE"
-            sleep 4  # Give Chrome time to start
-            
-            # Test Chrome DevTools connection
-            echo "=== Testing Chrome DevTools connection ===" >> "$CONSOLE_LOG_FILE"
-            if curl -s http://localhost:9222/json 2>/dev/null | head -5 >> "$CONSOLE_LOG_FILE"; then
-                echo "✅ Chrome DevTools responding" >> "$CONSOLE_LOG_FILE"
-                
-                # Get tab info
-                echo "=== Chrome tabs ===" >> "$CONSOLE_LOG_FILE"
-                curl -s http://localhost:9222/json 2>/dev/null | head -10 >> "$CONSOLE_LOG_FILE"
-                
-                # Try to get page console messages (if available)
-                echo "=== Attempting console capture ===" >> "$CONSOLE_LOG_FILE"
-                for i in {1..10}; do
-                    echo "--- Console check $i ---" >> "$CONSOLE_LOG_FILE"
-                    curl -s http://localhost:9222/json/list 2>/dev/null | head -3 >> "$CONSOLE_LOG_FILE"
-                    sleep 2
-                done
-            else
-                echo "❌ Chrome DevTools not responding on port 9222" >> "$CONSOLE_LOG_FILE"
-            fi
-            
-            # Also capture Chrome log files as fallback
-            echo "=== Checking Chrome system logs ===" >> "$CONSOLE_LOG_FILE"
-            CHROME_LOG_DIR="/tmp/chrome-test-$$"
-            if [ -d "$CHROME_LOG_DIR" ]; then
-                echo "Chrome user data dir exists: $CHROME_LOG_DIR" >> "$CONSOLE_LOG_FILE"
-                find "$CHROME_LOG_DIR" -name "*.log" -type f 2>/dev/null | while read logfile; do
-                    echo "=== Chrome System Log: $logfile ===" >> "$CONSOLE_LOG_FILE"
-                    tail -20 "$logfile" >> "$CONSOLE_LOG_FILE" 2>/dev/null || echo "Could not read $logfile" >> "$CONSOLE_LOG_FILE"
-                done
-            else
-                echo "Chrome user data dir not found: $CHROME_LOG_DIR" >> "$CONSOLE_LOG_FILE"
-            fi
-            
-            # Monitor Expo logs for any JavaScript errors
-            echo "=== Expo logs during test ===" >> "$CONSOLE_LOG_FILE"
-            if [ -f expo-server.log ]; then
-                tail -f expo-server.log | grep -E "(ERROR|error|Error|WARN|warn|Warning)" >> "$CONSOLE_LOG_FILE" &
-                EXPO_MONITOR_PID=$!
-            fi
-        ) &
-        CONSOLE_CAPTURE_PID=$!
-        
         # Run maestro with valid CLI options and full logging
         maestro test "$test_file" \
           --headless \
@@ -194,15 +138,6 @@ for test_file in .maestro/web/*.yml; do
           --env MAESTRO_CLI_LOG_LEVEL=DEBUG \
           2>&1 | tee "maestro-debug-output/maestro-console-$(basename "$test_file" .yml).log"
         INDIVIDUAL_EXIT_CODE=${PIPESTATUS[0]}  # Get maestro's exit code, not tee's
-        
-        # Stop console capture
-        kill $CONSOLE_CAPTURE_PID 2>/dev/null || true
-        
-        # Also try to capture any Expo dev server console output during the test
-        echo "=== Expo Server Console During Test ===" >> "$CONSOLE_LOG_FILE"
-        if [ -f expo-server.log ]; then
-            tail -50 expo-server.log >> "$CONSOLE_LOG_FILE" 2>/dev/null || true
-        fi
         
         set -e  # Re-enable exit on error
         
@@ -262,14 +197,7 @@ EOF
             
             # Show debug information for failed tests
             echo "📋 Debug information for failed test:"
-            
-            # Show Chrome console output
-            if [ -f "maestro-debug-output/chrome-console-${TEST_NAME}.log" ]; then
-                echo "🌐 Chrome console output (last 20 lines):"
-                tail -20 "maestro-debug-output/chrome-console-${TEST_NAME}.log" 2>/dev/null || echo "No Chrome console output available"
-            else
-                echo "⚠️ No Chrome console log available"
-            fi
+            echo "🌐 Browser console output available through Expo web server logs"
             
             # Show Maestro debug output
             if [ -f "maestro-debug-output/maestro-console-${TEST_NAME}.log" ]; then
@@ -283,10 +211,6 @@ EOF
             echo "📂 Available debug artifacts:"
             ls -la maestro-debug-output/ 2>/dev/null || echo "No debug artifacts found"
         fi
-        
-        # Cleanup
-        rm -rf "$CHROME_USER_DATA_DIR" 2>/dev/null || true
-        unset MAESTRO_CHROME_USER_DATA_DIR
         
         # Brief wait between tests
         sleep 1

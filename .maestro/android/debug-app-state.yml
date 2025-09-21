@@ -63,5 +63,4 @@ url: com.jimmy_solutions.strength_assistant.test
 
 # Take final screenshot
 - takeScreenshot: debug-final-app-state.png
-
 # This test will complete successfully if we get through all steps

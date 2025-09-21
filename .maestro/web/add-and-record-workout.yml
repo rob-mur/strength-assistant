@@ -1,11 +1,11 @@
 url: http://localhost:8081
-timeout: 60000  # Set overall flow timeout to 60 seconds
+timeout: 60000 # Set overall flow timeout to 60 seconds
 ---
 - runScript: ../../scripts/clear_emulator.js
 - launchApp
 - takeScreenshot: "01-app-launched.png"
 
-# Wait for auth screen to appear 
+# Wait for auth screen to appear
 - waitForAnimationToEnd:
     timeout: 10000
 - waitForAnimationToEnd:

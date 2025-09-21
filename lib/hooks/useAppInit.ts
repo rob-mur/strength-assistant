@@ -14,14 +14,17 @@ export const useAppInit = () => {
 
   // Enhanced debugging for Chrome tests
   console.log("🔄 useAppInit: Hook initialized");
-  
+
   const [fontsLoaded, fontError] = useFonts({
     NotoSans_400Regular,
     JetBrainsMono_400Regular,
     ...MaterialCommunityIcons.font,
   });
-  
-  console.log("🔄 useAppInit: Fonts state -", { fontsLoaded, fontError: !!fontError });
+
+  console.log("🔄 useAppInit: Fonts state -", {
+    fontsLoaded,
+    fontError: !!fontError,
+  });
 
   useEffect(() => {
     if (fontError) {
@@ -133,7 +136,10 @@ export const useAppInit = () => {
   }, [logger]);
 
   useEffect(() => {
-    console.log("🔄 useAppInit: Checking readiness -", { fontsLoaded, isAppReady });
+    console.log("🔄 useAppInit: Checking readiness -", {
+      fontsLoaded,
+      isAppReady,
+    });
     if (fontsLoaded && isAppReady) {
       console.log("✅ useAppInit: App fully ready, hiding splash screen");
       logger.info("Fonts loaded and app ready, hiding splash screen", {
@@ -143,10 +149,10 @@ export const useAppInit = () => {
       });
       SplashScreen.hideAsync();
     } else {
-      console.log("⏳ useAppInit: Not ready yet -", { 
-        fontsLoaded, 
-        isAppReady, 
-        willReturn: fontsLoaded && isAppReady 
+      console.log("⏳ useAppInit: Not ready yet -", {
+        fontsLoaded,
+        isAppReady,
+        willReturn: fontsLoaded && isAppReady,
       });
     }
   }, [fontsLoaded, isAppReady, logger]);
