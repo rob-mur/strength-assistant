@@ -223,6 +223,11 @@ describe("Authentication and Navigation Flow Integration", () => {
       jest.useFakeTimers();
       const consoleSpy = jest.spyOn(console, "warn").mockImplementation();
 
+      // Ensure we're not in CI/Chrome test environment for this test
+      delete process.env.CI;
+      delete process.env.CHROME_TEST;
+      delete process.env.EXPO_PUBLIC_CHROME_TEST;
+
       // Simulate persistent loading state
       mockUseAuth.mockReturnValue({
         user: null,
