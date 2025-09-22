@@ -10,7 +10,6 @@ export { StorageBackend, SupabaseStorage } from "./supabase/SupabaseStorage";
 export {
   StorageManager,
   IStorageManager,
-  FeatureFlags,
   storageManager,
 } from "./StorageManager";
 
@@ -140,14 +139,6 @@ export class DataLayerAPI {
   async getBackendInfo() {
     const { storageManager } = await import("./StorageManager");
     return storageManager.getBackendInfo();
-  }
-
-  /**
-   * Get current feature flags
-   */
-  async getFeatureFlags() {
-    const { storageManager } = await import("./StorageManager");
-    return storageManager.getFeatureFlags();
   }
 
   /**

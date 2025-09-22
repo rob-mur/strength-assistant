@@ -9,13 +9,6 @@
 import { StorageBackend, SupabaseStorage } from "./supabase/SupabaseStorage";
 
 /**
- * Feature Flag Interface
- */
-export interface FeatureFlags {
-  useSupabaseData: boolean;
-}
-
-/**
  * Storage Manager Interface
  * Manages Supabase backend operations
  */
@@ -23,9 +16,6 @@ export interface IStorageManager {
   // Returns Supabase backend
   getActiveStorageBackend(): StorageBackend;
   getAuthBackend(): StorageBackend;
-
-  // Feature flag access (always Supabase now)
-  getFeatureFlags(): FeatureFlags;
 }
 
 /**
@@ -35,15 +25,10 @@ export interface IStorageManager {
  */
 export class StorageManager implements IStorageManager {
   private readonly supabaseStorage: SupabaseStorage;
-  private readonly featureFlags: FeatureFlags;
 
   constructor() {
     // Initialize Supabase backend
     this.supabaseStorage = new SupabaseStorage();
-    // Always use Supabase
-    this.featureFlags = {
-      useSupabaseData: true,
-    };
     if (__DEV__) {
       console.info(`🔄 StorageManager initialized with Supabase backend`);
     }
@@ -68,13 +53,6 @@ export class StorageManager implements IStorageManager {
    */
   getAuthBackend(): StorageBackend {
     return this.supabaseStorage;
-  }
-
-  /**
-   * Returns current feature flag configuration
-   */
-  getFeatureFlags(): FeatureFlags {
-    return { ...this.featureFlags };
   }
 
   /**

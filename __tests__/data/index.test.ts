@@ -5,7 +5,6 @@ import {
   // FirebaseStorage removed
   StorageManager,
   IStorageManager,
-  FeatureFlags,
   storageManager,
 
   // Legend State
@@ -18,7 +17,6 @@ import {
   getExercises,
   getCurrentUser,
   getSyncState,
-  getFeatureFlags,
 
   // Models and types
   ExerciseRecord,
@@ -93,7 +91,6 @@ describe("lib/data/index", () => {
       expect(getExercises).toBeDefined();
       expect(getCurrentUser).toBeDefined();
       expect(getSyncState).toBeDefined();
-      expect(getFeatureFlags).toBeDefined();
     });
 
     test("exports configuration functions", () => {
@@ -153,11 +150,6 @@ describe("lib/data/index", () => {
       test("getBackendInfo handles dynamic import errors", async () => {
         const api = DataLayerAPI.getInstance();
         await expect(api.getBackendInfo()).rejects.toThrow();
-      });
-
-      test("getFeatureFlags handles dynamic import errors", async () => {
-        const api = DataLayerAPI.getInstance();
-        await expect(api.getFeatureFlags()).rejects.toThrow();
       });
 
       test("subscribeToAuthState handles dynamic import errors", async () => {

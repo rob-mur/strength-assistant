@@ -114,23 +114,6 @@ describe("StorageManager - Supabase Only", () => {
     });
   });
 
-  describe("Feature Flags", () => {
-    it("should always return useSupabaseData as true", () => {
-      const flags = storageManager.getFeatureFlags();
-      expect(flags).toEqual({
-        useSupabaseData: true,
-      });
-    });
-
-    it("should return a copy of feature flags", () => {
-      const flags1 = storageManager.getFeatureFlags();
-      const flags2 = storageManager.getFeatureFlags();
-
-      expect(flags1).toEqual(flags2);
-      expect(flags1).not.toBe(flags2); // Different objects
-    });
-  });
-
   describe("Data Management", () => {
     it("should clear all data from Supabase in non-production", async () => {
       process.env.NODE_ENV = "test";
