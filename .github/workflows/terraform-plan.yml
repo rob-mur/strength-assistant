@@ -1,0 +1,52 @@
+name: Terraform Plan
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "terraform/**"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - staging
+          - production
+
+jobs:
+  plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    env:
+      TF_VAR_supabase_access_token: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      TF_VAR_supabase_project_ref: ${{ secrets.SUPABASE_PROJECT_REF }}
+
+    steps:
+      - name: 🏗 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.0"
+
+      - name: 🚀 Terraform Init
+        working-directory: terraform
+        run: terraform init
+
+      - name: 📋 Terraform Plan
+        working-directory: terraform
+        run: terraform plan -no-color -out=tfplan
+
+      - name: 📤 Upload plan artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-${{ github.event.inputs.environment || 'dev' }}
+          path: terraform/tfplan
+          retention-days: 30
