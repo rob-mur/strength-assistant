@@ -1,7 +1,6 @@
 url: http://localhost:8081
 timeout: 60000 # Set overall flow timeout to 60 seconds
 ---
-- runScript: ../../scripts/clear_emulator.js
 - launchApp
 - takeScreenshot: "01-app-launched.png"
 

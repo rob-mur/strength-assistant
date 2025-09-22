@@ -118,10 +118,16 @@ PASSED_COUNT=0
 for test_file in .maestro/web/*.yml; do
     if [ -f "$test_file" ]; then
         TEST_COUNT=$((TEST_COUNT + 1))
-        echo "🧪 Running test: $(basename "$test_file")"
+        TEST_NAME=$(basename "$test_file" .yml)
+        echo "🧪 Running test: $TEST_NAME"
+        
+        # Clear Supabase data before each test (same as Android integration script does)
+        echo "🧹 Clearing Supabase database for $TEST_NAME..."
+        node scripts/clear_emulator.js
+        echo "✅ Supabase data cleared for $TEST_NAME"
         
         # Clear log marker for this test
-        echo "=== Starting test: $(basename "$test_file") at $(date) ==="
+        echo "=== Starting test: $TEST_NAME at $(date) ==="
         
         # Run test with debug output and console capture
         echo "🔍 Running test with Maestro debug output..."
@@ -142,7 +148,6 @@ for test_file in .maestro/web/*.yml; do
         set -e  # Re-enable exit on error
         
 # Add comprehensive debug artifacts collection
-        TEST_NAME=$(basename "$test_file" .yml)
         
         # Browser console output handled through Expo logs
         echo "📋 Browser console output available through Expo web server logs"
