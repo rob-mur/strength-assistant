@@ -1,14 +1,14 @@
 import { renderHook } from "@testing-library/react-native";
 import { useExercises } from "@/lib/hooks/useExercises";
 import { ExerciseRepo } from "@/lib/repo/ExerciseRepo";
-import { logger } from "@/lib/data/firebase/logger";
+// Firebase logger removed
 
 // Mock dependencies
 jest.mock("@/lib/repo/ExerciseRepo");
-jest.mock("@/lib/data/firebase/logger");
+// Firebase logger mock removed
 
 const mockExerciseRepo = ExerciseRepo as jest.Mocked<typeof ExerciseRepo>;
-const mockLogger = logger as jest.Mocked<typeof logger>;
+// Firebase logger mock removed
 
 describe("useExercises", () => {
   const mockUnsubscribe = jest.fn();
@@ -26,14 +26,7 @@ describe("useExercises", () => {
     const { result } = renderHook(() => useExercises(""));
 
     expect(result.current.exercises).toEqual([]);
-    expect(mockLogger.warn).toHaveBeenCalledWith(
-      "useExercises: User not authenticated, exercises will be empty",
-      expect.objectContaining({
-        service: "useExercises",
-        platform: "React Native",
-        operation: "fetch_exercises",
-      }),
-    );
+    // Logger expectation removed - Firebase no longer used
   });
 
   it("should subscribe to exercises when uid is provided", () => {

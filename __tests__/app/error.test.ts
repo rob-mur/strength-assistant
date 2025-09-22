@@ -1,19 +1,12 @@
 import { setJSExceptionHandler } from "react-native-exception-handler";
 import handleErrors from "@/app/error";
-import { logger } from "@/lib/data/firebase/logger";
+// Firebase logger removed
 
 jest.mock("react-native-exception-handler", () => ({
   setJSExceptionHandler: jest.fn(),
 }));
 
-jest.mock("@/lib/data/firebase/logger", () => ({
-  logger: {
-    debug: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-  },
-}));
+// Firebase logger mock removed
 
 const mockSetJSExceptionHandler = setJSExceptionHandler as jest.MockedFunction<
   typeof setJSExceptionHandler
@@ -48,11 +41,7 @@ describe("handleErrors", () => {
       const testError = new Error("Test error");
 
       expect(() => errorHandler(testError, true)).toThrow("Test error");
-      expect(logger.debug).toHaveBeenCalledWith(`Fatal error: ${testError}`, {
-        service: "Error Handler",
-        platform: "React Native",
-        operation: "fatal_error",
-      });
+      // Logger expectation removed - Firebase no longer used
     });
 
     it("should not throw error in production mode", () => {
@@ -60,7 +49,7 @@ describe("handleErrors", () => {
       const testError = new Error("Test error");
 
       expect(() => errorHandler(testError, true)).not.toThrow();
-      expect(logger.debug).not.toHaveBeenCalled();
+      // Logger expectation removed - Firebase no longer used
     });
 
     it("should handle different error types", () => {
@@ -70,14 +59,7 @@ describe("handleErrors", () => {
       expect(() => errorHandler(networkError, false)).toThrow(
         "Network connection failed",
       );
-      expect(logger.debug).toHaveBeenCalledWith(
-        `Fatal error: ${networkError}`,
-        {
-          service: "Error Handler",
-          platform: "React Native",
-          operation: "fatal_error",
-        },
-      );
+      // Logger expectation removed - Firebase no longer used
     });
   });
 });

@@ -10,10 +10,6 @@ cd "$(dirname "$0")/.."
 # Cleanup function
 cleanup() {
     echo "🧹 Cleaning up processes..."
-    if [ ! -z "$FIREBASE_PID" ]; then
-        kill $FIREBASE_PID 2>/dev/null || true
-    fi
-
     supabase stop 2>/dev/null || true
 
     if [ ! -z "$EXPO_PID" ]; then
@@ -31,33 +27,35 @@ cleanup() {
 
 trap cleanup EXIT ERR
 
-# Start Firebase emulators
-echo "🔥 Starting Firebase emulators..."
-firebase emulators:start &
-FIREBASE_PID=$!
-
 # Start Supabase emulators
 echo "🔥 Starting Supabase emulators..."
 supabase start
-
-# Wait for Firebase emulators
-echo "⏳ Waiting for Firebase emulators to be ready..."
-timeout=30
-counter=0
-while ! curl -s http://localhost:8080 > /dev/null; do
-    sleep 1
-    counter=$((counter + 1))
-    if [ $counter -ge $timeout ]; then
-        echo "❌ Firebase emulators failed to start within $timeout seconds"
-        exit 1
-    fi
-done
-echo "✅ Firebase emulators ready"
 
 # Apply migrations
 echo "🔄 Applying Supabase migrations..."
 supabase db reset --local
 echo "✅ Migrations applied"
+
+# Set environment variables for Chrome testing
+echo "🔧 Setting Chrome test environment variables..."
+# CRITICAL FIX: Unset CI to avoid conflicts with Chrome test environment
+unset CI
+export CHROME_TEST=true
+export EXPO_PUBLIC_CHROME_TEST=true
+export EXPO_PUBLIC_SUPABASE_URL="http://127.0.0.1:54321"
+export EXPO_PUBLIC_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMAs_-ApJY"
+export EXPO_PUBLIC_USE_SUPABASE=true
+export USE_SUPABASE_DATA=true
+export NODE_ENV=development
+
+echo "🔍 Environment Variables Debug:"
+echo "CI=${CI:-unset}"
+echo "CHROME_TEST=${CHROME_TEST}"
+echo "EXPO_PUBLIC_CHROME_TEST=${EXPO_PUBLIC_CHROME_TEST}"
+echo "EXPO_PUBLIC_SUPABASE_URL=${EXPO_PUBLIC_SUPABASE_URL}"
+echo "EXPO_PUBLIC_USE_SUPABASE=${EXPO_PUBLIC_USE_SUPABASE}"
+echo "USE_SUPABASE_DATA=${USE_SUPABASE_DATA}"
+echo "NODE_ENV=${NODE_ENV}"
 
 # Start Expo web server
 echo "🚀 Starting Expo web server..."
@@ -123,14 +121,16 @@ PASSED_COUNT=0
 for test_file in .maestro/web/*.yml; do
     if [ -f "$test_file" ]; then
         TEST_COUNT=$((TEST_COUNT + 1))
-        echo "🧪 Running test: $(basename "$test_file")"
+        TEST_NAME=$(basename "$test_file" .yml)
+        echo "🧪 Running test: $TEST_NAME"
         
-        # Create unique Chrome user data directory
-        CHROME_USER_DATA_DIR=$(mktemp -d -t maestro-chrome-test-XXXXXX)
-        export MAESTRO_CHROME_USER_DATA_DIR="$CHROME_USER_DATA_DIR"
+        # Clear Supabase data before each test (same as Android integration script does)
+        echo "🧹 Clearing Supabase database for $TEST_NAME..."
+        node scripts/clear_emulator.js
+        echo "✅ Supabase data cleared for $TEST_NAME"
         
         # Clear log marker for this test
-        echo "=== Starting test: $(basename "$test_file") at $(date) ==="
+        echo "=== Starting test: $TEST_NAME at $(date) ==="
         
         # Run test with debug output and console capture
         echo "🔍 Running test with Maestro debug output..."
@@ -151,7 +151,6 @@ for test_file in .maestro/web/*.yml; do
         set -e  # Re-enable exit on error
         
 # Add comprehensive debug artifacts collection
-        TEST_NAME=$(basename "$test_file" .yml)
         
         # Browser console output handled through Expo logs
         echo "📋 Browser console output available through Expo web server logs"
@@ -220,10 +219,6 @@ EOF
             echo "📂 Available debug artifacts:"
             ls -la maestro-debug-output/ 2>/dev/null || echo "No debug artifacts found"
         fi
-        
-        # Cleanup
-        rm -rf "$CHROME_USER_DATA_DIR" 2>/dev/null || true
-        unset MAESTRO_CHROME_USER_DATA_DIR
         
         # Brief wait between tests
         sleep 1

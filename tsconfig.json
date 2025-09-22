@@ -10,8 +10,7 @@
     "skipLibCheck": true,
     "exactOptionalPropertyTypes": false,
     "paths": {
-      "@/*": ["./*"],
-      "@/lib/data/firebase": ["./lib/data/firebase/firebase.web.ts"]
+      "@/*": ["./*"]
     },
     "jsx": "react-native"
   },

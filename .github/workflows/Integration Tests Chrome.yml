@@ -19,8 +19,6 @@ jobs:
       - name: 🛠 Setup development environment
         uses: ./.github/actions/setup-dev-environment
         with:
-          firebase-config: ${{ secrets.FIREBASE_WEB_CONFIG }}
-          google-services-config: ${{ secrets.GOOGLE_SERVICES }}
           devbox-config: minimal
 
       - name: 🧪 Run Chrome integration tests
@@ -31,8 +29,10 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: maestro-chrome-debug-artifacts
+          name: chrome-integration-test-debug-artifacts
           path: |
             maestro-debug-output/
             *.png
-          retention-days: 7
+            *.log
+            expo-server.log
+          retention-days: 14

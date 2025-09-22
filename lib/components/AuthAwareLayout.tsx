@@ -12,6 +12,13 @@ export function AuthAwareLayout({ children }: AuthAwareLayoutProps) {
   const { user, loading } = useAuthContext();
   const [forceShowAuth, setForceShowAuth] = useState(false);
 
+  // Debug logging for auth state
+  console.log("🔐 [AuthAwareLayout] Current auth state:", {
+    userId: user?.uid || "null",
+    loading,
+    forceShowAuth,
+  });
+
   // Show auth screen appropriately for different environments
   useEffect(() => {
     if (!loading) {
@@ -19,7 +26,14 @@ export function AuthAwareLayout({ children }: AuthAwareLayoutProps) {
     }
 
     // In Chrome test environment, no need to force - auth hook already handles this
-    if (process.env.CHROME_TEST === "true" || process.env.CI === "true") {
+    // Priority: Chrome test environment overrides CI environment
+    if (
+      process.env.CHROME_TEST === "true" ||
+      process.env.EXPO_PUBLIC_CHROME_TEST === "true" ||
+      (process.env.CI === "true" &&
+        !process.env.CHROME_TEST &&
+        !process.env.EXPO_PUBLIC_CHROME_TEST)
+    ) {
       console.warn(
         "Chrome test environment - auth state should be managed by useAuth hook",
       );

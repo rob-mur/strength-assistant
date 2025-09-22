@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Exercise } from "../models/Exercise";
 import { ExerciseRepo } from "../repo/ExerciseRepo";
-import { logger } from "../data/firebase/logger";
+import { Logger } from "../data/supabase/supabase/logger";
 
 export const useExercises = (uid: string) => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
+  const logger = useMemo(() => new Logger("useExercises"), []);
 
   useEffect(() => {
     if (!uid) {
@@ -28,7 +29,7 @@ export const useExercises = (uid: string) => {
     return () => {
       unsubscribe();
     };
-  }, [uid]);
+  }, [uid, logger]);
 
   return { exercises };
 };

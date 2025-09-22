@@ -1,36 +1,6 @@
 // Temporarily disable fake timers to debug hanging issue
 // jest.useFakeTimers();
 
-// Mock React Native Firebase Auth using FirebaseMockFactory
-jest.mock("@react-native-firebase/auth", () => {
-  const FirebaseMockFactory =
-    require("./__tests__/test-utils/FirebaseMockFactory").default;
-  return FirebaseMockFactory.getReactNativeFirebaseMock();
-});
-
-// Mock Firebase web SDK using FirebaseMockFactory
-jest.mock("firebase/auth", () => {
-  const FirebaseMockFactory =
-    require("./__tests__/test-utils/FirebaseMockFactory").default;
-  return FirebaseMockFactory.getWebFirebaseMock();
-});
-
-// Mock Firebase Firestore web SDK
-jest.mock("firebase/firestore", () => {
-  const FirebaseMockFactory =
-    require("./__tests__/test-utils/FirebaseMockFactory").default;
-  return {
-    getFirestore: jest.fn(() => FirebaseMockFactory.createFirestoreMock()),
-    collection: jest.fn(),
-    doc: jest.fn(),
-    addDoc: jest.fn(),
-    updateDoc: jest.fn(),
-    deleteDoc: jest.fn(),
-    onSnapshot: jest.fn(() => jest.fn()),
-    connectFirestoreEmulator: jest.fn(),
-  };
-});
-
 // Mock platform detection and React Native animations
 jest.mock("react-native", () => {
   const RN = jest.requireActual("react-native");
@@ -90,7 +60,7 @@ Object.defineProperty(global, "navigator", {
 // Set up test environment variables for Supabase
 process.env.EXPO_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
 process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
-process.env.USE_SUPABASE_DATA = "false"; // Default to Firebase for tests
+process.env.USE_SUPABASE_DATA = "false"; // Use Supabase test environment
 process.env.EXPO_PUBLIC_USE_SUPABASE_EMULATOR = "true";
 
 // Mock Supabase client with dynamic behavior
@@ -481,15 +451,6 @@ afterEach(async () => {
         }
       });
       global.eventListenersToCleanup.length = 0;
-    }
-
-    // Reset Firebase mock state for test isolation
-    try {
-      const FirebaseMockFactory =
-        require("./__tests__/test-utils/FirebaseMockFactory").default;
-      FirebaseMockFactory.cleanup();
-    } catch (error) {
-      // Ignore cleanup errors to prevent test interference
     }
 
     // Skip: resetModules, GC, AsyncStorage clearing (slow operations)

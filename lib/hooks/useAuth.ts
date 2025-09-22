@@ -1,9 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { Platform } from "react-native";
-
-// Platform-specific imports - use static imports to avoid Metro symbolication issues
-import * as AuthWeb from "../data/firebase/auth.web";
-import * as AuthNative from "../data/firebase/auth.native";
+import { storageManager } from "../data/StorageManager";
+import type { UserAccount } from "../models/UserAccount";
 
 // Types for cross-platform user
 export interface AuthUser {
@@ -23,292 +20,222 @@ export interface AuthState {
   error: AuthError | null;
 }
 
-// Firebase user type for cross-platform compatibility
-interface FirebaseUser {
-  uid: string;
-  email: string | null;
-  isAnonymous: boolean;
-  [key: string]: unknown; // For additional platform-specific properties
-}
-
-// Platform-specific auth functions interface
-interface AuthFunctions {
-  initAuth: () => void;
-  signInAnonymouslyWeb?: () => Promise<FirebaseUser>;
-  signInAnonymouslyNative?: () => Promise<FirebaseUser>;
-  createAccountWeb?: (email: string, password: string) => Promise<FirebaseUser>;
-  createAccountNative?: (
-    email: string,
-    password: string,
-  ) => Promise<FirebaseUser>;
-  signInWeb?: (email: string, password: string) => Promise<FirebaseUser>;
-  signInNative?: (email: string, password: string) => Promise<FirebaseUser>;
-  signOutWeb?: () => Promise<void>;
-  signOutNative?: () => Promise<void>;
-  onAuthStateChangedWeb?: (
-    callback: (user: FirebaseUser | null) => void,
-  ) => () => void;
-  onAuthStateChangedNative?: (
-    callback: (user: FirebaseUser | null) => void,
-  ) => () => void;
-}
-
-// Platform-specific function selection
-const getAuthFunctions = (): AuthFunctions => {
-  // @ts-ignore Firebase legacy auth modules - type compatibility issues
-  return Platform.OS === "web" ? AuthWeb : AuthNative;
-};
-
-export function useAuth() {
-  const [authState, setAuthState] = useState<AuthState>({
+/**
+ * Custom hook for authentication using Supabase
+ */
+export function useAuth(): AuthState & {
+  signInAnonymously: () => Promise<void>;
+  createAccount: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<void>;
+  signOut: () => Promise<void>;
+  clearError: () => void;
+} {
+  const [state, setState] = useState<AuthState>({
     user: null,
     loading: true,
     error: null,
   });
 
-  // Helper function to handle user state changes
-  const handleUserStateChange = useCallback((user: FirebaseUser | null) => {
-    const userData = user
-      ? (() => {
-          const { uid, email, isAnonymous } = user;
-          return { uid, email, isAnonymous };
-        })()
-      : null;
+  // Get the Supabase backend
+  const authBackend = storageManager.getAuthBackend();
 
-    setAuthState({
-      user: userData,
+  const handleUserStateChange = useCallback((user: UserAccount | null) => {
+    console.log(
+      "🔐 [useAuth] handleUserStateChange called with user:",
+      user?.id || "null",
+    );
+    setState((prevState) => ({
+      ...prevState,
+      user: user
+        ? {
+            uid: user.id,
+            email: user.email || null,
+            isAnonymous: user.isAnonymous,
+          }
+        : null,
       loading: false,
-      error: null,
-    });
+    }));
+    console.log(
+      "🔐 [useAuth] State updated - user is now:",
+      user?.id || "null",
+    );
   }, []);
 
-  // Helper function to set error state
-  const setErrorState = useCallback(() => {
-    setAuthState({
-      user: null,
-      loading: false,
+  useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+
+    const initAuth = async () => {
+      try {
+        // Handle Chrome test environment with automatic anonymous sign-in
+        // Priority: Chrome test environment overrides CI environment
+        if (
+          process.env.CHROME_TEST === "true" ||
+          process.env.EXPO_PUBLIC_CHROME_TEST === "true" ||
+          (process.env.CI === "true" &&
+            !process.env.CHROME_TEST &&
+            !process.env.EXPO_PUBLIC_CHROME_TEST)
+        ) {
+          console.log(
+            "🔐 [useAuth] Chrome test environment detected - creating anonymous test user",
+          );
+
+          // Subscribe to auth state changes first
+          unsubscribe = await authBackend.subscribeToAuthState(
+            handleUserStateChange,
+          );
+
+          // Check if user is already authenticated
+          const currentUser = await authBackend.getCurrentUser();
+          if (currentUser) {
+            console.log(
+              "🔐 [useAuth] Test user already authenticated:",
+              currentUser.id,
+            );
+            handleUserStateChange(currentUser);
+          } else {
+            console.log(
+              "🔐 [useAuth] No authenticated user found, signing in anonymously",
+            );
+            // Sign in anonymously to get a real Supabase user
+            await authBackend.signInAnonymously();
+            // handleUserStateChange will be called automatically via subscription
+          }
+          return;
+        }
+
+        // Subscribe to auth state changes
+        unsubscribe = await authBackend.subscribeToAuthState(
+          handleUserStateChange,
+        );
+
+        // Get current user
+        const currentUser = await authBackend.getCurrentUser();
+        handleUserStateChange(currentUser);
+      } catch (error) {
+        setState((prevState) => ({
+          ...prevState,
+          error: {
+            code: "init-error",
+            message: error instanceof Error ? error.message : "Unknown error",
+          },
+          loading: false,
+        }));
+      }
+    };
+
+    initAuth();
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [authBackend, handleUserStateChange]);
+
+  const signInAnonymously = useCallback(async () => {
+    console.log("🔐 [useAuth] Starting anonymous sign-in process");
+    console.log(
+      "🔐 [useAuth] AuthBackend instance:",
+      authBackend.constructor.name,
+    );
+    setState((prevState) => ({ ...prevState, loading: true, error: null }));
+    try {
+      console.log("🔐 [useAuth] Calling authBackend.signInAnonymously()");
+      const result = await authBackend.signInAnonymously();
+      console.log("🔐 [useAuth] Anonymous sign-in successful:", result);
+
+      // CRITICAL FIX: Update user state immediately, don't rely only on callbacks
+      console.log("🔐 [useAuth] Updating user state with result");
+      handleUserStateChange(result);
+
+      console.log("🔐 [useAuth] Loading state reset to false");
+    } catch (error) {
+      console.error("🔐 [useAuth] Anonymous sign-in failed:", error);
+      setState((prevState) => ({
+        ...prevState,
+        error: {
+          code: "sign-in-anonymous-error",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Failed to sign in anonymously",
+        },
+        loading: false,
+      }));
+    }
+  }, [authBackend, handleUserStateChange]);
+
+  const createAccount = useCallback(
+    async (email: string, password: string) => {
+      setState((prevState) => ({ ...prevState, loading: true, error: null }));
+      try {
+        await authBackend.signUpWithEmail(email, password);
+        setState((prevState) => ({ ...prevState, loading: false }));
+      } catch (error) {
+        setState((prevState) => ({
+          ...prevState,
+          error: {
+            code: "create-account-error",
+            message:
+              error instanceof Error
+                ? error.message
+                : "Failed to create account",
+          },
+          loading: false,
+        }));
+      }
+    },
+    [authBackend],
+  );
+
+  const signIn = useCallback(
+    async (email: string, password: string) => {
+      setState((prevState) => ({ ...prevState, loading: true, error: null }));
+      try {
+        await authBackend.signInWithEmail(email, password);
+        setState((prevState) => ({ ...prevState, loading: false }));
+      } catch (error) {
+        setState((prevState) => ({
+          ...prevState,
+          error: {
+            code: "sign-in-error",
+            message:
+              error instanceof Error ? error.message : "Failed to sign in",
+          },
+          loading: false,
+        }));
+      }
+    },
+    [authBackend],
+  );
+
+  const signOut = useCallback(async () => {
+    setState((prevState) => ({ ...prevState, loading: true, error: null }));
+    try {
+      await authBackend.signOut();
+      setState((prevState) => ({ ...prevState, loading: false }));
+    } catch (error) {
+      setState((prevState) => ({
+        ...prevState,
+        error: {
+          code: "sign-out-error",
+          message:
+            error instanceof Error ? error.message : "Failed to sign out",
+        },
+        loading: false,
+      }));
+    }
+  }, [authBackend]);
+
+  const clearError = useCallback(() => {
+    setState((prevState) => ({
+      ...prevState,
       error: null,
-    });
-  }, []);
-
-  // Helper function to handle auth errors consistently
-  const handleAuthError = useCallback((error: unknown) => {
-    const { code = "unknown", message = "An error occurred" } =
-      (error as { code?: string; message?: string }) || {};
-
-    setAuthState((prev) => ({
-      ...prev,
-      loading: false,
-      error: { code, message },
     }));
   }, []);
 
-  // Helper function to get platform-specific auth function
-  const getPlatformAuthFunction = useCallback(
-    <T extends keyof AuthFunctions>(
-      authFunctions: AuthFunctions,
-      webFunctionName: T,
-      nativeFunctionName: T,
-    ) => {
-      return Platform.OS === "web"
-        ? authFunctions[webFunctionName]
-        : authFunctions[nativeFunctionName];
-    },
-    [],
-  );
-
-  // Helper function to initialize auth with timeout
-  const initializeAuthWithTimeout = async (
-    authFunctions: AuthFunctions,
-  ): Promise<void> => {
-    const initPromise = new Promise<void>((resolve, reject) => {
-      try {
-        authFunctions.initAuth();
-        resolve();
-      } catch (error) {
-        reject(error);
-      }
-    });
-
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error("Auth initialization timeout")), 5000);
-    });
-
-    return Promise.race([initPromise, timeoutPromise]);
-  };
-
-  // Helper function to setup auth listener
-  const setupAuthListener = useCallback(
-    (authFunctions: AuthFunctions): (() => void) | undefined => {
-      const userStateHandler = (user: FirebaseUser | null) => {
-        try {
-          handleUserStateChange(user);
-        } catch (error: unknown) {
-          console.error("Error handling user state change:", error);
-          setErrorState();
-        }
-      };
-
-      return Platform.OS === "web"
-        ? authFunctions.onAuthStateChangedWeb?.(userStateHandler)
-        : authFunctions.onAuthStateChangedNative?.(userStateHandler);
-    },
-    [handleUserStateChange, setErrorState],
-  );
-
-  // Main auth initialization function
-  const initializeAuth = useCallback(async (): Promise<
-    (() => void) | undefined
-  > => {
-    try {
-      const authFunctions = getAuthFunctions();
-      await initializeAuthWithTimeout(authFunctions);
-      return setupAuthListener(authFunctions);
-    } catch (error: unknown) {
-      console.error("Error initializing auth:", error);
-      setErrorState();
-      return undefined;
-    }
-  }, [setupAuthListener, setErrorState]);
-
-  // Helper function to check if running in test environment
-  const isTestEnvironment = useCallback(() => {
-    return process.env.CHROME_TEST === "true" || process.env.CI === "true";
-  }, []);
-
-  // Helper function to handle auth cleanup
-  const cleanupAuth = useCallback(
-    (timeoutId: ReturnType<typeof setTimeout>, unsubscribe?: () => void) => {
-      clearTimeout(timeoutId);
-      if (!unsubscribe) return;
-
-      try {
-        unsubscribe();
-      } catch (error) {
-        console.error("Error during auth listener cleanup:", error);
-      }
-    },
-    [],
-  );
-
-  useEffect(() => {
-    // Early return for test environments
-    if (isTestEnvironment()) {
-      setErrorState();
-      return;
-    }
-
-    let unsubscribe: (() => void) | undefined;
-
-    // Shorter delay to speed up initialization
-    const timeoutId = setTimeout(() => {
-      initializeAuth()
-        .then((authUnsubscribe) => {
-          unsubscribe = authUnsubscribe;
-        })
-        .catch((error: unknown) => {
-          console.error("Error in auth initialization timeout:", error);
-          setErrorState();
-        });
-    }, 50);
-
-    return () => cleanupAuth(timeoutId, unsubscribe);
-  }, [initializeAuth, isTestEnvironment, setErrorState, cleanupAuth]);
-
-  const signInAnonymously = async (): Promise<void> => {
-    // Early return for test environments
-    if (isTestEnvironment() || process.env.NODE_ENV === "test") {
-      setAuthState({
-        user: {
-          uid: "test-user-chrome",
-          email: null,
-          isAnonymous: true,
-        },
-        loading: false,
-        error: null,
-      });
-      return;
-    }
-
-    try {
-      const authFunctions = getAuthFunctions();
-      setAuthState((prev) => ({ ...prev, loading: true, error: null }));
-
-      const signInFunction = getPlatformAuthFunction(
-        authFunctions,
-        "signInAnonymouslyWeb",
-        "signInAnonymouslyNative",
-      );
-
-      await signInFunction?.();
-    } catch (error: unknown) {
-      console.error("Anonymous sign in failed:", error);
-      handleAuthError(error);
-    }
-  };
-
-  const createAccount = async (
-    email: string,
-    password: string,
-  ): Promise<void> => {
-    try {
-      const authFunctions = getAuthFunctions();
-      setAuthState((prev) => ({ ...prev, loading: true, error: null }));
-
-      const createFunction = getPlatformAuthFunction(
-        authFunctions,
-        "createAccountWeb",
-        "createAccountNative",
-      );
-
-      await createFunction?.(email, password);
-    } catch (error: unknown) {
-      handleAuthError(error);
-    }
-  };
-
-  const signIn = async (email: string, password: string): Promise<void> => {
-    try {
-      const authFunctions = getAuthFunctions();
-      setAuthState((prev) => ({ ...prev, loading: true, error: null }));
-
-      const signInFunction = getPlatformAuthFunction(
-        authFunctions,
-        "signInWeb",
-        "signInNative",
-      );
-
-      await signInFunction?.(email, password);
-    } catch (error: unknown) {
-      handleAuthError(error);
-    }
-  };
-
-  const signOut = async (): Promise<void> => {
-    try {
-      const authFunctions = getAuthFunctions();
-      setAuthState((prev) => ({ ...prev, loading: true, error: null }));
-
-      const signOutFunction = getPlatformAuthFunction(
-        authFunctions,
-        "signOutWeb",
-        "signOutNative",
-      );
-
-      await signOutFunction?.();
-    } catch (error: unknown) {
-      handleAuthError(error);
-    }
-  };
-
-  const clearError = (): void => {
-    setAuthState((prev) => ({ ...prev, error: null }));
-  };
-
   return {
-    user: authState.user,
-    loading: authState.loading,
-    error: authState.error,
+    ...state,
     signInAnonymously,
     createAccount,
     signIn,

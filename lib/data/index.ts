@@ -7,11 +7,9 @@
 
 // Storage backends and management
 export { StorageBackend, SupabaseStorage } from "./supabase/SupabaseStorage";
-export { FirebaseStorage } from "./firebase/FirebaseStorage";
 export {
   StorageManager,
   IStorageManager,
-  FeatureFlags,
   storageManager,
 } from "./StorageManager";
 
@@ -141,14 +139,6 @@ export class DataLayerAPI {
   async getBackendInfo() {
     const { storageManager } = await import("./StorageManager");
     return storageManager.getBackendInfo();
-  }
-
-  /**
-   * Get current feature flags
-   */
-  async getFeatureFlags() {
-    const { storageManager } = await import("./StorageManager");
-    return storageManager.getFeatureFlags();
   }
 
   /**

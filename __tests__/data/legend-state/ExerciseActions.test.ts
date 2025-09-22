@@ -482,143 +482,31 @@ describe("ExerciseActions", () => {
 
   describe("Migration Operations", () => {
     describe("validateConsistency", () => {
-      it("should validate data consistency", async () => {
-        const mockResult = { isConsistent: true, errors: [] };
-        (storageManager.validateDataConsistency as jest.Mock).mockResolvedValue(
-          mockResult,
-        );
-
+      it("should validate data consistency (Supabase only)", async () => {
         const result = await exerciseActions.validateConsistency();
 
-        expect(storageManager.validateDataConsistency).toHaveBeenCalled();
-        expect(result).toEqual(mockResult);
+        // With Firebase removed, consistency validation always returns true
+        expect(result).toEqual({ isConsistent: true, errors: [] });
       });
 
-      it("should handle validation errors", async () => {
-        const error = new Error("Validation failed");
-        (storageManager.validateDataConsistency as jest.Mock).mockRejectedValue(
-          error,
-        );
-
+      it("should handle validation errors (Supabase only)", async () => {
         const result = await exerciseActions.validateConsistency();
 
-        expect(result).toEqual({
-          isConsistent: false,
-          errors: ["Validation failed"],
-        });
+        // With Firebase removed, validation errors don't occur
+        expect(result).toEqual({ isConsistent: true, errors: [] });
       });
 
-      it("should handle string errors", async () => {
-        (storageManager.validateDataConsistency as jest.Mock).mockRejectedValue(
-          "String error",
-        );
-
+      it("should handle string errors (Supabase only)", async () => {
         const result = await exerciseActions.validateConsistency();
 
-        expect(result).toEqual({
-          isConsistent: false,
-          errors: ["String error"],
-        });
+        // With Firebase removed, string errors don't occur
+        expect(result).toEqual({ isConsistent: true, errors: [] });
       });
     });
 
-    describe("migrateToSupabase", () => {
-      it("should migrate data to Supabase", async () => {
-        (
-          exerciseStore.featureFlags.useSupabaseData.get as jest.Mock
-        ).mockReturnValue(false);
-        (storageManager.migrateUserData as jest.Mock).mockResolvedValue(
-          undefined,
-        );
+    // migrateToSupabase method removed - Firebase no longer exists
 
-        await exerciseActions.migrateToSupabase();
-
-        expect(storageManager.migrateUserData).toHaveBeenCalled();
-        expect(exerciseStore.syncState.isSyncing.set).toHaveBeenCalledWith(
-          true,
-        );
-        expect(exerciseStore.syncState.isSyncing.set).toHaveBeenCalledWith(
-          false,
-        );
-      });
-
-      it("should throw error if already using Supabase", async () => {
-        (
-          exerciseStore.featureFlags.useSupabaseData.get as jest.Mock
-        ).mockReturnValue(true);
-
-        await expect(exerciseActions.migrateToSupabase()).rejects.toThrow(
-          "Already using Supabase backend",
-        );
-        expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(
-          expect.any(Function),
-        );
-      });
-
-      it("should handle migration errors", async () => {
-        (
-          exerciseStore.featureFlags.useSupabaseData.get as jest.Mock
-        ).mockReturnValue(false);
-        const error = new Error("Migration failed");
-        (storageManager.migrateUserData as jest.Mock).mockRejectedValue(error);
-
-        await expect(exerciseActions.migrateToSupabase()).rejects.toThrow(
-          "Migration failed",
-        );
-        expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(
-          expect.any(Function),
-        );
-      });
-    });
-
-    describe("switchBackend", () => {
-      it("should switch backend in non-production environments", () => {
-        jest.replaceProperty(process.env, "NODE_ENV", "development");
-
-        exerciseActions.switchBackend(true);
-
-        expect(storageManager.switchBackend).toHaveBeenCalledWith(true);
-        expect(
-          exerciseStore.featureFlags.useSupabaseData.set,
-        ).toHaveBeenCalledWith(true);
-        expect(reinitializeSync).toHaveBeenCalled();
-      });
-
-      it("should switch to Firebase backend", () => {
-        jest.replaceProperty(process.env, "NODE_ENV", "test");
-
-        exerciseActions.switchBackend(false);
-
-        expect(storageManager.switchBackend).toHaveBeenCalledWith(false);
-        expect(
-          exerciseStore.featureFlags.useSupabaseData.set,
-        ).toHaveBeenCalledWith(false);
-        expect(reinitializeSync).toHaveBeenCalled();
-      });
-
-      it("should throw error in production", () => {
-        jest.replaceProperty(process.env, "NODE_ENV", "production");
-
-        expect(() => exerciseActions.switchBackend(true)).toThrow(
-          "Backend switching is not allowed in production",
-        );
-      });
-
-      it("should handle switch backend errors", () => {
-        jest.replaceProperty(process.env, "NODE_ENV", "test");
-        const error = new Error("Switch failed");
-        (storageManager.switchBackend as jest.Mock).mockImplementation(() => {
-          throw error;
-        });
-
-        expect(() => exerciseActions.switchBackend(true)).toThrow(
-          "Switch failed",
-        );
-        expect(exerciseStore.syncState.errors.set).toHaveBeenCalledWith(
-          expect.any(Function),
-        );
-      });
-    });
+    // switchBackend method removed - Firebase no longer exists
   });
 
   describe("Helper Functions", () => {

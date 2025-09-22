@@ -24,11 +24,6 @@ jest.mock(
   { virtual: true },
 );
 
-jest.mock("@/lib/data/firebase/initializer", () => ({
-  initializeFirebaseServices: jest.fn(),
-  getDb: jest.fn(),
-}));
-
 jest.mock("@/lib/data/supabase/SupabaseClient", () => ({
   supabaseClient: {
     getCurrentUser: jest.fn(),
@@ -65,22 +60,11 @@ jest.mock("@/lib/models/Exercise", () => ({
   },
 }));
 
-jest.mock("firebase/firestore", () => ({
-  collection: jest.fn(),
-  addDoc: jest.fn(),
-  deleteDoc: jest.fn(),
-  doc: jest.fn(),
-  onSnapshot: jest.fn(),
-  query: jest.fn(),
-  orderBy: jest.fn(),
-}));
-
 jest.mock("uuid", () => ({
   v4: jest.fn(() => "test-uuid"),
 }));
 
 jest.mock("expo-router");
-jest.mock("@/lib/data/firebase");
 jest.mock("@/lib/hooks/useAddExercise");
 jest.mock("@/lib/hooks/useAuth");
 const mockUseAddExercise = jest.mocked(useAddExercise);

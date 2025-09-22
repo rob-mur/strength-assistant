@@ -1,0 +1,66 @@
+url: com.jimmy_solutions.strength_assistant.test
+---
+# Debug test to understand app state in CI - simplified for Android Maestro
+- runScript: ../../scripts/clear_emulator.js
+- launchApp
+
+# Wait for app to initialize
+- extendedWaitUntil:
+    visible: "*"
+    timeout: 30000
+
+# Take screenshot of initial state
+- takeScreenshot: debug-initial-app-state.png
+
+# Check for continue as guest button
+- assertVisible:
+    id: "continue-as-guest"
+    optional: true
+
+# Try to tap continue as guest if visible
+- tapOn:
+    id: "continue-as-guest"
+    optional: true
+
+# Wait and see what screen we're on
+- extendedWaitUntil:
+    visible: "*"
+    timeout: 15000
+
+# Take another screenshot after guest login attempt
+- takeScreenshot: debug-after-guest-login.png
+
+# Check for get started button
+- assertVisible:
+    id: "get-started"
+    optional: true
+
+# Try to tap get started if visible
+- tapOn:
+    id: "get-started"
+    optional: true
+
+# Wait for response
+- extendedWaitUntil:
+    visible: "*"
+    timeout: 15000
+
+# Take screenshot after get started
+- takeScreenshot: debug-after-get-started.png
+
+# Check for main app elements
+- assertVisible:
+    id: "add-exercise"
+    optional: true
+
+- assertVisible:
+    id: "add-workout"
+    optional: true
+
+- assertVisible:
+    id: "exercise-screen"
+    optional: true
+
+# Take final screenshot
+- takeScreenshot: debug-final-app-state.png
+# This test will complete successfully if we get through all steps

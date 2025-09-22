@@ -19,8 +19,6 @@ jobs:
       - name: 🛠 Setup development environment
         uses: ./.github/actions/setup-dev-environment
         with:
-          firebase-config: ${{ secrets.FIREBASE_WEB_CONFIG }}
-          google-services-config: ${{ secrets.GOOGLE_SERVICES }}
           devbox-config: android-build
 
       - name: Build
@@ -64,8 +62,10 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: maestro-debug-artifacts
+          name: android-integration-test-debug-artifacts
           path: |
             maestro-debug-output/
             *.png
-          retention-days: 7
+            *.xml
+            devbox/android-testing/maestro-debug-output/
+          retention-days: 14

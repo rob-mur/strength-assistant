@@ -1,9 +1,10 @@
-import { logger } from "../../../lib/data/firebase/logger";
+import { Logger } from "../../data/supabase/supabase/logger";
 
 /**
  * Common logging utilities for repository operations
  */
 export class RepositoryLogger {
+  private static logger = new Logger("Repository");
   /**
    * Log successful repository operation
    */
@@ -12,7 +13,7 @@ export class RepositoryLogger {
     operation: string,
     additionalContext?: Record<string, unknown>,
   ): void {
-    logger.info(`${operation} completed successfully`, {
+    this.logger.info(`${operation} completed successfully`, {
       service,
       platform: "mobile",
       operation,
@@ -29,7 +30,7 @@ export class RepositoryLogger {
     error: Error,
     additionalContext?: Record<string, unknown>,
   ): void {
-    logger.error(`Failed to ${operation}`, {
+    this.logger.error(`Failed to ${operation}`, {
       service,
       platform: "mobile",
       operation,

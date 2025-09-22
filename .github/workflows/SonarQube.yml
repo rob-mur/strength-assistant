@@ -20,7 +20,6 @@ jobs:
       - name: 🛠 Setup development environment
         uses: ./.github/actions/setup-dev-environment
         with:
-          firebase-config: ${{ secrets.FIREBASE_WEB_CONFIG }}
           devbox-config: minimal
 
       - name: Test and coverage

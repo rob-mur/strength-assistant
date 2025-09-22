@@ -17,19 +17,9 @@ jest.mock(
   { virtual: true },
 );
 
-jest.mock("@/lib/data/firebase/initializer", () => ({
-  initializeFirebaseServices: jest.fn(),
-  getDb: jest.fn(),
-}));
+// Firebase initializer mock removed
 
-jest.mock("@/lib/data/firebase/logger", () => ({
-  logger: {
-    info: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
-    debug: jest.fn(),
-  },
-}));
+// Firebase logger mock removed
 
 jest.mock("@/lib/data/supabase/SupabaseClient", () => ({
   supabaseClient: {
@@ -67,15 +57,7 @@ jest.mock("@/lib/models/Exercise", () => ({
   },
 }));
 
-jest.mock("firebase/firestore", () => ({
-  collection: jest.fn(),
-  addDoc: jest.fn(),
-  deleteDoc: jest.fn(),
-  doc: jest.fn(),
-  onSnapshot: jest.fn(),
-  query: jest.fn(),
-  orderBy: jest.fn(),
-}));
+// Firebase firestore mock removed
 
 jest.mock("uuid", () => ({
   v4: jest.fn(() => "test-uuid"),

@@ -2,10 +2,9 @@ import {
   // Storage backends
   StorageBackend,
   SupabaseStorage,
-  FirebaseStorage,
+  // FirebaseStorage removed
   StorageManager,
   IStorageManager,
-  FeatureFlags,
   storageManager,
 
   // Legend State
@@ -18,7 +17,6 @@ import {
   getExercises,
   getCurrentUser,
   getSyncState,
-  getFeatureFlags,
 
   // Models and types
   ExerciseRecord,
@@ -48,7 +46,7 @@ import {
 
 // Mock all the dependencies
 jest.mock("../../lib/data/supabase/SupabaseStorage");
-jest.mock("../../lib/data/firebase/FirebaseStorage");
+// Firebase storage mock removed
 jest.mock("../../lib/data/StorageManager");
 jest.mock("../../lib/data/legend-state/ExerciseStore");
 jest.mock("../../lib/data/legend-state/ExerciseActions");
@@ -79,7 +77,7 @@ describe("lib/data/index", () => {
   describe("exports", () => {
     test("exports all storage backend classes and interfaces", () => {
       expect(SupabaseStorage).toBeDefined();
-      expect(FirebaseStorage).toBeDefined();
+      // FirebaseStorage check removed
       expect(StorageManager).toBeDefined();
       expect(storageManager).toBeDefined();
     });
@@ -93,7 +91,6 @@ describe("lib/data/index", () => {
       expect(getExercises).toBeDefined();
       expect(getCurrentUser).toBeDefined();
       expect(getSyncState).toBeDefined();
-      expect(getFeatureFlags).toBeDefined();
     });
 
     test("exports configuration functions", () => {
@@ -153,11 +150,6 @@ describe("lib/data/index", () => {
       test("getBackendInfo handles dynamic import errors", async () => {
         const api = DataLayerAPI.getInstance();
         await expect(api.getBackendInfo()).rejects.toThrow();
-      });
-
-      test("getFeatureFlags handles dynamic import errors", async () => {
-        const api = DataLayerAPI.getInstance();
-        await expect(api.getFeatureFlags()).rejects.toThrow();
       });
 
       test("subscribeToAuthState handles dynamic import errors", async () => {
