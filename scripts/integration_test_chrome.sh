@@ -38,6 +38,8 @@ echo "✅ Migrations applied"
 
 # Set environment variables for Chrome testing
 echo "🔧 Setting Chrome test environment variables..."
+# CRITICAL FIX: Unset CI to avoid conflicts with Chrome test environment
+unset CI
 export CHROME_TEST=true
 export EXPO_PUBLIC_CHROME_TEST=true
 export EXPO_PUBLIC_SUPABASE_URL="http://127.0.0.1:54321"
@@ -47,6 +49,7 @@ export USE_SUPABASE_DATA=true
 export NODE_ENV=development
 
 echo "🔍 Environment Variables Debug:"
+echo "CI=${CI:-unset}"
 echo "CHROME_TEST=${CHROME_TEST}"
 echo "EXPO_PUBLIC_CHROME_TEST=${EXPO_PUBLIC_CHROME_TEST}"
 echo "EXPO_PUBLIC_SUPABASE_URL=${EXPO_PUBLIC_SUPABASE_URL}"

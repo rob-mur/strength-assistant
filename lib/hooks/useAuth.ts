@@ -67,10 +67,13 @@ export function useAuth(): AuthState & {
     const initAuth = async () => {
       try {
         // Handle Chrome test environment with automatic anonymous sign-in
+        // Priority: Chrome test environment overrides CI environment
         if (
           process.env.CHROME_TEST === "true" ||
-          process.env.CI === "true" ||
-          process.env.EXPO_PUBLIC_CHROME_TEST === "true"
+          process.env.EXPO_PUBLIC_CHROME_TEST === "true" ||
+          (process.env.CI === "true" &&
+            !process.env.CHROME_TEST &&
+            !process.env.EXPO_PUBLIC_CHROME_TEST)
         ) {
           console.log(
             "🔐 [useAuth] Chrome test environment detected - creating anonymous test user",
