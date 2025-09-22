@@ -2,45 +2,79 @@
 // This script works with Supabase local development instance
 // Using localhost for web/Chrome tests, 10.0.2.2 for Android emulator
 
-// Determine the base URL - always use localhost for web tests
-var baseUrl = "http://127.0.0.1:54321";
+const http = require("http");
+
+// Determine the base URL based on environment
+// This script runs on the host machine, so use localhost even for Android tests
+// The Android app uses 10.0.2.2:54321 but both point to the same database instance
+const baseUrl = "http://127.0.0.1:54321";
 
 // Service role token for admin operations
-var serviceToken =
+const serviceToken =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU";
 
-var headers = {
-  Authorization: "Bearer " + serviceToken,
+const headers = {
+  Authorization: `Bearer ${serviceToken}`,
   apikey: serviceToken,
   "Content-Type": "application/json",
 };
 
 // Clear all main tables in correct order (respecting foreign key constraints)
-var tablesToClear = [
+const tablesToClear = [
   "exercise_records",
   "exercises",
   "user_accounts",
   "sync_state_records",
 ];
 
-// eslint-disable-next-line no-undef
-console.log("Clearing Supabase database at " + baseUrl);
+console.log(`Clearing Supabase database at ${baseUrl}`);
 
-// Clear each table
-for (var i = 0; i < tablesToClear.length; i++) {
-  var table = tablesToClear[i];
+// Function to make HTTP DELETE request
+function deleteTable(table) {
+  return new Promise((resolve, reject) => {
+    const options = {
+      hostname: "127.0.0.1",
+      port: 54321,
+      path: `/rest/v1/${table}`,
+      method: "DELETE",
+      headers: headers,
+    };
 
-  // eslint-disable-next-line no-undef
-  console.log("Clearing table: " + table);
+    const req = http.request(options, (res) => {
+      console.log(`Cleared ${table}: ${res.statusCode}`);
 
-  // eslint-disable-next-line no-undef
-  var response = http.delete(baseUrl + "/rest/v1/" + table, {
-    headers: headers,
+      let data = "";
+      res.on("data", (chunk) => {
+        data += chunk;
+      });
+
+      res.on("end", () => {
+        resolve({ table, status: res.statusCode, data });
+      });
+    });
+
+    req.on("error", (error) => {
+      console.error(`Error clearing ${table}:`, error.message);
+      reject(error);
+    });
+
+    req.end();
   });
-
-  // eslint-disable-next-line no-undef
-  console.log("Cleared " + table + ": " + response.status);
 }
 
-// eslint-disable-next-line no-undef
-console.log("Database cleared successfully");
+// Clear tables sequentially
+async function clearAllTables() {
+  try {
+    for (const table of tablesToClear) {
+      console.log(`Clearing table: ${table}`);
+      await deleteTable(table);
+    }
+    console.log("Database cleared successfully");
+  } catch (error) {
+    console.error("Failed to clear database:", error.message);
+    process.exit(1);
+  }
+}
+
+// Run the clearing process
+clearAllTables();

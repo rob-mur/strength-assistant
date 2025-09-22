@@ -94,6 +94,45 @@ echo "🔄 Applying Supabase migrations..."
 supabase db reset --local
 echo "✅ Migrations applied successfully"
 
+# Ensure no existing emulators are running
+echo "🧹 Checking for existing emulators..."
+adb devices | grep emulator && {
+    echo "⚠️ Found existing emulators, killing them..."
+    adb devices | grep emulator | cut -f1 | while read device; do
+        adb -s "$device" emu kill
+    done
+    sleep 3
+}
+
+# Start Android emulator in headless mode
+echo "🚀 Starting Android emulator in headless mode..."
+emulator -avd test -no-snapshot-load -no-window -no-audio -no-boot-anim -gpu off &
+EMULATOR_PID=$!
+
+# Wait for device to be ready
+echo "⏳ Waiting for Android emulator to be ready..."
+adb wait-for-device
+
+# Wait a bit more for the emulator to fully boot
+echo "⏳ Waiting for emulator boot to complete..."
+BOOT_COMPLETED=""
+BOOT_ATTEMPTS=0
+while [ "$BOOT_COMPLETED" != "1" ] && [ $BOOT_ATTEMPTS -lt 60 ]; do
+    sleep 2
+    BOOT_COMPLETED=$(adb shell getprop sys.boot_completed 2>/dev/null || echo "0")
+    echo "   Boot status: $BOOT_COMPLETED (attempt $BOOT_ATTEMPTS/60)"
+    BOOT_ATTEMPTS=$((BOOT_ATTEMPTS + 1))
+done
+
+if [ "$BOOT_COMPLETED" != "1" ]; then
+    echo "❌ Emulator failed to boot after 60 attempts"
+    exit 1
+fi
+
+echo "✅ Android emulator is ready"
+
+# Install the APK
+echo "📱 Installing APK to emulator..."
 adb install build_preview.apk
 
 # Create debug output directory
@@ -157,9 +196,18 @@ else
 fi
 echo ""
 
-echo "Environment variables for Supabase:"
+# CRITICAL FIX: Clear Chrome-specific environment variables for Android
+# Android emulator needs to use 10.0.2.2, not 127.0.0.1
+# Don't set EXPO_PUBLIC_SUPABASE_URL - let emulator logic construct the URL
+unset EXPO_PUBLIC_SUPABASE_URL
+export EXPO_PUBLIC_USE_SUPABASE_EMULATOR=true
+# Don't set EXPO_PUBLIC_SUPABASE_EMULATOR_HOST - use hardcoded 10.0.2.2 fallback in native config
+
+echo "Environment variables for Supabase (Android-specific):"
 echo "EXPO_PUBLIC_USE_SUPABASE: $EXPO_PUBLIC_USE_SUPABASE"  
 echo "EXPO_PUBLIC_SUPABASE_URL: $EXPO_PUBLIC_SUPABASE_URL"
+echo "EXPO_PUBLIC_USE_SUPABASE_EMULATOR: $EXPO_PUBLIC_USE_SUPABASE_EMULATOR"
+echo "EXPO_PUBLIC_SUPABASE_EMULATOR_HOST: $EXPO_PUBLIC_SUPABASE_EMULATOR_HOST"
 echo "EXPO_PUBLIC_SUPABASE_ANON_KEY: $EXPO_PUBLIC_SUPABASE_ANON_KEY"
 echo ""
 
@@ -216,6 +264,29 @@ for test_file in .maestro/android/*.yml; do
         echo "🧪 Running test: $TEST_NAME"
         echo "Test: $TEST_NAME" >> maestro-debug-output/test-summary.txt
         
+        # Clear any existing Supabase data using the clear script
+        echo "Clearing Supabase database for $TEST_NAME..."
+        node scripts/clear_emulator.js
+        
+        # Note: Not clearing app data since Maestro tests handle app launching themselves
+        # and pm clear would remove the installed app process
+        echo "Skipping app data clear to preserve installed app..."
+        
+        # Clear logcat buffer and start continuous logging
+        echo "🔍 Starting React Native log capture for test: $TEST_NAME"
+        adb logcat -c  # Clear existing logs
+        
+        # Start background logcat capture for React Native logs
+        adb logcat -s ReactNativeJS:* -s System.err:* -s AndroidRuntime:* -s Supabase:* > "maestro-debug-output/reactnative-${TEST_NAME}.log" 2>&1 &
+        LOGCAT_PID=$!
+        
+        # Also capture all logs with specific filters in a separate file
+        adb logcat -v time | grep -E "(ReactNativeJS|Supabase|Legend|Error|Exception|Fatal|Crash)" > "maestro-debug-output/filtered-${TEST_NAME}.log" 2>&1 &
+        FILTERED_LOGCAT_PID=$!
+        
+        # Give logcat a moment to start
+        sleep 2
+        
         # Take screenshot before test
         echo "📸 Taking screenshot before test: $TEST_NAME"
         adb shell screencap -p /sdcard/before-${TEST_NAME}.png
@@ -225,13 +296,26 @@ for test_file in .maestro/android/*.yml; do
         set +e  # Don't exit on command failure
         echo "Starting test execution at $(date)..."
         
-        timeout 300 maestro test "$test_file" \
+        # Run maestro test directly and capture its exit code
+        maestro test "$test_file" \
           --debug-output maestro-debug-output \
           --format junit \
           2>&1 | tee "maestro-debug-output/maestro-${TEST_NAME}.log"
         
-        INDIVIDUAL_EXIT_CODE=${PIPESTATUS[0]}
+        INDIVIDUAL_EXIT_CODE=$?
         set -e  # Re-enable exit on error
+        
+        # Stop logcat capture processes
+        echo "🔍 Stopping log capture for test: $TEST_NAME"
+        kill $LOGCAT_PID 2>/dev/null || true
+        kill $FILTERED_LOGCAT_PID 2>/dev/null || true
+        
+        # Wait a moment for final logs to be written
+        sleep 1
+        
+        # Capture final logcat state for immediate analysis
+        echo "📝 Capturing final device logs..."
+        adb logcat -d -v time | grep -E "(ReactNativeJS|Supabase|Legend|Error|Exception|Fatal|Crash)" | tail -50 > "maestro-debug-output/final-logs-${TEST_NAME}.log" 2>/dev/null || echo "No final logs captured"
         
         # Take screenshot after test (regardless of success/failure)
         echo "📸 Taking screenshot after test: $TEST_NAME"
@@ -255,7 +339,30 @@ for test_file in .maestro/android/*.yml; do
             # Enhanced debugging for failed tests
             echo "🔍 Capturing enhanced debug info for failed test..."
             
-            # Capture detailed app logs
+            # Show React Native logs immediately for quick debugging
+            echo ""
+            echo "🔍 React Native Logs for Failed Test $TEST_NAME:"
+            echo "================================================"
+            if [ -f "maestro-debug-output/reactnative-${TEST_NAME}.log" ]; then
+                echo "📱 React Native Console Output:"
+                tail -20 "maestro-debug-output/reactnative-${TEST_NAME}.log" || echo "No React Native logs captured"
+            fi
+            
+            if [ -f "maestro-debug-output/filtered-${TEST_NAME}.log" ]; then
+                echo ""
+                echo "🚨 Filtered Error/Debug Logs:"
+                tail -15 "maestro-debug-output/filtered-${TEST_NAME}.log" || echo "No filtered logs captured"
+            fi
+            
+            if [ -f "maestro-debug-output/final-logs-${TEST_NAME}.log" ]; then
+                echo ""
+                echo "📝 Final Device State Logs:"
+                cat "maestro-debug-output/final-logs-${TEST_NAME}.log" || echo "No final logs captured"
+            fi
+            echo "================================================"
+            echo ""
+            
+            # Capture detailed app logs for summary file
             echo "App logs during test failure:" >> maestro-debug-output/test-summary.txt
             adb logcat -d | grep -E "ReactNativeJS|Supabase|Legend|Error|Exception" | tail -20 >> maestro-debug-output/test-summary.txt || echo "No relevant logs" >> maestro-debug-output/test-summary.txt
             
@@ -358,6 +465,29 @@ if [ -d "maestro-debug-output" ]; then
     echo "  Log files: $LOG_COUNT"
     echo "  UI dumps: $XML_COUNT"
     echo "  Total files: $(ls maestro-debug-output/ | wc -l)"
+    
+    # Quick analysis of React Native logs for debugging
+    echo ""
+    echo "🔍 React Native Log Analysis:"
+    for test_file in maestro-debug-output/reactnative-*.log; do
+        if [ -f "$test_file" ]; then
+            test_name=$(basename "$test_file" .log | sed 's/reactnative-//')
+            echo "  📱 $test_name:"
+            
+            # Count different types of messages
+            error_count=$(grep -c -i "error\|exception\|fail" "$test_file" 2>/dev/null || echo "0")
+            warn_count=$(grep -c -i "warn" "$test_file" 2>/dev/null || echo "0")
+            supabase_count=$(grep -c -i "supabase" "$test_file" 2>/dev/null || echo "0")
+            
+            echo "    Errors: $error_count, Warnings: $warn_count, Supabase: $supabase_count"
+            
+            # Show first few error lines if any
+            if [ "$error_count" -gt 0 ]; then
+                echo "    First errors:"
+                grep -i "error\|exception\|fail" "$test_file" | head -3 | sed 's/^/      /' 2>/dev/null || true
+            fi
+        fi
+    done
 else
     echo "⚠️ maestro-debug-output directory not found"
 fi
@@ -366,6 +496,16 @@ fi
 echo ""
 echo "🧹 Cleaning up temporary files on device..."
 adb shell rm -f /sdcard/*.png /sdcard/*.xml 2>/dev/null || true
+
+# Stop the Android emulator
+echo "🛑 Stopping Android emulator..."
+if [ ! -z "$EMULATOR_PID" ]; then
+    kill $EMULATOR_PID 2>/dev/null || true
+    # Wait a bit for graceful shutdown
+    sleep 5
+    # Force kill if still running
+    kill -9 $EMULATOR_PID 2>/dev/null || true
+fi
 
 # Explicitly fail if any tests failed
 if [ $MAESTRO_EXIT_CODE -ne 0 ]; then

@@ -40,6 +40,10 @@ export function useAuth(): AuthState & {
   const authBackend = storageManager.getAuthBackend();
 
   const handleUserStateChange = useCallback((user: UserAccount | null) => {
+    console.log(
+      "🔐 [useAuth] handleUserStateChange called with user:",
+      user?.id || "null",
+    );
     setState((prevState) => ({
       ...prevState,
       user: user
@@ -51,6 +55,10 @@ export function useAuth(): AuthState & {
         : null,
       loading: false,
     }));
+    console.log(
+      "🔐 [useAuth] State updated - user is now:",
+      user?.id || "null",
+    );
   }, []);
 
   useEffect(() => {
@@ -123,12 +131,20 @@ export function useAuth(): AuthState & {
 
   const signInAnonymously = useCallback(async () => {
     console.log("🔐 [useAuth] Starting anonymous sign-in process");
+    console.log(
+      "🔐 [useAuth] AuthBackend instance:",
+      authBackend.constructor.name,
+    );
     setState((prevState) => ({ ...prevState, loading: true, error: null }));
     try {
       console.log("🔐 [useAuth] Calling authBackend.signInAnonymously()");
       const result = await authBackend.signInAnonymously();
       console.log("🔐 [useAuth] Anonymous sign-in successful:", result);
-      setState((prevState) => ({ ...prevState, loading: false }));
+
+      // CRITICAL FIX: Update user state immediately, don't rely only on callbacks
+      console.log("🔐 [useAuth] Updating user state with result");
+      handleUserStateChange(result);
+
       console.log("🔐 [useAuth] Loading state reset to false");
     } catch (error) {
       console.error("🔐 [useAuth] Anonymous sign-in failed:", error);
@@ -144,7 +160,7 @@ export function useAuth(): AuthState & {
         loading: false,
       }));
     }
-  }, [authBackend]);
+  }, [authBackend, handleUserStateChange]);
 
   const createAccount = useCallback(
     async (email: string, password: string) => {

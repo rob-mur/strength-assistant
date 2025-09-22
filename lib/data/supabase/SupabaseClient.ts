@@ -69,7 +69,7 @@ export class SupabaseClient {
 
   /**
    * Get the current authenticated user
-   * Automatically signs in anonymously if no user is authenticated (for testing)
+   * Does NOT automatically sign in - auth should be handled by useAuth hook
    */
   async getCurrentUser() {
     try {
@@ -77,19 +77,9 @@ export class SupabaseClient {
         data: { user },
         error,
       } = await this.getClient().auth.getUser();
-      if (error || !user) {
-        // For tests and initial setup, automatically sign in anonymously
-        console.log("No authenticated user found, signing in anonymously...");
-        const {
-          data: { user: anonUser },
-          error: signInError,
-        } = await this.getClient().auth.signInAnonymously();
-        if (signInError) {
-          console.error("Anonymous sign-in failed:", signInError);
-          throw signInError;
-        }
-        console.log("Successfully signed in anonymously:", anonUser?.id);
-        return anonUser;
+      if (error) {
+        console.error("Failed to get current user:", error);
+        throw error;
       }
       return user;
     } catch (error) {
