@@ -13,6 +13,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      
+      - name: Debug - List GitHub Actions directory
+        run: |
+          echo "Listing .github/actions directory structure..."
+          ls -la .github/actions/ || echo "No actions directory found"
+          ls -la .github/actions/android-build/ || echo "No android-build directory"
+          ls -la .github/actions/maestro-test/ || echo "No maestro-test directory"
 
       - name: Check android-build action exists
         run: |
