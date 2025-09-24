@@ -47,6 +47,7 @@ Fix production APK authentication failures where the app cannot connect to live 
 **Scale/Scope**: Single mobile app, auth errors affect all production users
 
 **Error Context from logs**:
+
 - `AuthRetryableFetchError: Network request failed` - production APK cannot reach Supabase servers
 - `AuthSessionMissingError: Auth session missing!` - session persistence issues between development and production
 - App correctly falls back to local anonymous users but real auth fails
@@ -224,8 +225,9 @@ _This section describes what the /tasks command will do - DO NOT execute during 
 - Mark [P] for parallel execution (independent test files)
 
 **Key Task Categories**:
+
 1. **Environment Configuration** (3-4 tasks): Build type detection, URL switching, validation
-2. **Authentication Flow** (4-5 tasks): Session persistence, error handling, fallback mechanisms  
+2. **Authentication Flow** (4-5 tasks): Session persistence, error handling, fallback mechanisms
 3. **Testing Infrastructure** (5-6 tasks): Contract tests, integration tests, production validation
 4. **CI/CD Integration** (3-4 tasks): Pre-release validation, automated testing, deployment gates
 
@@ -257,7 +259,7 @@ _This checklist is updated during execution flow_
 **Phase Status**:
 
 - [x] Phase 0: Research complete (/plan command)
-- [x] Phase 1: Design complete (/plan command) 
+- [x] Phase 1: Design complete (/plan command)
 - [x] Phase 2: Task planning complete (/plan command - describe approach only)
 - [ ] Phase 3: Tasks generated (/tasks command)
 - [ ] Phase 4: Implementation complete

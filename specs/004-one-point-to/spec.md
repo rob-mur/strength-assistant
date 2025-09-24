@@ -42,6 +42,7 @@
 ## Clarifications
 
 ### Session 2025-09-24
+
 - Q: Which specific application functionality should be tested against production? → A: Same Maestro flow files used for integration testing
 - Q: What timeout limits should production tests have? → A: No specific requirement, tests should be relatively fast
 - Q: How should test user data be isolated/cleaned up? → A: Use fresh anonymous user each time, no data cleanup needed

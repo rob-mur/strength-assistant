@@ -6,7 +6,7 @@
 const http = require("http");
 
 // Check if data cleanup should be skipped (for production testing with anonymous users)
-const skipCleanup = process.env.SKIP_DATA_CLEANUP === 'true';
+const skipCleanup = process.env.SKIP_DATA_CLEANUP === "true";
 
 if (skipCleanup) {
   console.log("SKIP_DATA_CLEANUP=true detected - skipping database cleanup");

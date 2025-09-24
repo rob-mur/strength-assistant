@@ -10,12 +10,12 @@ Production validation runs **after** terraform infrastructure deployment but **b
 
 ### When Production Validation Fails
 
-| Scenario | Action | Reason |
-|----------|--------|---------|
-| Infrastructure issue (network, certificates, etc.) | **Infrastructure Rollback** | Fix underlying infrastructure problem |
+| Scenario                                              | Action                              | Reason                                              |
+| ----------------------------------------------------- | ----------------------------------- | --------------------------------------------------- |
+| Infrastructure issue (network, certificates, etc.)    | **Infrastructure Rollback**         | Fix underlying infrastructure problem               |
 | Application issue (API changes, data migration, etc.) | **Application Fix + Re-validation** | Application code can be fixed without infra changes |
-| Test environment issue (emulator, Maestro, CI) | **Re-run Validation** | Issue is with validation process, not production |
-| Production data issue (database, user accounts) | **Data Fix + Re-validation** | Address data layer problems |
+| Test environment issue (emulator, Maestro, CI)        | **Re-run Validation**               | Issue is with validation process, not production    |
+| Production data issue (database, user accounts)       | **Data Fix + Re-validation**        | Address data layer problems                         |
 
 ## Rollback Procedures
 
@@ -24,6 +24,7 @@ Production validation runs **after** terraform infrastructure deployment but **b
 **Use when:** Infrastructure deployment caused production validation failure
 
 **Steps:**
+
 ```bash
 # 1. Assess impact
 gh run view <failed-validation-run-id> --log
@@ -50,6 +51,7 @@ gh issue create --title "Production Rollback: $(date)" --body "..."
 **Use when:** Application code issues cause validation failure
 
 **Steps:**
+
 ```bash
 # 1. Identify application issue
 gh run view <failed-validation-run-id> --log
@@ -79,6 +81,7 @@ gh workflow run production-validation.yml --field terraform_deployment_id="hotfi
 **Use when:** Validation failure is due to testing infrastructure, not production
 
 **Steps:**
+
 ```bash
 # 1. Check if it's a test environment issue
 # Common signs:
@@ -104,6 +107,7 @@ gh run list --workflow=production-validation.yml --limit=5 --json conclusion
 **Use when:** Database or data layer issues prevent validation
 
 **Steps:**
+
 ```bash
 # 1. Identify data issue
 # Review Supabase logs during validation failure
@@ -140,7 +144,7 @@ gh workflow run production-validation.yml --field terraform_deployment_id="dataf
 # 1. Document emergency override decision
 gh issue create --title "EMERGENCY OVERRIDE: $(date)" \
   --body "Production validation bypassed due to: [REASON]
-  
+
   Authorized by: [NAME]
   Risk assessment: [ASSESSMENT]
   Post-deployment validation plan: [PLAN]"
@@ -182,7 +186,7 @@ ETA: [ESTIMATED RESOLUTION TIME]
 
 Actions taken:
 1. Production validation failed at [TIME]
-2. Infrastructure rollback initiated at [TIME]  
+2. Infrastructure rollback initiated at [TIME]
 3. [SPECIFIC ROLLBACK ACTIONS]
 
 Next steps:
@@ -198,6 +202,7 @@ Updates will be provided every 30 minutes.
 ### After Successful Rollback
 
 1. **Document the incident:**
+
    ```bash
    gh issue create --title "Production Rollback Post-Mortem" \
      --body "Incident: [DESCRIPTION]

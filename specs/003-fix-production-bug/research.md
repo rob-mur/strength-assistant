@@ -12,12 +12,14 @@ Investigation into production APK authentication failures and establishment of p
 
 **Decision**: Implement environment-specific configuration that switches between emulator and production URLs based on build type
 
-**Rationale**: 
+**Rationale**:
+
 - Error logs show Supabase client initializing with local emulator URL in production
 - Environment variables not properly configured for production builds
 - Need conditional logic to detect production vs development builds
 
 **Alternatives considered**:
+
 - Hard-coding production URLs (rejected: not flexible for staging)
 - Single configuration file (rejected: security concerns for production keys)
 
@@ -28,11 +30,13 @@ Investigation into production APK authentication failures and establishment of p
 **Decision**: Investigate session storage mechanisms and ensure consistent behavior across build types
 
 **Rationale**:
+
 - Session management works in development but fails in production
 - May be related to storage permissions or encryption differences
 - AsyncStorage or SecureStore configuration might differ
 
 **Alternatives considered**:
+
 - Disabling session persistence (rejected: poor UX)
 - Using only local anonymous users (rejected: doesn't solve real auth)
 
@@ -43,11 +47,13 @@ Investigation into production APK authentication failures and establishment of p
 **Decision**: Research network security policies and certificate configurations for production builds
 
 **Rationale**:
+
 - Production builds may have different network security requirements
 - SSL certificate pinning or network security configs might block Supabase connections
 - Need to ensure production APK can reach external Supabase servers
 
 **Alternatives considered**:
+
 - Disabling network security (rejected: security risk)
 - Using only local fallbacks (rejected: defeats purpose of cloud backend)
 
@@ -58,11 +64,13 @@ Investigation into production APK authentication failures and establishment of p
 **Decision**: Implement production build validation pipeline with real Supabase testing
 
 **Rationale**:
+
 - Manual testing insufficient to catch production-only issues
 - Need automated validation against actual Supabase environments
 - Should test both authentication flows and fallback mechanisms
 
 **Alternatives considered**:
+
 - Manual testing only (rejected: unreliable)
 - Mock-based testing (rejected: wouldn't catch this issue)
 
@@ -73,11 +81,13 @@ Investigation into production APK authentication failures and establishment of p
 **Decision**: Review and standardize environment variable handling for all build types
 
 **Rationale**:
+
 - Current logs show undefined environment variables in production
 - Need clear separation between development, staging, and production configs
 - Must ensure sensitive credentials don't leak to development builds
 
 **Alternatives considered**:
+
 - Single environment configuration (rejected: security concerns)
 - Runtime configuration fetching (rejected: complexity)
 
@@ -91,8 +101,9 @@ Investigation into production APK authentication failures and establishment of p
 ## Next Steps
 
 Phase 1 will design:
+
 - Environment configuration system for proper URL switching
-- Session management consistency across build types  
+- Session management consistency across build types
 - Pre-release testing pipeline with real Supabase validation
 - Error reporting improvements for production debugging
 

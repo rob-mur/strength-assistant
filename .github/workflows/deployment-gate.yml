@@ -7,19 +7,19 @@ on:
   workflow_call:
     inputs:
       deployment_type:
-        description: 'Type of deployment (frontend, mobile, etc.)'
+        description: "Type of deployment (frontend, mobile, etc.)"
         required: true
         type: string
       deployment_environment:
-        description: 'Target deployment environment'
+        description: "Target deployment environment"
         required: true
         type: string
     outputs:
       deployment_approved:
-        description: 'Whether deployment is approved to proceed'
+        description: "Whether deployment is approved to proceed"
         value: ${{ jobs.check-production-validation.outputs.approved }}
       validation_status:
-        description: 'Production validation status'
+        description: "Production validation status"
         value: ${{ jobs.check-production-validation.outputs.status }}
 
 jobs:
@@ -29,32 +29,32 @@ jobs:
     outputs:
       approved: ${{ steps.validation-check.outputs.approved }}
       status: ${{ steps.validation-check.outputs.status }}
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
+
       - name: Check Recent Production Validation
         id: validation-check
         run: |
           echo "🔍 Checking production validation status for ${{ inputs.deployment_type }} deployment..."
-          
+
           # Use GitHub CLI to check recent workflow runs
           VALIDATION_STATUS=$(gh run list \
             --workflow=production-validation.yml \
             --limit=1 \
             --json conclusion,status,createdAt \
             --jq '.[0].conclusion // .[0].status')
-          
+
           VALIDATION_CREATED=$(gh run list \
             --workflow=production-validation.yml \
             --limit=1 \
             --json createdAt \
             --jq '.[0].createdAt')
-          
+
           echo "Latest validation status: $VALIDATION_STATUS"
           echo "Latest validation created: $VALIDATION_CREATED"
-          
+
           # Check if validation is recent (within last 24 hours for production)
           if [ "${{ inputs.deployment_environment }}" = "production" ]; then
             CUTOFF_TIME=$(date -d '24 hours ago' -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -67,7 +67,7 @@ jobs:
               exit 0
             fi
           fi
-          
+
           # Check validation status
           case "$VALIDATION_STATUS" in
             "success")
@@ -100,7 +100,7 @@ jobs:
           esac
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
+
       - name: Deployment Decision Summary
         run: |
           echo "📊 Deployment Gate Summary:"
@@ -108,7 +108,7 @@ jobs:
           echo "   Environment: ${{ inputs.deployment_environment }}"
           echo "   Validation Status: ${{ steps.validation-check.outputs.status }}"
           echo "   Deployment Approved: ${{ steps.validation-check.outputs.approved }}"
-          
+
           if [ "${{ steps.validation-check.outputs.approved }}" = "false" ]; then
             echo ""
             echo "🚫 DEPLOYMENT BLOCKED"

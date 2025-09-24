@@ -5,6 +5,7 @@ This guide covers common issues encountered during production validation testing
 ## Quick Diagnostics
 
 ### Check Validation Status
+
 ```bash
 # Check recent production validation runs
 gh run list --workflow=production-validation.yml --limit=5
@@ -14,6 +15,7 @@ gh run view <run-id> --log
 ```
 
 ### Manual Validation Test
+
 ```bash
 # Trigger manual validation
 gh workflow run production-validation.yml \
@@ -25,15 +27,18 @@ gh workflow run production-validation.yml \
 ### 1. APK Build Failures
 
 #### Issue: EAS Authentication Failed
+
 ```
 Error: Authentication token required for EAS builds
 ```
 
 **Diagnosis:**
+
 - Missing or invalid `EXPO_TOKEN` secret
 - Token expired or revoked
 
 **Solution:**
+
 ```bash
 # Generate new Expo token
 npx eas login
@@ -44,15 +49,18 @@ gh secret set EXPO_TOKEN --body "YOUR_NEW_TOKEN"
 ```
 
 #### Issue: Production Configuration Missing
+
 ```
 Error: Missing required environment variables
 ```
 
 **Diagnosis:**
+
 - Production Supabase credentials not configured in EAS
 - Environment variables not set for production profile
 
 **Solution:**
+
 ```bash
 # Set production environment variables in EAS
 npx eas env:set EXPO_PUBLIC_SUPABASE_URL="https://your-project.supabase.co" --environment production
@@ -62,16 +70,20 @@ npx eas env:set EXPO_PUBLIC_SUPABASE_ANON_KEY="your-anon-key" --environment prod
 ### 2. Maestro Test Failures
 
 #### Issue: Emulator Not Starting
+
 ```
 Error: Failed to start Android emulator
 ```
 
 **Diagnosis:**
+
 - GitHub Actions runner resource limitations
 - Android emulator configuration issues
 
 **Solution:**
+
 1. Check emulator configuration in workflow:
+
    ```yaml
    - uses: reactivecircus/android-emulator-runner@v2
      with:
@@ -88,16 +100,19 @@ Error: Failed to start Android emulator
    ```
 
 #### Issue: APK Installation Failed
+
 ```
 Error: Failed to install APK on emulator
 ```
 
 **Diagnosis:**
+
 - APK build path incorrect
 - Emulator storage full
 - Architecture mismatch
 
 **Solution:**
+
 ```bash
 # Verify APK exists and get correct path
 find . -name "*.apk" -type f
@@ -108,18 +123,22 @@ adb shell pm clear com.jimmy_solutions.strength_assistant
 ```
 
 #### Issue: Maestro Flow Execution Failed
+
 ```
 Error: Maestro test timed out or failed to find element
 ```
 
 **Diagnosis:**
+
 - Production server connectivity issues
 - App not fully loaded
 - UI elements changed
 
 **Solution:**
+
 1. Check Maestro flow files for environment-specific selectors
 2. Add longer waits for production server responses:
+
    ```yaml
    - waitForAnimationToEnd:
        timeout: 10000
@@ -133,16 +152,19 @@ Error: Maestro test timed out or failed to find element
 ### 3. Production Server Issues
 
 #### Issue: Supabase Connection Failed
+
 ```
 Error: Invalid API key or connection refused
 ```
 
 **Diagnosis:**
+
 - Production Supabase project URL incorrect
 - Anonymous key expired or wrong
 - Network connectivity issues
 
 **Solution:**
+
 ```bash
 # Test Supabase connection
 curl -H "apikey: YOUR_ANON_KEY" \
@@ -154,17 +176,21 @@ curl -H "apikey: YOUR_ANON_KEY" \
 ```
 
 #### Issue: Anonymous User Creation Failed
+
 ```
 Error: Failed to create anonymous user
 ```
 
 **Diagnosis:**
+
 - Row Level Security (RLS) policies too restrictive
 - Anonymous authentication disabled
 - Database schema changes
 
 **Solution:**
+
 1. Check RLS policies in Supabase:
+
    ```sql
    SELECT * FROM pg_policies WHERE tablename = 'user_accounts';
    ```
@@ -175,24 +201,28 @@ Error: Failed to create anonymous user
 
 3. Test anonymous user creation manually:
    ```javascript
-   const { data, error } = await supabase.auth.signInAnonymously()
-   console.log(data, error)
+   const { data, error } = await supabase.auth.signInAnonymously();
+   console.log(data, error);
    ```
 
 ### 4. Workflow Trigger Issues
 
 #### Issue: Workflow Not Triggering After Terraform
+
 ```
 Production validation not starting after terraform deployment
 ```
 
 **Diagnosis:**
+
 - Terraform workflow name mismatch
 - Branch restrictions
 - Workflow permissions
 
 **Solution:**
+
 1. Check terraform workflow name:
+
    ```yaml
    workflow_run:
      workflows: ["Terraform Deploy", "Infrastructure Deploy"]
@@ -201,6 +231,7 @@ Production validation not starting after terraform deployment
    ```
 
 2. Verify terraform workflow conclusion:
+
    ```bash
    gh run list --workflow="terraform-deploy.yml" --limit=1 --json conclusion
    ```
@@ -208,17 +239,21 @@ Production validation not starting after terraform deployment
 3. Check workflow permissions in repository settings
 
 #### Issue: Deployment Gate Blocking Valid Deployments
+
 ```
 Deployment blocked despite successful validation
 ```
 
 **Diagnosis:**
+
 - Validation status check logic error
 - Stale validation check too restrictive
 - GitHub CLI permissions
 
 **Solution:**
+
 1. Check recent validation status:
+
    ```bash
    gh run list --workflow=production-validation.yml --limit=1 --json conclusion,createdAt
    ```
@@ -232,23 +267,28 @@ Deployment blocked despite successful validation
 ### 5. Performance Issues
 
 #### Issue: Validation Takes Too Long
+
 ```
 Workflow times out after 30 minutes
 ```
 
 **Diagnosis:**
+
 - Slow APK build process
 - Emulator startup delays
 - Network connectivity issues
 
 **Solution:**
+
 1. Optimize APK build:
+
    ```yaml
    # Use local builds instead of cloud builds
    - run: npx eas build --platform android --profile production --local
    ```
 
 2. Pre-warm emulator:
+
    ```yaml
    - name: Pre-warm emulator
      run: |
@@ -268,6 +308,7 @@ Workflow times out after 30 minutes
 ## Monitoring and Alerts
 
 ### Set Up Notifications
+
 ```bash
 # GitHub CLI notifications for workflow failures
 gh api repos/:owner/:repo/hooks --method POST --field name=web \
@@ -276,6 +317,7 @@ gh api repos/:owner/:repo/hooks --method POST --field name=web \
 ```
 
 ### Health Check Dashboard
+
 Create a simple dashboard to monitor production validation:
 
 ```bash
@@ -301,15 +343,18 @@ curl -s -o /dev/null -w "%{http_code}" https://your-production-server.com/api/he
 ## Emergency Procedures
 
 ### Manual Override for Critical Fixes
+
 If production validation is blocking critical fixes:
 
 1. **Temporary bypass** (use sparingly):
+
    ```bash
    # Create manual deployment without validation gate
    gh workflow run frontend-deployment.yml --field skip_validation=true
    ```
 
 2. **Emergency deployment approval**:
+
    ```bash
    # Mark validation as manually approved
    gh run create-check --name="production-validation-manual-override" \
@@ -326,6 +371,7 @@ If production validation is blocking critical fixes:
 ## Getting Help
 
 ### Debug Information to Collect
+
 When reporting issues, include:
 
 1. GitHub run ID and logs
@@ -335,6 +381,7 @@ When reporting issues, include:
 5. Environment configuration (sanitized)
 
 ### Escalation Process
+
 1. Check this troubleshooting guide
 2. Review GitHub Actions logs and artifacts
 3. Test individual components manually

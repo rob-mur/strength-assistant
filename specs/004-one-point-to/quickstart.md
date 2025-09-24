@@ -24,7 +24,7 @@ on:
   workflow_dispatch:
     inputs:
       terraform_deployment_id:
-        description: 'Terraform deployment ID'
+        description: "Terraform deployment ID"
         required: true
 
 env:
@@ -36,33 +36,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
-          
+          node-version: "18"
+          cache: "npm"
+
       - name: Install Dependencies
         run: npm ci
-        
+
       - name: Build Production APK
         run: |
           echo "Building production APK with actual production configuration..."
           npx expo build:android --release-channel production
-        
+
       - name: Install Maestro
         run: |
           curl -Ls "https://get.maestro.mobile.dev" | bash
           echo "$HOME/.maestro/bin" >> $GITHUB_PATH
-          
+
       - name: Run Maestro Tests Against Production
         run: |
           echo "Running existing Maestro flows with SKIP_DATA_CLEANUP=true..."
           maestro test .maestro/web/add-exercise-and-see-it-in-list.yml
           maestro test .maestro/web/add-and-record-workout.yml
-        
-      - name: Alert on Failure  
+
+      - name: Alert on Failure
         if: failure()
         run: |
           echo "::error::Production validation failed - manual intervention required"
@@ -94,7 +94,7 @@ production_validation:
   stage: production-test
   dependencies:
     - unit_tests
-    - integration_tests  
+    - integration_tests
     - security_scan
   script:
     - echo "Starting production validation..."
@@ -122,7 +122,7 @@ PRODUCTION_SERVER="https://your-production-server.com"
 TEST_RUN_ID="${CI_PIPELINE_ID}-${CI_COMMIT_SHORT_SHA}"
 MAESTRO_FLOWS=(".maestro/critical-flow.yaml" ".maestro/user-journey.yaml")
 
-# Create anonymous user for testing  
+# Create anonymous user for testing
 echo "Creating anonymous user for test run: $TEST_RUN_ID"
 USER_RESPONSE=$(curl -s -X POST "$PRODUCTION_SERVER/api/users/anonymous" \
   -H "Content-Type: application/json" \
@@ -150,7 +150,7 @@ chmod +x scripts/run-production-tests.sh
 
 ```bash
 # Set test environment variables
-export CI_PIPELINE_ID="manual-test-$(date +%s)"  
+export CI_PIPELINE_ID="manual-test-$(date +%s)"
 export CI_COMMIT_SHORT_SHA="$(git rev-parse --short HEAD)"
 
 # Run production validation
@@ -179,7 +179,7 @@ git push origin feature-branch
 ✅ **Anonymous Users**: Fresh anonymous users created for each test run  
 ✅ **Maestro Execution**: Existing Maestro flows execute against production server  
 ✅ **Error Handling**: Failed production tests block deployment with clear errors  
-✅ **Performance**: Tests complete within reasonable timeframes  
+✅ **Performance**: Tests complete within reasonable timeframes
 
 ## Common Issues & Solutions
 
@@ -220,7 +220,7 @@ production_validation:
     - unit_tests
     - integration_tests
     - security_scan
-  when: on_success  # Only run when all dependencies pass
+  when: on_success # Only run when all dependencies pass
 ```
 
 ## Next Steps
@@ -228,7 +228,7 @@ production_validation:
 After quickstart validation:
 
 1. **If tests pass**: Integration successful, ready for production deployment
-2. **If tests fail**: Use error logs to identify production-specific configuration issues  
+2. **If tests fail**: Use error logs to identify production-specific configuration issues
 3. **For ongoing development**: Set up monitoring for production validation metrics
 
 ## Files Created/Modified
@@ -237,12 +237,13 @@ This quickstart validates:
 
 - `scripts/run-production-tests.sh` - Production test execution script
 - Pipeline configuration with production validation stage
-- Maestro flow execution against production endpoints  
+- Maestro flow execution against production endpoints
 - Anonymous user creation and management
 
 ## Support
 
 If issues persist:
+
 1. Check pipeline logs for specific error messages
 2. Verify production server connectivity and API endpoints
 3. Test Maestro flows individually: `maestro test specific-flow.yaml`

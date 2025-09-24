@@ -35,6 +35,7 @@ This guide covers the setup of GitHub Actions secrets and environment variables 
 The following environment variables are automatically set by the workflow and EAS configuration:
 
 ### Production Build Environment
+
 ```bash
 NODE_ENV=production
 EXPO_PUBLIC_USE_SUPABASE=true
@@ -79,16 +80,19 @@ gh workflow run production-validation.yml \
 ## Security Considerations
 
 ### Supabase Anonymous Key
+
 - The anonymous key is safe to expose in client applications
 - It provides limited access based on Row Level Security policies
 - Production RLS policies should restrict anonymous user access appropriately
 
 ### EAS Token
+
 - Keep this token secure - it provides full access to your EAS projects
 - Rotate regularly if compromised
 - Use organization-level tokens for team projects
 
 ### Environment Separation
+
 - Production validation uses actual production configuration
 - Tests create anonymous users that don't affect real user data
 - `SKIP_DATA_CLEANUP=true` ensures tests don't interfere with production cleanup
@@ -98,21 +102,27 @@ gh workflow run production-validation.yml \
 ### Common Issues
 
 1. **EAS Build Fails**
+
    ```
    Error: Authentication token required
    ```
+
    - Solution: Verify `EXPO_TOKEN` secret is set correctly
 
 2. **Supabase Connection Failed**
+
    ```
    Error: Invalid API key or URL
    ```
+
    - Solution: Check `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY`
 
 3. **Production Tests Fail**
+
    ```
    Error: Anonymous user creation failed
    ```
+
    - Solution: Verify Supabase RLS policies allow anonymous user creation
 
 ### Validation Commands

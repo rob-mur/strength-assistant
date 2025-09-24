@@ -88,7 +88,7 @@ npm run test:network-errors
 ✅ **Authentication Flow**: Anonymous auth works in production APK  
 ✅ **Session Persistence**: Sessions maintained across app restarts  
 ✅ **Error Handling**: Network failures handled gracefully  
-✅ **Pre-Release Testing**: Automated tests catch configuration issues  
+✅ **Pre-Release Testing**: Automated tests catch configuration issues
 
 ## Common Issues & Solutions
 
@@ -135,13 +135,14 @@ After quickstart validation:
 This quickstart will help validate:
 
 - `lib/config/environment.ts` - Environment configuration
-- `lib/data/supabase/auth.ts` - Authentication implementation  
+- `lib/data/supabase/auth.ts` - Authentication implementation
 - `__tests__/integration/production-auth.test.ts` - Production validation tests
 - `.github/workflows/pre-release-validation.yml` - CI/CD integration
 
 ## Support
 
 If issues persist:
+
 1. Check logs: `npx expo logs --platform android`
 2. Review environment: `npm run debug:full-config`
 3. Test network connectivity: `npm run test:network`

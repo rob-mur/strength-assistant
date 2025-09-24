@@ -3,6 +3,7 @@
 Auto-generated from all feature plans. Last updated: 2025-09-23
 
 ## Active Technologies
+
 - TypeScript/JavaScript with React Native/Expo + Maestro (test automation), existing CI/CD pipeline, Supabase (004-one-point-to)
 - Production server configuration, anonymous user data (temporary) (004-one-point-to)
 
