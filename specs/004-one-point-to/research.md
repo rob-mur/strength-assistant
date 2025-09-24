@@ -116,11 +116,33 @@ Research into implementing simple APK-based production validation after terrafor
 4. **Error Reporting**: Standard CI/CD error reporting sufficient with production context
 5. **Performance**: Maestro's existing performance characteristics meet requirements
 
+### 7. GitHub Actions Reusability Strategy  
+
+**Decision**: Extract parameterized GitHub Actions for Android building and Maestro testing
+
+**Rationale**:
+- Eliminates code duplication between integration and production workflows
+- Uses devbox for consistent dependency setup across environments  
+- Enables parameterization between integration/production modes
+- Reuses existing build production APK job instead of rebuilding
+
+**Alternatives considered**:
+- Duplicate workflow code (rejected: violates DRY principle)
+- Monolithic action (rejected: reduces modularity)
+- Separate specialized actions (rejected: misses reusability opportunity)
+
+**Implementation Approach**:
+- Android Build Action: Parameterized by build type (preview/production)
+- Maestro Test Action: Parameterized by test environment and APK path
+- Both actions use devbox for reproducible dependency management
+- Production APK built once after all tests pass, then consumed by validation
+
 ## Next Steps
 
 Phase 1 will design:
 
-- CI/CD pipeline stage configuration for production validation
-- Anonymous user creation and management flows
+- Parameterized GitHub Actions for Android build and Maestro testing
+- CI/CD pipeline orchestration using reusable actions
+- Anonymous user creation and management flows  
 - Error reporting and logging enhancements
 - Integration points with existing Maestro test infrastructure

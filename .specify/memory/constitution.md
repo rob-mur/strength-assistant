@@ -1,73 +1,74 @@
-# [PROJECT_NAME] Constitution
+<!--
+Sync Impact Report:
+- Version change: [TEMPLATE] → 1.0.0 (Initial constitution)
+- Added sections: All core principles and governance
+- Modified principles: N/A (initial creation)
+- Templates requiring updates:
+  ✅ .specify/templates/plan-template.md (Constitution Check references established)
+  ✅ .specify/templates/spec-template.md (References constitution principles)
+  ✅ .specify/templates/tasks-template.md (Local testing principle integrated)
+- Follow-up TODOs: None
+-->
 
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# Strength Assistant Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
+### I. Local Testing First
 
-<!-- Example: I. Library-First -->
+All changes MUST be tested locally using devbox before CI/CD execution. The development environment MUST be reproducible across team members using devbox configuration. Any functionality that can be validated locally (builds, tests, linting, type checking) MUST be validated locally before pushing to CI.
 
-[PRINCIPLE_1_DESCRIPTION]
+**Rationale**: Devbox provides controlled, reproducible development environments. Local validation reduces CI pipeline load, catches issues earlier, and enables faster development iteration.
 
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### II. Test-Driven Development
 
-### [PRINCIPLE_2_NAME]
+Tests MUST be written before implementation. All business logic MUST have corresponding unit tests. Integration tests MUST cover critical user flows. The Red-Green-Refactor cycle is mandatory for all feature development.
 
-<!-- Example: II. CLI Interface -->
+**Rationale**: TDD ensures code quality, documentation through tests, and prevents regressions while maintaining development velocity.
 
-[PRINCIPLE_2_DESCRIPTION]
+### III. CI/CD Infrastructure as Code
 
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+All CI/CD workflows MUST be version controlled and declarative. GitHub Actions MUST be parameterized and reusable to eliminate code duplication. Build processes MUST use devbox to ensure consistency between local and CI environments.
 
-### [PRINCIPLE_3_NAME]
+**Rationale**: Infrastructure as code ensures reproducible deployments, enables rollbacks, and maintains consistency across environments.
 
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
+### IV. Anonymous User Testing
 
-[PRINCIPLE_3_DESCRIPTION]
+Production testing MUST use fresh anonymous users created through standard application flows. No persistent test data or complex cleanup procedures are permitted. Test isolation MUST be achieved through user session design, not external cleanup processes.
 
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+**Rationale**: Anonymous users eliminate data contamination risks, reduce operational complexity, and ensure tests don't affect real user data.
 
-### [PRINCIPLE_4_NAME]
+### V. Progressive Validation
 
-<!-- Example: IV. Integration Testing -->
+Development follows the pattern: unit tests → integration tests → production validation → deployment. Each stage MUST pass before proceeding to the next. Production validation MUST test against actual production infrastructure post-deployment.
 
-[PRINCIPLE_4_DESCRIPTION]
+**Rationale**: Progressive validation catches issues at the appropriate level, reduces production incidents, and builds confidence in deployments.
 
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+## Development Workflow
 
-### [PRINCIPLE_5_NAME]
+All development MUST follow the established project structure:
+- Business logic in `lib/` directory
+- Routes and screens in `app/` directory  
+- Supabase-only backend (no Firebase)
+- Direct framework usage without unnecessary abstraction layers
 
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
+Code changes MUST be validated locally using devbox shell scripts before creating pull requests. The CI/CD pipeline serves as final validation, not primary testing.
 
-[PRINCIPLE_5_DESCRIPTION]
+## Quality Standards
 
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
-
-## [SECTION_2_NAME]
-
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
-
-[SECTION_2_CONTENT]
-
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
-
-## [SECTION_3_NAME]
-
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
-
-[SECTION_3_CONTENT]
-
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+**Testing**: Jest for unit tests, Maestro for integration tests, production validation against live infrastructure
+**Code Quality**: TypeScript strict mode, ESLint enforcement, automated formatting
+**Performance**: Mobile-first performance considerations, offline capability where applicable
+**Security**: Anonymous user isolation, no secrets in code, secure API practices
 
 ## Governance
 
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
+This constitution supersedes all other development practices. Amendments require:
+1. Documentation of rationale and impact
+2. Update of dependent templates and tooling
+3. Team consensus on principle changes
+4. Version increment following semantic versioning
 
-[GOVERNANCE_RULES]
+All pull requests and code reviews MUST verify constitutional compliance. Violations require justification or design changes. Complex architectural decisions MUST reference constitutional principles for guidance.
 
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
-
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2025-09-24 | **Last Amended**: 2025-09-24

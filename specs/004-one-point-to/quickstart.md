@@ -13,9 +13,87 @@
 
 ## Quick Setup (5 minutes)
 
-### 1. Create GitHub Actions Workflow
+### 1. Create Parameterized GitHub Actions
 
-Create `.github/workflows/production-validation.yml`:
+First, create the reusable Android Build action `.github/actions/android-build/action.yml`:
+
+```yaml
+name: 'Android Build Action'
+description: 'Build Android APK using devbox'
+inputs:
+  build-type:
+    description: 'Build type: preview or production'
+    required: true
+  devbox-config:
+    description: 'Devbox configuration directory'
+    required: true
+  artifact-name:
+    description: 'APK artifact name'
+    required: true
+outputs:
+  apk-path:
+    description: 'Path to built APK'
+    value: ${{ steps.build.outputs.apk-path }}
+
+runs:
+  using: composite
+  steps:
+    - name: Setup dev environment
+      uses: ./.github/actions/setup-dev-environment
+      with:
+        devbox-config: ${{ inputs.devbox-config }}
+    - name: Build APK
+      shell: bash
+      working-directory: devbox/${{ inputs.devbox-config }}
+      run: devbox run build_${{ inputs.build-type }}
+      id: build
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ steps.build.outputs.apk-path }}
+```
+
+Next, create the reusable Maestro Test action `.github/actions/maestro-test/action.yml`:
+
+```yaml
+name: 'Maestro Test Action'
+description: 'Run Maestro tests using devbox'
+inputs:
+  apk-path:
+    description: 'APK artifact name'
+    required: true
+  test-environment:
+    description: 'Test environment: integration or production'
+    required: true
+  skip-data-cleanup:
+    description: 'Skip data cleanup'
+    required: false
+    default: 'false'
+  devbox-config:
+    description: 'Devbox test configuration'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Download APK
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ inputs.apk-path }}
+    - name: Setup test environment
+      uses: ./.github/actions/setup-dev-environment
+      with:
+        devbox-config: ${{ inputs.devbox-config }}
+    - name: Run tests
+      shell: bash
+      working-directory: devbox/${{ inputs.devbox-config }}
+      env:
+        SKIP_DATA_CLEANUP: ${{ inputs.skip-data-cleanup }}
+      run: devbox run integration_test_android
+```
+
+Finally, create the main workflow `.github/workflows/production-validation.yml`:
 
 ```yaml
 name: Production Validation
@@ -27,46 +105,27 @@ on:
         description: "Terraform deployment ID"
         required: true
 
-env:
-  SKIP_DATA_CLEANUP: true
-  NODE_ENV: production
-
 jobs:
   validate-production:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-          cache: "npm"
-
-      - name: Install Dependencies
-        run: npm ci
-
+      
       - name: Build Production APK
-        run: |
-          echo "Building production APK with actual production configuration..."
-          npx expo build:android --release-channel production
-
-      - name: Install Maestro
-        run: |
-          curl -Ls "https://get.maestro.mobile.dev" | bash
-          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
-
-      - name: Run Maestro Tests Against Production
-        run: |
-          echo "Running existing Maestro flows with SKIP_DATA_CLEANUP=true..."
-          maestro test .maestro/web/add-exercise-and-see-it-in-list.yml
-          maestro test .maestro/web/add-and-record-workout.yml
-
-      - name: Alert on Failure
-        if: failure()
-        run: |
-          echo "::error::Production validation failed - manual intervention required"
-          echo "Frontend deployment should be blocked pending investigation"
+        uses: ./.github/actions/android-build
+        with:
+          build-type: production
+          devbox-config: android-build
+          artifact-name: production-apk
+        id: build
+      
+      - name: Run Production Tests
+        uses: ./.github/actions/maestro-test
+        with:
+          apk-path: production-apk
+          test-environment: production
+          skip-data-cleanup: true
+          devbox-config: android-testing
 ```
 
 ### 2. Modify Cleanup Script

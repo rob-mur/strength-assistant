@@ -30,18 +30,24 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
 
     steps:
-      # Contract: Build production APK
-      - name: Build Production APK
-        run: |
-          echo "Build production APK with actual production configuration"
-          # Implementation details handled by build system
+      # Contract: Use parameterized Android Build Action
+      - name: Build Production APK  
+        uses: ./.github/actions/android-build
+        with:
+          build-type: production
+          devbox-config: android-build
+          artifact-name: production-apk
+        id: build-apk
 
-      # Contract: Execute Maestro flows
+      # Contract: Use parameterized Maestro Test Action
       - name: Run Maestro Tests Against Production
-        run: |
-          echo "Execute existing Maestro flows against production APK"
-          # SKIP_DATA_CLEANUP=true modifies cleanup behavior
-          # Flows create anonymous users automatically
+        uses: ./.github/actions/maestro-test
+        with:
+          apk-path: ${{ steps.build-apk.outputs.apk-path }}
+          test-environment: production
+          skip-data-cleanup: true
+          devbox-config: android-testing
+        id: maestro-tests
 
       # Contract: Process results
       - name: Process Test Results

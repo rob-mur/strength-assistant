@@ -50,6 +50,9 @@
 - Q: For the APK-based approach, which environment variable should control the anonymous user creation behavior? → A: SKIP_DATA_CLEANUP (tests already use anonymous users by default)
 - Q: Should production tests run as post-deployment validation rather than pre-deployment gates? → A: Post-deployment validation: Run after terraform deploy, trigger rollback on failure
 - Q: What should happen when production validation fails after infrastructure is already deployed? → A: Manual intervention: Alert team, block frontend deploy, require manual rollback decision
+- Q: Based on your feedback about reusing existing workflows, how should the production APK building be coordinated with the existing build processes? → A: Production APK built once after all tests pass using reusable GitHub Action
+- Q: You mentioned creating two reusable GitHub Actions (one for building Android, one for running Maestro tests). Should these actions be parameterized to handle both integration testing and production validation scenarios? → A: Yes, create parameterized actions that can switch between integration/production modes via inputs
+- Q: You mentioned using devbox for dependency setup and reusing the integration test Android script. Should the parameterized actions inherit the existing dependency setup patterns? → A: Yes, parameterized actions should use devbox for dependency setup like existing workflows
 
 ## User Scenarios & Testing _(mandatory)_
 
@@ -65,12 +68,6 @@ Development teams need to validate that their applications work correctly with t
 4. **Given** production tests fail, **When** the pipeline evaluates the results, **Then** team is alerted, frontend deployment is blocked, and manual rollback decision is required
 5. **Given** existing Maestro flows run with SKIP_DATA_CLEANUP=true, **When** tests complete, **Then** no additional cleanup is required as anonymous users are already handled by default
 
-### Edge Cases
-
-- What happens when the production server is temporarily unavailable during test execution?
-- How does the system handle rate limiting or security restrictions when running tests against production?
-- What occurs if anonymous user creation fails during test execution?
-- How are production test failures distinguished from temporary infrastructure issues?
 
 ## Requirements _(mandatory)_
 
@@ -78,14 +75,14 @@ Development teams need to validate that their applications work correctly with t
 
 - **FR-001**: Production validation tests MUST run after infrastructure deployment (terraform) but before frontend deployment
 - **FR-002**: Production tests MUST connect to and validate against the actual deployed production infrastructure and configuration
-- **FR-003**: Production APK MUST be built with production configuration to ensure exact environment matching
-- **FR-004**: Pipeline MUST run existing Maestro integration test flows against the production APK build
+- **FR-003**: Production APK MUST be built once after all pipeline tests pass using a reusable GitHub Action, then shared across validation workflows
+- **FR-004**: Pipeline MUST use parameterized reusable GitHub Actions for both Android building and Maestro testing that can switch between integration and production modes
 - **FR-005**: SKIP_DATA_CLEANUP environment variable MUST control emulator clearing behavior since tests already use anonymous users by default
 - **FR-006**: System MUST provide clear separation between test user activities and real user activities in production logs and metrics
 - **FR-007**: Pipeline MUST alert development team and block frontend deployment if production validation tests fail, requiring manual rollback decision
-- **FR-008**: System MUST handle production server rate limiting and security restrictions without causing false failures
-- **FR-009**: Production test execution MUST complete within reasonable timeframes as tests are designed to be relatively fast
-- **FR-010**: Fresh anonymous users MUST be created through standard app flows rather than external service management
+- **FR-008**: Production test execution MUST complete within reasonable timeframes as tests are designed to be relatively fast
+- **FR-009**: Fresh anonymous users MUST be created through standard app flows rather than external service management
+- **FR-010**: Reusable GitHub Actions MUST use devbox for dependency setup to ensure CI is reproducible locally
 
 ### Key Entities _(include if feature involves data)_
 

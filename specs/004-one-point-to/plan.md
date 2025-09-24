@@ -33,29 +33,30 @@
 
 ## Summary
 
-Production validation enhancement that runs Maestro integration tests against actual deployed production infrastructure after terraform deployment but before frontend deployment. Uses simple APK-based approach with SKIP_DATA_CLEANUP environment variable to modify existing test flows, eliminating need for complex service architecture while ensuring production compatibility validation.
+Enhance existing production testing to validate applications against actual production server configuration using parameterized GitHub Actions and devbox for reproducible CI. Tests run post-deployment using production APK builds with existing Maestro flows, enabling early detection of environment-specific issues while maintaining test isolation through anonymous users.
 
 ## Technical Context
 
-**Language/Version**: TypeScript/JavaScript with React Native/Expo framework  
-**Primary Dependencies**: Maestro test automation, GitHub Actions/CI pipeline, Terraform infrastructure  
-**Storage**: N/A (pipeline enhancement, no new data storage)  
-**Testing**: Maestro integration tests (existing), CI/CD pipeline stages  
-**Target Platform**: Mobile (iOS/Android) with CI/CD pipeline integration
-**Project Type**: mobile - React Native/Expo app with CI/CD pipeline enhancement  
-**Performance Goals**: Test execution within reasonable timeframes (existing constraint)  
-**Constraints**: Run only after terraform deployment, manual intervention on failures  
-**Scale/Scope**: Single pipeline stage enhancement, reuse existing Maestro flows
+**Language/Version**: TypeScript/JavaScript with React Native, Expo 53.0.22, Node.js (latest via devbox)  
+**Primary Dependencies**: GitHub Actions, devbox (for dependency management), Maestro (test automation), Expo CLI  
+**Storage**: N/A (CI/CD pipeline infrastructure enhancement)  
+**Testing**: Jest (unit), Maestro (integration), existing workflow orchestration  
+**Target Platform**: Ubuntu Linux GitHub Actions runners, Android APK testing
+**Project Type**: mobile - React Native/Expo app with CI/CD enhancement  
+**Performance Goals**: Fast test execution (existing tests designed to be relatively fast), pipeline efficiency  
+**Constraints**: Must run post-deployment, use devbox for reproducibility, parameterized actions for reusability  
+**Scale/Scope**: Single production validation workflow with 2 reusable GitHub Actions (Android build + Maestro test)
 
 ## Constitution Check
 
 _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-**Status**: PASS (Constitution file is template - no specific constraints identified)
-
-- Mobile project type aligns with existing React Native/Expo structure
-- CI/CD pipeline enhancement follows infrastructure-as-code practices
-- Reuses existing test infrastructure (Maestro flows) rather than creating new complexity
+**Infrastructure as Code**: ✅ PASS - GitHub Actions workflows are version controlled and declarative  
+**Reproducibility**: ✅ PASS - devbox ensures consistent dependency management across environments  
+**Test-First Approach**: ✅ PASS - Enhancing existing test infrastructure, no new business logic  
+**Reusability**: ✅ PASS - Creating parameterized GitHub Actions for DRY principle  
+**Isolation**: ✅ PASS - Anonymous users ensure test isolation without data cleanup needs  
+**Observability**: ✅ PASS - GitHub Actions provide native logging and artifact collection
 
 ## Project Structure
 
@@ -109,7 +110,7 @@ ios/ or android/
 └── [platform-specific structure]
 ```
 
-**Structure Decision**: Option 1 (Single Project) - This is a CI/CD pipeline enhancement for existing React Native/Expo mobile app, requiring only pipeline scripts and configuration changes, no new application structure.
+**Structure Decision**: [DEFAULT to Option 1 unless Technical Context indicates web/mobile app]
 
 ## Phase 0: Outline & Research
 
@@ -172,35 +173,32 @@ _Prerequisites: research.md complete_
 
 _This section describes what the /tasks command will do - DO NOT execute during /plan_
 
-**Simple APK-Based Task Generation Strategy**:
+**Task Generation Strategy**:
 
-- Load `.specify/templates/tasks-template.md` as base
-- Generate minimal tasks for GitHub Actions workflow and script modifications
-- Focus on configuration and integration rather than complex service development
-- Leverage existing infrastructure (GitHub Actions, Maestro, APK build system)
+Based on the parameterized GitHub Actions approach and infrastructure focus:
 
-**Key Task Categories**:
-
-- **Setup**: GitHub Actions workflow creation, environment variable configuration
-- **Integration**: Modify existing cleanup scripts, update APK build for production
-- **Testing**: Validate workflow execution, test Maestro flow integration
-- **Documentation**: Update deployment procedures, troubleshooting guides
+- Create GitHub Actions composite actions (android-build, maestro-test) [P]
+- Update existing integration workflows to use new parameterized actions [P]  
+- Create production validation workflow using parameterized actions
+- Update production build workflow to run after all tests pass
+- Remove redundant deployment gate and frontend deployment examples per user feedback
+- Test parameterized actions locally using devbox for reproducibility
 
 **Ordering Strategy**:
 
-- Configuration before testing
-- Workflow setup before script modifications
-- Validation and documentation last
-- Most tasks can run in parallel [P] (independent files)
+1. **Foundation Tasks** [P]: Create parameterized GitHub Actions with proper devbox integration
+2. **Integration Tasks**: Update existing workflows to use new actions (integration tests first for safety)
+3. **Production Tasks**: Implement production validation workflow with proper triggers
+4. **Pipeline Tasks**: Update workflow orchestration for production APK → validation flow
+5. **Cleanup Tasks**: Remove unnecessary example workflows as requested
 
-**Estimated Output**: 8-12 numbered tasks in tasks.md (significantly fewer than complex service approach)
+**Key Dependencies**:
+- Parameterized actions must be created before workflow updates
+- Integration tests should be updated first to validate action functionality  
+- Production validation depends on production APK build workflow
+- All changes use existing devbox configurations for consistency
 
-**Key Simplifications**:
-
-- No complex data models or services to implement
-- No API endpoints or database changes
-- Reuses existing Maestro flows without modification
-- Leverages GitHub Actions native features for job management and alerting
+**Estimated Output**: 15-20 numbered, ordered tasks in tasks.md
 
 **IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
 
@@ -228,7 +226,7 @@ _This checklist is updated during execution flow_
 **Phase Status**:
 
 - [x] Phase 0: Research complete (/plan command)
-- [x] Phase 1: Design complete (/plan command)
+- [x] Phase 1: Design complete (/plan command)  
 - [x] Phase 2: Task planning complete (/plan command - describe approach only)
 - [ ] Phase 3: Tasks generated (/tasks command)
 - [ ] Phase 4: Implementation complete
@@ -239,8 +237,8 @@ _This checklist is updated during execution flow_
 - [x] Initial Constitution Check: PASS
 - [x] Post-Design Constitution Check: PASS
 - [x] All NEEDS CLARIFICATION resolved
-- [x] Complexity deviations documented (APK-based approach significantly simpler)
+- [x] Complexity deviations documented (N/A - no violations)
 
 ---
 
-_Based on Constitution v2.1.1 - See `/memory/constitution.md`_
+_Based on Constitution v1.0.0 - See `/memory/constitution.md`_

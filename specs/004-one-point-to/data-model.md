@@ -33,19 +33,35 @@
 - `duration`: number (execution time in milliseconds)
 - `artifactPaths`: string[] (screenshots, debug output)
 
-### 3. Environment Configuration
+### 3. Parameterized GitHub Actions Configuration
 
-**Purpose**: Configuration for production validation execution
-**Storage**: GitHub Actions workflow YAML file
+**Purpose**: Configuration for reusable Android build and Maestro test actions
+**Storage**: GitHub Actions composite action definitions
+
+**Android Build Action Inputs**:
+- `build-type`: 'preview' | 'production' (determines APK configuration)
+- `devbox-config`: string (path to devbox configuration directory)
+- `artifact-name`: string (name for output APK artifact)
+
+**Maestro Test Action Inputs**:
+- `apk-path`: string (path to APK artifact to test)
+- `test-environment`: 'integration' | 'production' (test mode configuration)
+- `skip-data-cleanup`: boolean (SKIP_DATA_CLEANUP environment variable)
+- `devbox-config`: string (path to devbox test configuration)
+
+### 4. Environment Configuration
+
+**Purpose**: Runtime configuration for production validation execution
+**Storage**: GitHub Actions workflow YAML file and environment variables
 
 **Fields**:
 
 - `SKIP_DATA_CLEANUP`: boolean (environment variable = true)
 - `maestroFlowPaths`: string[] (paths to .maestro/\*.yml files)
-- `apkBuildPath`: string (path to production APK)
+- `apkBuildPath`: string (path to production APK artifact)
 - `alertChannels`: Slack/email configuration for failure notifications
 
-### 4. Anonymous Users (App-Managed)
+### 5. Anonymous Users (App-Managed)
 
 **Purpose**: Temporary users created by app during test execution
 **Storage**: Production database (temporary, self-expiring)
