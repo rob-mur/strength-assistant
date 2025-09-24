@@ -8,22 +8,20 @@ on:
         required: true
         type: string
 
-  # Trigger automatically after terraform workflow completes successfully
+  # Trigger automatically after terraform workflow completes
   workflow_run:
     workflows: ["Terraform Deploy", "Infrastructure Deploy"]
     types: [completed]
-    branches: [main, master]
+    branches: [main]
 
 env:
   SKIP_DATA_CLEANUP: true
   NODE_ENV: production
-  EXPO_PUBLIC_USE_SUPABASE: true
 
 jobs:
   production-validation:
     name: Validate against Production Infrastructure
     runs-on: ubuntu-latest
-    timeout-minutes: 30
 
     # Only run if terraform deployment succeeded
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
@@ -32,191 +30,44 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Extract Deployment Context
-        id: deployment
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            DEPLOYMENT_ID="${{ github.event.inputs.terraform_deployment_id }}"
-          else
-            # Extract from terraform workflow run
-            DEPLOYMENT_ID="${{ github.event.workflow_run.id }}"
-          fi
-
-          echo "deployment_id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
-          echo "📋 Deployment ID: $DEPLOYMENT_ID"
-          echo "📋 Trigger: ${{ github.event_name }}"
-          echo "⏱️  Validation started at: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-          echo "validation_start_time=$(date +%s)" >> $GITHUB_OUTPUT
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Setup EAS CLI
-        run: npm install -g @expo/eas-cli
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: "temurin"
-          java-version: "17"
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
+      # Use parameterized Android Build Action
       - name: Build Production APK
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: |
-          echo "🏗️  Building production APK with actual production configuration"
-          echo "⏱️  APK build started at: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-          BUILD_START=$(date +%s)
-
-          npx eas build --platform android --profile production --local --non-interactive
-
-          BUILD_END=$(date +%s)
-          BUILD_DURATION=$((BUILD_END - BUILD_START))
-          echo "⏱️  APK build completed in ${BUILD_DURATION} seconds"
-
-          # Warn if build takes longer than expected (>600 seconds = 10 minutes)
-          if [ $BUILD_DURATION -gt 600 ]; then
-            echo "⚠️  APK build took longer than expected (${BUILD_DURATION}s > 600s)"
-            echo "Consider optimizing build process for faster validation"
-          fi
-
-      - name: Install Maestro CLI
-        run: |
-          curl -Ls "https://get.maestro.mobile.dev" | bash
-          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
-
-      - name: Setup Android Emulator
-        uses: reactivecircus/android-emulator-runner@v2
+        uses: ./.github/actions/android-build
         with:
-          api-level: 29
-          target: default
-          arch: x86_64
-          profile: Nexus 6
-          script: echo "Emulator started"
+          build-type: production
+          devbox-config: android-build
+          artifact-name: production-apk
+        id: build-apk
 
-      - name: Run Production Test Setup
-        run: |
-          chmod +x scripts/production-test-setup.sh
-          ./scripts/production-test-setup.sh
-
+      # Use parameterized Maestro Test Action
       - name: Run Maestro Tests Against Production
-        uses: reactivecircus/android-emulator-runner@v2
+        uses: ./.github/actions/maestro-test
         with:
-          api-level: 29
-          target: default
-          arch: x86_64
-          profile: Nexus 6
-          script: |
-            echo "🧪 Executing existing Maestro flows against production APK"
-            echo "⏱️  Maestro execution started at: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-            MAESTRO_START=$(date +%s)
+          apk-path: production-apk
+          test-environment: production
+          skip-data-cleanup: true
+          devbox-config: android-testing
+        id: maestro-tests
 
-            # Install the production APK
-            echo "📱 Installing production APK..."
-            adb install build/*.apk
-
-            # Run Maestro flows with production configuration and timing
-            echo "🎯 Running add-exercise flow..."
-            FLOW1_START=$(date +%s)
-            maestro test .maestro/web/add-exercise-and-see-it-in-list.yml --format junit --output maestro-results/
-            FLOW1_END=$(date +%s)
-            FLOW1_DURATION=$((FLOW1_END - FLOW1_START))
-            echo "⏱️  add-exercise flow completed in ${FLOW1_DURATION} seconds"
-
-            echo "🎯 Running record-workout flow..."
-            FLOW2_START=$(date +%s)
-            maestro test .maestro/web/add-and-record-workout.yml --format junit --output maestro-results/
-            FLOW2_END=$(date +%s)
-            FLOW2_DURATION=$((FLOW2_END - FLOW2_START))
-            echo "⏱️  record-workout flow completed in ${FLOW2_DURATION} seconds"
-
-            MAESTRO_END=$(date +%s)
-            MAESTRO_TOTAL=$((MAESTRO_END - MAESTRO_START))
-            echo "⏱️  Total Maestro execution: ${MAESTRO_TOTAL} seconds"
-
-            # Performance validation - warn if individual flows take too long
-            if [ $FLOW1_DURATION -gt 300 ]; then
-              echo "⚠️  add-exercise flow slower than expected (${FLOW1_DURATION}s > 300s)"
-            fi
-            if [ $FLOW2_DURATION -gt 300 ]; then
-              echo "⚠️  record-workout flow slower than expected (${FLOW2_DURATION}s > 300s)"
-            fi
-            if [ $MAESTRO_TOTAL -gt 600 ]; then
-              echo "⚠️  Total Maestro execution slower than expected (${MAESTRO_TOTAL}s > 600s)"
-            fi
-
+      # Process results
       - name: Process Test Results
-        if: always()
         run: |
-          echo "📊 Processing Maestro test results and collecting artifacts"
-          # Check exit codes and prepare artifacts
-          find . -name "*.xml" -path "*/maestro-results/*" -exec echo "Found result: {}" \;
+          echo "Production validation completed"
+          echo "Build successful: ${{ steps.build-apk.outputs.build-successful }}"
+          echo "Tests passed: ${{ steps.maestro-tests.outputs.tests-passed }}"
 
-          # Calculate total validation time
-          VALIDATION_END=$(date +%s)
-          TOTAL_DURATION=$(($VALIDATION_END - ${{ steps.deployment.outputs.validation_start_time }}))
-
-          echo "⏱️  Performance Summary:"
-          echo "   Total validation time: ${TOTAL_DURATION} seconds"
-          echo "   Expected completion: <1800 seconds (30 minutes)"
-
-          if [ $TOTAL_DURATION -gt 1800 ]; then
-            echo "⚠️  Validation exceeded 30-minute target (${TOTAL_DURATION}s > 1800s)"
-            echo "📋 Performance investigation recommended"
-          else
-            echo "✅ Validation completed within performance target"
-          fi
-
-          # Store performance metrics for trending analysis
-          echo "VALIDATION_DURATION=${TOTAL_DURATION}" >> $GITHUB_OUTPUT
-
-      - name: Upload Maestro Screenshots
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: maestro-screenshots-${{ github.run_id }}
-          path: |
-            maestro-results/
-            ~/.maestro/tests/**/screenshots/
-          retention-days: 7
-
-      - name: Upload Test Results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: production-test-results-${{ github.run_id }}
-          path: maestro-results/
-          retention-days: 7
-
-      - name: Send Failure Alert
+      # Alert on failure - GitHub will automatically send email notifications
+      - name: Production Validation Failed
         if: failure()
         run: |
-          chmod +x scripts/production-alert.sh
-          ./scripts/production-alert.sh "${{ steps.deployment.outputs.deployment_id }}" "failed"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "::error title=Production Validation Failed::Production validation against deployment ${{ github.event.inputs.terraform_deployment_id }} has failed. Manual intervention required."
+          echo "::error::Frontend deployment should be blocked pending investigation"
+          echo "::error::Check the logs and artifacts for details on the failure"
+          exit 1
 
-      - name: Send Timeout Alert
-        if: cancelled()
-        run: |
-          chmod +x scripts/production-alert.sh
-          ./scripts/production-alert.sh "${{ steps.deployment.outputs.deployment_id }}" "timeout"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Success Notification
+      # Success notification
+      - name: Production Validation Succeeded
         if: success()
         run: |
-          chmod +x scripts/production-alert.sh
-          ./scripts/production-alert.sh "${{ steps.deployment.outputs.deployment_id }}" "passed"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "::notice title=Production Validation Passed::Production validation against deployment ${{ github.event.inputs.terraform_deployment_id }} completed successfully"
+          echo "::notice::Frontend deployment can proceed with confidence"

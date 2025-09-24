@@ -35,6 +35,26 @@ npm run reset-project
 
 This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
 
+## Production Validation
+
+This project includes parameterized GitHub Actions for production validation:
+
+### Parameterized Actions
+
+- **Android Build Action** (`.github/actions/android-build/`): Builds APKs for both preview and production environments using devbox configurations
+  - Supports `build-type: preview` for integration testing
+  - Supports `build-type: production` for production validation
+  - Uses devbox for reproducible builds across local and CI environments
+
+- **Maestro Test Action** (`.github/actions/maestro-test/`): Runs Maestro integration tests against built APKs
+  - Supports `test-environment: integration` for PR validation
+  - Supports `test-environment: production` for production validation
+  - Handles `skip-data-cleanup` flag for production testing
+
+### Production Workflow
+
+The production validation workflow (`.github/workflows/production-validation.yml`) automatically runs after terraform deployments to validate the application against actual production infrastructure using these parameterized actions.
+
 ## Learn more
 
 To learn more about developing your project with Expo, look at the following resources:

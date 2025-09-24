@@ -18,21 +18,21 @@
 First, create the reusable Android Build action `.github/actions/android-build/action.yml`:
 
 ```yaml
-name: 'Android Build Action'
-description: 'Build Android APK using devbox'
+name: "Android Build Action"
+description: "Build Android APK using devbox"
 inputs:
   build-type:
-    description: 'Build type: preview or production'
+    description: "Build type: preview or production"
     required: true
   devbox-config:
-    description: 'Devbox configuration directory'
+    description: "Devbox configuration directory"
     required: true
   artifact-name:
-    description: 'APK artifact name'
+    description: "APK artifact name"
     required: true
 outputs:
   apk-path:
-    description: 'Path to built APK'
+    description: "Path to built APK"
     value: ${{ steps.build.outputs.apk-path }}
 
 runs:
@@ -57,21 +57,21 @@ runs:
 Next, create the reusable Maestro Test action `.github/actions/maestro-test/action.yml`:
 
 ```yaml
-name: 'Maestro Test Action'
-description: 'Run Maestro tests using devbox'
+name: "Maestro Test Action"
+description: "Run Maestro tests using devbox"
 inputs:
   apk-path:
-    description: 'APK artifact name'
+    description: "APK artifact name"
     required: true
   test-environment:
-    description: 'Test environment: integration or production'
+    description: "Test environment: integration or production"
     required: true
   skip-data-cleanup:
-    description: 'Skip data cleanup'
+    description: "Skip data cleanup"
     required: false
-    default: 'false'
+    default: "false"
   devbox-config:
-    description: 'Devbox test configuration'
+    description: "Devbox test configuration"
     required: true
 
 runs:
@@ -110,7 +110,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Build Production APK
         uses: ./.github/actions/android-build
         with:
@@ -118,7 +118,7 @@ jobs:
           devbox-config: android-build
           artifact-name: production-apk
         id: build
-      
+
       - name: Run Production Tests
         uses: ./.github/actions/maestro-test
         with:

@@ -68,7 +68,6 @@ Development teams need to validate that their applications work correctly with t
 4. **Given** production tests fail, **When** the pipeline evaluates the results, **Then** team is alerted, frontend deployment is blocked, and manual rollback decision is required
 5. **Given** existing Maestro flows run with SKIP_DATA_CLEANUP=true, **When** tests complete, **Then** no additional cleanup is required as anonymous users are already handled by default
 
-
 ## Requirements _(mandatory)_
 
 ### Functional Requirements

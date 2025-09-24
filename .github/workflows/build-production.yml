@@ -1,7 +1,15 @@
 name: Build Production APK
 
 on:
-  push:
+  workflow_run:
+    workflows:
+      [
+        "Unit Tests",
+        "Integration Tests Android",
+        "Integration Tests Chrome",
+        "SonarQube",
+      ]
+    types: [completed]
     branches: ["main"]
   workflow_dispatch:
 
@@ -15,19 +23,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
     environment: Dev
+    # Only run if all previous workflows succeeded
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
 
     steps:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🛠 Setup development environment
-        uses: ./.github/actions/setup-dev-environment
+      - name: Build Production APK
+        uses: ./.github/actions/android-build
         with:
+          build-type: production
           devbox-config: android-build
-
-      - name: Build production APK
-        working-directory: devbox/android-build
-        run: devbox run build_production
+          artifact-name: production-release-apk
+        id: build-production
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -36,6 +45,7 @@ jobs:
           name: Release v${{ github.run_number }}
           body: |
             Production build from commit ${{ github.sha }}
+            Build successful: ${{ steps.build-production.outputs.build-successful }}
 
             Changes: ${{ github.event.head_commit.message }}
-          files: ./build_production.apk
+          files: ${{ steps.build-production.outputs.apk-path }}

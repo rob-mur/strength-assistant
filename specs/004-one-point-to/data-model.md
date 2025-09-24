@@ -39,11 +39,13 @@
 **Storage**: GitHub Actions composite action definitions
 
 **Android Build Action Inputs**:
+
 - `build-type`: 'preview' | 'production' (determines APK configuration)
 - `devbox-config`: string (path to devbox configuration directory)
 - `artifact-name`: string (name for output APK artifact)
 
 **Maestro Test Action Inputs**:
+
 - `apk-path`: string (path to APK artifact to test)
 - `test-environment`: 'integration' | 'production' (test mode configuration)
 - `skip-data-cleanup`: boolean (SKIP_DATA_CLEANUP environment variable)

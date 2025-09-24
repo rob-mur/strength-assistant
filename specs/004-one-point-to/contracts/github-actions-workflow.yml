@@ -31,7 +31,7 @@ jobs:
 
     steps:
       # Contract: Use parameterized Android Build Action
-      - name: Build Production APK  
+      - name: Build Production APK
         uses: ./.github/actions/android-build
         with:
           build-type: production

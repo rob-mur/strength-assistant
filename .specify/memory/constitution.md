@@ -47,8 +47,9 @@ Development follows the pattern: unit tests → integration tests → production
 ## Development Workflow
 
 All development MUST follow the established project structure:
+
 - Business logic in `lib/` directory
-- Routes and screens in `app/` directory  
+- Routes and screens in `app/` directory
 - Supabase-only backend (no Firebase)
 - Direct framework usage without unnecessary abstraction layers
 
@@ -64,6 +65,7 @@ Code changes MUST be validated locally using devbox shell scripts before creatin
 ## Governance
 
 This constitution supersedes all other development practices. Amendments require:
+
 1. Documentation of rationale and impact
 2. Update of dependent templates and tooling
 3. Team consensus on principle changes

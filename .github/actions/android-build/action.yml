@@ -1,6 +1,3 @@
-# GitHub Composite Action Contract: Android Build
-# Parameterized action for building Android APKs with devbox
-
 name: "Android Build Action"
 description: "Build Android APK using devbox with parameterized configuration"
 
@@ -54,9 +51,3 @@ runs:
         name: ${{ inputs.artifact-name }}
         path: ${{ steps.build.outputs.apk-path }}
         retention-days: 30
-# Contract Requirements:
-# - Must use devbox for dependency management
-# - Must support both preview and production build types
-# - Must upload APK as GitHub Actions artifact
-# - Must output apk-path for downstream consumption
-# - Must work with existing devbox shell scripts
