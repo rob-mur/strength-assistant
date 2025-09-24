@@ -18,7 +18,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.jimmy_solutions.strength_assistant"
+      "package": "com.jimmy_solutions.strength_assistant.test"
     },
     "web": {
       "bundler": "metro",
