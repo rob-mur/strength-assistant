@@ -1,8 +1,10 @@
 # strength-assistant Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2025-09-19
+Auto-generated from all feature plans. Last updated: 2025-09-23
 
 ## Active Technologies
+- TypeScript/JavaScript with React Native/Expo + Maestro (test automation), existing CI/CD pipeline, Supabase (004-one-point-to)
+- Production server configuration, anonymous user data (temporary) (004-one-point-to)
 
 - TypeScript/JavaScript with React Native/Expo
 - Supabase (PostgreSQL) for backend services
@@ -38,12 +40,28 @@ __tests__/              # Test infrastructure
 npm test # Run Jest unit tests
 devbox run test # Run complete test suite
 devbox run maestro-test # Run Maestro integration tests
+npm run test:production-build # Validate production APK authentication
+npm run validate-env # Check environment configuration
 
 # Development
 
 npm run lint # ESLint
 npm run typecheck # TypeScript checking
 npm start # Start Expo dev server
+
+# Production Authentication Testing
+
+npm run debug:env-config # Debug environment loading
+npm run test:session-storage # Test session persistence
+npm run test:apk-validation # Test against built APK
+
+# Production Validation
+
+gh workflow run production-validation.yml --field terraform_deployment_id="manual-test-$(date +%s)" # Trigger manual production validation
+gh run list --workflow=production-validation.yml --limit=5 # Check recent validation runs
+gh workflow run deployment-gate.yml --field deployment_type="frontend" --field deployment_environment="production" # Test deployment gate
+scripts/production-test-setup.sh # Setup environment for production testing
+scripts/production-alert.sh DEPLOYMENT_ID STATUS # Send production validation alerts
 
 ## Code Style
 
@@ -55,9 +73,9 @@ npm start # Start Expo dev server
 
 ## Recent Changes
 
+- 004-one-point-to: Production server testing enhancement - validates against actual production infrastructure with Maestro flows, APK builds, and deployment gates
+- 003-fix-production-bug: Added production authentication testing + environment configuration
 - 002-remove-firebase-now: Complete Firebase removal - Supabase only backend
-- Repository factory simplified to always use Supabase
-- Firebase packages, source code, tests, and configuration removed
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

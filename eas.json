@@ -18,10 +18,20 @@
     "production": {
       "distribution": "internal",
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "applicationId": "com.jimmy_solutions.strength_assistant"
       },
-      "environment": "production"
-      // Only production uses EAS environment variables
+      "environment": "production",
+      "env": {
+        "NODE_ENV": "production",
+        "EXPO_PUBLIC_USE_SUPABASE": "true",
+        "EXPO_PUBLIC_USE_EMULATOR": "false",
+        "EXPO_PUBLIC_USE_SUPABASE_EMULATOR": "false",
+        "USE_SUPABASE_DATA": "true"
+      }
+      // Production uses actual Supabase endpoints via EAS secrets
+      // EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY
+      // must be configured in EAS secrets for production environment
     }
   }
 }

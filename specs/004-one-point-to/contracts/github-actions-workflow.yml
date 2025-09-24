@@ -1,0 +1,72 @@
+# GitHub Actions Workflow Contract: Production Validation
+# Contract for production validation stage after terraform deployment
+
+name: Production Validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      terraform_deployment_id:
+        description: 'Terraform deployment ID that triggered this validation'
+        required: true
+        type: string
+  
+  # Future: Trigger automatically after terraform workflow completes
+  # workflow_run:
+  #   workflows: ["Terraform Deploy"]
+  #   types: [completed]
+  #   branches: [main]
+
+env:
+  SKIP_DATA_CLEANUP: true
+  NODE_ENV: production
+
+jobs:
+  production-validation:
+    name: Validate against Production Infrastructure
+    runs-on: ubuntu-latest
+    
+    # Only run if terraform deployment succeeded
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    
+    steps:
+      # Contract: Build production APK
+      - name: Build Production APK
+        run: |
+          echo "Build production APK with actual production configuration"
+          # Implementation details handled by build system
+        
+      # Contract: Execute Maestro flows
+      - name: Run Maestro Tests Against Production
+        run: |
+          echo "Execute existing Maestro flows against production APK"
+          # SKIP_DATA_CLEANUP=true modifies cleanup behavior
+          # Flows create anonymous users automatically
+        
+      # Contract: Process results
+      - name: Process Test Results  
+        run: |
+          echo "Check Maestro exit codes and collect artifacts"
+          # Screenshots and logs automatically captured as artifacts
+        
+      # Contract: Alert on failure
+      - name: Send Failure Alert
+        if: failure()
+        run: |
+          echo "Alert team about production validation failure"
+          # Block frontend deployment
+          # Require manual rollback decision
+        
+      # Contract: Success notification  
+      - name: Success Notification
+        if: success()
+        run: |
+          echo "Production validation passed - frontend deployment can proceed"
+
+# Contract Validation Rules:
+# - Job only runs after successful terraform deployment
+# - SKIP_DATA_CLEANUP=true environment variable set
+# - Uses existing .maestro/ flow files
+# - Anonymous users created through standard app flows
+# - Manual intervention required on failure
+# - GitHub Actions artifacts used for screenshots/logs

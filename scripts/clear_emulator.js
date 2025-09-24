@@ -1,8 +1,18 @@
 // Clear Supabase local database for testing
 // This script works with Supabase local development instance
 // Using localhost for web/Chrome tests, 10.0.2.2 for Android emulator
+// Respects SKIP_DATA_CLEANUP environment variable for production testing
 
 const http = require("http");
+
+// Check if data cleanup should be skipped (for production testing with anonymous users)
+const skipCleanup = process.env.SKIP_DATA_CLEANUP === 'true';
+
+if (skipCleanup) {
+  console.log("SKIP_DATA_CLEANUP=true detected - skipping database cleanup");
+  console.log("Production tests use fresh anonymous users, no cleanup needed");
+  process.exit(0);
+}
 
 // Determine the base URL based on environment
 // This script runs on the host machine, so use localhost even for Android tests

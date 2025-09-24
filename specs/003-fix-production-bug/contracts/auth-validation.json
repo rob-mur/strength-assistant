@@ -1,0 +1,301 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Production Authentication Validation API",
+    "version": "1.0.0",
+    "description": "API contracts for validating authentication in production builds"
+  },
+  "paths": {
+    "/auth/validate-environment": {
+      "post": {
+        "summary": "Validate environment configuration for authentication",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnvironmentConfig"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Environment configuration is valid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/test-connection": {
+      "post": {
+        "summary": "Test connection to Supabase server",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectionTest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Connection successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionResult"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Connection failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/anonymous": {
+      "post": {
+        "summary": "Perform anonymous authentication",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnonymousAuthRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authentication successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "EnvironmentConfig": {
+        "type": "object",
+        "required": ["buildType", "supabaseUrl", "supabaseAnonKey"],
+        "properties": {
+          "buildType": {
+            "type": "string",
+            "enum": ["development", "staging", "production"]
+          },
+          "supabaseUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "supabaseAnonKey": {
+            "type": "string",
+            "minLength": 1
+          },
+          "isEmulator": {
+            "type": "boolean"
+          },
+          "enableFallback": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ValidationResult": {
+        "type": "object",
+        "required": ["isValid", "errors"],
+        "properties": {
+          "isValid": {
+            "type": "boolean"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ValidationError": {
+        "type": "object",
+        "required": ["message", "field"],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        }
+      },
+      "ConnectionTest": {
+        "type": "object",
+        "required": ["url", "buildType"],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "buildType": {
+            "type": "string",
+            "enum": ["development", "staging", "production"]
+          },
+          "timeout": {
+            "type": "number",
+            "minimum": 1000,
+            "maximum": 30000
+          }
+        }
+      },
+      "ConnectionResult": {
+        "type": "object",
+        "required": ["connected", "responseTime"],
+        "properties": {
+          "connected": {
+            "type": "boolean"
+          },
+          "responseTime": {
+            "type": "number"
+          },
+          "serverInfo": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "ConnectionError": {
+        "type": "object",
+        "required": ["message", "errorType"],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "errorType": {
+            "type": "string",
+            "enum": ["network", "timeout", "authentication", "configuration"]
+          },
+          "statusCode": {
+            "type": "number"
+          },
+          "details": {
+            "type": "object"
+          }
+        }
+      },
+      "AnonymousAuthRequest": {
+        "type": "object",
+        "required": ["buildType"],
+        "properties": {
+          "buildType": {
+            "type": "string",
+            "enum": ["development", "staging", "production"]
+          },
+          "fallbackEnabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AuthResult": {
+        "type": "object",
+        "required": ["userId", "isAnonymous", "source"],
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "isAnonymous": {
+            "type": "boolean"
+          },
+          "source": {
+            "type": "string",
+            "enum": ["supabase", "local", "fallback"]
+          },
+          "sessionToken": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AuthError": {
+        "type": "object",
+        "required": ["message", "errorType"],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "errorType": {
+            "type": "string",
+            "enum": ["network", "session", "configuration", "permission"]
+          },
+          "errorCode": {
+            "type": "string"
+          },
+          "buildType": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

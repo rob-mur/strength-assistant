@@ -1,0 +1,129 @@
+name: Deployment Gate
+
+# This workflow serves as a gate for frontend deployments
+# It checks production validation status and blocks deployment if validation failed
+
+on:
+  workflow_call:
+    inputs:
+      deployment_type:
+        description: 'Type of deployment (frontend, mobile, etc.)'
+        required: true
+        type: string
+      deployment_environment:
+        description: 'Target deployment environment'
+        required: true
+        type: string
+    outputs:
+      deployment_approved:
+        description: 'Whether deployment is approved to proceed'
+        value: ${{ jobs.check-production-validation.outputs.approved }}
+      validation_status:
+        description: 'Production validation status'
+        value: ${{ jobs.check-production-validation.outputs.status }}
+
+jobs:
+  check-production-validation:
+    name: Check Production Validation Status
+    runs-on: ubuntu-latest
+    outputs:
+      approved: ${{ steps.validation-check.outputs.approved }}
+      status: ${{ steps.validation-check.outputs.status }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Check Recent Production Validation
+        id: validation-check
+        run: |
+          echo "🔍 Checking production validation status for ${{ inputs.deployment_type }} deployment..."
+          
+          # Use GitHub CLI to check recent workflow runs
+          VALIDATION_STATUS=$(gh run list \
+            --workflow=production-validation.yml \
+            --limit=1 \
+            --json conclusion,status,createdAt \
+            --jq '.[0].conclusion // .[0].status')
+          
+          VALIDATION_CREATED=$(gh run list \
+            --workflow=production-validation.yml \
+            --limit=1 \
+            --json createdAt \
+            --jq '.[0].createdAt')
+          
+          echo "Latest validation status: $VALIDATION_STATUS"
+          echo "Latest validation created: $VALIDATION_CREATED"
+          
+          # Check if validation is recent (within last 24 hours for production)
+          if [ "${{ inputs.deployment_environment }}" = "production" ]; then
+            CUTOFF_TIME=$(date -d '24 hours ago' -u +"%Y-%m-%dT%H:%M:%SZ")
+            
+            if [ "$VALIDATION_CREATED" \< "$CUTOFF_TIME" ]; then
+              echo "❌ Production validation is stale (older than 24 hours)"
+              echo "❌ Recent production validation required for production deployment"
+              echo "approved=false" >> $GITHUB_OUTPUT
+              echo "status=stale" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+          fi
+          
+          # Check validation status
+          case "$VALIDATION_STATUS" in
+            "success")
+              echo "✅ Production validation passed - deployment approved"
+              echo "approved=true" >> $GITHUB_OUTPUT
+              echo "status=passed" >> $GITHUB_OUTPUT
+              ;;
+            "failure")
+              echo "❌ Production validation failed - deployment blocked"
+              echo "🚨 Manual intervention required before deployment can proceed"
+              echo "approved=false" >> $GITHUB_OUTPUT
+              echo "status=failed" >> $GITHUB_OUTPUT
+              ;;
+            "in_progress"|"queued")
+              echo "⏳ Production validation in progress - waiting..."
+              echo "approved=false" >> $GITHUB_OUTPUT
+              echo "status=in_progress" >> $GITHUB_OUTPUT
+              ;;
+            "cancelled")
+              echo "⚠️  Production validation was cancelled - deployment blocked"
+              echo "approved=false" >> $GITHUB_OUTPUT
+              echo "status=cancelled" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "❓ Unknown validation status: $VALIDATION_STATUS"
+              echo "🛡️  Blocking deployment as safety measure"
+              echo "approved=false" >> $GITHUB_OUTPUT
+              echo "status=unknown" >> $GITHUB_OUTPUT
+              ;;
+          esac
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Deployment Decision Summary
+        run: |
+          echo "📊 Deployment Gate Summary:"
+          echo "   Type: ${{ inputs.deployment_type }}"
+          echo "   Environment: ${{ inputs.deployment_environment }}"
+          echo "   Validation Status: ${{ steps.validation-check.outputs.status }}"
+          echo "   Deployment Approved: ${{ steps.validation-check.outputs.approved }}"
+          
+          if [ "${{ steps.validation-check.outputs.approved }}" = "false" ]; then
+            echo ""
+            echo "🚫 DEPLOYMENT BLOCKED"
+            echo "   Reason: Production validation ${{ steps.validation-check.outputs.status }}"
+            echo "   Required Action: Resolve production validation issues"
+            echo ""
+            echo "📋 Next Steps:"
+            echo "   1. Check production validation workflow results"
+            echo "   2. Fix any production environment issues"
+            echo "   3. Re-run production validation if needed"
+            echo "   4. Retry deployment once validation passes"
+            
+            exit 1
+          else
+            echo ""
+            echo "✅ DEPLOYMENT APPROVED"
+            echo "   Production validation passed - safe to deploy"
+          fi

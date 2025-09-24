@@ -1,8 +1,8 @@
 
-# Implementation Plan: [FEATURE]
+# Implementation Plan: Production Server Testing Enhancement
 
-**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+**Branch**: `004-one-point-to` | **Date**: 2025-09-24 | **Spec**: [spec.md](./spec.md)
+**Input**: Feature specification from `/specs/004-one-point-to/spec.md`
 
 ## Execution Flow (/plan command scope)
 ```
@@ -31,23 +31,26 @@
 - Phase 3-4: Implementation execution (manual or via tools)
 
 ## Summary
-[Extract from feature spec: primary requirement + technical approach from research]
+Production validation enhancement that runs Maestro integration tests against actual deployed production infrastructure after terraform deployment but before frontend deployment. Uses simple APK-based approach with SKIP_DATA_CLEANUP environment variable to modify existing test flows, eliminating need for complex service architecture while ensuring production compatibility validation.
 
 ## Technical Context
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Project Type**: [single/web/mobile - determines source structure]  
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Language/Version**: TypeScript/JavaScript with React Native/Expo framework  
+**Primary Dependencies**: Maestro test automation, GitHub Actions/CI pipeline, Terraform infrastructure  
+**Storage**: N/A (pipeline enhancement, no new data storage)  
+**Testing**: Maestro integration tests (existing), CI/CD pipeline stages  
+**Target Platform**: Mobile (iOS/Android) with CI/CD pipeline integration
+**Project Type**: mobile - React Native/Expo app with CI/CD pipeline enhancement  
+**Performance Goals**: Test execution within reasonable timeframes (existing constraint)  
+**Constraints**: Run only after terraform deployment, manual intervention on failures  
+**Scale/Scope**: Single pipeline stage enhancement, reuse existing Maestro flows
 
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+**Status**: PASS (Constitution file is template - no specific constraints identified)
+- Mobile project type aligns with existing React Native/Expo structure
+- CI/CD pipeline enhancement follows infrastructure-as-code practices
+- Reuses existing test infrastructure (Maestro flows) rather than creating new complexity
 
 ## Project Structure
 
@@ -99,7 +102,7 @@ ios/ or android/
 └── [platform-specific structure]
 ```
 
-**Structure Decision**: [DEFAULT to Option 1 unless Technical Context indicates web/mobile app]
+**Structure Decision**: Option 1 (Single Project) - This is a CI/CD pipeline enhancement for existing React Native/Expo mobile app, requiring only pipeline scripts and configuration changes, no new application structure.
 
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context** above:
@@ -158,20 +161,31 @@ ios/ or android/
 ## Phase 2: Task Planning Approach
 *This section describes what the /tasks command will do - DO NOT execute during /plan*
 
-**Task Generation Strategy**:
+**Simple APK-Based Task Generation Strategy**:
 - Load `.specify/templates/tasks-template.md` as base
-- Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
-- Each contract → contract test task [P]
-- Each entity → model creation task [P] 
-- Each user story → integration test task
-- Implementation tasks to make tests pass
+- Generate minimal tasks for GitHub Actions workflow and script modifications
+- Focus on configuration and integration rather than complex service development
+- Leverage existing infrastructure (GitHub Actions, Maestro, APK build system)
+
+**Key Task Categories**:
+- **Setup**: GitHub Actions workflow creation, environment variable configuration
+- **Integration**: Modify existing cleanup scripts, update APK build for production
+- **Testing**: Validate workflow execution, test Maestro flow integration
+- **Documentation**: Update deployment procedures, troubleshooting guides
 
 **Ordering Strategy**:
-- TDD order: Tests before implementation 
-- Dependency order: Models before services before UI
-- Mark [P] for parallel execution (independent files)
+- Configuration before testing
+- Workflow setup before script modifications
+- Validation and documentation last
+- Most tasks can run in parallel [P] (independent files)
 
-**Estimated Output**: 25-30 numbered, ordered tasks in tasks.md
+**Estimated Output**: 8-12 numbered tasks in tasks.md (significantly fewer than complex service approach)
+
+**Key Simplifications**:
+- No complex data models or services to implement
+- No API endpoints or database changes
+- Reuses existing Maestro flows without modification
+- Leverages GitHub Actions native features for job management and alerting
 
 **IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
 
@@ -195,18 +209,18 @@ ios/ or android/
 *This checklist is updated during execution flow*
 
 **Phase Status**:
-- [ ] Phase 0: Research complete (/plan command)
-- [ ] Phase 1: Design complete (/plan command)
-- [ ] Phase 2: Task planning complete (/plan command - describe approach only)
+- [x] Phase 0: Research complete (/plan command)
+- [x] Phase 1: Design complete (/plan command)
+- [x] Phase 2: Task planning complete (/plan command - describe approach only)
 - [ ] Phase 3: Tasks generated (/tasks command)
 - [ ] Phase 4: Implementation complete
 - [ ] Phase 5: Validation passed
 
 **Gate Status**:
-- [ ] Initial Constitution Check: PASS
-- [ ] Post-Design Constitution Check: PASS
-- [ ] All NEEDS CLARIFICATION resolved
-- [ ] Complexity deviations documented
+- [x] Initial Constitution Check: PASS
+- [x] Post-Design Constitution Check: PASS
+- [x] All NEEDS CLARIFICATION resolved
+- [x] Complexity deviations documented (APK-based approach significantly simpler)
 
 ---
 *Based on Constitution v2.1.1 - See `/memory/constitution.md`*
