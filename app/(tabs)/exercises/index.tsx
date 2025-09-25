@@ -13,8 +13,14 @@ export default function ExerciseScreen() {
 
   // Debug logging for Chrome tests
   React.useEffect(() => {
-    const isChromeTest = process.env.CHROME_TEST === "true" || process.env.EXPO_PUBLIC_CHROME_TEST === "true";
-    const isCITest = process.env.CI === "true" && process.env.CI !== "false" && process.env.CHROME_TEST !== "true" && process.env.EXPO_PUBLIC_CHROME_TEST !== "true";
+    const isChromeTest =
+      process.env.CHROME_TEST === "true" ||
+      process.env.EXPO_PUBLIC_CHROME_TEST === "true";
+    const isCITest =
+      process.env.CI === "true" &&
+      process.env.CI !== "false" &&
+      process.env.CHROME_TEST !== "true" &&
+      process.env.EXPO_PUBLIC_CHROME_TEST !== "true";
     if (isChromeTest || isCITest) {
       console.log("🔍 ExerciseScreen: Component rendered", {
         userId: user?.uid,
@@ -32,8 +38,14 @@ export default function ExerciseScreen() {
         testID="add-exercise"
         onPress={(_) => {
           // Debug logging for Chrome tests
-          const isChromeTest = process.env.CHROME_TEST === "true" || process.env.EXPO_PUBLIC_CHROME_TEST === "true";
-          const isCITest = process.env.CI === "true" && process.env.CI !== "false" && process.env.CHROME_TEST !== "true" && process.env.EXPO_PUBLIC_CHROME_TEST !== "true";
+          const isChromeTest =
+            process.env.CHROME_TEST === "true" ||
+            process.env.EXPO_PUBLIC_CHROME_TEST === "true";
+          const isCITest =
+            process.env.CI === "true" &&
+            process.env.CI !== "false" &&
+            process.env.CHROME_TEST !== "true" &&
+            process.env.EXPO_PUBLIC_CHROME_TEST !== "true";
           if (isChromeTest || isCITest) {
             console.log("🔍 ExerciseScreen: Add exercise button tapped");
           }

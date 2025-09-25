@@ -68,18 +68,24 @@ export function useAuth(): AuthState & {
       try {
         // Handle Chrome test environment with automatic anonymous sign-in
         // Priority: Chrome test environment overrides CI environment
-        const isChromeTest = process.env.CHROME_TEST === "true" || process.env.EXPO_PUBLIC_CHROME_TEST === "true";
+        const isChromeTest =
+          process.env.CHROME_TEST === "true" ||
+          process.env.EXPO_PUBLIC_CHROME_TEST === "true";
         // CRITICAL FIX: Only use CI fallback if CI=true AND no Chrome test flags AND CI is not explicitly disabled
-        const isCITest = process.env.CI === "true" && process.env.CI !== "false" && process.env.CHROME_TEST !== "true" && process.env.EXPO_PUBLIC_CHROME_TEST !== "true";
-        
+        const isCITest =
+          process.env.CI === "true" &&
+          process.env.CI !== "false" &&
+          process.env.CHROME_TEST !== "true" &&
+          process.env.EXPO_PUBLIC_CHROME_TEST !== "true";
+
         if (isChromeTest || isCITest) {
           console.log("🔐 [useAuth] Test environment detected:", {
             CHROME_TEST: process.env.CHROME_TEST,
-            EXPO_PUBLIC_CHROME_TEST: process.env.EXPO_PUBLIC_CHROME_TEST, 
+            EXPO_PUBLIC_CHROME_TEST: process.env.EXPO_PUBLIC_CHROME_TEST,
             CI: process.env.CI,
             isChromeTest,
             isCITest,
-            willRunTestFlow: isChromeTest || isCITest
+            willRunTestFlow: isChromeTest || isCITest,
           });
           console.log(
             "🔐 [useAuth] Chrome test environment detected - creating anonymous test user",
