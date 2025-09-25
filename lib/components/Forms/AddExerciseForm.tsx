@@ -18,6 +18,8 @@ export default function AddExerciseForm() {
       <Card.Content>
         <TextInput
           testID="name"
+          // @ts-ignore - Web compatibility for Maestro tests
+          id="name"
           label={Locales.t("name")}
           value={exercise}
           onChangeText={setExercise}
@@ -26,6 +28,8 @@ export default function AddExerciseForm() {
       <Card.Actions>
         <Button
           testID="submit"
+          // @ts-ignore - Web compatibility for Maestro tests
+          id="submit"
           mode="contained"
           loading={isLoading}
           disabled={isLoading}

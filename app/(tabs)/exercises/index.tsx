@@ -18,6 +18,8 @@ export default function ExerciseScreen() {
         style={{ position: "absolute", margin: 16, right: 0, bottom: 0 }}
         icon="plus"
         testID="add-exercise"
+        // @ts-ignore - Web compatibility for Maestro tests
+        id="add-exercise"
         onPress={(_) => {
           router.navigate("/exercises/add");
         }}

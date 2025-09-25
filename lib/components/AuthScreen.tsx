@@ -186,6 +186,8 @@ export function AuthScreen() {
                 disabled={loading}
                 style={styles.anonymousButton}
                 testID="continue-as-guest"
+                // @ts-ignore - Web compatibility for Maestro tests
+                id="continue-as-guest"
               >
                 Continue as Guest
               </Button>

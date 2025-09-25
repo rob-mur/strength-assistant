@@ -23,6 +23,8 @@ const HomeTabIcon = (props: TabIconProps) => (
 const ExercisesTabIcon = (props: TabIconProps) => (
   <MaterialIcons
     testID="exercisesTab"
+    // @ts-ignore - Web compatibility for Maestro tests
+    id="exercisesTab"
     {...props}
     size={24}
     name={props.focused ? "sports-gymnastics" : "sports-martial-arts"}
