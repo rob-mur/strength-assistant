@@ -1,151 +1,107 @@
 # Research: Production Server Testing Enhancement
 
-## Overview
+**Date**: 2025-09-25 | **Feature**: 004-one-point-to
 
-Research into implementing simple APK-based production validation after terraform deployment, reusing existing Maestro test flows with SKIP_DATA_CLEANUP environment variable modification.
+## Current State Analysis
 
-## Research Tasks Completed
+### Existing CI/CD Infrastructure
 
-### 1. Maestro Integration for Production Testing
+**Current Build Process**:
+- `build-production.yml` triggers after all tests pass on main branch
+- Creates production APK using `.github/actions/android-build`
+- Stores APK as GitHub release artifact with tag `v{run_number}`
+- Uses devbox for consistent build environment
 
-**Decision**: Reuse existing Maestro flow files for production validation
+**Current Production Validation**:
+- `production-validation.yml` triggers after terraform deployment
+- **ISSUE**: Rebuilds production APK instead of reusing existing artifact
+- Uses parameterized actions for Android build and Maestro testing
+- Sets `SKIP_DATA_CLEANUP=true` for anonymous user handling
 
-**Rationale**:
+**Existing Reusable Actions**:
+1. `.github/actions/android-build` - Parameterized APK building with devbox
+2. `.github/actions/maestro-test` - Parameterized Maestro testing with devbox  
+3. `.github/actions/setup-dev-environment` - Devbox environment setup
 
-- Maestro flows already validate critical application functionality
-- Existing flows are proven and maintained
-- No need to duplicate test logic or create new test scenarios
-- Reduces maintenance overhead
+## Gap Analysis
 
-**Alternatives considered**:
+### Problems Identified
+1. **Duplicate APK Building**: Production validation rebuilds APK instead of reusing release artifact
+2. **Artifact Management**: No clear mechanism to download and reuse existing release APK
+3. **Workflow Timing**: Build happens correctly after tests pass, but validation doesn't reuse it
 
-- Creating new production-specific test flows (rejected: unnecessary duplication)
-- Manual testing against production (rejected: not scalable or reliable)
-- Using different test framework (rejected: adds complexity)
+### Current vs Required Flow
 
-### 2. Anonymous User Strategy
+**Current Flow**:
+```
+Tests Pass → Build APK → Create Release → Terraform Deploy → Rebuild APK → Maestro Tests
+```
 
-**Decision**: Create fresh anonymous users for each test run
+**Required Flow** (from spec):
+```  
+Tests Pass → Build APK → Create Release → Terraform Deploy → Download Release APK → Maestro Tests
+```
 
-**Rationale**:
+## Technical Constraints
 
-- Eliminates data persistence and cleanup concerns
-- Removes security risks from credential management
-- Simplifies test isolation without affecting real user data
-- Anonymous users have limited privileges by design
+### Constitutional Compliance
+- ✅ Uses devbox for local/CI consistency
+- ✅ Anonymous users via SKIP_DATA_CLEANUP=true
+- ✅ Progressive validation pattern maintained
+- ✅ Infrastructure as code with parameterized actions
 
-**Alternatives considered**:
+### Existing Dependencies
+- GitHub Actions release artifacts (max 90 days retention)
+- Devbox configurations in `devbox/android-build` and `devbox/android-testing`
+- Maestro test flows in `.maestro/` directory
+- Anonymous user flows already implemented
 
-- Dedicated test user accounts with cleanup (rejected: complex cleanup logic)
-- Mock users (rejected: wouldn't test real production authentication)
-- Shared test accounts (rejected: data contamination risk)
+## Research Findings
 
-### 3. Pipeline Integration Approach
+### GitHub Release Artifact Access
+- GitHub CLI (`gh release download`) can fetch release artifacts
+- Release tags follow `v{run_number}` pattern
+- APK files stored with original filename in release assets
 
-**Decision**: Run production validation after terraform deployment but before frontend deployment
+### Maestro Integration
+- Existing `.maestro/` flows work with anonymous users
+- `SKIP_DATA_CLEANUP=true` prevents data cleanup scripts
+- Tests designed to be "relatively fast" per spec requirements
 
-**Rationale**:
+### Devbox Environment
+- `devbox/android-build/` contains production build scripts
+- `devbox/android-testing/` contains Maestro testing environment
+- Both use same base dependencies for consistency
 
-- Tests against actual deployed infrastructure with exact production configuration
-- Validates terraform deployment success before exposing to users
-- Enables infrastructure rollback if validation fails
-- Separates infrastructure validation from application deployment
+## Implementation Strategy
 
-**Alternatives considered**:
+### Approach: Modify Production Validation Workflow
+Instead of creating new workflows, enhance existing `production-validation.yml`:
 
-- Pre-deployment validation (rejected: can't test actual deployed infrastructure)
-- Post-frontend deployment (rejected: users would see issues first)
-- During terraform deployment (rejected: adds complexity to infrastructure deployment)
+1. **Remove duplicate build step** - Replace android-build action with artifact download
+2. **Add release artifact download** - Use GitHub CLI to fetch latest production APK
+3. **Pass downloaded APK to Maestro** - Update maestro-test action call
+4. **Maintain all existing parameters** - Keep SKIP_DATA_CLEANUP, devbox configs, etc.
 
-### 4. Failure Handling and Error Reporting
+### Reuse Strategy
+- Keep existing parameterized actions unchanged
+- Leverage GitHub's built-in release artifact system  
+- Maintain devbox consistency across build and test environments
+- Preserve anonymous user testing approach
 
-**Decision**: Manual intervention - alert team and block frontend deployment, require manual rollback decision
+## Complexity Assessment
 
-**Rationale**:
+**Low Complexity Enhancement**:
+- Single workflow file modification
+- No new infrastructure components
+- Reuses all existing patterns and tools
+- Maintains constitutional compliance
+- No breaking changes to existing workflows
 
-- Allows human judgment on infrastructure vs application issues
-- Prevents accidental rollbacks due to transient issues
-- Provides opportunity to analyze logs before rollback decision
-- Simpler to implement than automated rollback logic
+## Next Phase Requirements
 
-**Alternatives considered**:
-
-- Automatic infrastructure rollback (rejected: complex to implement safely)
-- Warning-only mode (rejected: doesn't prevent problematic deployments)
-- Silent failure logging (rejected: issues might go unnoticed)
-
-### 5. Performance and Timeout Considerations
-
-**Decision**: No specific timeout requirements, leverage Maestro's built-in timeouts
-
-**Rationale**:
-
-- Maestro flows already designed to be fast
-- Existing timeout handling is proven
-- Production tests should complete quickly by nature
-- Avoids arbitrary timeout values
-
-**Alternatives considered**:
-
-- Custom timeout configuration (rejected: adds unnecessary complexity)
-- Extended timeouts for production (rejected: would slow pipeline)
-- No timeouts (rejected: could hang pipeline indefinitely)
-
-### 6. Test Isolation and Production Impact
-
-**Decision**: Use production server with anonymous users for true environment testing
-
-**Rationale**:
-
-- Tests actual production configuration and connectivity
-- Anonymous users have minimal impact on production metrics
-- Validates real network conditions and server behavior
-- Catches environment-specific issues that staging might miss
-
-**Alternatives considered**:
-
-- Production-like staging environment (rejected: not identical to production)
-- Read-only production access (rejected: doesn't test full functionality)
-- Separate production test instance (rejected: not true production validation)
-
-## Key Findings
-
-1. **Reuse Strategy**: Existing Maestro flows provide complete test coverage without duplication
-2. **User Management**: Anonymous users eliminate complexity while maintaining isolation
-3. **Pipeline Position**: Final stage placement ensures quality gates while maintaining efficiency
-4. **Error Reporting**: Standard CI/CD error reporting sufficient with production context
-5. **Performance**: Maestro's existing performance characteristics meet requirements
-
-### 7. GitHub Actions Reusability Strategy
-
-**Decision**: Extract parameterized GitHub Actions for Android building and Maestro testing
-
-**Rationale**:
-
-- Eliminates code duplication between integration and production workflows
-- Uses devbox for consistent dependency setup across environments
-- Enables parameterization between integration/production modes
-- Reuses existing build production APK job instead of rebuilding
-
-**Alternatives considered**:
-
-- Duplicate workflow code (rejected: violates DRY principle)
-- Monolithic action (rejected: reduces modularity)
-- Separate specialized actions (rejected: misses reusability opportunity)
-
-**Implementation Approach**:
-
-- Android Build Action: Parameterized by build type (preview/production)
-- Maestro Test Action: Parameterized by test environment and APK path
-- Both actions use devbox for reproducible dependency management
-- Production APK built once after all tests pass, then consumed by validation
-
-## Next Steps
-
-Phase 1 will design:
-
-- Parameterized GitHub Actions for Android build and Maestro testing
-- CI/CD pipeline orchestration using reusable actions
-- Anonymous user creation and management flows
-- Error reporting and logging enhancements
-- Integration points with existing Maestro test infrastructure
+**Phase 1 Design Needs**:
+- Artifact download mechanism specification
+- Error handling for missing releases
+- APK path management between download and testing
+- Validation that downloaded APK matches expected production build

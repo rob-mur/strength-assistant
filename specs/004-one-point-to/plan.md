@@ -1,7 +1,7 @@
 # Implementation Plan: Production Server Testing Enhancement
 
-**Branch**: `004-one-point-to` | **Date**: 2025-09-24 | **Spec**: [spec.md](./spec.md)
-**Input**: Feature specification from `/specs/004-one-point-to/spec.md`
+**Branch**: `004-one-point-to` | **Date**: 2025-09-25 | **Spec**: [spec.md](./spec.md)
+**Input**: Feature specification from `/home/rob/Documents/Github/strength-assistant/specs/004-one-point-to/spec.md`
 
 ## Execution Flow (/plan command scope)
 
@@ -33,30 +33,29 @@
 
 ## Summary
 
-Enhance existing production testing to validate applications against actual production server configuration using parameterized GitHub Actions and devbox for reproducible CI. Tests run post-deployment using production APK builds with existing Maestro flows, enabling early detection of environment-specific issues while maintaining test isolation through anonymous users.
+Enhance CI/CD pipeline to validate applications against actual production server infrastructure using reusable GitHub Actions. Production APK built once after tests pass, stored as release artifact, then reused for validation workflows against live production endpoints with anonymous test users.
 
 ## Technical Context
 
-**Language/Version**: TypeScript/JavaScript with React Native, Expo 53.0.22, Node.js (latest via devbox)  
-**Primary Dependencies**: GitHub Actions, devbox (for dependency management), Maestro (test automation), Expo CLI  
-**Storage**: N/A (CI/CD pipeline infrastructure enhancement)  
-**Testing**: Jest (unit), Maestro (integration), existing workflow orchestration  
-**Target Platform**: Ubuntu Linux GitHub Actions runners, Android APK testing
-**Project Type**: mobile - React Native/Expo app with CI/CD enhancement  
-**Performance Goals**: Fast test execution (existing tests designed to be relatively fast), pipeline efficiency  
-**Constraints**: Must run post-deployment, use devbox for reproducibility, parameterized actions for reusability  
-**Scale/Scope**: Single production validation workflow with 2 reusable GitHub Actions (Android build + Maestro test)
+**Language/Version**: TypeScript with React Native, Expo 53.0.22, Node.js (latest via devbox)  
+**Primary Dependencies**: GitHub Actions, devbox (dependency management), Maestro (test automation), Expo CLI  
+**Storage**: GitHub release artifacts for APK storage and reuse  
+**Testing**: Jest (unit), Maestro (integration), GitHub Actions (CI/CD validation)  
+**Target Platform**: GitHub Actions runners (Linux), Android emulators, production server endpoints
+**Project Type**: mobile - React Native/Expo app with CI/CD infrastructure enhancement  
+**Performance Goals**: Fast production validation tests, efficient artifact reuse  
+**Constraints**: Must run after terraform deployment, before frontend deployment, use anonymous users only  
+**Scale/Scope**: CI/CD pipeline enhancement affecting build and deployment workflows
 
 ## Constitution Check
 
 _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-**Infrastructure as Code**: ✅ PASS - GitHub Actions workflows are version controlled and declarative  
-**Reproducibility**: ✅ PASS - devbox ensures consistent dependency management across environments  
-**Test-First Approach**: ✅ PASS - Enhancing existing test infrastructure, no new business logic  
-**Reusability**: ✅ PASS - Creating parameterized GitHub Actions for DRY principle  
-**Isolation**: ✅ PASS - Anonymous users ensure test isolation without data cleanup needs  
-**Observability**: ✅ PASS - GitHub Actions provide native logging and artifact collection
+**✅ I. Local Testing First**: Changes will be testable locally using devbox - GitHub Actions can be tested with act, Maestro tests run locally  
+**✅ II. Test-Driven Development**: Will create tests for new GitHub Actions and validate existing Maestro flows work with production endpoints  
+**✅ III. CI/CD Infrastructure as Code**: All workflows version controlled, parameterized reusable actions, devbox consistency maintained  
+**✅ IV. Anonymous User Testing**: Production tests use fresh anonymous users through standard app flows, no persistent test data  
+**✅ V. Progressive Validation**: Follows unit → integration → production validation → deployment pattern exactly
 
 ## Project Structure
 
@@ -135,6 +134,20 @@ ios/ or android/
 
 **Output**: research.md with all NEEDS CLARIFICATION resolved
 
+### ✅ Phase 0 Complete
+
+**Research Summary**: 
+- Current CI/CD infrastructure analyzed - production validation rebuilds APK unnecessarily
+- Gap identified between build and validation workflows  
+- GitHub CLI solution for artifact reuse validated
+- Constitutional compliance confirmed throughout enhancement
+- Implementation complexity assessed as low (single workflow modification)
+
+**Key Technical Decisions**:
+- **Decision**: Modify existing production-validation.yml instead of creating new workflows
+- **Rationale**: Minimal disruption, reuses existing parameterized actions, maintains constitutional compliance
+- **Alternatives considered**: New separate workflow, GitHub Actions artifact storage (rejected due to complexity)
+
 ## Phase 1: Design & Contracts
 
 _Prerequisites: research.md complete_
@@ -169,37 +182,40 @@ _Prerequisites: research.md complete_
 
 **Output**: data-model.md, /contracts/\*, failing tests, quickstart.md, agent-specific file
 
+### ✅ Phase 1 Complete
+
+**Design Summary**:
+- **Data Model**: Focused on CI/CD workflow state and GitHub release artifacts rather than application entities
+- **Contracts**: Workflow interface contracts for APK download and error handling specifications  
+- **Integration Points**: GitHub CLI, Maestro testing action, workflow parameter passing
+- **Error Handling**: Comprehensive error detection and recovery procedures for missing releases, download failures, corrupted APKs
+
+**Key Design Decisions**:
+- **Artifact Management**: Use GitHub CLI `gh release download` for artifact retrieval
+- **Error Handling**: Fail-fast approach with clear error messages and investigation steps
+- **Backward Compatibility**: Preserve all existing environment variables and action parameters
+- **Local Testing**: Maintain devbox consistency for local validation of changes
+
 ## Phase 2: Task Planning Approach
 
 _This section describes what the /tasks command will do - DO NOT execute during /plan_
 
 **Task Generation Strategy**:
 
-Based on the parameterized GitHub Actions approach and infrastructure focus:
-
-- Create GitHub Actions composite actions (android-build, maestro-test) [P]
-- Update existing integration workflows to use new parameterized actions [P]
-- Create production validation workflow using parameterized actions
-- Update production build workflow to run after all tests pass
-- Remove redundant deployment gate and frontend deployment examples per user feedback
-- Test parameterized actions locally using devbox for reproducibility
+- Load `.specify/templates/tasks-template.md` as base
+- Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
+- Each contract → contract test task [P]
+- Each entity → model creation task [P]
+- Each user story → integration test task
+- Implementation tasks to make tests pass
 
 **Ordering Strategy**:
 
-1. **Foundation Tasks** [P]: Create parameterized GitHub Actions with proper devbox integration
-2. **Integration Tasks**: Update existing workflows to use new actions (integration tests first for safety)
-3. **Production Tasks**: Implement production validation workflow with proper triggers
-4. **Pipeline Tasks**: Update workflow orchestration for production APK → validation flow
-5. **Cleanup Tasks**: Remove unnecessary example workflows as requested
+- TDD order: Tests before implementation
+- Dependency order: Models before services before UI
+- Mark [P] for parallel execution (independent files)
 
-**Key Dependencies**:
-
-- Parameterized actions must be created before workflow updates
-- Integration tests should be updated first to validate action functionality
-- Production validation depends on production APK build workflow
-- All changes use existing devbox configurations for consistency
-
-**Estimated Output**: 15-20 numbered, ordered tasks in tasks.md
+**Estimated Output**: 25-30 numbered, ordered tasks in tasks.md
 
 **IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
 
@@ -238,8 +254,8 @@ _This checklist is updated during execution flow_
 - [x] Initial Constitution Check: PASS
 - [x] Post-Design Constitution Check: PASS
 - [x] All NEEDS CLARIFICATION resolved
-- [x] Complexity deviations documented (N/A - no violations)
+- [x] Complexity deviations documented
 
 ---
 
-_Based on Constitution v1.0.0 - See `/memory/constitution.md`_
+_Based on Constitution v2.1.1 - See `/memory/constitution.md`_

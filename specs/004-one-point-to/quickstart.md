@@ -1,309 +1,224 @@
 # Quickstart: Production Server Testing Enhancement
 
-**Feature**: 004-one-point-to  
-**Approach**: Simple APK-based production validation after terraform deployment
+**Feature**: 004-one-point-to | **Branch**: `004-one-point-to`
+
+## Overview
+
+Modify the production validation workflow to reuse existing GitHub release artifacts instead of rebuilding the production APK, reducing build time and ensuring consistency between builds and validation tests.
 
 ## Prerequisites
 
-- Terraform deployment pipeline working
-- React Native/Expo APK build system configured
-- Existing Maestro test flows in `.maestro/` directory
-- GitHub Actions runner with Maestro installed
-- Production server endpoints accessible
+- Existing GitHub release artifacts created by `build-production.yml`
+- GitHub CLI (`gh`) available in GitHub Actions environment
+- Maestro testing environment configured in `devbox/android-testing`
+- Production infrastructure deployed via terraform
 
-## Quick Setup (5 minutes)
+## Implementation Steps
 
-### 1. Create Parameterized GitHub Actions
+### Step 1: Modify Production Validation Workflow
 
-First, create the reusable Android Build action `.github/actions/android-build/action.yml`:
+**File**: `.github/workflows/production-validation.yml`
 
+**Change**: Replace APK build step with artifact download
+
+**Before**:
 ```yaml
-name: "Android Build Action"
-description: "Build Android APK using devbox"
-inputs:
-  build-type:
-    description: "Build type: preview or production"
-    required: true
-  devbox-config:
-    description: "Devbox configuration directory"
-    required: true
-  artifact-name:
-    description: "APK artifact name"
-    required: true
-outputs:
-  apk-path:
-    description: "Path to built APK"
-    value: ${{ steps.build.outputs.apk-path }}
-
-runs:
-  using: composite
-  steps:
-    - name: Setup dev environment
-      uses: ./.github/actions/setup-dev-environment
-      with:
-        devbox-config: ${{ inputs.devbox-config }}
-    - name: Build APK
-      shell: bash
-      working-directory: devbox/${{ inputs.devbox-config }}
-      run: devbox run build_${{ inputs.build-type }}
-      id: build
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ inputs.artifact-name }}
-        path: ${{ steps.build.outputs.apk-path }}
+- name: Build Production APK
+  uses: ./.github/actions/android-build
+  with:
+    build-type: production
+    devbox-config: android-build
+    artifact-name: production-apk
+  id: build-apk
 ```
 
-Next, create the reusable Maestro Test action `.github/actions/maestro-test/action.yml`:
-
+**After** (Implemented with comprehensive error handling):
 ```yaml
-name: "Maestro Test Action"
-description: "Run Maestro tests using devbox"
-inputs:
-  apk-path:
-    description: "APK artifact name"
-    required: true
-  test-environment:
-    description: "Test environment: integration or production"
-    required: true
-  skip-data-cleanup:
-    description: "Skip data cleanup"
-    required: false
-    default: "false"
-  devbox-config:
-    description: "Devbox test configuration"
-    required: true
-
-runs:
-  using: composite
-  steps:
-    - name: Download APK
-      uses: actions/download-artifact@v4
-      with:
-        name: ${{ inputs.apk-path }}
-    - name: Setup test environment
-      uses: ./.github/actions/setup-dev-environment
-      with:
-        devbox-config: ${{ inputs.devbox-config }}
-    - name: Run tests
-      shell: bash
-      working-directory: devbox/${{ inputs.devbox-config }}
-      env:
-        SKIP_DATA_CLEANUP: ${{ inputs.skip-data-cleanup }}
-      run: devbox run integration_test_android
+- name: Download Production APK
+  shell: bash
+  run: |
+    # Create artifacts directory
+    mkdir -p ./artifacts
+    
+    # Check if any releases exist
+    if ! gh release list --limit 1 >/dev/null 2>&1; then
+      echo "::error title=No GitHub Releases Found::No GitHub releases exist for this repository. Check if build-production workflow completed successfully."
+      exit 1
+    fi
+    
+    # Download with retry logic (3 attempts, exponential backoff)
+    MAX_RETRIES=3
+    RETRY_COUNT=0
+    DOWNLOAD_SUCCESS=false
+    
+    while [ $RETRY_COUNT -lt $MAX_RETRIES ] && [ "$DOWNLOAD_SUCCESS" = false ]; do
+      RETRY_COUNT=$((RETRY_COUNT + 1))
+      echo "📥 APK download attempt $RETRY_COUNT of $MAX_RETRIES..."
+      
+      if gh release download latest --pattern "*.apk" --dir ./artifacts 2>/dev/null; then
+        DOWNLOAD_SUCCESS=true
+        echo "✅ APK download succeeded on attempt $RETRY_COUNT"
+      else
+        if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+          DELAY=$((2 ** $RETRY_COUNT))
+          echo "::warning::Download attempt $RETRY_COUNT failed. Retrying in ${DELAY} seconds..."
+          sleep $DELAY
+        fi
+      fi
+    done
+    
+    if [ "$DOWNLOAD_SUCCESS" = false ]; then
+      echo "::error title=APK Download Failed::Failed to download APK after $MAX_RETRIES attempts."
+      exit 2
+    fi
+    
+    # Validate APK file integrity and format
+    APK_FILE=$(ls ./artifacts/*.apk 2>/dev/null | head -1)
+    if [ ! -f "$APK_FILE" ] || [ ! -s "$APK_FILE" ]; then
+      echo "::error title=No Valid APK Found::No valid APK files in release assets."
+      exit 3
+    fi
+    
+    # Validate APK format (ZIP signature check)
+    APK_HEADER=$(head -c 4 "$APK_FILE" | od -An -tx1 | tr -d ' ')
+    if [ "$APK_HEADER" != "504b0304" ]; then
+      echo "::error title=Invalid APK Format::Downloaded file is not a valid APK."
+      exit 5
+    fi
+    
+    echo "✅ Successfully downloaded and validated APK: $APK_FILE"
+    echo "📁 File size: $(stat -c%s "$APK_FILE") bytes"
+    echo "apk-path=$APK_FILE" >> $GITHUB_OUTPUT
+    echo "build-successful=true" >> $GITHUB_OUTPUT
+  id: download-apk
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-Finally, create the main workflow `.github/workflows/production-validation.yml`:
+### Step 2: Update Maestro Test Action Reference
 
+**Change**: Update APK path reference
+
+**Before**:
 ```yaml
-name: Production Validation
-
-on:
-  workflow_dispatch:
-    inputs:
-      terraform_deployment_id:
-        description: "Terraform deployment ID"
-        required: true
-
-jobs:
-  validate-production:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Build Production APK
-        uses: ./.github/actions/android-build
-        with:
-          build-type: production
-          devbox-config: android-build
-          artifact-name: production-apk
-        id: build
-
-      - name: Run Production Tests
-        uses: ./.github/actions/maestro-test
-        with:
-          apk-path: production-apk
-          test-environment: production
-          skip-data-cleanup: true
-          devbox-config: android-testing
+- name: Run Maestro Tests Against Production
+  uses: ./.github/actions/maestro-test
+  with:
+    apk-path: production-apk
 ```
 
-### 2. Modify Cleanup Script
-
-Update your emulator/device clearing script to respect `SKIP_DATA_CLEANUP`:
-
-```bash
-#!/bin/bash
-# In scripts/clear-emulator.sh or similar
-
-if [ "$SKIP_DATA_CLEANUP" = "true" ]; then
-  echo "SKIP_DATA_CLEANUP=true - Skipping cleanup for production validation"
-  exit 0
-fi
-
-echo "Performing normal data cleanup..."
-# Your existing cleanup logic here
-```
-
-### 3. Configure Pipeline Stage
-
+**After**:
 ```yaml
-# Add to your CI/CD pipeline configuration
-production_validation:
-  stage: production-test
-  dependencies:
-    - unit_tests
-    - integration_tests
-    - security_scan
-  script:
-    - echo "Starting production validation..."
-    - ./scripts/run-production-tests.sh
-  only:
-    - main
-    - release/*
-  when: on_success
+- name: Run Maestro Tests Against Production
+  uses: ./.github/actions/maestro-test
+  with:
+    apk-path: ${{ steps.download-apk.outputs.apk-path }}
 ```
 
-**Expected**: Pipeline stage configured but not yet executable
+### Step 3: Update Success/Failure References
 
-## Full Integration Test (30 minutes)
+**Change**: Update step references in result processing
 
-### 1. Create Production Test Script
-
-```bash
-# Create the production test runner script
-cat > scripts/run-production-tests.sh << 'EOF'
-#!/bin/bash
-set -e
-
-# Configuration
-PRODUCTION_SERVER="https://your-production-server.com"
-TEST_RUN_ID="${CI_PIPELINE_ID}-${CI_COMMIT_SHORT_SHA}"
-MAESTRO_FLOWS=(".maestro/critical-flow.yaml" ".maestro/user-journey.yaml")
-
-# Create anonymous user for testing
-echo "Creating anonymous user for test run: $TEST_RUN_ID"
-USER_RESPONSE=$(curl -s -X POST "$PRODUCTION_SERVER/api/users/anonymous" \
-  -H "Content-Type: application/json" \
-  -d "{\"testRunId\": \"$TEST_RUN_ID\"}")
-
-USER_ID=$(echo $USER_RESPONSE | jq -r '.userId')
-echo "Created anonymous user: $USER_ID"
-
-# Run Maestro flows against production
-echo "Running Maestro flows against production..."
-for flow in "${MAESTRO_FLOWS[@]}"; do
-  echo "Executing flow: $flow"
-  MAESTRO_SERVER_URL="$PRODUCTION_SERVER" \
-  MAESTRO_USER_ID="$USER_ID" \
-    maestro test "$flow" || exit 1
-done
-
-echo "Production validation completed successfully"
-EOF
-
-chmod +x scripts/run-production-tests.sh
-```
-
-### 2. Test Production Validation Manually
-
-```bash
-# Set test environment variables
-export CI_PIPELINE_ID="manual-test-$(date +%s)"
-export CI_COMMIT_SHORT_SHA="$(git rev-parse --short HEAD)"
-
-# Run production validation
-./scripts/run-production-tests.sh
-```
-
-**Expected**: Script creates anonymous user and runs Maestro flows successfully
-
-### 3. Verify Pipeline Integration
-
-```bash
-# Trigger pipeline with all stages
-git add .
-git commit -m "Add production validation stage"
-git push origin feature-branch
-
-# Monitor pipeline execution
-# Check that production validation only runs after other stages pass
-```
-
-**Expected**: Pipeline executes production validation as final stage
-
-## Success Criteria
-
-✅ **Pipeline Integration**: Production validation runs only after all other stages pass  
-✅ **Anonymous Users**: Fresh anonymous users created for each test run  
-✅ **Maestro Execution**: Existing Maestro flows execute against production server  
-✅ **Error Handling**: Failed production tests block deployment with clear errors  
-✅ **Performance**: Tests complete within reasonable timeframes
-
-## Common Issues & Solutions
-
-### Issue: "Failed to create anonymous user"
-
-**Cause**: Production server not configured for anonymous user creation  
-**Solution**: Verify production API endpoints and authentication
-
-```bash
-# Debug anonymous user creation
-curl -v -X POST https://your-production-server.com/api/users/anonymous \
-  -H "Content-Type: application/json" \
-  -d '{"testRunId": "debug-test"}'
-```
-
-### Issue: "Maestro flows fail against production"
-
-**Cause**: Environment differences between staging and production  
-**Solution**: Check production-specific configuration
-
-```bash
-# Compare environment configurations
-echo "Staging URL: $STAGING_SERVER_URL"
-echo "Production URL: $PRODUCTION_SERVER_URL"
-
-# Test specific production endpoints
-curl -I "$PRODUCTION_SERVER_URL/api/health"
-```
-
-### Issue: "Production validation runs when other tests fail"
-
-**Cause**: Pipeline dependency configuration incorrect  
-**Solution**: Verify stage dependencies and conditions
-
+**Before**:
 ```yaml
-production_validation:
-  dependencies:
-    - unit_tests
-    - integration_tests
-    - security_scan
-  when: on_success # Only run when all dependencies pass
+echo "Build successful: ${{ steps.build-apk.outputs.build-successful }}"
 ```
+
+**After**:
+```yaml
+echo "APK download successful: ${{ steps.download-apk.outputs.build-successful }}"
+```
+
+## Local Testing
+
+### Automated Test Script
+The implementation includes a comprehensive local test script:
+
+```bash
+# Run the automated test script
+./scripts/test-release-download.sh
+```
+
+This script tests:
+- GitHub CLI authentication
+- Release existence detection
+- APK download with retry logic
+- File validation (format, size, integrity)
+- Output variable simulation
+
+### Manual Verification
+```bash
+# Test GitHub authentication
+gh auth status
+
+# Check available releases
+gh release list --limit 5
+
+# Test APK download (if releases exist)
+gh release download latest --pattern "*.apk" --dir ./test-download
+ls -la ./test-download/
+
+# Clean up
+rm -rf ./test-download/
+```
+
+### Workflow Testing with Act
+```bash
+# Install act (GitHub Actions local runner)
+# On macOS: brew install act
+# On Linux: curl https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
+
+# Test the production validation workflow locally
+act workflow_dispatch -W .github/workflows/production-validation.yml --input terraform_deployment_id=local-test
+```
+
+## Validation Checklist
+
+- [x] Production validation workflow downloads APK instead of building
+- [x] Downloaded APK path correctly passed to Maestro testing  
+- [x] Comprehensive error handling for missing releases, download failures, and corruption
+- [x] Success/failure notifications updated with artifact-specific error context
+- [x] Retry logic implemented with exponential backoff (3 attempts)
+- [x] APK format validation (ZIP signature verification)
+- [x] Local test script created for verification (`scripts/test-release-download.sh`)
+- [x] Constitutional compliance maintained (anonymous users via SKIP_DATA_CLEANUP)
+- [x] Enhanced failure notifications with investigation steps
+
+## Error Scenarios
+
+### No Release Available
+```bash
+# Simulate missing release
+gh release delete latest  # Don't actually run this!
+# Workflow should fail with clear error message
+```
+
+### APK Missing from Release
+```bash
+# Check release contents
+gh release view latest
+# Should show APK file in assets list
+```
+
+### Download Failure
+```bash
+# Test network connectivity
+curl -I https://api.github.com
+# GitHub CLI should handle network errors gracefully
+```
+
+## Rollback Plan
+
+If issues arise, revert by restoring the original build step:
+
+1. Replace download step with original android-build action
+2. Restore original APK path reference
+3. Update step references back to build-apk
+4. Commit revert and trigger validation workflow
 
 ## Next Steps
 
-After quickstart validation:
-
-1. **If tests pass**: Integration successful, ready for production deployment
-2. **If tests fail**: Use error logs to identify production-specific configuration issues
-3. **For ongoing development**: Set up monitoring for production validation metrics
-
-## Files Created/Modified
-
-This quickstart validates:
-
-- `scripts/run-production-tests.sh` - Production test execution script
-- Pipeline configuration with production validation stage
-- Maestro flow execution against production endpoints
-- Anonymous user creation and management
-
-## Support
-
-If issues persist:
-
-1. Check pipeline logs for specific error messages
-2. Verify production server connectivity and API endpoints
-3. Test Maestro flows individually: `maestro test specific-flow.yaml`
-4. Validate anonymous user creation: `curl -X POST .../api/users/anonymous`
+After successful implementation:
+1. Monitor production validation runs for performance improvements
+2. Validate build time reduction from eliminating duplicate APK creation
+3. Confirm artifact consistency between build and validation phases

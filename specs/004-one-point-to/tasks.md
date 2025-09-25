@@ -1,148 +1,144 @@
 # Tasks: Production Server Testing Enhancement
 
 **Input**: Design documents from `/specs/004-one-point-to/`
-**Prerequisites**: plan.md (required), research.md, data-model.md, contracts/
+**Prerequisites**: plan.md (✓), research.md (✓), data-model.md (✓), contracts/ (✓), quickstart.md (✓)
 
-## Execution Flow (main)
+## Summary
 
-```
-1. Load plan.md from feature directory
-   → Extract: GitHub Actions, devbox, Maestro, production validation workflow
-2. Load optional design documents:
-   → contracts/: Android build action, Maestro test action, production workflow
-   → quickstart.md: Setup and validation scenarios
-3. Generate tasks by category:
-   → Setup: GitHub Actions structure, devbox integration
-   → Tests: Action validation, workflow testing
-   → Core: Parameterized actions implementation
-   → Integration: Workflow orchestration, existing workflow updates
-   → Polish: Local testing, cleanup, documentation
-4. Apply task rules:
-   → Different files = mark [P] for parallel
-   → Same file = sequential (no [P])
-   → Tests before implementation (TDD)
-5. Number tasks sequentially (T001, T002...)
-6. Generate dependency graph
-7. Create parallel execution examples
-8. Return: SUCCESS (tasks ready for execution)
-```
+Pure workflow modification: Update `.github/workflows/production-validation.yml` to download existing GitHub release artifacts instead of rebuilding APK. This eliminates duplicate builds while maintaining constitutional compliance with devbox, anonymous users, and infrastructure as code principles.
 
 ## Format: `[ID] [P?] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
 - Include exact file paths in descriptions
 
-## Path Conventions
+## Phase 3.1: Setup & Verification
 
-- **Mobile project**: GitHub Actions in `.github/`, workflows, composite actions
-- This project uses devbox configurations in `devbox/` directories
-- All paths relative to repository root
+- [x] T001 Verify current production validation workflow structure at `.github/workflows/production-validation.yml`
+- [x] T002 Confirm GitHub CLI availability for artifact download in GitHub Actions environment
+- [x] T003 Check existing build-production workflow creates GitHub release artifacts correctly
 
-## Phase 3.1: Setup
+## Phase 3.2: Core Workflow Modification
 
-- [x] T001 [P] Create GitHub Actions android-build composite action directory structure `.github/actions/android-build/`
-- [x] T002 [P] Create GitHub Actions maestro-test composite action directory structure `.github/actions/maestro-test/`
-- [x] T003 Verify existing devbox configurations in `devbox/android-build/` and `devbox/android-testing/`
+- [x] T004 Replace APK build step with GitHub release artifact download in `.github/workflows/production-validation.yml`
+- [x] T005 Update Maestro test action APK path reference to use downloaded artifact path in `.github/workflows/production-validation.yml`
+- [x] T006 Update success/failure result processing step references in `.github/workflows/production-validation.yml`
+- [x] T007 Add comprehensive error handling for missing releases and download failures in `.github/workflows/production-validation.yml`
 
-## Phase 3.2: Tests First (TDD) ⚠️ MUST COMPLETE BEFORE 3.3
+## Phase 3.3: Error Handling & Resilience
 
-**CRITICAL: These tests MUST be written and MUST FAIL before ANY implementation**
+- [x] T008 Implement retry logic for GitHub API failures in `.github/workflows/production-validation.yml`
+- [x] T009 Add APK validation after download to detect corruption in `.github/workflows/production-validation.yml`
+- [x] T010 Update workflow failure notifications with artifact-specific error context in `.github/workflows/production-validation.yml`
 
-- [x] T004 [P] Test android-build action locally using `devbox run build_preview` and `devbox run build_production` in `devbox/android-build/`
-- [x] T005 [P] Test maestro-test action locally using `devbox run integration_test_android` in `devbox/android-testing/`
-- [x] T006 [P] Create workflow test for production validation workflow in `.github/workflows/test-production-validation.yml`
-- [x] T007 Validate existing integration tests still work with SKIP_DATA_CLEANUP=true environment variable
+## Phase 3.4: Local Testing & Documentation
 
-## Phase 3.3: Core Implementation (ONLY after tests are failing)
+- [x] T011 [P] Create local test script for GitHub CLI release download in `scripts/test-release-download.sh`
+- [x] T012 Test workflow changes locally using act (GitHub Actions local runner)
+- [x] T013 [P] Update quickstart.md with final implementation details and verification steps
+- [x] T014 [P] Add workflow comments explaining artifact reuse approach in `.github/workflows/production-validation.yml`
 
-- [x] T008 [P] Implement Android Build composite action in `.github/actions/android-build/action.yml`
-- [x] T009 [P] Implement Maestro Test composite action in `.github/actions/maestro-test/action.yml`
-- [x] T010 Create production validation workflow in `.github/workflows/production-validation.yml`
-- [x] T011 Update existing integration test workflow to use new parameterized android-build action
-- [x] T012 Update existing integration test workflow to use new parameterized maestro-test action
+## Phase 3.5: Validation & Completion
 
-## Phase 3.4: Integration
-
-- [x] T013 Update production build workflow in `.github/workflows/build-production.yml` to run after all tests pass
-- [x] T014 Configure production validation workflow triggers after terraform deployment
-- [x] T015 Ensure production validation workflow fails properly (GitHub will automatically send email notifications on job failure)
-- [x] T016 Remove example deployment gate workflow per user feedback
-- [x] T017 Remove frontend deployment example workflow per user feedback
-
-## Phase 3.5: Polish
-
-- [ ] T018 [P] Test all parameterized actions locally using devbox before CI validation
-- [ ] T019 [P] Create integration test scenario validating parameterized actions work for both integration and production modes
-- [ ] T020 [P] Update documentation in `README.md` or relevant docs about new parameterized actions
-- [ ] T021 Verify production APK reuse pattern works (build once, test multiple times)
-- [ ] T023 Run quickstart validation scenarios from `quickstart.md`
+- [ ] T015 Test production validation workflow end-to-end with actual GitHub release
+- [ ] T016 Verify anonymous user testing behavior remains unchanged (SKIP_DATA_CLEANUP preservation)
+- [ ] T017 [P] Update CLAUDE.md with implementation completion and lessons learned
+- [ ] T018 Commit implementation with constitutional compliance verification
 
 ## Dependencies
 
-- Setup (T001-T003) before tests (T004-T007)
-- Tests (T004-T007) before implementation (T008-T012)
-- T008 blocks T011 (android-build action needed for integration workflow update)
-- T009 blocks T012 (maestro-test action needed for integration workflow update)
-- T008, T009 block T010 (production workflow needs both actions)
-- Implementation (T008-T012) before integration (T013-T017)
-- Integration before polish (T018-T021, T023)
-- Local testing (T018) before CI submission
+### Critical Path
+- Setup (T001-T003) before workflow modification (T004-T007)
+- Core modification (T004-T007) before error handling (T008-T010)  
+- Error handling complete before local testing (T011-T014)
+- Local validation before final testing (T015-T018)
 
-## Parallel Example
+### Parallel Opportunities
+- **T011, T013-T014**: Documentation and local scripts can be created independently
+- **T017**: CLAUDE.md update independent of other tasks
 
+## Implementation Details
+
+### T004: Replace APK Build Step
+```yaml
+# REMOVE:
+- name: Build Production APK
+  uses: ./.github/actions/android-build
+  with:
+    build-type: production
+    devbox-config: android-build
+    artifact-name: production-apk
+  id: build-apk
+
+# REPLACE WITH:
+- name: Download Production APK
+  shell: bash
+  run: |
+    gh release download latest --pattern "*.apk" --dir ./artifacts
+    APK_FILE=$(ls ./artifacts/*.apk | head -1)
+    
+    if [ ! -f "$APK_FILE" ]; then
+      echo "::error::No APK found in release artifacts"
+      exit 1
+    fi
+    
+    echo "Downloaded APK: $APK_FILE"
+    echo "apk-path=$APK_FILE" >> $GITHUB_OUTPUT
+    echo "build-successful=true" >> $GITHUB_OUTPUT
+  id: download-apk
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
-# Launch T001-T002 together:
-Task: "Create GitHub Actions android-build composite action directory structure `.github/actions/android-build/`"
-Task: "Create GitHub Actions maestro-test composite action directory structure `.github/actions/maestro-test/`"
 
-# Launch T004-T006 together:
-Task: "Test android-build action locally using `devbox run build_preview` and `devbox run build_production` in `devbox/android-build/`"
-Task: "Test maestro-test action locally using `devbox run integration_test_android` in `devbox/android-testing/`"
-Task: "Create workflow test for production validation workflow in `.github/workflows/test-production-validation.yml`"
+### T005: Update APK Path Reference
+```yaml
+# CHANGE:
+- name: Run Maestro Tests Against Production
+  uses: ./.github/actions/maestro-test
+  with:
+    apk-path: production-apk
 
-# Launch T008-T009 together:
-Task: "Implement Android Build composite action in `.github/actions/android-build/action.yml`"
-Task: "Implement Maestro Test composite action in `.github/actions/maestro-test/action.yml`"
+# TO:
+- name: Run Maestro Tests Against Production
+  uses: ./.github/actions/maestro-test
+  with:
+    apk-path: ${{ steps.download-apk.outputs.apk-path }}
 ```
+
+### T006: Update Result Processing
+```yaml
+# CHANGE:
+echo "Build successful: ${{ steps.build-apk.outputs.build-successful }}"
+
+# TO:
+echo "APK download successful: ${{ steps.download-apk.outputs.build-successful }}"
+```
+
+## Constitutional Compliance Verification
+
+- **Local Testing First**: T012 ensures workflow changes testable via act locally
+- **Infrastructure as Code**: All changes in version-controlled `.github/workflows/`  
+- **Anonymous User Testing**: T016 validates SKIP_DATA_CLEANUP behavior preserved
+- **Progressive Validation**: T015 confirms production validation maintains pipeline integrity
+
+## Task Generation Rationale
+
+1. **From Clarifications**: 
+   - "Pure workflow change" → Focus only on `.github/workflows/production-validation.yml`
+   - No test code, no application changes, no new dependencies
+
+2. **From Quickstart**:
+   - Implementation steps → T004-T006 (core workflow modifications)
+   - Local testing approach → T011-T012 (validation)
+
+3. **From Plan Technical Context**:
+   - GitHub Actions + devbox consistency → T012 (local testing with act)
+   - Constitutional compliance → T016 (verify anonymous user behavior)
 
 ## Notes
 
-- [P] tasks = different files, no dependencies
-- Verify tests fail before implementing
-- Test locally using devbox before pushing to CI
-- All actions must use devbox for consistent dependency management
-- Commit after each task
-- Avoid: vague tasks, same file conflicts
-
-## Task Generation Rules
-
-_Applied during main() execution_
-
-1. **From Contracts**:
-   - android-build-action.yml → T008 implementation task
-   - maestro-test-action.yml → T009 implementation task
-   - github-actions-workflow.yml → T010 production workflow task
-2. **From Existing Infrastructure**:
-   - Update integration workflows → T011, T012 integration tasks
-   - Production build workflow → T013 orchestration task
-3. **From User Feedback**:
-   - Remove unnecessary examples → T016, T017 cleanup tasks
-   - Local testing mandate → T004, T005, T018 local validation tasks
-
-## Ordering
-
-- Setup → Tests → Implementation → Integration → Polish
-- Parameterized actions before workflows that use them
-- Local testing before CI submission (constitutional requirement)
-
-## Validation Checklist
-
-_GATE: Checked by main() before returning_
-
-- [x] All contracts have corresponding implementation tasks
-- [x] All local testing tasks include devbox usage
-- [x] All tests come before implementation
-- [x] Parallel tasks truly independent
-- [x] Each task specifies exact file path
-- [x] No task modifies same file as another [P] task
-- [x] Local testing tasks included per constitutional requirement
+- Single workflow file modification keeps complexity minimal
+- All tasks target the same file (`.github/workflows/production-validation.yml`) so must run sequentially for T004-T010
+- [P] tasks target different files for true parallelism  
+- Local testing with act maintains constitutional "Local Testing First" principle
+- No JavaScript/TypeScript code needed - pure CI/CD infrastructure change

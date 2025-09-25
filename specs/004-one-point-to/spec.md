@@ -41,6 +41,13 @@
 
 ## Clarifications
 
+### Session 2025-09-25
+
+- Q: How should production APK artifacts be managed in the pipeline? → A: Build production APK once after all tests pass, store as artifact, reuse across workflows
+- Q: When should the production build artifact be created in relation to merge/release workflows? → A: Build APK after all tests pass on main branch, store as GitHub release artifact
+- Q: How should the artifact be passed between the pre-merge build job and the post-deployment validation workflow? → A: Use existing GitHub release artifact from build production job, just needs to be reused
+- Q: Should this enhancement focus purely on workflow modification without additional test code? → A: Pure workflow change: Only modify `.github/workflows/production-validation.yml` to download existing release artifacts instead of rebuilding
+
 ### Session 2025-09-24
 
 - Q: Which specific application functionality should be tested against production? → A: Same Maestro flow files used for integration testing
@@ -74,12 +81,12 @@ Development teams need to validate that their applications work correctly with t
 
 - **FR-001**: Production validation tests MUST run after infrastructure deployment (terraform) but before frontend deployment
 - **FR-002**: Production tests MUST connect to and validate against the actual deployed production infrastructure and configuration
-- **FR-003**: Production APK MUST be built once after all pipeline tests pass using a reusable GitHub Action, then shared across validation workflows
+- **FR-003**: Production validation MUST reuse existing GitHub release artifact from build-production workflow, eliminating duplicate APK builds
 - **FR-004**: Pipeline MUST use parameterized reusable GitHub Actions for both Android building and Maestro testing that can switch between integration and production modes
 - **FR-005**: SKIP_DATA_CLEANUP environment variable MUST control emulator clearing behavior since tests already use anonymous users by default
 - **FR-006**: System MUST provide clear separation between test user activities and real user activities in production logs and metrics
 - **FR-007**: Pipeline MUST alert development team and block frontend deployment if production validation tests fail, requiring manual rollback decision
-- **FR-008**: Production test execution MUST complete within reasonable timeframes as tests are designed to be relatively fast
+- **FR-008**: Production test execution MUST complete in a timely manner, reusing existing Maestro flows designed for fast execution
 - **FR-009**: Fresh anonymous users MUST be created through standard app flows rather than external service management
 - **FR-010**: Reusable GitHub Actions MUST use devbox for dependency setup to ensure CI is reproducible locally
 
