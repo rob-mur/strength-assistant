@@ -27,13 +27,10 @@ export function AuthAwareLayout({ children }: AuthAwareLayoutProps) {
 
     // In Chrome test environment, no need to force - auth hook already handles this
     // Priority: Chrome test environment overrides CI environment
-    if (
-      process.env.CHROME_TEST === "true" ||
-      process.env.EXPO_PUBLIC_CHROME_TEST === "true" ||
-      (process.env.CI === "true" &&
-        !process.env.CHROME_TEST &&
-        !process.env.EXPO_PUBLIC_CHROME_TEST)
-    ) {
+    const isChromeTest = process.env.CHROME_TEST === "true" || process.env.EXPO_PUBLIC_CHROME_TEST === "true";
+    const isCITest = process.env.CI === "true" && process.env.CI !== "false" && process.env.CHROME_TEST !== "true" && process.env.EXPO_PUBLIC_CHROME_TEST !== "true";
+    
+    if (isChromeTest || isCITest) {
       console.warn(
         "Chrome test environment - auth state should be managed by useAuth hook",
       );
