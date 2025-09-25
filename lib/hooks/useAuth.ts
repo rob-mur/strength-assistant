@@ -71,10 +71,9 @@ export function useAuth(): AuthState & {
         const isChromeTest =
           process.env.CHROME_TEST === "true" ||
           process.env.EXPO_PUBLIC_CHROME_TEST === "true";
-        // CRITICAL FIX: Only use CI fallback if CI=true AND no Chrome test flags AND CI is not explicitly disabled
+        // CRITICAL FIX: Only use CI fallback if CI=true AND no Chrome test flags (CI=false explicitly disables CI mode)
         const isCITest =
           process.env.CI === "true" &&
-          process.env.CI !== "false" &&
           process.env.CHROME_TEST !== "true" &&
           process.env.EXPO_PUBLIC_CHROME_TEST !== "true";
 
@@ -142,7 +141,7 @@ export function useAuth(): AuthState & {
         unsubscribe();
       }
     };
-  }, [authBackend]);
+  }, [authBackend, handleUserStateChange]);
 
   const signInAnonymously = useCallback(async () => {
     console.log("🔐 [useAuth] Starting anonymous sign-in process");
@@ -175,7 +174,7 @@ export function useAuth(): AuthState & {
         loading: false,
       }));
     }
-  }, [authBackend]);
+  }, [authBackend, handleUserStateChange]);
 
   const createAccount = useCallback(
     async (email: string, password: string) => {
@@ -237,7 +236,7 @@ export function useAuth(): AuthState & {
         loading: false,
       }));
     }
-  }, [authBackend]);
+  }, [authBackend, handleUserStateChange]);
 
   const clearError = useCallback(() => {
     setState((prevState) => ({

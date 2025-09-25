@@ -13,7 +13,6 @@ export default function HomeScreen() {
       process.env.EXPO_PUBLIC_CHROME_TEST === "true";
     const isCITest =
       process.env.CI === "true" &&
-      process.env.CI !== "false" &&
       process.env.CHROME_TEST !== "true" &&
       process.env.EXPO_PUBLIC_CHROME_TEST !== "true";
     if (isChromeTest || isCITest) {
@@ -33,7 +32,6 @@ export default function HomeScreen() {
           process.env.EXPO_PUBLIC_CHROME_TEST === "true";
         const isCITest =
           process.env.CI === "true" &&
-          process.env.CI !== "false" &&
           process.env.CHROME_TEST !== "true" &&
           process.env.EXPO_PUBLIC_CHROME_TEST !== "true";
         if (isChromeTest || isCITest) {
