@@ -130,7 +130,7 @@ export function useAuth(): AuthState & {
         unsubscribe();
       }
     };
-  }, [authBackend, handleUserStateChange]);
+  }, [authBackend]);
 
   const signInAnonymously = useCallback(async () => {
     console.log("🔐 [useAuth] Starting anonymous sign-in process");
@@ -163,7 +163,7 @@ export function useAuth(): AuthState & {
         loading: false,
       }));
     }
-  }, [authBackend, handleUserStateChange]);
+  }, [authBackend]);
 
   const createAccount = useCallback(
     async (email: string, password: string) => {
