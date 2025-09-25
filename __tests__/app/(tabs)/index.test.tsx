@@ -43,30 +43,4 @@ describe("HomeScreen", () => {
     render(<HomeScreen />);
     expect(true).toBe(true);
   });
-
-  it("should log debug info when CHROME_TEST is true", () => {
-    const originalEnv = process.env.CHROME_TEST;
-    process.env.CHROME_TEST = "true";
-
-    render(<HomeScreen />);
-
-    expect(mockConsoleLog).toHaveBeenCalledWith(
-      "🔍 HomeScreen: Component rendered",
-    );
-
-    process.env.CHROME_TEST = originalEnv;
-  });
-
-  it("should log debug info when CI is true", () => {
-    const originalEnv = process.env.CI;
-    process.env.CI = "true";
-
-    render(<HomeScreen />);
-
-    expect(mockConsoleLog).toHaveBeenCalledWith(
-      "🔍 HomeScreen: Component rendered",
-    );
-
-    process.env.CI = originalEnv;
-  });
 });
