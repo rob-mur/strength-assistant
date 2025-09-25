@@ -40,26 +40,29 @@ Pure workflow modification: Update `.github/workflows/production-validation.yml`
 
 ## Phase 3.5: Validation & Completion
 
-- [ ] T015 Test production validation workflow end-to-end with actual GitHub release
-- [ ] T016 Verify anonymous user testing behavior remains unchanged (SKIP_DATA_CLEANUP preservation)
-- [ ] T017 [P] Update CLAUDE.md with implementation completion and lessons learned
-- [ ] T018 Commit implementation with constitutional compliance verification
+- [x] T015 Test production validation workflow end-to-end with actual GitHub release
+- [x] T016 Verify anonymous user testing behavior remains unchanged (SKIP_DATA_CLEANUP preservation)
+- [x] T017 [P] Update CLAUDE.md with implementation completion and lessons learned
+- [x] T018 Commit implementation with constitutional compliance verification
 
 ## Dependencies
 
 ### Critical Path
+
 - Setup (T001-T003) before workflow modification (T004-T007)
-- Core modification (T004-T007) before error handling (T008-T010)  
+- Core modification (T004-T007) before error handling (T008-T010)
 - Error handling complete before local testing (T011-T014)
 - Local validation before final testing (T015-T018)
 
 ### Parallel Opportunities
+
 - **T011, T013-T014**: Documentation and local scripts can be created independently
 - **T017**: CLAUDE.md update independent of other tasks
 
 ## Implementation Details
 
 ### T004: Replace APK Build Step
+
 ```yaml
 # REMOVE:
 - name: Build Production APK
@@ -76,12 +79,12 @@ Pure workflow modification: Update `.github/workflows/production-validation.yml`
   run: |
     gh release download latest --pattern "*.apk" --dir ./artifacts
     APK_FILE=$(ls ./artifacts/*.apk | head -1)
-    
+
     if [ ! -f "$APK_FILE" ]; then
       echo "::error::No APK found in release artifacts"
       exit 1
     fi
-    
+
     echo "Downloaded APK: $APK_FILE"
     echo "apk-path=$APK_FILE" >> $GITHUB_OUTPUT
     echo "build-successful=true" >> $GITHUB_OUTPUT
@@ -91,6 +94,7 @@ Pure workflow modification: Update `.github/workflows/production-validation.yml`
 ```
 
 ### T005: Update APK Path Reference
+
 ```yaml
 # CHANGE:
 - name: Run Maestro Tests Against Production
@@ -106,6 +110,7 @@ Pure workflow modification: Update `.github/workflows/production-validation.yml`
 ```
 
 ### T006: Update Result Processing
+
 ```yaml
 # CHANGE:
 echo "Build successful: ${{ steps.build-apk.outputs.build-successful }}"
@@ -117,13 +122,13 @@ echo "APK download successful: ${{ steps.download-apk.outputs.build-successful }
 ## Constitutional Compliance Verification
 
 - **Local Testing First**: T012 ensures workflow changes testable via act locally
-- **Infrastructure as Code**: All changes in version-controlled `.github/workflows/`  
+- **Infrastructure as Code**: All changes in version-controlled `.github/workflows/`
 - **Anonymous User Testing**: T016 validates SKIP_DATA_CLEANUP behavior preserved
 - **Progressive Validation**: T015 confirms production validation maintains pipeline integrity
 
 ## Task Generation Rationale
 
-1. **From Clarifications**: 
+1. **From Clarifications**:
    - "Pure workflow change" → Focus only on `.github/workflows/production-validation.yml`
    - No test code, no application changes, no new dependencies
 
@@ -139,6 +144,6 @@ echo "APK download successful: ${{ steps.download-apk.outputs.build-successful }
 
 - Single workflow file modification keeps complexity minimal
 - All tasks target the same file (`.github/workflows/production-validation.yml`) so must run sequentially for T004-T010
-- [P] tasks target different files for true parallelism  
+- [P] tasks target different files for true parallelism
 - Local testing with act maintains constitutional "Local Testing First" principle
 - No JavaScript/TypeScript code needed - pure CI/CD infrastructure change

@@ -40,7 +40,7 @@ jobs:
         run: |
           # Create artifacts directory
           mkdir -p ./artifacts
-          
+
           # Check if any releases exist
           if ! gh release list --limit 1 >/dev/null 2>&1; then
             echo "::error title=No GitHub Releases Found::No GitHub releases exist for this repository. Check if build-production workflow completed successfully."
@@ -50,12 +50,12 @@ jobs:
             echo "::error::3. Confirm GitHub release creation permissions"
             exit 1
           fi
-          
+
           # Attempt to download APK from latest release with retry logic
           MAX_RETRIES=3
           RETRY_COUNT=0
           DOWNLOAD_SUCCESS=false
-          
+
           while [ $RETRY_COUNT -lt $MAX_RETRIES ] && [ "$DOWNLOAD_SUCCESS" = false ]; do
             RETRY_COUNT=$((RETRY_COUNT + 1))
             echo "📥 APK download attempt $RETRY_COUNT of $MAX_RETRIES..."
@@ -71,7 +71,7 @@ jobs:
               fi
             fi
           done
-          
+
           if [ "$DOWNLOAD_SUCCESS" = false ]; then
             echo "::error title=APK Download Failed::Failed to download APK after $MAX_RETRIES attempts."
             echo "::error::Investigation steps:"
@@ -81,7 +81,7 @@ jobs:
             echo "::error::4. Check GitHub API status: https://www.githubstatus.com/"
             exit 2
           fi
-          
+
           # Validate APK file was downloaded
           APK_FILE=$(ls ./artifacts/*.apk 2>/dev/null | head -1)
           if [ ! -f "$APK_FILE" ]; then
@@ -92,7 +92,7 @@ jobs:
             echo "::error::3. Confirm release assets contain APK files"
             exit 3
           fi
-          
+
           # Validate APK file integrity and format
           if [ ! -s "$APK_FILE" ]; then
             echo "::error title=Corrupted APK File::Downloaded APK file is empty or corrupted."
@@ -103,7 +103,7 @@ jobs:
             echo "::error::3. Retry download or rebuild production APK"
             exit 4
           fi
-          
+
           # Validate APK file format (basic ZIP signature check)
           APK_HEADER=$(head -c 4 "$APK_FILE" | od -An -tx1 | tr -d ' ')
           if [ "$APK_HEADER" != "504b0304" ]; then
@@ -116,7 +116,7 @@ jobs:
             echo "::error::3. Rebuild and re-upload production APK"
             exit 5
           fi
-          
+
           # Additional file size validation (APK should be at least 1MB for a real app)
           APK_SIZE=$(stat -c%s "$APK_FILE")
           MIN_SIZE=1048576  # 1MB minimum
@@ -124,7 +124,7 @@ jobs:
             echo "::warning::APK file size ($APK_SIZE bytes) is smaller than expected minimum (1MB)"
             echo "::warning::This may indicate an incomplete or test build"
           fi
-          
+
           echo "✅ Successfully downloaded APK: $APK_FILE"
           echo "📁 File size: $(stat -c%s "$APK_FILE") bytes"
           echo "apk-path=$APK_FILE" >> $GITHUB_OUTPUT
