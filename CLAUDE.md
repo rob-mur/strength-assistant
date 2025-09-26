@@ -80,11 +80,11 @@ scripts/production-alert.sh DEPLOYMENT_ID STATUS # Send production validation al
 
 ## Recent Changes
 
+- 005-ci-fixes-there: ✅ COMPLETED - CI Pipeline Workflow Dependencies Fix: Consolidated PR validation into single workflow with proper job dependencies. Claude code review now only executes after all tests (unit, integration Android/Chrome, SonarQube) succeed. Fixed production builds to trigger on main branch pushes without waiting for PR-only workflows. Archived individual test workflows. Enhanced CI pipeline reliability and eliminated workflow_run dependency issues.
+
 - 004-one-point-to: ✅ COMPLETED - Production server testing enhancement: Modified `.github/workflows/production-validation.yml` to reuse GitHub release artifacts instead of duplicate APK builds. Added comprehensive error handling with retry logic, APK format validation, and enhanced failure notifications. Preserved anonymous user testing (SKIP_DATA_CLEANUP=true). Created local test script `scripts/test-release-download.sh` for validation. Constitutional compliance maintained throughout.
 
 - 004-one-point-to: Added TypeScript with React Native, Expo 53.0.22, Node.js (latest via devbox) + GitHub Actions, devbox (dependency management), Maestro (test automation), Expo CLI
-
-- 004-one-point-to: Added TypeScript/JavaScript with React Native, Expo 53.0.22, Node.js (latest via devbox) + GitHub Actions, devbox (for dependency management), Maestro (test automation), Expo CLI
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->
