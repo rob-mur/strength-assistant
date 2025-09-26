@@ -411,5 +411,4 @@ describe("useAppInit", () => {
       expect(mockSplashScreenHideAsync).toHaveBeenCalledTimes(1);
     });
   });
-
 });
