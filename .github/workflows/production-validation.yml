@@ -1,0 +1,182 @@
+name: Production Validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      terraform_deployment_id:
+        description: "Terraform deployment ID that triggered this validation"
+        required: true
+        type: string
+
+  # Trigger automatically after terraform workflow completes
+  workflow_run:
+    workflows: ["Terraform Deploy", "Infrastructure Deploy"]
+    types: [completed]
+    branches: [main]
+
+env:
+  SKIP_DATA_CLEANUP: true
+  NODE_ENV: production
+
+jobs:
+  production-validation:
+    name: Validate against Production Infrastructure
+    runs-on: ubuntu-latest
+
+    # Only run if terraform deployment succeeded
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Download Production APK from GitHub Release
+      # This step replaces the previous APK build to eliminate duplicate builds.
+      # It downloads the APK created by build-production.yml from GitHub release artifacts,
+      # ensuring the exact same APK that was built and tested is used for production validation.
+      # Benefits: Faster validation, guaranteed consistency, reduced CI resource usage.
+      - name: Download Production APK
+        shell: bash
+        run: |
+          # Create artifacts directory
+          mkdir -p ./artifacts
+
+          # Check if any releases exist
+          if ! gh release list --limit 1 >/dev/null 2>&1; then
+            echo "::error title=No GitHub Releases Found::No GitHub releases exist for this repository. Check if build-production workflow completed successfully."
+            echo "::error::Investigation steps:"
+            echo "::error::1. Verify all prerequisite tests passed on main branch"
+            echo "::error::2. Check build-production workflow execution logs"
+            echo "::error::3. Confirm GitHub release creation permissions"
+            exit 1
+          fi
+
+          # Attempt to download APK from latest release with retry logic
+          MAX_RETRIES=3
+          RETRY_COUNT=0
+          DOWNLOAD_SUCCESS=false
+
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ] && [ "$DOWNLOAD_SUCCESS" = false ]; do
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            echo "📥 APK download attempt $RETRY_COUNT of $MAX_RETRIES..."
+            
+            if gh release download latest --pattern "*.apk" --dir ./artifacts 2>/dev/null; then
+              DOWNLOAD_SUCCESS=true
+              echo "✅ APK download succeeded on attempt $RETRY_COUNT"
+            else
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                DELAY=$((2 ** $RETRY_COUNT))  # Exponential backoff: 2, 4, 8 seconds
+                echo "::warning::Download attempt $RETRY_COUNT failed. Retrying in ${DELAY} seconds..."
+                sleep $DELAY
+              fi
+            fi
+          done
+
+          if [ "$DOWNLOAD_SUCCESS" = false ]; then
+            echo "::error title=APK Download Failed::Failed to download APK after $MAX_RETRIES attempts."
+            echo "::error::Investigation steps:"
+            echo "::error::1. Verify APK was uploaded to release assets in build-production workflow"
+            echo "::error::2. Check GitHub API connectivity and rate limits"
+            echo "::error::3. Confirm GITHUB_TOKEN has appropriate read permissions"
+            echo "::error::4. Check GitHub API status: https://www.githubstatus.com/"
+            exit 2
+          fi
+
+          # Validate APK file was downloaded
+          APK_FILE=$(ls ./artifacts/*.apk 2>/dev/null | head -1)
+          if [ ! -f "$APK_FILE" ]; then
+            echo "::error title=No APK Assets Found::No APK files found in latest GitHub release assets."
+            echo "::error::Investigation steps:"
+            echo "::error::1. Check build-production workflow logs for APK upload failures"
+            echo "::error::2. Verify APK file naming matches expected pattern (*.apk)"
+            echo "::error::3. Confirm release assets contain APK files"
+            exit 3
+          fi
+
+          # Validate APK file integrity and format
+          if [ ! -s "$APK_FILE" ]; then
+            echo "::error title=Corrupted APK File::Downloaded APK file is empty or corrupted."
+            echo "::error::File: $APK_FILE"
+            echo "::error::Investigation steps:"
+            echo "::error::1. Check network connectivity during download"
+            echo "::error::2. Verify original APK file integrity in release assets"
+            echo "::error::3. Retry download or rebuild production APK"
+            exit 4
+          fi
+
+          # Validate APK file format (basic ZIP signature check)
+          APK_HEADER=$(head -c 4 "$APK_FILE" | od -An -tx1 | tr -d ' ')
+          if [ "$APK_HEADER" != "504b0304" ]; then
+            echo "::error title=Invalid APK Format::Downloaded file does not have valid APK/ZIP signature."
+            echo "::error::File: $APK_FILE"
+            echo "::error::Expected ZIP signature: 504b0304, Found: $APK_HEADER"
+            echo "::error::Investigation steps:"
+            echo "::error::1. Verify file was not corrupted during upload to GitHub release"
+            echo "::error::2. Check if file is actually an APK and not another format"
+            echo "::error::3. Rebuild and re-upload production APK"
+            exit 5
+          fi
+
+          # Additional file size validation (APK should be at least 1MB for a real app)
+          APK_SIZE=$(stat -c%s "$APK_FILE")
+          MIN_SIZE=1048576  # 1MB minimum
+          if [ $APK_SIZE -lt $MIN_SIZE ]; then
+            echo "::warning::APK file size ($APK_SIZE bytes) is smaller than expected minimum (1MB)"
+            echo "::warning::This may indicate an incomplete or test build"
+          fi
+
+          echo "✅ Successfully downloaded APK: $APK_FILE"
+          echo "📁 File size: $(stat -c%s "$APK_FILE") bytes"
+          echo "apk-path=$APK_FILE" >> $GITHUB_OUTPUT
+          echo "build-successful=true" >> $GITHUB_OUTPUT
+        id: download-apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Use parameterized Maestro Test Action
+      # Maestro tests now use the downloaded APK instead of a freshly built one.
+      # This ensures production validation tests the exact same APK that will be deployed,
+      # maintaining consistency between build and validation phases.
+      - name: Run Maestro Tests Against Production
+        uses: ./.github/actions/maestro-test
+        with:
+          apk-path: ${{ steps.download-apk.outputs.apk-path }}
+          test-environment: production
+          skip-data-cleanup: true
+          devbox-config: android-testing
+        id: maestro-tests
+
+      # Process results
+      # Results now reflect APK download success instead of build success,
+      # maintaining the same output format for downstream processes.
+      - name: Process Test Results
+        run: |
+          echo "Production validation completed"
+          echo "APK download successful: ${{ steps.download-apk.outputs.build-successful }}"
+          echo "Tests passed: ${{ steps.maestro-tests.outputs.tests-passed }}"
+
+      # Alert on failure - GitHub will automatically send email notifications
+      - name: Production Validation Failed
+        if: failure()
+        run: |
+          echo "::error title=Production Validation Failed::Production validation against deployment ${{ github.event.inputs.terraform_deployment_id || 'unknown' }} has failed. Manual intervention required."
+          echo "::error::Frontend deployment should be blocked pending investigation"
+          echo "::error::Possible failure causes:"
+          echo "::error::• GitHub release artifact download failure (check build-production workflow)"
+          echo "::error::• APK file corruption or invalid format (check release assets)"
+          echo "::error::• Maestro test execution failure against production infrastructure"
+          echo "::error::• Production server connectivity or configuration issues"
+          echo "::error::Investigation steps:"
+          echo "::error::1. Check workflow logs for specific error messages and exit codes"
+          echo "::error::2. Verify latest GitHub release contains valid APK assets"
+          echo "::error::3. Confirm production infrastructure is accessible and healthy"
+          echo "::error::4. Review Maestro test results and anonymous user creation logs"
+          echo "::error::5. Check SKIP_DATA_CLEANUP environment variable preservation"
+          exit 1
+
+      # Success notification
+      - name: Production Validation Succeeded
+        if: success()
+        run: |
+          echo "::notice title=Production Validation Passed::Production validation against deployment ${{ github.event.inputs.terraform_deployment_id }} completed successfully"
+          echo "::notice::Frontend deployment can proceed with confidence"

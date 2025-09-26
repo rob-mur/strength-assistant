@@ -27,6 +27,8 @@ const GettingStartedCard = ({
           <Card.Actions>
             <Button
               testID="get-started"
+              // @ts-ignore - Web compatibility for Maestro tests
+              id="get-started"
               mode="contained"
               icon="arrow-right"
               contentStyle={{ flexDirection: "row-reverse" }}

@@ -40,10 +40,6 @@ export function useAuth(): AuthState & {
   const authBackend = storageManager.getAuthBackend();
 
   const handleUserStateChange = useCallback((user: UserAccount | null) => {
-    console.log(
-      "🔐 [useAuth] handleUserStateChange called with user:",
-      user?.id || "null",
-    );
     setState((prevState) => ({
       ...prevState,
       user: user
@@ -55,10 +51,6 @@ export function useAuth(): AuthState & {
         : null,
       loading: false,
     }));
-    console.log(
-      "🔐 [useAuth] State updated - user is now:",
-      user?.id || "null",
-    );
   }, []);
 
   useEffect(() => {
@@ -68,17 +60,16 @@ export function useAuth(): AuthState & {
       try {
         // Handle Chrome test environment with automatic anonymous sign-in
         // Priority: Chrome test environment overrides CI environment
-        if (
+        const isChromeTest =
           process.env.CHROME_TEST === "true" ||
-          process.env.EXPO_PUBLIC_CHROME_TEST === "true" ||
-          (process.env.CI === "true" &&
-            !process.env.CHROME_TEST &&
-            !process.env.EXPO_PUBLIC_CHROME_TEST)
-        ) {
-          console.log(
-            "🔐 [useAuth] Chrome test environment detected - creating anonymous test user",
-          );
+          process.env.EXPO_PUBLIC_CHROME_TEST === "true";
+        // CRITICAL FIX: Only use CI fallback if CI=true AND no Chrome test flags (CI=false explicitly disables CI mode)
+        const isCITest =
+          process.env.CI === "true" &&
+          process.env.CHROME_TEST !== "true" &&
+          process.env.EXPO_PUBLIC_CHROME_TEST !== "true";
 
+        if (isChromeTest || isCITest) {
           // Subscribe to auth state changes first
           unsubscribe = await authBackend.subscribeToAuthState(
             handleUserStateChange,
@@ -87,15 +78,8 @@ export function useAuth(): AuthState & {
           // Check if user is already authenticated
           const currentUser = await authBackend.getCurrentUser();
           if (currentUser) {
-            console.log(
-              "🔐 [useAuth] Test user already authenticated:",
-              currentUser.id,
-            );
             handleUserStateChange(currentUser);
           } else {
-            console.log(
-              "🔐 [useAuth] No authenticated user found, signing in anonymously",
-            );
             // Sign in anonymously to get a real Supabase user
             await authBackend.signInAnonymously();
             // handleUserStateChange will be called automatically via subscription
@@ -133,24 +117,13 @@ export function useAuth(): AuthState & {
   }, [authBackend, handleUserStateChange]);
 
   const signInAnonymously = useCallback(async () => {
-    console.log("🔐 [useAuth] Starting anonymous sign-in process");
-    console.log(
-      "🔐 [useAuth] AuthBackend instance:",
-      authBackend.constructor.name,
-    );
     setState((prevState) => ({ ...prevState, loading: true, error: null }));
     try {
-      console.log("🔐 [useAuth] Calling authBackend.signInAnonymously()");
       const result = await authBackend.signInAnonymously();
-      console.log("🔐 [useAuth] Anonymous sign-in successful:", result);
 
       // CRITICAL FIX: Update user state immediately, don't rely only on callbacks
-      console.log("🔐 [useAuth] Updating user state with result");
       handleUserStateChange(result);
-
-      console.log("🔐 [useAuth] Loading state reset to false");
     } catch (error) {
-      console.error("🔐 [useAuth] Anonymous sign-in failed:", error);
       setState((prevState) => ({
         ...prevState,
         error: {

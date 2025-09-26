@@ -1,0 +1,83 @@
+name: Test Production Validation Workflow
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [004-one-point-to]
+
+jobs:
+  test-parameterized-actions:
+    name: Test Parameterized Actions Exist
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Debug - List GitHub Actions directory
+        run: |
+          echo "Listing .github/actions directory structure..."
+          ls -la .github/actions/ || echo "No actions directory found"
+          ls -la .github/actions/android-build/ || echo "No android-build directory"
+          ls -la .github/actions/maestro-test/ || echo "No maestro-test directory"
+
+      - name: Check android-build action exists
+        run: |
+          if [ ! -f ".github/actions/android-build/action.yml" ]; then
+            echo "❌ android-build action not found"
+            exit 1
+          fi
+          echo "✅ android-build action exists"
+
+      - name: Check maestro-test action exists
+        run: |
+          if [ ! -f ".github/actions/maestro-test/action.yml" ]; then
+            echo "❌ maestro-test action not found"
+            exit 1
+          fi
+          echo "✅ maestro-test action exists"
+
+      - name: Check production-validation workflow exists
+        run: |
+          if [ ! -f ".github/workflows/production-validation.yml" ]; then
+            echo "❌ production-validation workflow not found"
+            exit 1
+          fi
+          echo "✅ production-validation workflow exists"
+
+      - name: Validate android-build action for both integration and production modes
+        run: |
+          echo "Testing android-build action syntax for both modes..."
+          grep -q 'name: "Android Build Action"' .github/actions/android-build/action.yml
+          grep -q "inputs:" .github/actions/android-build/action.yml
+          grep -q "build-type:" .github/actions/android-build/action.yml
+          grep -q "devbox-config:" .github/actions/android-build/action.yml
+
+          # Test preview mode parameters
+          grep -q 'build_preview' .github/actions/android-build/action.yml
+          # Test production mode parameters  
+          grep -q 'build_production' .github/actions/android-build/action.yml
+          echo "✅ android-build action supports both integration and production modes"
+
+      - name: Validate maestro-test action for both integration and production modes
+        run: |
+          echo "Testing maestro-test action syntax for both modes..."
+          grep -q 'name: "Maestro Test Action"' .github/actions/maestro-test/action.yml
+          grep -q "inputs:" .github/actions/maestro-test/action.yml
+          grep -q "apk-path:" .github/actions/maestro-test/action.yml
+          grep -q "test-environment:" .github/actions/maestro-test/action.yml
+          grep -q "skip-data-cleanup:" .github/actions/maestro-test/action.yml
+
+          # Test environment variable handling
+          grep -q 'SKIP_DATA_CLEANUP' .github/actions/maestro-test/action.yml
+          grep -q 'TEST_ENVIRONMENT' .github/actions/maestro-test/action.yml
+          echo "✅ maestro-test action supports both integration and production modes"
+
+      - name: Validate integration workflow uses parameterized actions
+        run: |
+          echo "Testing integration workflow uses new parameterized actions..."
+          grep -q "uses: ./.github/actions/android-build" ".github/workflows/Integration Tests Android.yml"
+          grep -q "uses: ./.github/actions/maestro-test" ".github/workflows/Integration Tests Android.yml"
+          grep -q "build-type: preview" ".github/workflows/Integration Tests Android.yml"
+          grep -q "test-environment: integration" ".github/workflows/Integration Tests Android.yml"
+          echo "✅ Integration workflow properly uses parameterized actions"

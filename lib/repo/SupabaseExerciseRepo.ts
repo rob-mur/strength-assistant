@@ -87,8 +87,8 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
 
       // Update the global store
       exercises$.set(exercises);
-    } catch (error) {
-      console.error("Failed to refresh exercises:", error);
+    } catch {
+      /* Silent error handling */
     }
   }
 

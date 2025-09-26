@@ -8,22 +8,14 @@ import { initSupabase } from "../supabase/supabase";
 export async function initializeDataLayer(): Promise<void> {
   try {
     // Initialize Supabase
-    console.log("📊 Initializing Supabase...");
     initSupabase();
 
     // Configure Legend State sync engine
-    console.log("🔄 Configuring sync engine...");
     configureSyncEngine();
-
-    console.log("✅ Offline-first data layer initialized successfully");
   } catch (error) {
-    console.error("❌ Failed to initialize data layer:", error);
     // For Chrome/web testing, we'll continue with degraded functionality
     // rather than completely blocking the app
     if (typeof window !== "undefined") {
-      console.warn(
-        "⚠️ Continuing with degraded functionality for web environment",
-      );
       return;
     }
     throw error;

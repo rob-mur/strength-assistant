@@ -84,20 +84,6 @@ export class SupabaseStorage implements StorageBackend {
       const config = getSupabaseEnvConfig();
       const supabaseUrl = getSupabaseUrl();
 
-      // Log the actual Supabase URL being used for debugging
-      console.log(
-        "🔗 [SupabaseStorage] Initializing client with URL:",
-        supabaseUrl,
-      );
-      console.log("🔗 [SupabaseStorage] Environment variables:", {
-        EXPO_PUBLIC_SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL,
-        EXPO_PUBLIC_USE_SUPABASE_EMULATOR:
-          process.env.EXPO_PUBLIC_USE_SUPABASE_EMULATOR,
-        EXPO_PUBLIC_SUPABASE_EMULATOR_HOST:
-          process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_HOST,
-        USE_SUPABASE_DATA: process.env.USE_SUPABASE_DATA,
-      });
-
       this.client = createClient(supabaseUrl, config.anonKey, {
         auth: {
           autoRefreshToken: true,
@@ -110,18 +96,11 @@ export class SupabaseStorage implements StorageBackend {
   }
 
   private notifyAuthStateChange(user: UserAccount | null): void {
-    console.log(
-      "🔗 [SupabaseStorage] Notifying auth state change:",
-      user?.id || "null",
-    );
     this.authStateCallbacks.forEach((callback) => {
       try {
         callback(user);
-      } catch (error) {
-        console.error(
-          "🔗 [SupabaseStorage] Error in auth state callback:",
-          error,
-        );
+      } catch {
+        // Silent error handling
       }
     });
   }
@@ -300,8 +279,6 @@ export class SupabaseStorage implements StorageBackend {
   }
 
   async signInAnonymously(): Promise<UserAccount> {
-    console.log("🔐 [SupabaseStorage] signInAnonymously called");
-
     // Try to create a real Supabase anonymous session first
     try {
       const {
@@ -309,47 +286,27 @@ export class SupabaseStorage implements StorageBackend {
         error,
       } = await this.getClient().auth.signInAnonymously();
       if (error) {
-        console.warn(
-          "🔐 [SupabaseStorage] Real Supabase anonymous auth failed:",
-          error,
-        );
         throw error;
       }
       if (user) {
-        console.log(
-          "🔐 [SupabaseStorage] Created real Supabase anonymous user:",
-          user.id,
-        );
         const realUser = this.mapSupabaseUserToAccount(user);
         this.currentUser = realUser;
-        console.log("🔐 [SupabaseStorage] Notifying auth state callbacks");
         this.notifyAuthStateChange(realUser);
         return realUser;
       }
-    } catch (error) {
-      console.warn(
-        "🔐 [SupabaseStorage] Failed to create real Supabase anonymous user:",
-        error,
-      );
+    } catch {
+      // Silent error handling
     }
 
     // Fallback: create a local anonymous user if Supabase auth fails
-    console.log("🔐 [SupabaseStorage] Falling back to local anonymous user");
     const anonymousUser = createAnonymousUser();
     this.currentUser = anonymousUser;
-    console.log(
-      "🔐 [SupabaseStorage] Created local anonymous user:",
-      anonymousUser.id,
-    );
-    console.log("🔐 [SupabaseStorage] Notifying auth state callbacks");
     this.notifyAuthStateChange(anonymousUser);
 
     return anonymousUser;
   }
 
   async signOut(): Promise<void> {
-    console.log("🔐 [SupabaseStorage] signOut called");
-
     const { error } = await this.getClient().auth.signOut();
 
     if (error) {
@@ -359,9 +316,6 @@ export class SupabaseStorage implements StorageBackend {
     this.currentUser = null;
 
     // CRITICAL FIX: Notify auth state callbacks when signing out
-    console.log(
-      "🔐 [SupabaseStorage] Notifying auth state callbacks of sign out",
-    );
     this.notifyAuthStateChange(null);
   }
 
@@ -471,18 +425,12 @@ export class SupabaseStorage implements StorageBackend {
     callback: (user: UserAccount | null) => void,
   ): () => void {
     // CRITICAL FIX: Register callback for both Supabase events AND local anonymous auth
-    console.log("🔗 [SupabaseStorage] Registering auth state callback");
     this.authStateCallbacks.push(callback);
 
     // Set up Supabase auth state listener for real auth events
     const {
       data: { subscription },
     } = this.getClient().auth.onAuthStateChange(async (event, session) => {
-      console.log(
-        "🔗 [SupabaseStorage] Supabase auth state change:",
-        event,
-        !!session?.user,
-      );
       if (session?.user) {
         const userAccount = this.mapSupabaseUserToAccount(session.user);
         this.currentUser = userAccount;
@@ -490,24 +438,10 @@ export class SupabaseStorage implements StorageBackend {
       } else {
         // CRITICAL FIX: Don't override local anonymous users when Supabase has no session
         // This prevents the race condition where local anonymous auth gets wiped out
-        console.log(
-          "🔗 [SupabaseStorage] No session - checking if should preserve user:",
-          {
-            currentUserId: this.currentUser?.id,
-            isAnonymous: this.currentUser?.isAnonymous,
-            event: event,
-          },
-        );
         if (this.currentUser?.isAnonymous && event === "INITIAL_SESSION") {
-          console.log(
-            "🔗 [SupabaseStorage] PRESERVING local anonymous user, ignoring Supabase INITIAL_SESSION",
-          );
           // Keep the existing local anonymous user, don't call callback(null)
           return;
         }
-        console.log(
-          "🔗 [SupabaseStorage] Setting user to null from Supabase auth state",
-        );
         this.currentUser = null;
         callback(null);
       }
@@ -515,15 +449,10 @@ export class SupabaseStorage implements StorageBackend {
 
     // Immediately call callback with current user if exists (for anonymous users)
     if (this.currentUser) {
-      console.log(
-        "🔗 [SupabaseStorage] Immediately calling callback with current user:",
-        this.currentUser.id,
-      );
       callback(this.currentUser);
     }
 
     return () => {
-      console.log("🔗 [SupabaseStorage] Unsubscribing auth state callback");
       // Remove from local callbacks
       const index = this.authStateCallbacks.indexOf(callback);
       if (index > -1) {
@@ -564,8 +493,8 @@ export class SupabaseStorage implements StorageBackend {
       if (session?.user) {
         this.currentUser = this.mapSupabaseUserToAccount(session.user);
       }
-    } catch (error) {
-      console.warn("Failed to initialize session:", error);
+    } catch {
+      // Silent error handling
     }
   }
 

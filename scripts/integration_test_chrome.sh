@@ -38,8 +38,8 @@ echo "✅ Migrations applied"
 
 # Set environment variables for Chrome testing
 echo "🔧 Setting Chrome test environment variables..."
-# CRITICAL FIX: Unset CI to avoid conflicts with Chrome test environment
-unset CI
+# CRITICAL FIX: Explicitly set CI=false to avoid conflicts with Chrome test environment
+export CI=false
 export CHROME_TEST=true
 export EXPO_PUBLIC_CHROME_TEST=true
 export EXPO_PUBLIC_SUPABASE_URL="http://127.0.0.1:54321"

@@ -1,0 +1,62 @@
+# GitHub Composite Action Contract: Android Build
+# Parameterized action for building Android APKs with devbox
+
+name: "Android Build Action"
+description: "Build Android APK using devbox with parameterized configuration"
+
+inputs:
+  build-type:
+    description: "Build type: preview or production"
+    required: true
+    type: string
+  devbox-config:
+    description: "Path to devbox configuration directory"
+    required: true
+    type: string
+  artifact-name:
+    description: "Name for output APK artifact"
+    required: true
+    type: string
+
+outputs:
+  apk-path:
+    description: "Path to built APK file"
+    value: ${{ steps.build.outputs.apk-path }}
+  build-successful:
+    description: "Whether build completed successfully"
+    value: ${{ steps.build.outputs.success }}
+
+runs:
+  using: composite
+  steps:
+    - name: Setup development environment
+      uses: ./.github/actions/setup-dev-environment
+      with:
+        devbox-config: ${{ inputs.devbox-config }}
+
+    - name: Build APK
+      shell: bash
+      working-directory: devbox/${{ inputs.devbox-config }}
+      run: |
+        if [ "${{ inputs.build-type }}" = "production" ]; then
+          devbox run build_production
+          echo "apk-path=./build_production.apk" >> $GITHUB_OUTPUT
+        else
+          devbox run build_preview
+          echo "apk-path=./build_preview.apk" >> $GITHUB_OUTPUT
+        fi
+        echo "success=true" >> $GITHUB_OUTPUT
+      id: build
+
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ steps.build.outputs.apk-path }}
+        retention-days: 30
+# Contract Requirements:
+# - Must use devbox for dependency management
+# - Must support both preview and production build types
+# - Must upload APK as GitHub Actions artifact
+# - Must output apk-path for downstream consumption
+# - Must work with existing devbox shell scripts

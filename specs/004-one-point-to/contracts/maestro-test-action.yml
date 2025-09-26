@@ -1,0 +1,88 @@
+# GitHub Composite Action Contract: Maestro Test
+# Parameterized action for running Maestro tests with devbox
+
+name: "Maestro Test Action"
+description: "Run Maestro integration tests using devbox with parameterized configuration"
+
+inputs:
+  apk-path:
+    description: "Path to APK artifact to test"
+    required: true
+    type: string
+  test-environment:
+    description: "Test environment: integration or production"
+    required: true
+    type: string
+  skip-data-cleanup:
+    description: "Skip data cleanup (SKIP_DATA_CLEANUP environment variable)"
+    required: false
+    type: boolean
+    default: false
+  devbox-config:
+    description: "Path to devbox test configuration directory"
+    required: true
+    type: string
+
+outputs:
+  tests-passed:
+    description: "Whether all tests passed successfully"
+    value: ${{ steps.test.outputs.success }}
+  test-results:
+    description: "Path to test result artifacts"
+    value: ${{ steps.test.outputs.results-path }}
+  debug-artifacts:
+    description: "Path to debug output directory"
+    value: ${{ steps.test.outputs.debug-path }}
+
+runs:
+  using: composite
+  steps:
+    - name: Enable KVM for Android emulator
+      shell: bash
+      run: |
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger --name-match=kvm
+
+    - name: Download APK artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ inputs.apk-path }}
+
+    - name: Setup testing environment
+      uses: ./.github/actions/setup-dev-environment
+      with:
+        devbox-config: ${{ inputs.devbox-config }}
+
+    - name: Run Maestro Tests
+      shell: bash
+      working-directory: devbox/${{ inputs.devbox-config }}
+      env:
+        SKIP_DATA_CLEANUP: ${{ inputs.skip-data-cleanup }}
+        TEST_ENVIRONMENT: ${{ inputs.test-environment }}
+      run: |
+        # Use existing integration test script which handles Maestro execution
+        devbox run integration_test_android
+        echo "success=$?" >> $GITHUB_OUTPUT
+        echo "results-path=./test-results" >> $GITHUB_OUTPUT
+        echo "debug-path=./maestro-debug-output" >> $GITHUB_OUTPUT
+      id: test
+
+    - name: Upload test result artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: ${{ inputs.test-environment }}-test-results
+        path: |
+          maestro-debug-output/
+          *.png
+          *.xml
+          devbox/${{ inputs.devbox-config }}/maestro-debug-output/
+        retention-days: 14
+# Contract Requirements:
+# - Must use devbox for dependency management
+# - Must reuse existing integration_test_android script
+# - Must support both integration and production environments
+# - Must handle SKIP_DATA_CLEANUP environment variable
+# - Must collect and upload debug artifacts on test failures
+# - Must work with downloaded APK artifacts from build action

@@ -1,0 +1,331 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Production Validation Pipeline API",
+    "version": "1.0.0",
+    "description": "API contracts for production server testing within CI/CD pipeline"
+  },
+  "paths": {
+    "/pipeline/production-test": {
+      "post": {
+        "summary": "Start production validation test run",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductionTestRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Production test run started successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductionTestResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or prerequisite stages not passed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pipeline/production-test/{runId}/status": {
+      "get": {
+        "summary": "Get production test run status",
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Test run status retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductionTestStatus"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Test run not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/anonymous": {
+      "post": {
+        "summary": "Create anonymous user for testing",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnonymousUserRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Anonymous user created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnonymousUserResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Failed to create anonymous user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ProductionTestRequest": {
+        "type": "object",
+        "required": ["pipelineId", "branch", "commit", "maestroFlows"],
+        "properties": {
+          "pipelineId": {
+            "type": "string",
+            "description": "CI/CD pipeline identifier"
+          },
+          "branch": {
+            "type": "string",
+            "description": "Git branch being tested"
+          },
+          "commit": {
+            "type": "string",
+            "description": "Git commit hash"
+          },
+          "maestroFlows": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of Maestro flow files to execute"
+          },
+          "prerequisites": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of prerequisite pipeline stages that must pass"
+          }
+        }
+      },
+      "ProductionTestResponse": {
+        "type": "object",
+        "required": ["runId", "status", "startTime"],
+        "properties": {
+          "runId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["running"]
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "estimatedDuration": {
+            "type": "number",
+            "description": "Estimated duration in seconds based on historical data"
+          }
+        }
+      },
+      "ProductionTestStatus": {
+        "type": "object",
+        "required": ["runId", "status", "startTime", "testResults"],
+        "properties": {
+          "runId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["running", "passed", "failed", "error"]
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "testResults": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TestResult"
+            }
+          },
+          "anonymousUsers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnonymousUser"
+            }
+          }
+        }
+      },
+      "TestResult": {
+        "type": "object",
+        "required": ["testFlowName", "status", "duration"],
+        "properties": {
+          "testFlowName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["passed", "failed", "skipped"]
+          },
+          "duration": {
+            "type": "number",
+            "description": "Duration in milliseconds"
+          },
+          "errorMessage": {
+            "type": "string"
+          },
+          "anonymousUserId": {
+            "type": "string"
+          },
+          "screenshots": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "AnonymousUserRequest": {
+        "type": "object",
+        "required": ["testRunId"],
+        "properties": {
+          "testRunId": {
+            "type": "string",
+            "description": "Production test run this user is for"
+          }
+        }
+      },
+      "AnonymousUserResponse": {
+        "type": "object",
+        "required": ["userId", "status", "createdAt"],
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["created"]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "serverEnvironment": {
+            "type": "string",
+            "enum": ["production"]
+          }
+        }
+      },
+      "AnonymousUser": {
+        "type": "object",
+        "required": ["userId", "status", "createdAt"],
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["created", "active", "completed"]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "usedByTestRun": {
+            "type": "string"
+          },
+          "serverEnvironment": {
+            "type": "string",
+            "enum": ["production"]
+          }
+        }
+      },
+      "ValidationError": {
+        "type": "object",
+        "required": ["message", "errors"],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "NotFoundError": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "ServerError": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "details": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  }
+}

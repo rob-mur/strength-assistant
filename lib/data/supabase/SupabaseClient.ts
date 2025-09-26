@@ -72,20 +72,14 @@ export class SupabaseClient {
    * Does NOT automatically sign in - auth should be handled by useAuth hook
    */
   async getCurrentUser() {
-    try {
-      const {
-        data: { user },
-        error,
-      } = await this.getClient().auth.getUser();
-      if (error) {
-        console.error("Failed to get current user:", error);
-        throw error;
-      }
-      return user;
-    } catch (error) {
-      console.error("Failed to get current user:", error);
+    const {
+      data: { user },
+      error,
+    } = await this.getClient().auth.getUser();
+    if (error) {
       throw error;
     }
+    return user;
   }
 
   /**

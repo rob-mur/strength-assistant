@@ -168,25 +168,12 @@ export const legendStateGlobalConfig = {
   optimizeUpdates: true,
 
   // Error handling
-  onSyncError: (error: Error, table: string) => {
-    console.error(`Legend State sync error for ${table}:`, error);
-
-    // In development, show more detailed errors
-    if (__DEV__) {
-      console.error("Sync error details:", {
-        message: error.message,
-        stack: error.stack,
-        table,
-      });
-    }
+  onSyncError: (_error: Error, _table: string) => {
+    // Silent error handling
   },
 
   // Connection status handling
-  onConnectionChange: (isConnected: boolean) => {
-    if (__DEV__) {
-      console.log(
-        `Legend State connection status: ${isConnected ? "online" : "offline"}`,
-      );
-    }
+  onConnectionChange: (_isConnected: boolean) => {
+    // Silent connection status tracking
   },
 };

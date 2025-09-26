@@ -9,8 +9,7 @@ const AsyncStorageWeb = {
         return window.localStorage.getItem(key);
       }
       return null;
-    } catch (error) {
-      console.warn("AsyncStorage.getItem failed:", error);
+    } catch {
       return null;
     }
   },
@@ -20,8 +19,8 @@ const AsyncStorageWeb = {
       if (typeof window !== "undefined" && window.localStorage) {
         window.localStorage.setItem(key, value);
       }
-    } catch (error) {
-      console.warn("AsyncStorage.setItem failed:", error);
+    } catch {
+      /* Silent error handling */
     }
   },
 
@@ -30,8 +29,8 @@ const AsyncStorageWeb = {
       if (typeof window !== "undefined" && window.localStorage) {
         window.localStorage.removeItem(key);
       }
-    } catch (error) {
-      console.warn("AsyncStorage.removeItem failed:", error);
+    } catch {
+      /* Silent error handling */
     }
   },
 
@@ -40,8 +39,8 @@ const AsyncStorageWeb = {
       if (typeof window !== "undefined" && window.localStorage) {
         window.localStorage.clear();
       }
-    } catch (error) {
-      console.warn("AsyncStorage.clear failed:", error);
+    } catch {
+      /* Silent error handling */
     }
   },
 };

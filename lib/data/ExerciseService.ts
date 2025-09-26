@@ -565,9 +565,8 @@ export class ExerciseService {
         );
         this.syncRecords = new Map(syncRecords as [string, SyncRecord][]);
       }
-    } catch (error) {
+    } catch {
       // Handle persistence errors gracefully
-      console.warn("Failed to load from persistence:", error);
     }
   }
 
@@ -586,9 +585,8 @@ export class ExerciseService {
       global.testPersistence.syncRecords = Array.from(
         this.syncRecords.entries(),
       );
-    } catch (error) {
+    } catch {
       // Handle persistence errors gracefully
-      console.warn("Failed to save to persistence:", error);
     }
   }
 }

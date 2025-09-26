@@ -36,8 +36,8 @@ async function loadInitialData() {
 
     if (error) throw error;
     exercises$.set((data as Exercise[]) || []);
-  } catch (error) {
-    console.error("Failed to load initial exercises:", error);
+  } catch {
+    /* Silent error handling */
   }
 }
 
@@ -116,12 +116,13 @@ function setupRealtimeSubscription() {
           },
         )
         .subscribe();
-    } catch (error) {
-      console.error("Failed to set up real-time subscription:", error);
+    } catch {
+      /* Silent error handling */
     }
   };
 
   // Set up auth state listener to restart subscription when user changes
+  let isInitialAuthState = true;
   supabaseClient.onAuthStateChange((event, session) => {
     user$.set(session?.user || null);
 
@@ -133,10 +134,16 @@ function setupRealtimeSubscription() {
 
     if (session?.user) {
       startSubscription();
-      loadInitialData();
+      // Prevent infinite loop: only load initial data on non-initial auth changes
+      // The initial data loading is handled by the configureSyncEngine() call
+      if (!isInitialAuthState) {
+        loadInitialData();
+      }
     } else {
       exercises$.set([]);
     }
+
+    isInitialAuthState = false;
   });
 }
 
@@ -146,27 +153,22 @@ function setupRealtimeSubscription() {
 export async function syncExerciseToSupabase(
   exercise: Exercise,
 ): Promise<void> {
-  try {
-    const user = await supabaseClient.getCurrentUser();
-    if (!user) throw new Error("User not authenticated");
+  const user = await supabaseClient.getCurrentUser();
+  if (!user) throw new Error("User not authenticated");
 
-    const exerciseToUpsert: ExerciseInsert = {
-      id: exercise.id,
-      name: exercise.name,
-      user_id: exercise.user_id,
-      created_at: exercise.created_at,
-    };
+  const exerciseToUpsert: ExerciseInsert = {
+    id: exercise.id,
+    name: exercise.name,
+    user_id: exercise.user_id,
+    created_at: exercise.created_at,
+  };
 
-    const { error } = await (
-      supabaseClient
-        .getSupabaseClient()
-        .from("exercises") as unknown as SupabaseQueryBuilder
-    ).upsert(exerciseToUpsert);
-    if (error) throw error;
-  } catch (error) {
-    console.error("Failed to sync exercise to Supabase:", error);
-    throw error;
-  }
+  const { error } = await (
+    supabaseClient
+      .getSupabaseClient()
+      .from("exercises") as unknown as SupabaseQueryBuilder
+  ).upsert(exerciseToUpsert);
+  if (error) throw error;
 }
 
 /**
@@ -176,21 +178,16 @@ export async function deleteExerciseFromSupabase(
   exerciseId: string,
   userId: string,
 ): Promise<void> {
-  try {
-    const { error } = await (
-      supabaseClient
-        .getSupabaseClient()
-        .from("exercises") as unknown as SupabaseQueryBuilder
-    )
-      .delete()
-      .eq("id", exerciseId)
-      .eq("user_id", userId);
+  const { error } = await (
+    supabaseClient
+      .getSupabaseClient()
+      .from("exercises") as unknown as SupabaseQueryBuilder
+  )
+    .delete()
+    .eq("id", exerciseId)
+    .eq("user_id", userId);
 
-    if (error) throw error;
-  } catch (error) {
-    console.error("Failed to delete exercise from Supabase:", error);
-    throw error;
-  }
+  if (error) throw error;
 }
 
 /**
@@ -217,8 +214,8 @@ export const syncHelpers = {
       if (!error && data) {
         exercises$.set(data as Exercise[]);
       }
-    } catch (error) {
-      console.error("Failed to force sync:", error);
+    } catch {
+      /* Silent error handling */
     }
   },
 

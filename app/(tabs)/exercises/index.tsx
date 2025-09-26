@@ -11,16 +11,6 @@ export default function ExerciseScreen() {
   const { user } = useAuth();
   const { exercises } = useExercises(user?.uid || "");
 
-  // Debug logging for Chrome tests
-  React.useEffect(() => {
-    if (process.env.CHROME_TEST === "true" || process.env.CI === "true") {
-      console.log("🔍 ExerciseScreen: Component rendered", {
-        userId: user?.uid,
-        exerciseCount: exercises.length,
-      });
-    }
-  }, [user, exercises]);
-
   return (
     <View style={{ flex: 1, position: "relative" }} testID="exercise-screen">
       <ExerciseList exercises={exercises} />
@@ -28,11 +18,9 @@ export default function ExerciseScreen() {
         style={{ position: "absolute", margin: 16, right: 0, bottom: 0 }}
         icon="plus"
         testID="add-exercise"
+        // @ts-ignore - Web compatibility for Maestro tests
+        id="add-exercise"
         onPress={(_) => {
-          // Debug logging for Chrome tests
-          if (process.env.CHROME_TEST === "true" || process.env.CI === "true") {
-            console.log("🔍 ExerciseScreen: Add exercise button tapped");
-          }
           router.navigate("/exercises/add");
         }}
       />

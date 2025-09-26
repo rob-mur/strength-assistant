@@ -113,21 +113,9 @@ export class DataLayerAPI {
           isAnonymous: currentUser.isAnonymous,
           isAuthenticated: !currentUser.isAnonymous,
         });
-
-        if (__DEV__) {
-          console.info(
-            `✅ Data layer initialized with ${currentUser.isAnonymous ? "anonymous" : "authenticated"} user`,
-          );
-        }
-      } else if (__DEV__) {
-        console.info("✅ Data layer initialized - no active user session");
       }
     } catch (error) {
       const errorMessage = `Data layer initialization failed: ${error instanceof Error ? error.message : String(error)}`;
-
-      if (__DEV__) {
-        console.error("❌", errorMessage);
-      }
 
       throw new Error(errorMessage);
     }
@@ -209,10 +197,6 @@ export class DataLayerAPI {
   async dispose(): Promise<void> {
     const { disposeSync } = await import("./legend-state/ExerciseStore");
     disposeSync();
-
-    if (__DEV__) {
-      console.info("🗑️ Data layer disposed");
-    }
   }
 }
 

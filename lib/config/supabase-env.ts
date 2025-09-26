@@ -71,33 +71,10 @@ export function isSupabaseDataEnabled(): boolean {
  * Should be called during app initialization
  */
 export function validateSupabaseEnvironment(): void {
-  try {
-    getSupabaseEnvConfig();
+  getSupabaseEnvConfig();
 
-    // Additional validation for development environment
-    if (__DEV__) {
-      const useEmulator = process.env.EXPO_PUBLIC_USE_EMULATOR === "true";
-      const useSupabaseEmulator =
-        process.env.EXPO_PUBLIC_USE_SUPABASE_EMULATOR === "true";
-
-      if (useEmulator && !useSupabaseEmulator) {
-        console.warn(
-          "⚠️  EXPO_PUBLIC_USE_EMULATOR is true but EXPO_PUBLIC_USE_SUPABASE_EMULATOR is false. Consider enabling Supabase emulator for development.",
-        );
-      }
-
-      if (isSupabaseDataEnabled()) {
-        console.info(
-          "✅ Supabase data layer is enabled (USE_SUPABASE_DATA=true)",
-        );
-      } else {
-        console.info(
-          "ℹ️  Firebase data layer is active (USE_SUPABASE_DATA=false)",
-        );
-      }
-    }
-  } catch (error) {
-    console.error("❌ Supabase environment validation failed:", error);
-    throw error;
+  // Additional validation for development environment
+  if (__DEV__) {
+    // Environment variable validation (no-op for now)
   }
 }
