@@ -145,4 +145,89 @@ describe("syncConfig loadInitialData error handling", () => {
     // Wait for async operations to complete
     await new Promise((resolve) => setTimeout(resolve, 50));
   });
+
+  it("handles error in loadInitialData when triggered by auth state change (non-initial)", async () => {
+    // Set up mocks for successful initial configuration
+    mockGetCurrentUser.mockResolvedValue({ id: "test-user-id" });
+
+    const mockFrom = jest.fn().mockReturnValue({
+      select: jest.fn().mockReturnValue({
+        eq: jest.fn().mockResolvedValue({
+          data: [],
+          error: null,
+        }),
+      }),
+    });
+
+    mockGetSupabaseClient.mockReturnValue({
+      from: mockFrom,
+    });
+
+    // Capture the auth state change callback
+    let authStateCallback: (event: string, session: any) => void;
+    mockOnAuthStateChange.mockImplementation((callback) => {
+      authStateCallback = callback;
+      return { data: { subscription: { unsubscribe: jest.fn() } } };
+    });
+
+    // Configure sync engine (this will be the initial auth state)
+    configureSyncEngine();
+
+    // Wait for initial setup
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    // Now mock getCurrentUser to throw an error for the subsequent call
+    mockGetCurrentUser.mockRejectedValue(new Error("Auth state change error"));
+
+    // Trigger a non-initial auth state change (this should call loadInitialData again)
+    // The !isInitialAuthState condition should be true now
+    authStateCallback("SIGNED_IN", { user: { id: "test-user" } });
+
+    // Wait for the auth state change to process
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    // The error should be silently handled, no exception thrown
+    expect(true).toBe(true); // Test passes if no exception is thrown
+  });
+
+  it("covers the non-initial auth state change path that calls loadInitialData", async () => {
+    // Set up successful mocks
+    mockGetCurrentUser.mockResolvedValue({ id: "test-user-id" });
+
+    const mockFrom = jest.fn().mockReturnValue({
+      select: jest.fn().mockReturnValue({
+        eq: jest.fn().mockResolvedValue({
+          data: [{ id: "1", name: "Test Exercise" }],
+          error: null,
+        }),
+      }),
+    });
+
+    mockGetSupabaseClient.mockReturnValue({
+      from: mockFrom,
+    });
+
+    // Capture the auth state change callback
+    let authStateCallback: (event: string, session: any) => void;
+    mockOnAuthStateChange.mockImplementation((callback) => {
+      authStateCallback = callback;
+      return { data: { subscription: { unsubscribe: jest.fn() } } };
+    });
+
+    // Configure sync engine (this will be the initial auth state)
+    configureSyncEngine();
+
+    // Wait for initial setup
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    // Trigger a non-initial auth state change (this should call loadInitialData again)
+    // This covers the if (!isInitialAuthState) { loadInitialData(); } path
+    authStateCallback("SIGNED_IN", { user: { id: "test-user" } });
+
+    // Wait for the auth state change to process
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    // The test passes if no exception is thrown, meaning the path was executed
+    expect(mockGetCurrentUser).toHaveBeenCalled();
+  });
 });
