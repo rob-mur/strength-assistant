@@ -52,12 +52,6 @@ describe("Data Sync Index", () => {
 
       expect(initSupabase).toHaveBeenCalled();
       expect(configureSyncEngine).toHaveBeenCalled();
-
-      expect(console.log).toHaveBeenCalledWith("📊 Initializing Supabase...");
-      expect(console.log).toHaveBeenCalledWith("🔄 Configuring sync engine...");
-      expect(console.log).toHaveBeenCalledWith(
-        "✅ Offline-first data layer initialized successfully",
-      );
     });
 
     it("initializes components in correct order", async () => {
@@ -66,33 +60,20 @@ describe("Data Sync Index", () => {
 
       await initializeDataLayer();
 
-      // Verify order of calls - Supabase first, then sync engine
-      const mockCalls = (console.log as jest.Mock).mock.calls;
-      expect(mockCalls.some((call) => call[0].includes("Supabase"))).toBe(true);
-      expect(mockCalls.some((call) => call[0].includes("sync engine"))).toBe(
-        true,
-      );
-      expect(mockCalls.some((call) => call[0].includes("successfully"))).toBe(
-        true,
-      );
+      // Verify both functions are called (order not verifiable without console logs)
+      expect(initSupabase).toHaveBeenCalled();
+      expect(configureSyncEngine).toHaveBeenCalled();
     });
 
-    it("logs initialization steps", async () => {
+    it("calls initialization functions", async () => {
+      const { configureSyncEngine } = require("@/lib/data/sync/syncConfig");
+      const { initSupabase } = require("@/lib/data/supabase/supabase");
+
       await initializeDataLayer();
 
-      expect(console.log).toHaveBeenCalledTimes(3); // Updated from 4 to 3 (no Firebase)
-      expect(console.log).toHaveBeenNthCalledWith(
-        1,
-        "📊 Initializing Supabase...",
-      );
-      expect(console.log).toHaveBeenNthCalledWith(
-        2,
-        "🔄 Configuring sync engine...",
-      );
-      expect(console.log).toHaveBeenNthCalledWith(
-        3,
-        "✅ Offline-first data layer initialized successfully",
-      );
+      // Verify both functions are called
+      expect(initSupabase).toHaveBeenCalledTimes(1);
+      expect(configureSyncEngine).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -129,14 +110,7 @@ describe("Data Sync Index", () => {
       // Should not throw in web environment, but continue with degraded functionality
       await expect(initializeDataLayer()).resolves.toBeUndefined();
 
-      expect(console.log).toHaveBeenCalledWith("📊 Initializing Supabase...");
-      expect(console.error).toHaveBeenCalledWith(
-        "❌ Failed to initialize data layer:",
-        expect.any(Error),
-      );
-      expect(console.warn).toHaveBeenCalledWith(
-        "⚠️ Continuing with degraded functionality for web environment",
-      );
+      // Console logs removed, but should still handle error gracefully
     });
 
     it("handles sync engine configuration errors in web environment", async () => {
@@ -148,14 +122,7 @@ describe("Data Sync Index", () => {
       // Should not throw in web environment, but continue with degraded functionality
       await expect(initializeDataLayer()).resolves.toBeUndefined();
 
-      expect(console.log).toHaveBeenCalledWith("🔄 Configuring sync engine...");
-      expect(console.error).toHaveBeenCalledWith(
-        "❌ Failed to initialize data layer:",
-        expect.any(Error),
-      );
-      expect(console.warn).toHaveBeenCalledWith(
-        "⚠️ Continuing with degraded functionality for web environment",
-      );
+      // Console logs removed, but should still handle error gracefully
     });
 
     it("throws errors in non-web environment", async () => {
@@ -176,11 +143,7 @@ describe("Data Sync Index", () => {
         "Supabase initialization failed",
       );
 
-      expect(console.error).toHaveBeenCalledWith(
-        "❌ Failed to initialize data layer:",
-        expect.any(Error),
-      );
-      expect(console.warn).not.toHaveBeenCalled();
+      // Console logs removed, but should still throw error in non-web environment
     });
   });
 });

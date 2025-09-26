@@ -12,13 +12,11 @@ export const useAppInit = () => {
   const [isAppReady, setIsAppReady] = useState(false);
   const logger = useMemo(() => new Logger("AppInit"), []);
 
-
   const [fontsLoaded, fontError] = useFonts({
     NotoSans_400Regular,
     JetBrainsMono_400Regular,
     ...MaterialCommunityIcons.font,
   });
-
 
   useEffect(() => {
     if (fontError) {
@@ -76,7 +74,6 @@ export const useAppInit = () => {
 
         // In Chrome/test environments, show error in DOM for easier debugging
         if (typeof window !== "undefined") {
-
           // Create visible error indicator for integration tests
           const errorDiv = document.createElement("div");
           errorDiv.style.cssText = `

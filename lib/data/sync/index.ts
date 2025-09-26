@@ -12,7 +12,6 @@ export async function initializeDataLayer(): Promise<void> {
 
     // Configure Legend State sync engine
     configureSyncEngine();
-
   } catch (error) {
     // For Chrome/web testing, we'll continue with degraded functionality
     // rather than completely blocking the app
