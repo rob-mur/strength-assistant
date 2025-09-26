@@ -81,8 +81,6 @@ export const exerciseStore = observable<ExerciseStore>(initialStoreState);
 function configurePersistence() {
   // For now, we'll use a simplified persistence approach
   // In the full implementation, we'd configure persistence plugins
-  if (__DEV__) {
-  }
 }
 
 /**
@@ -119,18 +117,12 @@ export function initializeSync() {
       );
     }
   }
-
-  if (__DEV__) {
-  }
 }
 
 /**
  * Reinitialize sync when backend changes (for feature flag switching)
  */
 export function reinitializeSync() {
-  if (__DEV__) {
-  }
-
   initializeSync();
 }
 
@@ -139,8 +131,6 @@ export function reinitializeSync() {
  */
 export function disposeSync() {
   // Cleanup any resources
-  if (__DEV__) {
-  }
 }
 
 // Auto-initialize on module load (disabled in tests to prevent hanging, unless explicitly testing)

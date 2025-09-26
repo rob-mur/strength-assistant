@@ -153,26 +153,22 @@ function setupRealtimeSubscription() {
 export async function syncExerciseToSupabase(
   exercise: Exercise,
 ): Promise<void> {
-  try {
-    const user = await supabaseClient.getCurrentUser();
-    if (!user) throw new Error("User not authenticated");
+  const user = await supabaseClient.getCurrentUser();
+  if (!user) throw new Error("User not authenticated");
 
-    const exerciseToUpsert: ExerciseInsert = {
-      id: exercise.id,
-      name: exercise.name,
-      user_id: exercise.user_id,
-      created_at: exercise.created_at,
-    };
+  const exerciseToUpsert: ExerciseInsert = {
+    id: exercise.id,
+    name: exercise.name,
+    user_id: exercise.user_id,
+    created_at: exercise.created_at,
+  };
 
-    const { error } = await (
-      supabaseClient
-        .getSupabaseClient()
-        .from("exercises") as unknown as SupabaseQueryBuilder
-    ).upsert(exerciseToUpsert);
-    if (error) throw error;
-  } catch (error) {
-    throw error;
-  }
+  const { error } = await (
+    supabaseClient
+      .getSupabaseClient()
+      .from("exercises") as unknown as SupabaseQueryBuilder
+  ).upsert(exerciseToUpsert);
+  if (error) throw error;
 }
 
 /**
@@ -182,20 +178,16 @@ export async function deleteExerciseFromSupabase(
   exerciseId: string,
   userId: string,
 ): Promise<void> {
-  try {
-    const { error } = await (
-      supabaseClient
-        .getSupabaseClient()
-        .from("exercises") as unknown as SupabaseQueryBuilder
-    )
-      .delete()
-      .eq("id", exerciseId)
-      .eq("user_id", userId);
+  const { error } = await (
+    supabaseClient
+      .getSupabaseClient()
+      .from("exercises") as unknown as SupabaseQueryBuilder
+  )
+    .delete()
+    .eq("id", exerciseId)
+    .eq("user_id", userId);
 
-    if (error) throw error;
-  } catch (error) {
-    throw error;
-  }
+  if (error) throw error;
 }
 
 /**

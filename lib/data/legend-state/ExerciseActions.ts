@@ -129,9 +129,6 @@ class ExerciseActionsImpl implements ExerciseActions {
 
       // Reinitialize sync for authenticated user
       reinitializeSync();
-
-      if (__DEV__) {
-      }
     } catch (error) {
       this.handleActionError("Sign in failed", error);
       throw error; // Re-throw for UI error handling
@@ -151,9 +148,6 @@ class ExerciseActionsImpl implements ExerciseActions {
 
       // Reinitialize sync for new authenticated user
       reinitializeSync();
-
-      if (__DEV__) {
-      }
     } catch (error) {
       this.handleActionError("Sign up failed", error);
       throw error; // Re-throw for UI error handling
@@ -170,9 +164,6 @@ class ExerciseActionsImpl implements ExerciseActions {
       const userAccount = await authBackend.signInAnonymously();
 
       this.updateUserState(userAccount);
-
-      if (__DEV__) {
-      }
     } catch (error) {
       this.handleActionError("Anonymous sign in failed", error);
       throw error; // Re-throw for UI error handling
@@ -196,9 +187,6 @@ class ExerciseActionsImpl implements ExerciseActions {
 
       // Clear sync errors
       this.clearSyncErrors();
-
-      if (__DEV__) {
-      }
     } catch (error) {
       this.handleActionError("Sign out failed", error);
       throw error; // Re-throw for UI error handling
@@ -214,9 +202,6 @@ class ExerciseActionsImpl implements ExerciseActions {
 
       // Force sync by reinitializing the sync engine
       reinitializeSync();
-
-      if (__DEV__) {
-      }
     } catch (error) {
       this.handleActionError("Force sync failed", error);
     } finally {
@@ -259,9 +244,6 @@ class ExerciseActionsImpl implements ExerciseActions {
 
     // Add error to sync state
     exerciseStore.syncState.errors.set((prev) => [...prev, fullMessage]);
-
-    if (__DEV__) {
-    }
   }
 }
 

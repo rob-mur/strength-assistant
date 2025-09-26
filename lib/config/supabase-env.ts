@@ -71,14 +71,10 @@ export function isSupabaseDataEnabled(): boolean {
  * Should be called during app initialization
  */
 export function validateSupabaseEnvironment(): void {
-  try {
-    getSupabaseEnvConfig();
+  getSupabaseEnvConfig();
 
-    // Additional validation for development environment
-    if (__DEV__) {
-      // Environment variable validation (no-op for now)
-    }
-  } catch (error) {
-    throw error;
+  // Additional validation for development environment
+  if (__DEV__) {
+    // Environment variable validation (no-op for now)
   }
 }

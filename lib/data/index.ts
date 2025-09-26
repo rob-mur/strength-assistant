@@ -197,9 +197,6 @@ export class DataLayerAPI {
   async dispose(): Promise<void> {
     const { disposeSync } = await import("./legend-state/ExerciseStore");
     disposeSync();
-
-    if (__DEV__) {
-    }
   }
 }
 

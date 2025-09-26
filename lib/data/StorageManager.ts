@@ -29,8 +29,6 @@ export class StorageManager implements IStorageManager {
   constructor() {
     // Initialize Supabase backend
     this.supabaseStorage = new SupabaseStorage();
-    if (__DEV__) {
-    }
   }
 
   /**
@@ -73,9 +71,6 @@ export class StorageManager implements IStorageManager {
     }
 
     await this.supabaseStorage.clearAllData();
-
-    if (__DEV__) {
-    }
   }
 }
 
