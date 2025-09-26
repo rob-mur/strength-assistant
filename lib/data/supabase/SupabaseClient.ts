@@ -78,11 +78,11 @@ export class SupabaseClient {
         error,
       } = await this.getClient().auth.getUser();
       if (error) {
-                throw error;
+        throw error;
       }
       return user;
     } catch (error) {
-            throw error;
+      throw error;
     }
   }
 

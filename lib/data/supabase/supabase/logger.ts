@@ -32,9 +32,9 @@ export class Logger {
   }
 
   private logWithContext(
-    level: "log" | "warn" | "error",
-    message: string,
-    context?: Record<string, unknown>,
+    _level: "log" | "warn" | "error",
+    _message: string,
+    _context?: Record<string, unknown>,
   ): void {
     // Silent logging to avoid Chrome test issues
   }

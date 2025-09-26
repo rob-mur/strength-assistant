@@ -76,11 +76,7 @@ export function validateSupabaseEnvironment(): void {
 
     // Additional validation for development environment
     if (__DEV__) {
-      const useEmulator = process.env.EXPO_PUBLIC_USE_EMULATOR === "true";
-      const useSupabaseEmulator =
-        process.env.EXPO_PUBLIC_USE_SUPABASE_EMULATOR === "true";
-
-
+      // Environment variable validation (no-op for now)
     }
   } catch (error) {
     throw error;

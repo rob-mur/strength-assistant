@@ -268,7 +268,8 @@ export function fromDbFormat(
   if (dbRecord.payload) {
     try {
       syncState.payload = JSON.parse(dbRecord.payload as string);
-    } catch (error) {
+    } catch {
+      /* Silent error handling */
     }
   }
 

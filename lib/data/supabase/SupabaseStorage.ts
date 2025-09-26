@@ -84,7 +84,6 @@ export class SupabaseStorage implements StorageBackend {
       const config = getSupabaseEnvConfig();
       const supabaseUrl = getSupabaseUrl();
 
-
       this.client = createClient(supabaseUrl, config.anonKey, {
         auth: {
           autoRefreshToken: true,
@@ -100,7 +99,7 @@ export class SupabaseStorage implements StorageBackend {
     this.authStateCallbacks.forEach((callback) => {
       try {
         callback(user);
-      } catch (error) {
+      } catch {
         // Silent error handling
       }
     });
@@ -295,7 +294,7 @@ export class SupabaseStorage implements StorageBackend {
         this.notifyAuthStateChange(realUser);
         return realUser;
       }
-    } catch (error) {
+    } catch {
       // Silent error handling
     }
 
@@ -494,7 +493,7 @@ export class SupabaseStorage implements StorageBackend {
       if (session?.user) {
         this.currentUser = this.mapSupabaseUserToAccount(session.user);
       }
-    } catch (error) {
+    } catch {
       // Silent error handling
     }
   }

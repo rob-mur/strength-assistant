@@ -168,12 +168,12 @@ export const legendStateGlobalConfig = {
   optimizeUpdates: true,
 
   // Error handling
-  onSyncError: (error: Error, table: string) => {
+  onSyncError: (_error: Error, _table: string) => {
     // Silent error handling
   },
 
   // Connection status handling
-  onConnectionChange: (isConnected: boolean) => {
+  onConnectionChange: (_isConnected: boolean) => {
     // Silent connection status tracking
   },
 };

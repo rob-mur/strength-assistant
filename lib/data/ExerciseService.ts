@@ -565,7 +565,7 @@ export class ExerciseService {
         );
         this.syncRecords = new Map(syncRecords as [string, SyncRecord][]);
       }
-    } catch (error) {
+    } catch {
       // Handle persistence errors gracefully
     }
   }
@@ -585,7 +585,7 @@ export class ExerciseService {
       global.testPersistence.syncRecords = Array.from(
         this.syncRecords.entries(),
       );
-    } catch (error) {
+    } catch {
       // Handle persistence errors gracefully
     }
   }

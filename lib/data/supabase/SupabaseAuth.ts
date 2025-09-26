@@ -74,8 +74,9 @@ export class SupabaseAuth {
         this.authStateListeners.forEach((listener) => {
           try {
             listener(mappedUser);
-          } catch (error) {
-                      }
+          } catch {
+            /* Silent error handling */
+          }
         });
       });
     }
@@ -166,7 +167,7 @@ export class SupabaseAuth {
     operation: string,
   ): UserAccount {
     if (error) {
-            throw new Error(
+      throw new Error(
         `${operation} failed: ${(error as { message: string }).message}`,
       );
     }

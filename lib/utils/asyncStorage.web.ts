@@ -9,8 +9,8 @@ const AsyncStorageWeb = {
         return window.localStorage.getItem(key);
       }
       return null;
-    } catch (error) {
-            return null;
+    } catch {
+      return null;
     }
   },
 
@@ -19,8 +19,9 @@ const AsyncStorageWeb = {
       if (typeof window !== "undefined" && window.localStorage) {
         window.localStorage.setItem(key, value);
       }
-    } catch (error) {
-          }
+    } catch {
+      /* Silent error handling */
+    }
   },
 
   removeItem: async (key: string): Promise<void> => {
@@ -28,8 +29,9 @@ const AsyncStorageWeb = {
       if (typeof window !== "undefined" && window.localStorage) {
         window.localStorage.removeItem(key);
       }
-    } catch (error) {
-          }
+    } catch {
+      /* Silent error handling */
+    }
   },
 
   clear: async (): Promise<void> => {
@@ -37,8 +39,9 @@ const AsyncStorageWeb = {
       if (typeof window !== "undefined" && window.localStorage) {
         window.localStorage.clear();
       }
-    } catch (error) {
-          }
+    } catch {
+      /* Silent error handling */
+    }
   },
 };
 

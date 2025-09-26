@@ -219,7 +219,6 @@ describe("Authentication and Navigation Flow Integration", () => {
   });
 
   describe("Authentication State Transitions", () => {
-
     it("should maintain auth state consistency throughout app lifecycle", async () => {
       const authStates: any[] = [];
 

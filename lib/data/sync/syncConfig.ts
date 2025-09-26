@@ -36,7 +36,8 @@ async function loadInitialData() {
 
     if (error) throw error;
     exercises$.set((data as Exercise[]) || []);
-  } catch (error) {
+  } catch {
+    /* Silent error handling */
   }
 }
 
@@ -115,7 +116,8 @@ function setupRealtimeSubscription() {
           },
         )
         .subscribe();
-    } catch (error) {
+    } catch {
+      /* Silent error handling */
     }
   };
 
@@ -220,7 +222,8 @@ export const syncHelpers = {
       if (!error && data) {
         exercises$.set(data as Exercise[]);
       }
-    } catch (error) {
+    } catch {
+      /* Silent error handling */
     }
   },
 

@@ -117,7 +117,6 @@ export class DataLayerAPI {
     } catch (error) {
       const errorMessage = `Data layer initialization failed: ${error instanceof Error ? error.message : String(error)}`;
 
-
       throw new Error(errorMessage);
     }
   }
