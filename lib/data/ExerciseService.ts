@@ -567,7 +567,6 @@ export class ExerciseService {
       }
     } catch (error) {
       // Handle persistence errors gracefully
-      console.warn("Failed to load from persistence:", error);
     }
   }
 
@@ -588,7 +587,6 @@ export class ExerciseService {
       );
     } catch (error) {
       // Handle persistence errors gracefully
-      console.warn("Failed to save to persistence:", error);
     }
   }
 }

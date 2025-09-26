@@ -37,7 +37,6 @@ async function loadInitialData() {
     if (error) throw error;
     exercises$.set((data as Exercise[]) || []);
   } catch (error) {
-    console.error("Failed to load initial exercises:", error);
   }
 }
 
@@ -117,7 +116,6 @@ function setupRealtimeSubscription() {
         )
         .subscribe();
     } catch (error) {
-      console.error("Failed to set up real-time subscription:", error);
     }
   };
 
@@ -171,7 +169,6 @@ export async function syncExerciseToSupabase(
     ).upsert(exerciseToUpsert);
     if (error) throw error;
   } catch (error) {
-    console.error("Failed to sync exercise to Supabase:", error);
     throw error;
   }
 }
@@ -195,7 +192,6 @@ export async function deleteExerciseFromSupabase(
 
     if (error) throw error;
   } catch (error) {
-    console.error("Failed to delete exercise from Supabase:", error);
     throw error;
   }
 }
@@ -225,7 +221,6 @@ export const syncHelpers = {
         exercises$.set(data as Exercise[]);
       }
     } catch (error) {
-      console.error("Failed to force sync:", error);
     }
   },
 

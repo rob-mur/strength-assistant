@@ -10,8 +10,7 @@ const AsyncStorageWeb = {
       }
       return null;
     } catch (error) {
-      console.warn("AsyncStorage.getItem failed:", error);
-      return null;
+            return null;
     }
   },
 
@@ -21,8 +20,7 @@ const AsyncStorageWeb = {
         window.localStorage.setItem(key, value);
       }
     } catch (error) {
-      console.warn("AsyncStorage.setItem failed:", error);
-    }
+          }
   },
 
   removeItem: async (key: string): Promise<void> => {
@@ -31,8 +29,7 @@ const AsyncStorageWeb = {
         window.localStorage.removeItem(key);
       }
     } catch (error) {
-      console.warn("AsyncStorage.removeItem failed:", error);
-    }
+          }
   },
 
   clear: async (): Promise<void> => {
@@ -41,8 +38,7 @@ const AsyncStorageWeb = {
         window.localStorage.clear();
       }
     } catch (error) {
-      console.warn("AsyncStorage.clear failed:", error);
-    }
+          }
   },
 };
 

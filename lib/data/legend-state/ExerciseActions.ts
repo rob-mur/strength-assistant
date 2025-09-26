@@ -131,7 +131,6 @@ class ExerciseActionsImpl implements ExerciseActions {
       reinitializeSync();
 
       if (__DEV__) {
-        console.info("✅ User signed in successfully");
       }
     } catch (error) {
       this.handleActionError("Sign in failed", error);
@@ -154,7 +153,6 @@ class ExerciseActionsImpl implements ExerciseActions {
       reinitializeSync();
 
       if (__DEV__) {
-        console.info("✅ User signed up successfully");
       }
     } catch (error) {
       this.handleActionError("Sign up failed", error);
@@ -174,7 +172,6 @@ class ExerciseActionsImpl implements ExerciseActions {
       this.updateUserState(userAccount);
 
       if (__DEV__) {
-        console.info("✅ Anonymous sign in successful");
       }
     } catch (error) {
       this.handleActionError("Anonymous sign in failed", error);
@@ -201,7 +198,6 @@ class ExerciseActionsImpl implements ExerciseActions {
       this.clearSyncErrors();
 
       if (__DEV__) {
-        console.info("✅ User signed out successfully");
       }
     } catch (error) {
       this.handleActionError("Sign out failed", error);
@@ -220,7 +216,6 @@ class ExerciseActionsImpl implements ExerciseActions {
       reinitializeSync();
 
       if (__DEV__) {
-        console.info("🔄 Force sync completed");
       }
     } catch (error) {
       this.handleActionError("Force sync failed", error);
@@ -266,7 +261,6 @@ class ExerciseActionsImpl implements ExerciseActions {
     exerciseStore.syncState.errors.set((prev) => [...prev, fullMessage]);
 
     if (__DEV__) {
-      console.error("❌", fullMessage);
     }
   }
 }

@@ -82,7 +82,6 @@ function configurePersistence() {
   // For now, we'll use a simplified persistence approach
   // In the full implementation, we'd configure persistence plugins
   if (__DEV__) {
-    console.info("📱 Exercise store persistence configured");
   }
 }
 
@@ -122,7 +121,6 @@ export function initializeSync() {
   }
 
   if (__DEV__) {
-    console.info("🔄 Legend State store initialized");
   }
 }
 
@@ -131,7 +129,6 @@ export function initializeSync() {
  */
 export function reinitializeSync() {
   if (__DEV__) {
-    console.info("🔄 Reinitializing store for backend change");
   }
 
   initializeSync();
@@ -143,7 +140,6 @@ export function reinitializeSync() {
 export function disposeSync() {
   // Cleanup any resources
   if (__DEV__) {
-    console.info("🗑️ Legend State store disposed");
   }
 }
 

@@ -35,7 +35,6 @@ export function AuthAwareLayout({ children }: AuthAwareLayoutProps) {
 
     // Normal timeout for other environments
     const timeout = setTimeout(() => {
-      console.warn("Auth loading timeout - forcing auth screen display");
       setForceShowAuth(true);
     }, 5000); // 5 seconds timeout
 

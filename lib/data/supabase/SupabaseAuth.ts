@@ -75,8 +75,7 @@ export class SupabaseAuth {
           try {
             listener(mappedUser);
           } catch (error) {
-            console.error("Error in auth state listener:", error);
-          }
+                      }
         });
       });
     }
@@ -167,8 +166,7 @@ export class SupabaseAuth {
     operation: string,
   ): UserAccount {
     if (error) {
-      console.error(`🔐 [SupabaseAuth] ${operation} error:`, error);
-      throw new Error(
+            throw new Error(
         `${operation} failed: ${(error as { message: string }).message}`,
       );
     }

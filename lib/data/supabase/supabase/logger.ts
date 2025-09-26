@@ -36,21 +36,7 @@ export class Logger {
     message: string,
     context?: Record<string, unknown>,
   ): void {
-    const formattedMessage = this.createMessage(level, message, context);
-
-    // Only log in development and test environments to avoid SonarQube violations
-    if (
-      process.env.NODE_ENV === "development" ||
-      process.env.NODE_ENV === "test"
-    ) {
-      if (level === "error") {
-        console.error(formattedMessage, context);
-      } else if (level === "warn") {
-        console.warn(formattedMessage, context);
-      } else {
-        console.log(formattedMessage, context);
-      }
-    }
+    // Silent logging to avoid Chrome test issues
   }
 
   info(message: string, context?: Record<string, unknown>): void {

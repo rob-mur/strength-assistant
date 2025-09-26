@@ -78,13 +78,11 @@ export class SupabaseClient {
         error,
       } = await this.getClient().auth.getUser();
       if (error) {
-        console.error("Failed to get current user:", error);
-        throw error;
+                throw error;
       }
       return user;
     } catch (error) {
-      console.error("Failed to get current user:", error);
-      throw error;
+            throw error;
     }
   }
 

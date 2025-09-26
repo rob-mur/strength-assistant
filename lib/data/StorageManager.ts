@@ -30,7 +30,6 @@ export class StorageManager implements IStorageManager {
     // Initialize Supabase backend
     this.supabaseStorage = new SupabaseStorage();
     if (__DEV__) {
-      console.info(`🔄 StorageManager initialized with Supabase backend`);
     }
   }
 
@@ -76,7 +75,6 @@ export class StorageManager implements IStorageManager {
     await this.supabaseStorage.clearAllData();
 
     if (__DEV__) {
-      console.info("🗑️ Cleared all data from Supabase backend");
     }
   }
 }

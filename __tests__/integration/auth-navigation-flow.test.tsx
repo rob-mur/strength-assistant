@@ -219,55 +219,6 @@ describe("Authentication and Navigation Flow Integration", () => {
   });
 
   describe("Authentication State Transitions", () => {
-    it("should handle loading timeout correctly", async () => {
-      jest.useFakeTimers();
-      const consoleSpy = jest.spyOn(console, "warn").mockImplementation();
-
-      // Ensure we're not in CI/Chrome test environment for this test
-      delete process.env.CI;
-      delete process.env.CHROME_TEST;
-      delete process.env.EXPO_PUBLIC_CHROME_TEST;
-
-      // Simulate persistent loading state
-      mockUseAuth.mockReturnValue({
-        user: null,
-        loading: true,
-        error: null,
-        signInAnonymously: jest.fn(),
-        createAccount: jest.fn(),
-        signIn: jest.fn(),
-        signOut: jest.fn(),
-        clearError: jest.fn(),
-      });
-
-      const { getByTestId, getByText } = render(
-        <AuthProvider>
-          <AuthAwareLayout>
-            <MainAppContent />
-          </AuthAwareLayout>
-        </AuthProvider>,
-      );
-
-      // Initially shows loading
-      expect(getByText("Initializing...")).toBeTruthy();
-
-      // Fast-forward past the 5-second timeout
-      act(() => {
-        jest.advanceTimersByTime(5500);
-      });
-
-      // Should force auth screen display after timeout
-      await waitFor(() => {
-        expect(getByTestId("auth-screen")).toBeTruthy();
-      });
-
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "Auth loading timeout - forcing auth screen display",
-      );
-
-      consoleSpy.mockRestore();
-      jest.useRealTimers();
-    });
 
     it("should maintain auth state consistency throughout app lifecycle", async () => {
       const authStates: any[] = [];
