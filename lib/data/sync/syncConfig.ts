@@ -124,7 +124,6 @@ function setupRealtimeSubscription() {
   // Set up auth state listener to restart subscription when user changes
   let isInitialAuthState = true;
   supabaseClient.onAuthStateChange((event, session) => {
-    console.log("🔗 [syncConfig] Auth state change:", event, !!session?.user);
     user$.set(session?.user || null);
 
     // Restart subscription when user changes
@@ -138,7 +137,6 @@ function setupRealtimeSubscription() {
       // Prevent infinite loop: only load initial data on non-initial auth changes
       // The initial data loading is handled by the configureSyncEngine() call
       if (!isInitialAuthState) {
-        console.log("🔗 [syncConfig] Loading data for auth state change");
         loadInitialData();
       }
     } else {
