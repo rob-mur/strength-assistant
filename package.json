@@ -12,7 +12,7 @@
     "test": "jest --config jest.config.js --coverage",
     "test:watch": "jest --watchAll --config jest.config.js",
     "format": "npx prettier . --write",
-    "format:check": "FORMAT_OUTPUT=$(npx prettier . --check 2>&1) || (echo '❌ Formatting check failed' && echo '$FORMAT_OUTPUT' && exit 1)",
+    "format:check": "npx prettier . --check",
     "storybook-generate": "sb-rn-get-stories",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
