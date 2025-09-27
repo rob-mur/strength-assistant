@@ -82,11 +82,11 @@ scripts/production-alert.sh DEPLOYMENT_ID STATUS # Send production validation al
 
 ## Recent Changes
 
+- 007-correct-production-validation: Added YAML 1.2 (GitHub Actions workflow syntax) + GitHub Actions, existing workflow infrastructure
+
 - 006-fix-ci-issue: Added YAML 1.2 (GitHub Actions workflow syntax) + GitHub Actions, existing workflow infrastructure
 
 - 005-ci-fixes-there: ✅ COMPLETED - CI Pipeline Workflow Dependencies Fix: Consolidated PR validation into single workflow with proper job dependencies. Claude code review now only executes after all tests (unit, integration Android/Chrome, SonarQube) succeed. Fixed production builds to trigger on main branch pushes without waiting for PR-only workflows. Archived individual test workflows. Enhanced CI pipeline reliability and eliminated workflow_run dependency issues.
-
-- 004-one-point-to: ✅ COMPLETED - Production server testing enhancement: Modified `.github/workflows/production-validation.yml` to reuse GitHub release artifacts instead of duplicate APK builds. Added comprehensive error handling with retry logic, APK format validation, and enhanced failure notifications. Preserved anonymous user testing (SKIP_DATA_CLEANUP=true). Created local test script `scripts/test-release-download.sh` for validation. Constitutional compliance maintained throughout.
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->
