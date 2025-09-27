@@ -12,9 +12,27 @@ permissions:
   contents: write
 
 jobs:
+  validate-main:
+    runs-on: ubuntu-latest
+    environment: Dev
+    steps:
+      - name: 🏗 Checkout repository
+        uses: actions/checkout@v4
+      - name: 🛠 Setup development environment
+        uses: ./.github/actions/setup-dev-environment
+        with:
+          devbox-config: minimal
+      - name: Quick validation
+        working-directory: devbox/minimal
+        run: |
+          devbox run test
+          devbox run typecheck
+          devbox run lint
+
   build:
     runs-on: ubuntu-latest
     environment: Dev
+    needs: validate-main
     steps:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
