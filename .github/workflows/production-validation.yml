@@ -31,6 +31,16 @@ jobs:
         uses: actions/checkout@v4
 
       # Download Production APK from GitHub Release
+      #
+      # IMPROVEMENT: Fixed systematic APK download failure (feature 008-the-current-production)
+      # Previously failed with GitHub CLI 'latest' alias resolution (exit code 2)
+      #
+      # Key fixes:
+      # 1. GitHub API-based latest tag resolution (gh api repos/:owner/:repo/releases/latest)
+      # 2. APK asset verification before download attempt (gh release view $TAG --json assets)
+      # 3. Systematic error detection - exit code 2 failures NOT retried
+      # 4. Enhanced error diagnostics with specific troubleshooting steps
+      #
       # This step replaces the previous APK build to eliminate duplicate builds.
       # It downloads the APK created by build-production.yml from GitHub release artifacts,
       # ensuring the exact same APK that was built and tested is used for production validation.
@@ -51,57 +61,116 @@ jobs:
             exit 1
           fi
 
-          # Attempt to download APK from latest release with retry logic
-          MAX_RETRIES=3
-          RETRY_COUNT=0
-          DOWNLOAD_SUCCESS=false
-
-          while [ $RETRY_COUNT -lt $MAX_RETRIES ] && [ "$DOWNLOAD_SUCCESS" = false ]; do
-            RETRY_COUNT=$((RETRY_COUNT + 1))
-            echo "📥 APK download attempt $RETRY_COUNT of $MAX_RETRIES..."
-            
-            if gh release download latest --pattern "*.apk" --dir ./artifacts 2>/dev/null; then
-              DOWNLOAD_SUCCESS=true
-              echo "✅ APK download succeeded on attempt $RETRY_COUNT"
-            else
-              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-                DELAY=$((2 ** $RETRY_COUNT))  # Exponential backoff: 2, 4, 8 seconds
-                echo "::warning::Download attempt $RETRY_COUNT failed. Retrying in ${DELAY} seconds..."
-                sleep $DELAY
-              fi
-            fi
-          done
-
-          if [ "$DOWNLOAD_SUCCESS" = false ]; then
-            echo "::error title=APK Download Failed::Failed to download APK after $MAX_RETRIES attempts."
+          # Get latest release tag using GitHub API (fixes 'latest' alias resolution issue)
+          echo "🔍 Resolving latest release tag..."
+          LATEST_TAG=$(gh api repos/:owner/:repo/releases/latest --jq '.tag_name' 2>/dev/null)
+          if [ -z "$LATEST_TAG" ]; then
+            echo "::error title=Cannot Resolve Latest Release::Failed to get latest release tag from GitHub API."
             echo "::error::Investigation steps:"
-            echo "::error::1. Verify APK was uploaded to release assets in build-production workflow"
-            echo "::error::2. Check GitHub API connectivity and rate limits"
-            echo "::error::3. Confirm GITHUB_TOKEN has appropriate read permissions"
-            echo "::error::4. Check GitHub API status: https://www.githubstatus.com/"
-            exit 2
+            echo "::error::1. Check GitHub API connectivity and authentication"
+            echo "::error::2. Verify GITHUB_TOKEN has repository read permissions"
+            echo "::error::3. Confirm at least one published release exists"
+            exit 1
           fi
+          echo "📋 Latest release tag: $LATEST_TAG"
 
-          # Validate APK file was downloaded
-          APK_FILE=$(ls ./artifacts/*.apk 2>/dev/null | head -1)
-          if [ ! -f "$APK_FILE" ]; then
-            echo "::error title=No APK Assets Found::No APK files found in latest GitHub release assets."
+          # Verify latest release contains APK assets before download
+          echo "🔍 Checking release $LATEST_TAG for APK assets..."
+          APK_ASSETS=$(gh release view "$LATEST_TAG" --json assets --jq '.assets[] | select(.name | endswith(".apk")) | .name' 2>/dev/null)
+          if [ -z "$APK_ASSETS" ]; then
+            echo "::error title=No APK Assets Found::Release $LATEST_TAG exists but contains no APK files."
             echo "::error::Investigation steps:"
             echo "::error::1. Check build-production workflow logs for APK upload failures"
             echo "::error::2. Verify APK file naming matches expected pattern (*.apk)"
-            echo "::error::3. Confirm release assets contain APK files"
+            echo "::error::3. Confirm release assets contain APK files in GitHub web UI"
+            echo "::error::4. Verify build-production workflow completed APK upload step"
             exit 3
+          fi
+          echo "📦 Found APK assets: $APK_ASSETS"
+
+          # Download APK using resolved tag (systematic error detection - no retry for exit code 2)
+          echo "📥 Downloading APK from release $LATEST_TAG..."
+          if ! gh release download "$LATEST_TAG" --pattern "*.apk" --dir ./artifacts 2>/dev/null; then
+            DOWNLOAD_EXIT_CODE=$?
+            if [ $DOWNLOAD_EXIT_CODE -eq 2 ]; then
+              echo "::error title=APK Download Failed (Systematic)::Download failed with exit code 2 (file not found or permission denied)."
+              echo "::error::This is a systematic failure that will not be retried."
+              echo "::error::Investigation steps:"
+              echo "::error::1. Verify APK assets are accessible (not corrupted during upload)"
+              echo "::error::2. Check GITHUB_TOKEN has sufficient release asset read permissions"
+              echo "::error::3. Confirm release $LATEST_TAG is published (not draft)"
+              echo "::error::4. Test download manually: gh release download $LATEST_TAG --pattern '*.apk'"
+              exit 2
+            else
+              # For other exit codes, attempt retry with exponential backoff
+              echo "::warning::Download failed with exit code $DOWNLOAD_EXIT_CODE. Attempting retry..."
+              MAX_RETRIES=3
+              RETRY_COUNT=0
+              DOWNLOAD_SUCCESS=false
+
+              while [ $RETRY_COUNT -lt $MAX_RETRIES ] && [ "$DOWNLOAD_SUCCESS" = false ]; do
+                RETRY_COUNT=$((RETRY_COUNT + 1))
+                echo "📥 APK download retry attempt $RETRY_COUNT of $MAX_RETRIES..."
+                
+                if gh release download "$LATEST_TAG" --pattern "*.apk" --dir ./artifacts 2>/dev/null; then
+                  DOWNLOAD_SUCCESS=true
+                  echo "✅ APK download succeeded on retry attempt $RETRY_COUNT"
+                else
+                  RETRY_EXIT_CODE=$?
+                  if [ $RETRY_EXIT_CODE -eq 2 ]; then
+                    echo "::error title=APK Download Failed (Systematic)::Retry failed with exit code 2. This indicates a persistent issue."
+                    echo "::error::Investigation steps:"
+                    echo "::error::1. Check if release assets were modified or removed during download"
+                    echo "::error::2. Verify GITHUB_TOKEN permissions have not changed"
+                    echo "::error::3. Confirm GitHub API is functioning correctly"
+                    exit 2
+                  fi
+                  if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                    DELAY=$((2 ** $RETRY_COUNT))  # Exponential backoff: 2, 4, 8 seconds
+                    echo "::warning::Retry attempt $RETRY_COUNT failed with exit code $RETRY_EXIT_CODE. Retrying in ${DELAY} seconds..."
+                    sleep $DELAY
+                  fi
+                fi
+              done
+
+              if [ "$DOWNLOAD_SUCCESS" = false ]; then
+                echo "::error title=APK Download Failed After Retries::Failed to download APK after $MAX_RETRIES retry attempts."
+                echo "::error::Investigation steps:"
+                echo "::error::1. Check GitHub API status: https://www.githubstatus.com/"
+                echo "::error::2. Verify network connectivity from GitHub Actions runner"
+                echo "::error::3. Test download manually to isolate the issue"
+                echo "::error::4. Check for GitHub API rate limiting"
+                exit 4
+              fi
+            fi
+          else
+            echo "✅ APK download succeeded on first attempt"
+          fi
+
+          # Validate APK file was downloaded successfully
+          APK_FILE=$(ls ./artifacts/*.apk 2>/dev/null | head -1)
+          if [ ! -f "$APK_FILE" ]; then
+            echo "::error title=APK Download Verification Failed::APK assets were verified in release but file not found after download."
+            echo "::error::This indicates a download process failure despite successful validation."
+            echo "::error::Investigation steps:"
+            echo "::error::1. Check if download directory ./artifacts was created correctly"
+            echo "::error::2. Verify file permissions allow APK file creation"
+            echo "::error::3. Check for disk space issues on GitHub Actions runner"
+            echo "::error::4. Review download logs for partial download or corruption"
+            exit 5
           fi
 
           # Validate APK file integrity and format
           if [ ! -s "$APK_FILE" ]; then
             echo "::error title=Corrupted APK File::Downloaded APK file is empty or corrupted."
             echo "::error::File: $APK_FILE"
+            echo "::error::Release: $LATEST_TAG"
             echo "::error::Investigation steps:"
-            echo "::error::1. Check network connectivity during download"
-            echo "::error::2. Verify original APK file integrity in release assets"
-            echo "::error::3. Retry download or rebuild production APK"
-            exit 4
+            echo "::error::1. Check if download was interrupted (network issues)"
+            echo "::error::2. Verify original APK file integrity in release $LATEST_TAG assets"
+            echo "::error::3. Re-run build-production workflow to generate new APK"
+            echo "::error::4. Test manual download: gh release download $LATEST_TAG --pattern '*.apk'"
+            exit 6
           fi
 
           # Validate APK file format (basic ZIP signature check)
@@ -109,12 +178,14 @@ jobs:
           if [ "$APK_HEADER" != "504b0304" ]; then
             echo "::error title=Invalid APK Format::Downloaded file does not have valid APK/ZIP signature."
             echo "::error::File: $APK_FILE"
+            echo "::error::Release: $LATEST_TAG"
             echo "::error::Expected ZIP signature: 504b0304, Found: $APK_HEADER"
             echo "::error::Investigation steps:"
-            echo "::error::1. Verify file was not corrupted during upload to GitHub release"
-            echo "::error::2. Check if file is actually an APK and not another format"
-            echo "::error::3. Rebuild and re-upload production APK"
-            exit 5
+            echo "::error::1. Verify file was not corrupted during upload to GitHub release $LATEST_TAG"
+            echo "::error::2. Check if file is actually an APK and not another format (inspect in GitHub web UI)"
+            echo "::error::3. Re-run build-production workflow to generate and upload new APK"
+            echo "::error::4. Test file integrity: file $APK_FILE"
+            exit 7
           fi
 
           # Additional file size validation (APK should be at least 1MB for a real app)
@@ -125,8 +196,10 @@ jobs:
             echo "::warning::This may indicate an incomplete or test build"
           fi
 
-          echo "✅ Successfully downloaded APK: $APK_FILE"
+          echo "✅ Successfully downloaded and validated APK: $APK_FILE"
+          echo "📋 Release: $LATEST_TAG"
           echo "📁 File size: $(stat -c%s "$APK_FILE") bytes"
+          echo "🔍 Format: Valid APK/ZIP signature verified"
           echo "apk-path=$APK_FILE" >> $GITHUB_OUTPUT
           echo "build-successful=true" >> $GITHUB_OUTPUT
         id: download-apk

@@ -1,0 +1,101 @@
+# Contract: GitHub Release Verification
+
+description: Verify GitHub release exists and contains APK assets
+version: 1.0.0
+type: workflow_step
+
+## Input Contract
+
+```yaml
+inputs:
+  repository: 
+    type: string
+    description: GitHub repository in format "owner/repo"
+    required: true
+  release_tag:
+    type: string  
+    description: Release tag to verify ("latest" or specific version)
+    default: "latest"
+  github_token:
+    type: string
+    description: GitHub token with read permissions
+    required: true
+    sensitive: true
+```
+
+## Output Contract
+
+```yaml
+outputs:
+  release_exists:
+    type: boolean
+    description: Whether the specified release exists
+  release_id:
+    type: string
+    description: Unique identifier of the release
+  release_tag:
+    type: string
+    description: Actual tag name of the release
+  asset_count:
+    type: integer
+    description: Total number of assets in the release
+  apk_assets:
+    type: array
+    description: List of APK assets found in the release
+    items:
+      name: string
+      size: integer
+      download_url: string
+  has_apk:
+    type: boolean
+    description: Whether release contains at least one APK asset
+```
+
+## Behavior Contract
+
+### Success Scenarios
+
+1. **Release with APK exists**
+   - Input: valid repository, "latest" tag, valid token
+   - Output: release_exists=true, has_apk=true, apk_assets populated
+   - Exit code: 0
+
+2. **Release exists but no APK**
+   - Input: valid repository, "latest" tag, valid token  
+   - Output: release_exists=true, has_apk=false, apk_assets=[]
+   - Exit code: 0
+
+### Error Scenarios
+
+1. **No releases found**
+   - Input: repository with no releases
+   - Output: release_exists=false, error_message="No releases found"
+   - Exit code: 1
+
+2. **Permission denied**
+   - Input: invalid or insufficient token
+   - Output: error_message="Permission denied"
+   - Exit code: 2
+
+3. **Repository not found**
+   - Input: non-existent repository
+   - Output: error_message="Repository not found"
+   - Exit code: 3
+
+## Implementation Requirements
+
+### Commands
+- `gh release list --limit 1` to verify releases exist
+- `gh release view $TAG` to get release details and assets
+- Error handling for all GitHub CLI exit codes
+
+### Validation
+- Verify GITHUB_TOKEN is set and non-empty
+- Validate repository format matches "owner/repo"
+- Check release tag format (semantic versioning recommended)
+- Filter assets by `.apk` extension for apk_assets output
+
+### Error Reporting
+- Use GitHub Actions error format: `::error title=Title::Message`
+- Provide actionable troubleshooting steps in error messages
+- Include specific GitHub CLI command outputs for debugging
