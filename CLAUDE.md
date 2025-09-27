@@ -4,6 +4,9 @@ Auto-generated from all feature plans. Last updated: 2025-09-23
 
 ## Active Technologies
 
+- YAML 1.2 (GitHub Actions workflow syntax), Bash scripting + GitHub CLI (gh), GitHub API, GitHub Actions workflow infrastructure (008-the-current-production)
+- GitHub Releases as APK artifact storage (008-the-current-production)
+
 - YAML 1.2 (GitHub Actions workflow syntax) + GitHub Actions, existing workflow infrastructure (006-fix-ci-issue)
 
 - TypeScript with React Native, Expo 53.0.22, Node.js (latest via devbox) + GitHub Actions, devbox (dependency management), Maestro (test automation), Expo CLI (004-one-point-to)
@@ -82,11 +85,13 @@ scripts/production-alert.sh DEPLOYMENT_ID STATUS # Send production validation al
 
 ## Recent Changes
 
+- 008-the-current-production: ✅ COMPLETED - Production APK download failure fix: Resolved systematic GitHub CLI `latest` alias resolution failure by implementing GitHub API-based tag resolution, APK asset verification before download, and systematic error detection (exit code 2) without inappropriate retries. Enhanced error diagnostics with specific troubleshooting steps. Constitutional compliance maintained with local testing using devbox and GitHub CLI.
+
+- 008-the-current-production: Added YAML 1.2 (GitHub Actions workflow syntax), Bash scripting + GitHub CLI (gh), GitHub API, GitHub Actions workflow infrastructure
+
 - 007-correct-production-validation: Added YAML 1.2 (GitHub Actions workflow syntax) + GitHub Actions, existing workflow infrastructure
 
 - 006-fix-ci-issue: Added YAML 1.2 (GitHub Actions workflow syntax) + GitHub Actions, existing workflow infrastructure
-
-- 005-ci-fixes-there: ✅ COMPLETED - CI Pipeline Workflow Dependencies Fix: Consolidated PR validation into single workflow with proper job dependencies. Claude code review now only executes after all tests (unit, integration Android/Chrome, SonarQube) succeed. Fixed production builds to trigger on main branch pushes without waiting for PR-only workflows. Archived individual test workflows. Enhanced CI pipeline reliability and eliminated workflow_run dependency issues.
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->
