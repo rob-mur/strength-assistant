@@ -133,17 +133,27 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Use parameterized Maestro Test Action
-      # Maestro tests now use the downloaded APK instead of a freshly built one.
+      # Run Maestro Tests Against Production
+      # Use direct test execution since we have the APK file locally
       # This ensures production validation tests the exact same APK that will be deployed,
       # maintaining consistency between build and validation phases.
-      - name: Run Maestro Tests Against Production
-        uses: ./.github/actions/maestro-test
+      - name: Setup testing environment
+        uses: ./.github/actions/setup-dev-environment
         with:
-          apk-path: ${{ steps.download-apk.outputs.apk-path }}
-          test-environment: production
-          skip-data-cleanup: true
           devbox-config: android-testing
+
+      - name: Run Maestro Tests Against Production
+        shell: bash
+        working-directory: devbox/android-testing
+        env:
+          SKIP_DATA_CLEANUP: true
+          TEST_ENVIRONMENT: production
+        run: |
+          # Set APK path for the test script to use
+          export APK_PATH="${{ steps.download-apk.outputs.apk-path }}"
+          # Run integration test with the downloaded APK
+          devbox run integration_test_android
+          echo "tests-passed=$?" >> $GITHUB_OUTPUT
         id: maestro-tests
 
       # Process results
