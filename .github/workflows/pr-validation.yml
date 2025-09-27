@@ -91,7 +91,7 @@ jobs:
         run: devbox run collect_coverage
         working-directory: devbox/minimal
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v5
+        uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       - name: SonarQube Quality Gate Check
