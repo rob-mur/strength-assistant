@@ -4,6 +4,9 @@ Auto-generated from all feature plans. Last updated: 2025-09-23
 
 ## Active Technologies
 
+- YAML 1.2 (GitHub Actions workflow syntax), Bash scripting + GitHub Actions, Terraform, devbox, Maestro testing framework (009-the-production-validation)
+- GitHub release artifacts for APK storage, Terraform state management (009-the-production-validation)
+
 - YAML 1.2 (GitHub Actions workflow syntax), Bash scripting + GitHub CLI (gh), GitHub API, GitHub Actions workflow infrastructure (008-the-current-production)
 - GitHub Releases as APK artifact storage (008-the-current-production)
 
@@ -85,13 +88,11 @@ scripts/production-alert.sh DEPLOYMENT_ID STATUS # Send production validation al
 
 ## Recent Changes
 
+- 009-the-production-validation: Added YAML 1.2 (GitHub Actions workflow syntax), Bash scripting + GitHub Actions, Terraform, devbox, Maestro testing framework
+
 - 008-the-current-production: ✅ COMPLETED - Production APK download failure fix: Resolved systematic GitHub CLI `latest` alias resolution failure by implementing GitHub API-based tag resolution, APK asset verification before download, and systematic error detection (exit code 2) without inappropriate retries. Enhanced error diagnostics with specific troubleshooting steps. Constitutional compliance maintained with local testing using devbox and GitHub CLI.
 
 - 008-the-current-production: Added YAML 1.2 (GitHub Actions workflow syntax), Bash scripting + GitHub CLI (gh), GitHub API, GitHub Actions workflow infrastructure
-
-- 007-correct-production-validation: Added YAML 1.2 (GitHub Actions workflow syntax) + GitHub Actions, existing workflow infrastructure
-
-- 006-fix-ci-issue: Added YAML 1.2 (GitHub Actions workflow syntax) + GitHub Actions, existing workflow infrastructure
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

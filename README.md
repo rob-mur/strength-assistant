@@ -51,9 +51,25 @@ This project includes parameterized GitHub Actions for production validation:
   - Supports `test-environment: production` for production validation
   - Handles `skip-data-cleanup` flag for production testing
 
-### Production Workflow
+### Production Deployment Workflow
 
-The production validation workflow (`.github/workflows/production-validation.yml`) automatically runs after terraform deployments to validate the application against actual production infrastructure using these parameterized actions.
+The unified production deployment workflow (`.github/workflows/production-deployment.yml`) consolidates APK building, infrastructure deployment, and validation into a single automated pipeline:
+
+**Jobs:**
+
+1. **Build Production APK**: Creates `build_production.apk` and uploads to GitHub releases
+2. **Terraform Deploy**: Deploys infrastructure changes with proper dependency on APK build
+3. **Production Validation**: Downloads APK and validates against deployed infrastructure using anonymous users
+
+**Key Features:**
+
+- **Concurrency Control**: Cancels running deployments on new pushes to main
+- **Job Dependencies**: Ensures proper sequencing (build → deploy → validate)
+- **APK Consistency**: Uses the same production APK for validation that was built
+- **No Timeouts**: Allows operations to run until completion
+- **Anonymous Testing**: Clean test isolation without persistent test data
+
+**Monitoring**: Use `scripts/monitor-deployment.sh` to track deployment status
 
 ## Learn more
 

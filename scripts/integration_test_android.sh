@@ -133,7 +133,7 @@ echo "✅ Android emulator is ready"
 
 # Install the APK
 echo "📱 Installing APK to emulator..."
-adb install build_preview.apk
+adb install build_production.apk
 
 # Create debug output directory
 mkdir -p maestro-debug-output
