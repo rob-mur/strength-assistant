@@ -1,0 +1,118 @@
+# Contract: APK Download Operation
+
+description: Download APK asset from GitHub release with retry logic
+version: 1.0.0
+type: workflow_step
+
+## Input Contract
+
+```yaml
+inputs:
+  release_tag:
+    type: string
+    description: Release tag containing APK asset
+    required: true
+  download_pattern:
+    type: string
+    description: File pattern for APK matching
+    default: "*.apk"
+  destination_dir:
+    type: string
+    description: Directory to download APK files
+    default: "./artifacts"
+  max_retries:
+    type: integer
+    description: Maximum download retry attempts
+    default: 3
+  github_token:
+    type: string
+    description: GitHub token with read permissions
+    required: true
+    sensitive: true
+```
+
+## Output Contract
+
+```yaml
+outputs:
+  download_successful:
+    type: boolean
+    description: Whether APK download completed successfully
+  apk_file_path:
+    type: string
+    description: Local path to downloaded APK file
+  file_size:
+    type: integer
+    description: Size of downloaded APK file in bytes
+  retry_count:
+    type: integer
+    description: Number of download attempts made
+  error_code:
+    type: integer
+    description: GitHub CLI exit code (0 for success)
+  error_message:
+    type: string
+    description: Detailed error description for failures
+```
+
+## Behavior Contract
+
+### Success Scenarios
+
+1. **First attempt success**
+   - Input: valid release with APK, proper permissions
+   - Output: download_successful=true, retry_count=1, error_code=0
+   - File: APK downloaded to destination_dir
+
+2. **Retry success**
+   - Input: transient network failure on first attempt
+   - Output: download_successful=true, retry_count>1, error_code=0
+   - File: APK downloaded after retries
+
+### Error Scenarios
+
+1. **No APK assets found**
+   - Input: release exists but contains no APK files
+   - Output: download_successful=false, error_code=2, retry_count=1
+   - Behavior: No retries attempted (systematic failure)
+
+2. **Permission denied**
+   - Input: insufficient GITHUB_TOKEN permissions
+   - Output: download_successful=false, error_code=2, retry_count=1
+   - Behavior: No retries attempted (systematic failure)
+
+3. **Network timeout after retries**
+   - Input: persistent network connectivity issues
+   - Output: download_successful=false, retry_count=3, error_code>0
+   - Behavior: All retries exhausted with exponential backoff
+
+## Implementation Requirements
+
+### Retry Logic
+- Only retry on exit codes indicating transient failures (timeouts, 5xx errors)
+- Do NOT retry on exit code 2 (file not found, permission denied)
+- Use exponential backoff: 2^attempt_number seconds (2s, 4s, 8s)
+- Maximum 3 retry attempts as default
+
+### File Validation
+- Verify downloaded file exists and is non-empty
+- Check file has minimum size (1MB for real applications)
+- Validate file has proper APK/ZIP signature (504b0304)
+
+### Commands
+- `mkdir -p $DESTINATION_DIR` to ensure directory exists
+- `gh release download $TAG --pattern "$PATTERN" --dir $DESTINATION_DIR`
+- `ls $DESTINATION_DIR/*.apk` to locate downloaded file
+- `stat -c%s $FILE` for file size validation
+- `head -c 4 $FILE | od -An -tx1` for format validation
+
+### Error Handling
+- Distinguish between systematic and transient failures
+- Provide specific troubleshooting steps for each error type
+- Include file path and size information in success outputs
+- Use GitHub Actions error format for consistent reporting
+
+### Environment
+- Requires GITHUB_TOKEN environment variable
+- Working directory should allow file creation
+- Sufficient disk space for APK download (typically 50-100MB)
