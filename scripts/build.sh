@@ -5,7 +5,7 @@ cd "$(dirname "$0")/.."
 
 # Build script that accepts a profile argument
 # Usage: ./scripts/build.sh <profile> [output_name]
-# Example: ./scripts/build.sh preview build_preview.apk
+# Example: ./scripts/build.sh production build_production.apk
 # Example: ./scripts/build.sh production build_production.apk
 
 PROFILE=$1

@@ -1,5 +1,24 @@
 #!/usr/bin/env bash
 
+# Integration test script that accepts APK filename as argument
+# Usage: ./scripts/integration_test_android.sh <apk_filename>
+# Example: ./scripts/integration_test_android.sh build_preview.apk
+# Example: ./scripts/integration_test_android.sh build_production.apk
+
+APK_NAME=${1:-build_preview.apk}
+
+if [ ! -f "$APK_NAME" ]; then
+    echo "❌ APK file not found: $APK_NAME"
+    echo "Usage: $0 <apk_filename>"
+    echo "Example: $0 build_preview.apk"
+    exit 1
+fi
+
+# Convert APK path to absolute path before changing directories
+APK_NAME=$(realpath "$APK_NAME")
+
+echo "🔄 Running integration tests with APK: $APK_NAME"
+
 # Change to project root directory (relative to scripts folder)
 cd "$(dirname "$0")/.."
 
@@ -132,8 +151,8 @@ fi
 echo "✅ Android emulator is ready"
 
 # Install the APK
-echo "📱 Installing APK to emulator..."
-adb install build_preview.apk
+echo "📱 Installing APK to emulator: $APK_NAME"
+adb install "$APK_NAME"
 
 # Create debug output directory
 mkdir -p maestro-debug-output

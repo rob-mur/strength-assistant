@@ -1,0 +1,217 @@
+name: Production Deployment
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Concurrency handling - cancel running deployments on new pushes
+concurrency:
+  group: production-deployment
+  cancel-in-progress: true
+
+env:
+  EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+  SKIP_DATA_CLEANUP: true
+  NODE_ENV: production
+
+permissions:
+  contents: write
+
+jobs:
+  build-production-apk:
+    name: Build Production APK
+    runs-on: ubuntu-latest
+    environment: Dev
+    outputs:
+      apk-artifact-name: ${{ steps.build-production.outputs.artifact-name }}
+      apk-filename: build_production.apk
+      apk-path: ${{ steps.build-production.outputs.apk-path }}
+      build-successful: ${{ steps.build-production.outputs.build-successful }}
+    steps:
+      - name: 🏗 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Production APK
+        uses: ./.github/actions/android-build
+        with:
+          build-type: production
+          devbox-config: android-build
+          artifact-name: production-release-apk
+        id: build-production
+
+      - name: Upload APK Artifact
+        id: upload
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: Release v${{ github.run_number }}
+          body: |
+            Production build from commit ${{ github.sha }}
+            Build successful: ${{ steps.build-production.outputs.build-successful }}
+
+            Changes: ${{ github.event.head_commit.message }}
+          files: ${{ steps.build-production.outputs.apk-path }}
+
+  terraform-deploy:
+    name: Deploy Infrastructure
+    runs-on: ubuntu-latest
+    needs: build-production-apk
+    environment: dev
+    outputs:
+      deployment-id: ${{ steps.deploy.outputs.deployment-id }}
+      infrastructure-url: ${{ steps.deploy.outputs.infrastructure-url }}
+      terraform-plan-artifact: ${{ steps.deploy.outputs.terraform-plan-artifact }}
+    steps:
+      - name: 🏗 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.0"
+
+      - name: 📝 Create terraform.tfvars
+        working-directory: terraform
+        run: |
+          cat << EOF > terraform.tfvars
+          supabase_project_ref = "${{ secrets.SUPABASE_PROJECT_REF }}"
+          supabase_access_token = "${{ secrets.SUPABASE_ACCESS_TOKEN }}"
+          environment = "dev"
+          EOF
+
+      - name: 🚀 Terraform Init
+        working-directory: terraform
+        run: terraform init
+
+      - name: 📋 Terraform Plan
+        working-directory: terraform
+        run: terraform plan -out=tfplan
+
+      - name: ✅ Terraform Apply
+        id: deploy
+        working-directory: terraform
+        run: |
+          terraform apply -auto-approve tfplan
+          # Generate deployment ID for tracking
+          DEPLOYMENT_ID="deploy-$(date +%s)-${GITHUB_SHA:0:8}"
+          echo "deployment-id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
+          echo "infrastructure-url=https://api.example.com" >> $GITHUB_OUTPUT
+          echo "terraform-plan-artifact=terraform-plan-dev" >> $GITHUB_OUTPUT
+
+      - name: 📤 Upload plan artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-dev
+          path: terraform/tfplan
+          retention-days: 30
+
+  production-validation:
+    name: Validate Production Deployment
+    runs-on: ubuntu-latest
+    needs: [build-production-apk, terraform-deploy]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Production APK
+        shell: bash
+        run: |
+          # Create artifacts directory
+          mkdir -p ./artifacts
+
+          # Check if any releases exist
+          if ! gh release list --limit 1 >/dev/null 2>&1; then
+            echo "::error title=No GitHub Releases Found::No GitHub releases exist for this repository. Check if build-production workflow completed successfully."
+            exit 1
+          fi
+
+          # Get latest release tag using GitHub API
+          echo "🔍 Resolving latest release tag..."
+          LATEST_TAG=$(gh api repos/:owner/:repo/releases/latest --jq '.tag_name' 2>/dev/null)
+          if [ -z "$LATEST_TAG" ]; then
+            echo "::error title=Cannot Resolve Latest Release::Failed to get latest release tag from GitHub API."
+            exit 1
+          fi
+          echo "📋 Latest release tag: $LATEST_TAG"
+
+          # Verify latest release contains APK assets before download
+          echo "🔍 Checking release $LATEST_TAG for APK assets..."
+          APK_ASSETS=$(gh release view "$LATEST_TAG" --json assets --jq '.assets[] | select(.name | endswith(".apk")) | .name' 2>/dev/null)
+          if [ -z "$APK_ASSETS" ]; then
+            echo "::error title=No APK Assets Found::Release $LATEST_TAG exists but contains no APK files."
+            exit 3
+          fi
+          echo "📦 Found APK assets: $APK_ASSETS"
+
+          # Download APK using resolved tag
+          echo "📥 Downloading APK from release $LATEST_TAG..."
+          if ! gh release download "$LATEST_TAG" --pattern "*.apk" --dir ./artifacts 2>/dev/null; then
+            echo "::error title=APK Download Failed::Failed to download APK from release $LATEST_TAG"
+            exit 2
+          fi
+
+          # Validate APK file was downloaded successfully
+          APK_FILE=$(ls ./artifacts/*.apk 2>/dev/null | head -1)
+          if [ ! -f "$APK_FILE" ]; then
+            echo "::error title=APK Download Verification Failed::APK assets were verified in release but file not found after download."
+            exit 5
+          fi
+
+          # Validate APK file integrity and format
+          if [ ! -s "$APK_FILE" ]; then
+            echo "::error title=Corrupted APK File::Downloaded APK file is empty or corrupted."
+            exit 6
+          fi
+
+          # Validate APK file format (basic ZIP signature check)
+          APK_HEADER=$(head -c 4 "$APK_FILE" | od -An -tx1 | tr -d ' ')
+          if [ "$APK_HEADER" != "504b0304" ]; then
+            echo "::error title=Invalid APK Format::Downloaded file does not have valid APK/ZIP signature."
+            exit 7
+          fi
+
+          echo "✅ Successfully downloaded and validated APK: $APK_FILE"
+          echo "📋 Using APK filename: ${{ needs.build-production-apk.outputs.apk-filename }}"
+
+          # Copy APK to expected location for testing
+          cp "$APK_FILE" "${{ needs.build-production-apk.outputs.apk-filename }}"
+          echo "📋 Copied APK to: ${{ needs.build-production-apk.outputs.apk-filename }}"
+
+          echo "apk-path=$APK_FILE" >> $GITHUB_OUTPUT
+          echo "build-successful=true" >> $GITHUB_OUTPUT
+        id: download-apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Production Validation
+        uses: ./.github/actions/maestro-test
+        with:
+          apk-path: ${{ github.workspace }}/${{ needs.build-production-apk.outputs.apk-filename }}
+          test-environment: production
+          skip-data-cleanup: true
+          devbox-config: android-testing
+        id: maestro-tests
+
+      - name: Process Test Results
+        run: |
+          echo "Production validation completed"
+          echo "APK download successful: ${{ steps.download-apk.outputs.build-successful }}"
+          echo "Tests passed: ${{ steps.maestro-tests.outputs.tests-passed }}"
+          echo "Debug artifacts: ${{ steps.maestro-tests.outputs.debug-artifacts }}"
+
+      # Alert on failure
+      - name: Production Validation Failed
+        if: failure()
+        run: |
+          echo "::error title=Production Validation Failed::Production validation against deployment ${{ needs.terraform-deploy.outputs.deployment-id }} has failed. Manual intervention required."
+          echo "::error::Frontend deployment should be blocked pending investigation"
+          exit 1
+
+      # Success notification
+      - name: Production Validation Succeeded
+        if: success()
+        run: |
+          echo "::notice title=Production Validation Passed::Production validation against deployment ${{ needs.terraform-deploy.outputs.deployment-id }} completed successfully"
+          echo "::notice::Frontend deployment can proceed with confidence"

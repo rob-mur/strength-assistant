@@ -24,6 +24,9 @@ jobs:
   build-preview:
     runs-on: ubuntu-latest
     environment: Dev
+    outputs:
+      apk-path: ${{ steps.build-preview.outputs.apk-path }}
+      artifact-name: ${{ steps.build-preview.outputs.artifact-name }}
     steps:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
@@ -41,10 +44,34 @@ jobs:
     steps:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
+      - name: Download APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-preview.outputs.artifact-name }}
+      - name: List downloaded files for debugging
+        run: |
+          echo "Downloaded artifact contents:"
+          ls -la
+          find . -name "*.apk" -type f
+          echo "Expected APK path: ${{ needs.build-preview.outputs.apk-path }}"
+          echo "Working directory: $(pwd)"
+          echo "All files recursively:"
+          find . -type f | head -20
+      - name: Verify APK file exists
+        run: |
+          if [ -f "build_preview.apk" ]; then
+            echo "✅ APK file found: build_preview.apk"
+            ls -la build_preview.apk
+          else
+            echo "❌ APK file not found at expected location"
+            echo "Available APK files:"
+            find . -name "*.apk" -type f
+            exit 1
+          fi
       - name: Run Integration Tests
         uses: ./.github/actions/maestro-test
         with:
-          apk-path: preview_build
+          apk-path: ${{ github.workspace }}/build_preview.apk
           test-environment: integration
           skip-data-cleanup: false
           devbox-config: android-testing
@@ -91,7 +118,7 @@ jobs:
         run: devbox run collect_coverage
         working-directory: devbox/minimal
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v5
+        uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       - name: SonarQube Quality Gate Check
