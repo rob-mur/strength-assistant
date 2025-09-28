@@ -71,7 +71,7 @@ jobs:
       - name: Run Integration Tests
         uses: ./.github/actions/maestro-test
         with:
-          apk-path: build_preview.apk
+          apk-path: ${{ github.workspace }}/build_preview.apk
           test-environment: integration
           skip-data-cleanup: false
           devbox-config: android-testing
