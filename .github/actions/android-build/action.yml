@@ -19,6 +19,9 @@ outputs:
   apk-path:
     description: "Path to built APK file"
     value: ${{ steps.build.outputs.apk-path }}
+  artifact-name:
+    description: "Name of uploaded artifact"
+    value: ${{ inputs.artifact-name }}
   build-successful:
     description: "Whether build completed successfully"
     value: ${{ steps.build.outputs.success }}

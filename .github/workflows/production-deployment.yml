@@ -174,6 +174,11 @@ jobs:
 
           echo "✅ Successfully downloaded and validated APK: $APK_FILE"
           echo "📋 Using APK filename: ${{ needs.build-production-apk.outputs.apk-filename }}"
+
+          # Copy APK to expected location for testing
+          cp "$APK_FILE" "${{ needs.build-production-apk.outputs.apk-filename }}"
+          echo "📋 Copied APK to: ${{ needs.build-production-apk.outputs.apk-filename }}"
+
           echo "apk-path=$APK_FILE" >> $GITHUB_OUTPUT
           echo "build-successful=true" >> $GITHUB_OUTPUT
         id: download-apk
@@ -183,7 +188,8 @@ jobs:
       - name: Run Production Validation
         uses: ./.github/actions/maestro-test
         with:
-          apk-path: ${{ steps.download-apk.outputs.apk-path }}
+          apk-artifact-name: ""
+          apk-filename: ${{ needs.build-production-apk.outputs.apk-filename }}
           test-environment: production
           skip-data-cleanup: true
           devbox-config: android-testing
