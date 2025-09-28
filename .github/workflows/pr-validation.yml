@@ -57,17 +57,15 @@ jobs:
           echo "Working directory: $(pwd)"
           echo "All files recursively:"
           find . -type f | head -20
-      - name: Locate and copy APK file
+      - name: Verify APK file exists
         run: |
-          # Find the APK file wherever it is
-          APK_FILE=$(find . -name "*.apk" -type f | head -1)
-          if [ -n "$APK_FILE" ]; then
-            echo "Found APK at: $APK_FILE"
-            cp "$APK_FILE" build_preview.apk
-            echo "Copied APK to: build_preview.apk"
+          if [ -f "build_preview.apk" ]; then
+            echo "✅ APK file found: build_preview.apk"
             ls -la build_preview.apk
           else
-            echo "No APK file found in artifact!"
+            echo "❌ APK file not found at expected location"
+            echo "Available APK files:"
+            find . -name "*.apk" -type f
             exit 1
           fi
       - name: Run Integration Tests
