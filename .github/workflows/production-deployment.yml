@@ -188,8 +188,7 @@ jobs:
       - name: Run Production Validation
         uses: ./.github/actions/maestro-test
         with:
-          apk-artifact-name: ""
-          apk-filename: ${{ needs.build-production-apk.outputs.apk-filename }}
+          apk-path: ${{ needs.build-production-apk.outputs.apk-filename }}
           test-environment: production
           skip-data-cleanup: true
           devbox-config: android-testing

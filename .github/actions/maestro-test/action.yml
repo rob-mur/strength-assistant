@@ -2,12 +2,8 @@ name: "Maestro Test Action"
 description: "Run Maestro integration tests using devbox with parameterized configuration"
 
 inputs:
-  apk-artifact-name:
-    description: "Name of the APK artifact to download (leave empty if APK already present)"
-    required: false
-    type: string
-  apk-filename:
-    description: "Filename of the APK to test"
+  apk-path:
+    description: "Path to APK file to test"
     required: true
     type: string
   test-environment:
@@ -45,12 +41,6 @@ runs:
         sudo udevadm control --reload-rules
         sudo udevadm trigger --name-match=kvm
 
-    - name: Download APK artifact
-      if: ${{ inputs.apk-artifact-name != '' }}
-      uses: actions/download-artifact@v4
-      with:
-        name: ${{ inputs.apk-artifact-name }}
-
     - name: Setup testing environment
       uses: ./.github/actions/setup-dev-environment
       with:
@@ -63,10 +53,10 @@ runs:
         SKIP_DATA_CLEANUP: ${{ inputs.skip-data-cleanup }}
         TEST_ENVIRONMENT: ${{ inputs.test-environment }}
       run: |
-        echo "🔄 Running integration tests with APK: ${{ inputs.apk-filename }}"
+        echo "🔄 Running integration tests with APK: ${{ inputs.apk-path }}"
 
         # Use parameterized integration test script
-        ../../scripts/integration_test_android.sh "${{ inputs.apk-filename }}"
+        ../../scripts/integration_test_android.sh "${{ inputs.apk-path }}"
         TEST_EXIT_CODE=$?
 
         echo "success=$TEST_EXIT_CODE" >> $GITHUB_OUTPUT

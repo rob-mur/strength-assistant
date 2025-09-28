@@ -41,10 +41,14 @@ jobs:
     steps:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
+      - name: Download APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: preview_build
       - name: Run Integration Tests
         uses: ./.github/actions/maestro-test
         with:
-          apk-path: preview_build
+          apk-path: build_preview.apk
           test-environment: integration
           skip-data-cleanup: false
           devbox-config: android-testing
