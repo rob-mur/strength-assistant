@@ -3,6 +3,7 @@
 ## Problem
 
 The preview APK build was failing in CI with the error:
+
 ```
 [EAGER_BUNDLE] Error: node_modules/expo-router/_ctx.android.js:Invalid call at line 2: process.env.EXPO_ROUTER_APP_ROOT
 [EAGER_BUNDLE] First argument of `require.context` should be a string denoting the directory to require.
@@ -33,7 +34,7 @@ Added the `EXPO_ROUTER_APP_ROOT` environment variable to the Android build actio
 ```json
 {
   "env": {
-    "EXPO_ROUTER_APP_ROOT": "$PWD/../../app",
+    "EXPO_ROUTER_APP_ROOT": "$PWD/../../app"
     // ... other env vars
   }
 }
@@ -48,8 +49,9 @@ Added the `EXPO_ROUTER_APP_ROOT` environment variable to the Android build actio
 ## Expected Result
 
 After this fix, the CI build should:
+
 1. ✅ Set `EXPO_ROUTER_APP_ROOT` to point to the app directory
-2. ✅ Allow `expo export:embed` to successfully bundle JavaScript 
+2. ✅ Allow `expo export:embed` to successfully bundle JavaScript
 3. ✅ Complete the APK build process without errors
 
 ## Files Modified
@@ -60,6 +62,7 @@ After this fix, the CI build should:
 ## Testing
 
 To test this fix locally:
+
 ```bash
 cd devbox/android-build
 export EXPO_ROUTER_APP_ROOT="$PWD/../../app"
