@@ -40,10 +40,10 @@ runs:
       run: |
         if [ "${{ inputs.build-type }}" = "production" ]; then
           devbox run build_production
-          echo "apk-path=./build_production.apk" >> $GITHUB_OUTPUT
+          echo "apk-path=build_production.apk" >> $GITHUB_OUTPUT
         else
           devbox run build_preview
-          echo "apk-path=./build_preview.apk" >> $GITHUB_OUTPUT
+          echo "apk-path=build_preview.apk" >> $GITHUB_OUTPUT
         fi
         echo "success=true" >> $GITHUB_OUTPUT
       id: build
@@ -52,5 +52,5 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.artifact-name }}
-        path: ${{ steps.build.outputs.apk-path }}
+        path: ./${{ steps.build.outputs.apk-path }}
         retention-days: 30

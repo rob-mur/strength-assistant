@@ -24,6 +24,9 @@ jobs:
   build-preview:
     runs-on: ubuntu-latest
     environment: Dev
+    outputs:
+      apk-path: ${{ steps.build-preview.outputs.apk-path }}
+      artifact-name: ${{ steps.build-preview.outputs.artifact-name }}
     steps:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
@@ -44,11 +47,17 @@ jobs:
       - name: Download APK artifact
         uses: actions/download-artifact@v4
         with:
-          name: preview_build
+          name: ${{ needs.build-preview.outputs.artifact-name }}
+      - name: List downloaded files for debugging
+        run: |
+          echo "Downloaded artifact contents:"
+          ls -la
+          find . -name "*.apk" -type f
+          echo "Expected APK path: ${{ needs.build-preview.outputs.apk-path }}"
       - name: Run Integration Tests
         uses: ./.github/actions/maestro-test
         with:
-          apk-path: build_preview.apk
+          apk-path: ${{ needs.build-preview.outputs.apk-path }}
           test-environment: integration
           skip-data-cleanup: false
           devbox-config: android-testing
