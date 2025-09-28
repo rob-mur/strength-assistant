@@ -55,8 +55,8 @@ runs:
       run: |
         echo "🔄 Running integration tests with APK: ${{ inputs.apk-path }}"
 
-        # Use parameterized integration test script
-        ../../scripts/integration_test_android.sh "${{ inputs.apk-path }}"
+        # Use devbox run to execute with proper environment
+        devbox run -- ../../scripts/integration_test_android.sh "${{ inputs.apk-path }}"
         TEST_EXIT_CODE=$?
 
         echo "success=$TEST_EXIT_CODE" >> $GITHUB_OUTPUT

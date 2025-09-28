@@ -31,16 +31,16 @@ unset XDG_CONFIG_HOME
 
 echo "🔄 Creating Android AVD using devbox-managed system image..."
 # Use the default system image that's provided by the optimized flake
-echo -e "no\nno\nno" | "$ANDROID_HOME/cmdline-tools/19.0/bin/avdmanager" create avd --force -n test -k "system-images;android-35;default;x86_64" --device "Nexus 5X"
+echo -e "no\nno\nno" | avdmanager create avd --force -n test -k "system-images;android-35;default;x86_64" --device "Nexus 5X"
 
 # Verify AVD was created successfully
 AVD_CONFIG_FILE="$HOME/.android/avd/test.avd/config.ini"
 if [ ! -f "$AVD_CONFIG_FILE" ]; then
     echo "❌ Failed to create Android AVD"
     echo "Available AVDs:"
-    "$ANDROID_HOME/cmdline-tools/19.0/bin/avdmanager" list avd
+    avdmanager list avd
     echo "Available system images:"  
-    "$ANDROID_HOME/cmdline-tools/19.0/bin/avdmanager" list targets
+    avdmanager list targets
     exit 1
 fi
 
