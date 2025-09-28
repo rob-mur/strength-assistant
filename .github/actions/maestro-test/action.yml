@@ -58,11 +58,19 @@ runs:
         SKIP_DATA_CLEANUP: ${{ inputs.skip-data-cleanup }}
         TEST_ENVIRONMENT: ${{ inputs.test-environment }}
       run: |
-        # Use existing integration test script which handles Maestro execution
-        devbox run integration_test_android
-        echo "success=$?" >> $GITHUB_OUTPUT
+        # Extract APK filename from the path
+        APK_FILENAME=$(basename "${{ inputs.apk-path }}")
+        echo "🔄 Running integration tests with APK: $APK_FILENAME"
+
+        # Use parameterized integration test script
+        ../../scripts/integration_test_android.sh "$APK_FILENAME"
+        TEST_EXIT_CODE=$?
+
+        echo "success=$TEST_EXIT_CODE" >> $GITHUB_OUTPUT
         echo "results-path=./test-results" >> $GITHUB_OUTPUT
         echo "debug-path=./maestro-debug-output" >> $GITHUB_OUTPUT
+
+        exit $TEST_EXIT_CODE
       id: test
 
     - name: Upload test result artifacts

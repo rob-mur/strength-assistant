@@ -9,7 +9,12 @@
   ],
   "shell": {
     "scripts": {
-      "integration_test_android": ["../../scripts/integration_test_android.sh"],
+      "integration_test_android": [
+        "../../scripts/integration_test_android.sh build_preview.apk"
+      ],
+      "integration_test_android_production": [
+        "../../scripts/integration_test_android.sh build_production.apk"
+      ],
       "sync_devbox": ["bash ../../scripts/sync-devbox.sh"]
     }
   },

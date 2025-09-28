@@ -36,10 +36,12 @@ runs:
       working-directory: devbox/${{ inputs.devbox-config }}
       run: |
         if [ "${{ inputs.build-type }}" = "production" ]; then
-          devbox run build_production
+          # Use parameterized build script: build.sh production build_production.apk
+          ../../scripts/build.sh production build_production.apk
           echo "apk-path=./build_production.apk" >> $GITHUB_OUTPUT
         else
-          devbox run build_preview
+          # Use parameterized build script: build.sh preview build_preview.apk  
+          ../../scripts/build.sh preview build_preview.apk
           echo "apk-path=./build_preview.apk" >> $GITHUB_OUTPUT
         fi
         echo "success=true" >> $GITHUB_OUTPUT

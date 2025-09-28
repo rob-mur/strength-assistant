@@ -180,29 +180,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup testing environment
-        uses: ./.github/actions/setup-dev-environment
-        with:
-          devbox-config: android-testing
-
       - name: Run Production Validation
-        shell: bash
-        working-directory: devbox/android-testing
-        env:
-          SKIP_DATA_CLEANUP: true
-          TEST_ENVIRONMENT: production
-          INFRASTRUCTURE_URL: ${{ needs.terraform-deploy.outputs.infrastructure-url }}
-          DEPLOYMENT_ID: ${{ needs.terraform-deploy.outputs.deployment-id }}
-        run: |
-          # Set APK path for the test script to use
-          export APK_PATH="${{ steps.download-apk.outputs.apk-path }}"
-          # Run integration test with the downloaded APK using anonymous users
-          echo "🧪 Validating production deployment using anonymous users"
-          echo "📍 Infrastructure URL: $INFRASTRUCTURE_URL"
-          echo "🆔 Deployment ID: $DEPLOYMENT_ID"
-          echo "📱 APK Path: $APK_PATH"
-          devbox run integration_test_android
-          echo "tests-passed=$?" >> $GITHUB_OUTPUT
+        uses: ./.github/actions/maestro-test
+        with:
+          apk-path: ${{ steps.download-apk.outputs.apk-path }}
+          test-environment: production
+          skip-data-cleanup: true
+          devbox-config: android-testing
         id: maestro-tests
 
       - name: Process Test Results
@@ -210,6 +194,7 @@ jobs:
           echo "Production validation completed"
           echo "APK download successful: ${{ steps.download-apk.outputs.build-successful }}"
           echo "Tests passed: ${{ steps.maestro-tests.outputs.tests-passed }}"
+          echo "Debug artifacts: ${{ steps.maestro-tests.outputs.debug-artifacts }}"
 
       # Alert on failure
       - name: Production Validation Failed

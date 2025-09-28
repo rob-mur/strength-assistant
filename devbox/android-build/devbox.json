@@ -3,8 +3,10 @@
   "packages": ["path:flakes/androidsdk", "nodejs@latest", "jdk17@latest"],
   "shell": {
     "scripts": {
-      "build_preview": ["../../scripts/build.sh preview"],
-      "build_production": ["../../scripts/build.sh production"],
+      "build_preview": ["../../scripts/build.sh preview build_preview.apk"],
+      "build_production": [
+        "../../scripts/build.sh production build_production.apk"
+      ],
       "sync_devbox": ["bash ../../scripts/sync-devbox.sh"]
     }
   },

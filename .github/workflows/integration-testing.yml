@@ -1,0 +1,78 @@
+name: Integration Testing
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Concurrency handling - cancel running tests on new pushes to PR
+concurrency:
+  group: integration-testing-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+  SKIP_DATA_CLEANUP: false
+  NODE_ENV: test
+
+permissions:
+  contents: read
+
+jobs:
+  build-preview-apk:
+    name: Build Preview APK
+    runs-on: ubuntu-latest
+    environment: Dev
+    outputs:
+      apk-artifact-name: ${{ steps.build-preview.outputs.artifact-name }}
+      apk-filename: build_preview.apk
+      apk-path: ${{ steps.build-preview.outputs.apk-path }}
+      build-successful: ${{ steps.build-preview.outputs.build-successful }}
+    steps:
+      - name: 🏗 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Preview APK
+        uses: ./.github/actions/android-build
+        with:
+          build-type: preview
+          devbox-config: android-build
+          artifact-name: preview-integration-apk
+        id: build-preview
+
+  integration-tests:
+    name: Run Integration Tests
+    runs-on: ubuntu-latest
+    needs: build-preview-apk
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Integration Tests
+        uses: ./.github/actions/maestro-test
+        with:
+          apk-path: ${{ needs.build-preview-apk.outputs.apk-filename }}
+          test-environment: integration
+          skip-data-cleanup: false
+          devbox-config: android-testing
+        id: maestro-tests
+
+      - name: Process Test Results
+        run: |
+          echo "Integration testing completed"
+          echo "APK build successful: ${{ needs.build-preview-apk.outputs.build-successful }}"
+          echo "Tests passed: ${{ steps.maestro-tests.outputs.tests-passed }}"
+          echo "Debug artifacts: ${{ steps.maestro-tests.outputs.debug-artifacts }}"
+
+      # Alert on failure
+      - name: Integration Tests Failed
+        if: failure()
+        run: |
+          echo "::error title=Integration Tests Failed::Integration tests failed for PR #${{ github.event.pull_request.number }}. Review required before merge."
+          exit 1
+
+      # Success notification
+      - name: Integration Tests Succeeded
+        if: success()
+        run: |
+          echo "::notice title=Integration Tests Passed::All integration tests passed for PR #${{ github.event.pull_request.number }}. Ready for review."
