@@ -54,10 +54,26 @@ jobs:
           ls -la
           find . -name "*.apk" -type f
           echo "Expected APK path: ${{ needs.build-preview.outputs.apk-path }}"
+          echo "Working directory: $(pwd)"
+          echo "All files recursively:"
+          find . -type f | head -20
+      - name: Locate and copy APK file
+        run: |
+          # Find the APK file wherever it is
+          APK_FILE=$(find . -name "*.apk" -type f | head -1)
+          if [ -n "$APK_FILE" ]; then
+            echo "Found APK at: $APK_FILE"
+            cp "$APK_FILE" build_preview.apk
+            echo "Copied APK to: build_preview.apk"
+            ls -la build_preview.apk
+          else
+            echo "No APK file found in artifact!"
+            exit 1
+          fi
       - name: Run Integration Tests
         uses: ./.github/actions/maestro-test
         with:
-          apk-path: ${{ needs.build-preview.outputs.apk-path }}
+          apk-path: build_preview.apk
           test-environment: integration
           skip-data-cleanup: false
           devbox-config: android-testing
