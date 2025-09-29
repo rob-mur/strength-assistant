@@ -50,12 +50,14 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   return context.resolveRequest(context, moduleName, platform);
 };
 
-// Exclude Storybook from production builds
+// Exclude Storybook from production builds and integration tests
 const isProduction =
   process.env.EAS_BUILD_PROFILE === "production" ||
   process.env.NODE_ENV === "production";
 
-if (isProduction) {
+const isChromeIntegrationTest = process.env.CHROME_TEST === "true";
+
+if (isProduction || isChromeIntegrationTest) {
   // Add resolver to exclude all storybook-related files and modules
   const storybookExclusions = [
     /.*\.stories\.(js|jsx|ts|tsx)$/,
