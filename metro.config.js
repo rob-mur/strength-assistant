@@ -29,8 +29,6 @@ if (config.resolver.alias) {
 config.resolver.platforms = ["web", "native", "ios", "android"];
 config.resolver.mainFields = ["browser", "module", "main"];
 
-const withStorybook = require("@storybook/react-native/metro/withStorybook");
-
 const fs = require("fs");
 const path = require("path");
 
@@ -52,7 +50,13 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   return context.resolveRequest(context, moduleName, platform);
 };
 
-module.exports = withStorybook(config, {
-  enabled: process.env.WITH_STORYBOOK,
-  onDisabledRemoveStorybook: true,
-});
+// Only import and use Storybook in development environments
+if (process.env.WITH_STORYBOOK) {
+  const withStorybook = require("@storybook/react-native/metro/withStorybook");
+  module.exports = withStorybook(config, {
+    enabled: true,
+    onDisabledRemoveStorybook: true,
+  });
+} else {
+  module.exports = config;
+}
