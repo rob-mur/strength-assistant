@@ -52,6 +52,12 @@ export function getSupabaseEnvConfig(): SupabaseEnvConfig {
 export function getSupabaseUrl(): string {
   const config = getSupabaseEnvConfig();
 
+  // Always prefer the explicit URL if provided
+  if (config.url) {
+    return config.url;
+  }
+
+  // Fallback to building URL from host+port for emulator mode
   if (config.useEmulator) {
     return `http://${config.emulatorHost}:${config.emulatorPort}`;
   }

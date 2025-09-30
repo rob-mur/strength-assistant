@@ -60,15 +60,16 @@
   eas env:set EXPO_PUBLIC_SUPABASE_URL="https://oddphoddejomqiyctctq.supabase.co" --profile production
   eas env:set EXPO_PUBLIC_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kZHBob2RkZWpvbXFpeWN0Y3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1ODExNjIsImV4cCI6MjA3MjE1NzE2Mn0.MKheiiDO2VCknBaD2QRw4Kf_GeHpQW15qUMMAtK7BDk" --profile production
   eas env:set EXPO_PUBLIC_USE_SUPABASE="true" --profile production
-  eas env:set EXPO_PUBLIC_USE_EMULATOR="false" --profile production
+  eas env:set EXPO_PUBLIC_USE_SUPABASE_EMULATOR="false" --profile production
   ```
 
 - [x] T008 [NOTIFICATION] **USER ACTION**: Verify current devbox configuration contains these exact values for development/preview:
   ```bash
   # In devbox environment:
-  EXPO_PUBLIC_USE_EMULATOR=true
   EXPO_PUBLIC_USE_SUPABASE_EMULATOR=true
   EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 (local) or http://10.0.2.2:54321 (Android)
+  EXPO_PUBLIC_SUPABASE_EMULATOR_HOST=10.0.2.2
+  EXPO_PUBLIC_SUPABASE_EMULATOR_PORT=54321
   ```
 
 - [x] T009 [P] Validate environment variable loading logic in `lib/config/supabase-env.ts` matches contract requirements

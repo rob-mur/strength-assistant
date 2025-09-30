@@ -57,13 +57,20 @@ export abstract class SupabaseService {
   }
 
   protected getSupabaseUrl(): string {
+    // Always prefer the explicit URL if provided
+    const explicitUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+    if (explicitUrl) {
+      return explicitUrl;
+    }
+
+    // Fallback to building URL from host+port for emulator mode
     if (this.isEmulatorEnabled()) {
       const host = this.getEmulatorHost();
       const port = this.getEmulatorPort();
       return `http://${host}:${port}`;
     }
 
-    return process.env.EXPO_PUBLIC_SUPABASE_URL || "";
+    return "";
   }
 
   protected getSupabaseAnonKey(): string {
