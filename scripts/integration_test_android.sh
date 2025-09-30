@@ -309,14 +309,12 @@ for test_file in .maestro/android/*.yml; do
         echo "Starting test execution at $(date)..."
         
         # Run maestro test directly and capture its exit code
-        # Use PIPESTATUS to get the actual maestro exit code, not tee's exit code
         maestro test "$test_file" \
           --debug-output maestro-debug-output \
           --format junit \
           2>&1 | tee "maestro-debug-output/maestro-${TEST_NAME}.log"
-        
-        INDIVIDUAL_EXIT_CODE=${PIPESTATUS[0]}
-        echo "🔍 Maestro test '$TEST_NAME' completed with exit code: $INDIVIDUAL_EXIT_CODE"
+
+        INDIVIDUAL_EXIT_CODE=$?
         set -e  # Re-enable exit on error
         
         # Stop logcat capture processes
