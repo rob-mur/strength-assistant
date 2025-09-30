@@ -1,7 +1,6 @@
 url: com.jimmy_solutions.strength_assistant.test
 ---
 # Debug test to understand app state in CI - simplified for Android Maestro
-- runScript: ../../scripts/clear_emulator.js
 - launchApp
 
 # Wait for app to initialize

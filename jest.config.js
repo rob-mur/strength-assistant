@@ -30,6 +30,7 @@ module.exports = {
     "src/**/*.{ts,tsx}", // Include our TypeScript infrastructure
     "!**/*.d.ts",
     "!**/*.stories.{ts,tsx}",
+    "!app/storybook.tsx", // Exclude storybook configuration from coverage
     "!__tests__/test-utils/**", // Exclude test infrastructure from coverage
     "!**/*.test.{ts,tsx}",
     "!**/*.spec.{ts,tsx}",

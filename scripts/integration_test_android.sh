@@ -215,13 +215,6 @@ else
 fi
 echo ""
 
-# CRITICAL FIX: Clear Chrome-specific environment variables for Android
-# Android emulator needs to use 10.0.2.2, not 127.0.0.1
-# Don't set EXPO_PUBLIC_SUPABASE_URL - let emulator logic construct the URL
-unset EXPO_PUBLIC_SUPABASE_URL
-export EXPO_PUBLIC_USE_SUPABASE_EMULATOR=true
-# Don't set EXPO_PUBLIC_SUPABASE_EMULATOR_HOST - use hardcoded 10.0.2.2 fallback in native config
-
 echo "Environment variables for Supabase (Android-specific):"
 echo "EXPO_PUBLIC_USE_SUPABASE: $EXPO_PUBLIC_USE_SUPABASE"  
 echo "EXPO_PUBLIC_SUPABASE_URL: $EXPO_PUBLIC_SUPABASE_URL"
@@ -320,7 +313,7 @@ for test_file in .maestro/android/*.yml; do
           --debug-output maestro-debug-output \
           --format junit \
           2>&1 | tee "maestro-debug-output/maestro-${TEST_NAME}.log"
-        
+
         INDIVIDUAL_EXIT_CODE=$?
         set -e  # Re-enable exit on error
         

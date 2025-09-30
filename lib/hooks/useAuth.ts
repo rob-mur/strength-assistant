@@ -58,39 +58,7 @@ export function useAuth(): AuthState & {
 
     const initAuth = async () => {
       try {
-        // Handle Chrome test environment with automatic anonymous sign-in
-        // Priority: Chrome test environment overrides CI environment
-        const isChromeTest =
-          process.env.CHROME_TEST === "true" ||
-          process.env.EXPO_PUBLIC_CHROME_TEST === "true";
-        // CRITICAL FIX: Only use CI fallback if CI=true AND no Chrome test flags (CI=false explicitly disables CI mode)
-        const isCITest =
-          process.env.CI === "true" &&
-          process.env.CHROME_TEST !== "true" &&
-          process.env.EXPO_PUBLIC_CHROME_TEST !== "true";
-
-        if (isChromeTest || isCITest) {
-          // Subscribe to auth state changes first
-          unsubscribe = await authBackend.subscribeToAuthState(
-            handleUserStateChange,
-          );
-
-          // Check if user is already authenticated
-          const currentUser = await authBackend.getCurrentUser();
-          if (currentUser) {
-            handleUserStateChange(currentUser);
-          } else {
-            // Sign in anonymously to get a real Supabase user
-            await authBackend.signInAnonymously();
-            // handleUserStateChange will be called automatically via subscription
-          }
-          return;
-        }
-
-        // Subscribe to auth state changes
-        unsubscribe = await authBackend.subscribeToAuthState(
-          handleUserStateChange,
-        );
+        unsubscribe = authBackend.subscribeToAuthState(handleUserStateChange);
 
         // Get current user
         const currentUser = await authBackend.getCurrentUser();
