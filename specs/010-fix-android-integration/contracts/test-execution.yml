@@ -1,0 +1,189 @@
+# Test Execution Contract
+
+## Test Script Interface
+
+### Input Parameters
+```bash
+# Integration test script contract
+integration_test_android.sh [APK_PATH] [TEST_PROFILE]
+
+# Parameters:
+# APK_PATH: Absolute path to APK file to test
+# TEST_PROFILE: Build profile (development, preview, production)
+```
+
+### Exit Code Contract
+```bash
+# Success: All tests pass
+exit 0
+
+# Failure: Any test fails
+exit 1
+
+# Error: Script execution error (missing APK, invalid config, etc.)
+exit 2
+```
+
+### Output Contract
+```bash
+# Required stdout format for CI parsing
+echo "TESTS_TOTAL: ${total_tests}"
+echo "TESTS_PASSED: ${passed_tests}"
+echo "TESTS_FAILED: ${failed_tests}"
+echo "EXECUTION_TIME: ${duration_seconds}"
+echo "ARTIFACTS_PATH: ${debug_artifacts_dir}"
+```
+
+## Maestro Test Execution Contract
+
+### Individual Test Execution
+```bash
+maestro test ${test_file} --app-id ${app_package} --format junit --output ${results_dir}
+```
+
+### Required Exit Code Handling
+```bash
+# CRITICAL: Proper exit code propagation
+TEST_EXIT_CODE=$?
+
+# Convert to boolean for GitHub Actions
+if [ $TEST_EXIT_CODE -eq 0 ]; then
+    TEST_SUCCESS="true"
+else
+    TEST_SUCCESS="false"
+fi
+
+# Propagate exit code to script level
+if [ $TEST_EXIT_CODE -ne 0 ]; then
+    OVERALL_EXIT_CODE=1
+fi
+```
+
+### Debug Artifact Collection
+
+**Required Artifacts**:
+- `screenshots/` - Screenshots at each test step
+- `logs/` - Full device and application logs
+- `ui-dumps/` - UI hierarchy dumps for debugging
+- `videos/` - Screen recordings of test execution
+- `maestro-logs/` - Maestro execution logs and reports
+
+**Artifact Naming Convention**:
+```bash
+${timestamp}_${test_name}_${step_name}.${extension}
+# Example: 20250930_120345_add-workout_login-screen.png
+```
+
+## Test Environment Contract
+
+### Application State Management
+```bash
+# Before each test
+adb shell pm clear ${app_package}  # Clear app data
+adb shell am force-stop ${app_package}  # Ensure app is stopped
+
+# After each test
+adb shell am force-stop ${app_package}  # Clean shutdown
+# Collect debug artifacts
+```
+
+### Emulator Requirements
+```yaml
+# Android emulator configuration
+- API Level: 29+ (Android 10+)
+- RAM: 2GB minimum
+- Storage: 8GB minimum
+- Network: Enabled with internet access
+- Google Play Services: Available for Supabase connectivity
+```
+
+### Network Configuration
+```bash
+# Android emulator to host networking
+SUPABASE_HOST="10.0.2.2"  # Maps to host machine
+SUPABASE_PORT="54321"     # Supabase local development port
+
+# Verify connectivity before tests
+curl -f "http://${SUPABASE_HOST}:${SUPABASE_PORT}/health" || exit 2
+```
+
+## Test Suite Execution Contract
+
+### Test Discovery
+```bash
+# Discover all .maestro test files
+find .maestro/android -name "*.yml" -type f | sort
+```
+
+### Execution Order
+1. `debug-app-state.yml` - Verify app can start and basic state
+2. `add-exercise-and-see-it-in-list.yml` - CRUD operations
+3. `add-and-record-workout.yml` - Complex workflow test
+
+### Failure Handling
+```bash
+# Fail-fast: Stop on first test failure
+for test_file in ${test_files}; do
+    run_maestro_test "$test_file"
+    if [ $? -ne 0 ]; then
+        echo "Test failed: $test_file"
+        exit 1  # Immediate exit on failure
+    fi
+done
+```
+
+### Success Criteria
+- ALL individual tests must pass (exit code 0)
+- No crashes or unhandled exceptions
+- All required user flows complete successfully
+- Performance within acceptable limits (no ANRs)
+
+## CI Integration Contract
+
+### GitHub Actions Integration
+```yaml
+# Expected action usage
+- uses: ./.github/actions/maestro-test
+  with:
+    apk-path: ${{ needs.build.outputs.apk-path }}
+    test-folder: '.maestro/android'
+    test-name: 'Android Integration Tests'
+```
+
+### Result Propagation
+```yaml
+# Action must set these outputs correctly
+outputs:
+  success: ${{ steps.test.outputs.success }}  # boolean: true/false
+  exit-code: ${{ steps.test.outputs.exit-code }}  # number: 0/1/2
+  artifacts-path: ${{ steps.test.outputs.artifacts-path }}
+```
+
+### Artifact Upload Contract
+```yaml
+# Required artifact upload for debugging
+- uses: actions/upload-artifact@v4
+  if: always()  # Upload even on failure
+  with:
+    name: android-test-artifacts-${{ github.run_id }}
+    path: ${{ steps.test.outputs.artifacts-path }}
+    retention-days: 7
+```
+
+## Error Recovery Contract
+
+### Temporary Failures
+- Network timeouts: Retry up to 3 times
+- Emulator startup issues: Restart emulator once
+- App crashes: Clear data and retry test
+
+### Permanent Failures
+- Missing APK file: Immediate exit with error code 2
+- Invalid test configuration: Immediate exit with error code 2
+- Emulator hardware issues: Immediate exit with error code 2
+
+### Debugging Support
+- All failures must include debug artifacts
+- Error messages must be specific and actionable
+- Log all environment variables (except secrets)
+- Include device and emulator information

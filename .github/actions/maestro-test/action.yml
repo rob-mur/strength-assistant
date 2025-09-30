@@ -21,15 +21,18 @@ inputs:
     type: string
 
 outputs:
-  tests-passed:
-    description: "Whether all tests passed successfully"
+  success:
+    description: "Boolean indicating if tests passed (true/false)"
     value: ${{ steps.test.outputs.success }}
-  test-results:
-    description: "Path to test result artifacts"
-    value: ${{ steps.test.outputs.results-path }}
-  debug-artifacts:
-    description: "Path to debug output directory"
-    value: ${{ steps.test.outputs.debug-path }}
+  exit-code:
+    description: "Raw exit code from test execution"
+    value: ${{ steps.test.outputs.exit-code }}
+  test-duration:
+    description: "Test execution time in seconds"
+    value: ${{ steps.test.outputs.test-duration }}
+  artifacts-path:
+    description: "Path to debug artifacts directory"
+    value: ${{ steps.test.outputs.artifacts-path }}
 
 runs:
   using: composite
@@ -55,13 +58,28 @@ runs:
       run: |
         echo "🔄 Running integration tests with APK: ${{ inputs.apk-path }}"
 
+        # Record start time for duration calculation
+        START_TIME=$(date +%s)
+
         # Use devbox run to execute with proper environment
         devbox run -- ../../scripts/integration_test_android.sh "${{ inputs.apk-path }}"
         TEST_EXIT_CODE=$?
 
-        echo "success=$TEST_EXIT_CODE" >> $GITHUB_OUTPUT
-        echo "results-path=./test-results" >> $GITHUB_OUTPUT
-        echo "debug-path=./maestro-debug-output" >> $GITHUB_OUTPUT
+        # Calculate test duration
+        END_TIME=$(date +%s)
+        TEST_DURATION=$((END_TIME - START_TIME))
+
+        echo "success=$([ $TEST_EXIT_CODE -eq 0 ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
+        echo "exit-code=$TEST_EXIT_CODE" >> $GITHUB_OUTPUT
+        echo "test-duration=$TEST_DURATION" >> $GITHUB_OUTPUT
+        echo "artifacts-path=./maestro-debug-output" >> $GITHUB_OUTPUT
+
+        # Add debug artifact location reporting for failures
+        if [ $TEST_EXIT_CODE -ne 0 ]; then
+          echo "ERROR: Integration tests failed with exit code $TEST_EXIT_CODE"
+          echo "Debug artifacts available at: ./maestro-debug-output"
+          echo "Failure details: Check test logs and screenshots in debug artifacts"
+        fi
 
         exit $TEST_EXIT_CODE
       id: test

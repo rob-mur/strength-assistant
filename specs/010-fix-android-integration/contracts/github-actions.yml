@@ -1,0 +1,105 @@
+# GitHub Actions Contract: Maestro Test Action
+
+## Input Interface
+
+```yaml
+inputs:
+  apk-path:
+    description: 'Path to the APK file to test'
+    required: true
+    type: string
+  test-folder:
+    description: 'Path to Maestro test folder'
+    required: true
+    type: string
+  test-name:
+    description: 'Name of the test for reporting'
+    required: true
+    type: string
+```
+
+## Output Interface
+
+```yaml
+outputs:
+  success:
+    description: 'Boolean indicating if tests passed (true/false)'
+    value: ${{ steps.test.outputs.success }}
+  exit-code:
+    description: 'Raw exit code from test execution'
+    value: ${{ steps.test.outputs.exit-code }}
+  test-duration:
+    description: 'Test execution time in seconds'
+    value: ${{ steps.test.outputs.test-duration }}
+  artifacts-path:
+    description: 'Path to debug artifacts directory'
+    value: ${{ steps.test.outputs.artifacts-path }}
+```
+
+## Implementation Contract
+
+### Exit Code Handling (CRITICAL FIX)
+
+**Current (BROKEN)**:
+```yaml
+echo "success=$TEST_EXIT_CODE" >> $GITHUB_OUTPUT
+```
+
+**Required (FIXED)**:
+```yaml
+echo "success=$([ $TEST_EXIT_CODE -eq 0 ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
+echo "exit-code=$TEST_EXIT_CODE" >> $GITHUB_OUTPUT
+```
+
+### Test Execution Steps
+
+1. **Environment Setup**
+   - Start Android emulator if needed
+   - Verify APK installation
+   - Clear app data for clean test state
+
+2. **Test Execution**
+   - Run Maestro test with proper error capture
+   - Collect debug artifacts (screenshots, logs, UI dumps)
+   - Record execution timing
+
+3. **Result Processing**
+   - Convert exit code to boolean success indicator
+   - Upload debug artifacts
+   - Set action outputs correctly
+
+### Error Handling
+
+- Non-zero exit codes must be properly converted to `success=false`
+- Test failures must not crash the action itself
+- Debug artifacts must be collected regardless of test outcome
+- Timeout handling for stuck tests
+
+### Debug Artifact Requirements
+
+Required artifacts for troubleshooting:
+- Screenshots at key test steps
+- Full device logs
+- UI hierarchy dumps
+- Video recording of test execution
+- Maestro execution logs
+
+## Validation Tests
+
+### Success Case
+```yaml
+# Input: APK with working app, passing test
+# Expected Output: success=true, exit-code=0
+```
+
+### Failure Case
+```yaml
+# Input: APK with broken functionality, failing test
+# Expected Output: success=false, exit-code=1
+```
+
+### Error Case
+```yaml
+# Input: Invalid APK path
+# Expected Output: success=false, exit-code>1, error message
+```

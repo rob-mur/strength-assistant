@@ -5,6 +5,26 @@
 # Example: ./scripts/integration_test_android.sh build_preview.apk
 # Example: ./scripts/integration_test_android.sh build_production.apk
 
+# Function to validate standardized error message format
+validate_error_message() {
+    local test_name="$1"
+    local exit_code="$2"
+    local error_log="$3"
+
+    # Check if error message follows the standardized format
+    if ! grep -q "ERROR: Test '$test_name' failed with exit code $exit_code" "$error_log" 2>/dev/null; then
+        echo "WARNING: Standardized error format not found for test $test_name"
+    fi
+
+    if ! grep -q "Debug artifacts available at:" "$error_log" 2>/dev/null; then
+        echo "WARNING: Debug artifacts location not reported for test $test_name"
+    fi
+
+    if ! grep -q "Failure details:" "$error_log" 2>/dev/null; then
+        echo "WARNING: Failure details not provided for test $test_name"
+    fi
+}
+
 APK_NAME=${1:-build_preview.apk}
 
 if [ ! -f "$APK_NAME" ]; then
@@ -344,6 +364,9 @@ for test_file in .maestro/android/*.yml; do
             echo "Status: PASSED" >> maestro-debug-output/test-summary.txt
             PASSED_COUNT=$((PASSED_COUNT + 1))
         else
+            echo "ERROR: Test '$TEST_NAME' failed with exit code $INDIVIDUAL_EXIT_CODE"
+            echo "Debug artifacts available at: maestro-debug-output/"
+            echo "Failure details: Maestro test execution failed - check debug logs for specifics"
             echo "❌ Test $TEST_NAME failed with exit code $INDIVIDUAL_EXIT_CODE"
             echo "Status: FAILED (exit code $INDIVIDUAL_EXIT_CODE)" >> maestro-debug-output/test-summary.txt
             MAESTRO_EXIT_CODE=$INDIVIDUAL_EXIT_CODE
@@ -521,6 +544,9 @@ fi
 
 # Explicitly fail if any tests failed
 if [ $MAESTRO_EXIT_CODE -ne 0 ]; then
+    echo "ERROR: Integration test suite failed with exit code $MAESTRO_EXIT_CODE"
+    echo "Debug artifacts available at: maestro-debug-output/"
+    echo "Failure details: One or more Maestro tests failed - see individual test logs"
     echo "❌ Tests failed with exit code $MAESTRO_EXIT_CODE"
     exit $MAESTRO_EXIT_CODE
 else
