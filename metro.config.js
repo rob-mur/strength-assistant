@@ -6,23 +6,31 @@ const config = getDefaultConfig(__dirname);
 
 // Remove custom transformer - use default Metro transformer
 
-// Configure web polyfills to prevent Node.js module issues
+// Configure polyfills to prevent Node.js module issues in React Native
+const nodeModuleAliases = {
+  // Disable Node.js modules that don't work in React Native
+  tty: false,
+  fs: false,
+  os: false,
+  path: false,
+  crypto: false,
+  stream: false,
+  util: false,
+  buffer: false,
+  events: false,
+  assert: false,
+  constants: false,
+  // Use browser-compatible process polyfill
+  process: require.resolve("process/browser"),
+};
+
 if (config.resolver.alias) {
   config.resolver.alias = {
     ...config.resolver.alias,
-    // Disable TTY module for web builds - prevents debug package errors
-    tty: false,
-    // Use browser-compatible process polyfill
-    process: require.resolve("process/browser"),
-    // Disable util module for web builds
-    util: false,
+    ...nodeModuleAliases,
   };
 } else {
-  config.resolver.alias = {
-    tty: false,
-    process: require.resolve("process/browser"),
-    util: false,
-  };
+  config.resolver.alias = nodeModuleAliases;
 }
 
 // Ensure proper platform resolution for web builds

@@ -32,11 +32,33 @@ export class Logger {
   }
 
   private logWithContext(
-    _level: "log" | "warn" | "error",
-    _message: string,
-    _context?: Record<string, unknown>,
+    level: "log" | "warn" | "error",
+    message: string,
+    context?: Record<string, unknown>,
   ): void {
-    // Silent logging to avoid Chrome test issues
+    // Skip logging in test environment to avoid Chrome test issues
+    if (process.env.NODE_ENV === "test" || process.env.CHROME_TEST === "true") {
+      return;
+    }
+
+    const fullMessage = this.createMessage(level, message, context);
+
+    // Add context information if available
+    const contextStr = context ? ` | ${JSON.stringify(context)}` : "";
+    const logMessage = `${fullMessage}${contextStr}`;
+
+    // Use appropriate console method based on level
+    switch (level) {
+      case "error":
+        console.error(logMessage);
+        break;
+      case "warn":
+        console.warn(logMessage);
+        break;
+      default:
+        console.log(logMessage);
+        break;
+    }
   }
 
   info(message: string, context?: Record<string, unknown>): void {
