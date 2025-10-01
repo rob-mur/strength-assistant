@@ -82,6 +82,16 @@ echo "✅ Android AVD created and optimized successfully"
 
 adb start-server
 
+# Set up error handler early to cleanup any processes
+errorhandler () {
+    echo "🧹 Cleaning up processes on exit..."
+    # Kill any emulator processes
+    pkill -f "emulator.*test" 2>/dev/null || true
+    # Stop Supabase
+    supabase stop 2>/dev/null || true
+}
+trap errorhandler ERR EXIT
+
 # Clean up any existing processes and Docker resources to save disk space
 supabase stop || true
 
@@ -94,29 +104,6 @@ sleep 2
 echo "🔄 Starting Supabase at $(date)..."
 supabase start
 echo "✅ Supabase started successfully at $(date)"
-
-echo "🔄 Starting Android emulator..."
-emulator -avd test -no-snapshot-load -no-window -accel on -gpu off &
-EMULATOR_PID=$!
-echo "launched emulator in background"
-
-errorhandler () {
-    kill $EMULATOR_PID 2>/dev/null || true
-    supabase stop 2>/dev/null || true
-}
-trap errorhandler ERR EXIT
-
-echo "Waiting for device to boot"
-adb wait-for-device
-
-BOOT_COMPLETED=""
-while [ "$BOOT_COMPLETED" != "1" ]; do
-    sleep 5 
-    BOOT_COMPLETED=$(adb shell getprop sys.boot_completed | tr -d '\r')
-    echo "Boot status: $BOOT_COMPLETED (1 means ready)"
-done
-
-echo "Emulator is ready!"
 
 # Verify Supabase is responding
 echo "⏳ Verifying Supabase is ready..."
@@ -147,6 +134,18 @@ adb devices | grep emulator && {
 echo "🚀 Starting Android emulator in headless mode..."
 emulator -avd test -no-snapshot-load -no-window -no-audio -no-boot-anim -gpu off &
 EMULATOR_PID=$!
+
+# Update error handler to include the emulator PID
+errorhandler () {
+    echo "🧹 Cleaning up processes on exit..."
+    # Kill the specific emulator process
+    kill $EMULATOR_PID 2>/dev/null || true
+    # Kill any other emulator processes
+    pkill -f "emulator.*test" 2>/dev/null || true
+    # Stop Supabase
+    supabase stop 2>/dev/null || true
+}
+trap errorhandler ERR EXIT
 
 # Wait for device to be ready
 echo "⏳ Waiting for Android emulator to be ready..."
