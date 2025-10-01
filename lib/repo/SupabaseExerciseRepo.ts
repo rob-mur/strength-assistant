@@ -228,10 +228,8 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
         typeof result.id === "string"
       ) {
         currentUser = { id: result.id };
-      } else {
-        // No user from Supabase - don't use fallback, let authentication fail
-        currentUser = null;
       }
+      // If no valid user, currentUser remains null (initialized above)
     } catch (error) {
       console.error(
         "🔐 SupabaseExerciseRepo - supabaseClient.getCurrentUser() failed with error:",

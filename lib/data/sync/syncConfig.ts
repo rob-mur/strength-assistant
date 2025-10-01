@@ -8,6 +8,15 @@ import { ExerciseInsert } from "../../models/supabase";
 // const _SYNC_TIMEOUT = 30000; // 30 seconds
 // const _NETWORK_CHECK_INTERVAL = 5000; // 5 seconds
 
+// Type for dependency injection in tests
+interface StorageManagerModule {
+  storageManager: {
+    getAuthBackend: () => {
+      getCurrentUser: () => Promise<{ id: string } | null>;
+    };
+  };
+}
+
 /**
  * Configuration for Legend State sync with Supabase
  * Provides offline-first data synchronization with automatic conflict resolution
@@ -21,12 +30,13 @@ export function configureSyncEngine() {
 /**
  * Load initial exercises data from Supabase
  */
-async function loadInitialData() {
+async function loadInitialData(storageManagerModule?: StorageManagerModule) {
   try {
     console.log("📥 loadInitialData - Loading initial exercises data");
 
     // FIXED: Use consistent auth backend instead of supabaseClient.getCurrentUser()
-    const { storageManager } = await import("../StorageManager");
+    const { storageManager } =
+      storageManagerModule || (await import("../StorageManager"));
     const authBackend = storageManager.getAuthBackend();
     const user = await authBackend.getCurrentUser();
 
@@ -162,6 +172,7 @@ function setupRealtimeSubscription() {
  */
 export async function syncExerciseToSupabase(
   exercise: Exercise,
+  storageManagerModule?: StorageManagerModule,
 ): Promise<void> {
   console.log(
     "🔄 syncExerciseToSupabase - Starting sync for exercise:",
@@ -169,7 +180,8 @@ export async function syncExerciseToSupabase(
   );
 
   // FIXED: Use consistent auth backend instead of supabaseClient.getCurrentUser()
-  const { storageManager } = await import("../StorageManager");
+  const { storageManager } =
+    storageManagerModule || (await import("../StorageManager"));
   const authBackend = storageManager.getAuthBackend();
   const user = await authBackend.getCurrentUser();
 
