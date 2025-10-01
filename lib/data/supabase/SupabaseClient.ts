@@ -72,14 +72,45 @@ export class SupabaseClient {
    * Does NOT automatically sign in - auth should be handled by useAuth hook
    */
   async getCurrentUser() {
-    const {
-      data: { user },
-      error,
-    } = await this.getClient().auth.getUser();
-    if (error) {
+    console.log("🔗 SupabaseClient - getCurrentUser called");
+    console.log("🔗 SupabaseClient - Calling this.getClient().auth.getUser()");
+
+    try {
+      // Add timeout to prevent hanging
+      const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('getCurrentUser timeout after 10 seconds')), 10000)
+      );
+
+      const authCall = this.getClient().auth.getUser();
+      console.log("🔗 SupabaseClient - Waiting for auth.getUser() response...");
+
+      const {
+        data: { user },
+        error,
+      } = await Promise.race([authCall, timeout]);
+
+      console.log("🔗 SupabaseClient - auth.getUser() completed, user:", user ? "found" : "null", "error:", error);
+
+      if (error) {
+        console.error("🔗 SupabaseClient - auth.getUser() error:", error);
+        // Don't throw on auth session missing - this is expected in offline-first apps
+        if (error.message?.includes('Auth session missing') || error.name === 'AuthSessionMissingError') {
+          console.log("🔗 SupabaseClient - Auth session missing, returning null (offline-first)");
+          return null;
+        }
+        console.log("🔗 SupabaseClient - Non-auth error, throwing:", error);
+        throw error;
+      }
+      return user;
+    } catch (error) {
+      console.error("🔗 SupabaseClient - getCurrentUser failed:", error);
+      // Handle auth session missing errors gracefully in offline-first apps
+      if (error.message?.includes('Auth session missing') || error.name === 'AuthSessionMissingError') {
+        console.log("🔗 SupabaseClient - Auth session missing in catch block, returning null (offline-first)");
+        return null;
+      }
       throw error;
     }
-    return user;
   }
 
   /**

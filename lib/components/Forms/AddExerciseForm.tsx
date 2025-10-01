@@ -12,6 +12,8 @@ export default function AddExerciseForm() {
   const { user } = useAuth();
   const addExercise = useAddExercise(user?.uid || "");
 
+  console.log("💪 AddExerciseForm - Current user state:", user ? `authenticated (${user.uid})` : "not authenticated");
+
   return (
     <Card>
       <Card.Title title={Locales.t("addExerciseTitle")}></Card.Title>
@@ -34,11 +36,16 @@ export default function AddExerciseForm() {
           loading={isLoading}
           disabled={isLoading}
           onPress={async () => {
+            console.log("💪 AddExerciseForm - Submit clicked, user:", user ? "authenticated" : "not authenticated", "exercise:", exercise);
             setIsLoading(true);
             try {
+              console.log("💪 AddExerciseForm - Calling addExercise with userId:", user?.uid || "(empty)");
               await addExercise(exercise);
+              console.log("💪 AddExerciseForm - Exercise added successfully");
               router.back();
               router.navigate(`/workout?exercise=${exercise}`);
+            } catch (error) {
+              console.error("💪 AddExerciseForm - Error adding exercise:", error);
             } finally {
               setIsLoading(false);
             }
