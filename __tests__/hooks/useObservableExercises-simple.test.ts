@@ -13,7 +13,7 @@ jest.mock("@/lib/data/store", () => ({
 
 // Mock Legend State with a simple implementation
 jest.mock("@legendapp/state/react", () => ({
-  useObservable: jest.fn(() => mockObservable),
+  useObservable: jest.fn(() => []), // Return the actual value, not the observable
 }));
 
 import { useObservableExercises } from "@/lib/hooks/useObservableExercises";
@@ -48,7 +48,9 @@ describe("useObservableExercises - Basic Coverage", () => {
       },
     ];
 
-    mockObservable.get.mockReturnValue(mockExercises);
+    // Mock useObservable to return the specific exercises for this test
+    const useObservable = require("@legendapp/state/react").useObservable;
+    useObservable.mockReturnValue(mockExercises);
 
     const { result } = renderHook(() => useObservableExercises());
 

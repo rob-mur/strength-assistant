@@ -2,6 +2,8 @@ import {
   SupabaseClient as BaseSupabaseClient,
   AuthChangeEvent,
   Session,
+  User,
+  AuthError,
 } from "@supabase/supabase-js";
 import { Database } from "../../models/supabase";
 import { getSupabaseClient } from "./supabase";
@@ -71,7 +73,7 @@ export class SupabaseClient {
    * Get the current authenticated user
    * Does NOT automatically sign in - auth should be handled by useAuth hook
    */
-  async getCurrentUser() {
+  async getCurrentUser(): Promise<User | null> {
     console.log("🔗 SupabaseClient - getCurrentUser called");
     console.log("🔗 SupabaseClient - Calling this.getClient().auth.getUser()");
 
@@ -87,10 +89,17 @@ export class SupabaseClient {
       const authCall = this.getClient().auth.getUser();
       console.log("🔗 SupabaseClient - Waiting for auth.getUser() response...");
 
+      const result = await Promise.race([authCall, timeout]);
+
+      // Type guard to ensure we have the auth response
+      if (!result || typeof result !== "object" || !("data" in result)) {
+        throw new Error("Invalid auth response");
+      }
+
       const {
         data: { user },
         error,
-      } = await Promise.race([authCall, timeout]);
+      } = result as { data: { user: User | null }; error: AuthError | null };
 
       console.log(
         "🔗 SupabaseClient - auth.getUser() completed, user:",
@@ -104,7 +113,7 @@ export class SupabaseClient {
         // Don't throw on auth session missing - this is expected in offline-first apps
         if (
           error.message?.includes("Auth session missing") ||
-          error.name === "AuthSessionMissingError"
+          error.message?.includes("AuthSessionMissingError")
         ) {
           console.log(
             "🔗 SupabaseClient - Auth session missing, returning null (offline-first)",
@@ -119,8 +128,9 @@ export class SupabaseClient {
       console.error("🔗 SupabaseClient - getCurrentUser failed:", error);
       // Handle auth session missing errors gracefully in offline-first apps
       if (
-        error.message?.includes("Auth session missing") ||
-        error.name === "AuthSessionMissingError"
+        (error instanceof Error &&
+          error.message?.includes("Auth session missing")) ||
+        (error instanceof Error && error.name === "AuthSessionMissingError")
       ) {
         console.log(
           "🔗 SupabaseClient - Auth session missing in catch block, returning null (offline-first)",

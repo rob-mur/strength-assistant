@@ -190,7 +190,7 @@ export async function syncExerciseToSupabase(
   } catch (error) {
     console.log(
       "🔄 syncExerciseToSupabase - No Supabase session available:",
-      error.message,
+      error instanceof Error ? error.message : String(error),
     );
   }
 
@@ -214,16 +214,9 @@ export async function syncExerciseToSupabase(
     supabaseSessionUser.id,
   );
 
-  // Get connection details for logging
-  const client = supabaseClient.getSupabaseClient();
-  const supabaseUrl = client.supabaseUrl;
-  const supabaseKey = client.supabaseKey?.substring(0, 20) + "...";
-
   console.log(
     "🔄 syncExerciseToSupabase - Upserting exercise to Supabase database",
   );
-  console.log("🔄 syncExerciseToSupabase - Supabase URL:", supabaseUrl);
-  console.log("🔄 syncExerciseToSupabase - Supabase Key:", supabaseKey);
   console.log("🔄 syncExerciseToSupabase - Target table: exercises");
   console.log("🔄 syncExerciseToSupabase - Exercise data:", exerciseToUpsert);
 
@@ -263,8 +256,8 @@ export async function syncExerciseToSupabase(
     // GRACEFUL FALLBACK: For offline-first experience, don't throw on network errors
     // The exercise is already saved locally via optimistic update
     if (
-      error.message?.includes("timeout") ||
-      error.message?.includes("Network")
+      (error instanceof Error && error.message?.includes("timeout")) ||
+      (error instanceof Error && error.message?.includes("Network"))
     ) {
       console.log(
         "🔄 syncExerciseToSupabase - Continuing in offline mode - exercise saved locally",

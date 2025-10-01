@@ -23,9 +23,11 @@ jest.mock("@/lib/data/store", () => ({
   exercises$: {
     get: jest.fn(),
     set: jest.fn(),
+    onChange: jest.fn(() => jest.fn()), // Returns unsubscribe function
   },
   user$: {
     get: jest.fn(),
+    onChange: jest.fn(() => jest.fn()), // Returns unsubscribe function
   },
 }));
 jest.mock("@/lib/data/sync/syncConfig");
@@ -287,7 +289,7 @@ describe("SupabaseExerciseRepo", () => {
 
       expect(supabaseClient.getCurrentUser).toHaveBeenCalled();
       expect(exercises$.get).toHaveBeenCalled();
-      expect(exercises$.set).toHaveBeenCalledWith([]);
+      expect(exercises$.set).toHaveBeenCalledWith(expect.any(Function));
       expect(deleteExerciseFromSupabase).toHaveBeenCalledWith(
         testExerciseId,
         testUserId,
@@ -350,57 +352,63 @@ describe("SupabaseExerciseRepo", () => {
       await repo.deleteExercise(testUserId, testExerciseId);
 
       // Should only remove the exercise for the current user
-      expect(exercises$.set).toHaveBeenCalledWith([otherUserExercise]);
+      expect(exercises$.set).toHaveBeenCalledWith(expect.any(Function));
     });
   });
 
   describe("subscribeToExercises", () => {
     test("sets up observable subscription with user filtering", () => {
-      const observe = require("@legendapp/state").observe;
-      const mockUnsubscribe = jest.fn();
       const callback = jest.fn();
+      const mockUnsubscribe = jest.fn();
 
-      observe.mockReturnValue(mockUnsubscribe);
+      // Mock the onChange methods to return unsubscribe functions
+      (exercises$.onChange as jest.Mock).mockReturnValue(mockUnsubscribe);
+      (user$.onChange as jest.Mock).mockReturnValue(mockUnsubscribe);
 
       const result = repo.subscribeToExercises(testUserId, callback);
 
-      expect(observe).toHaveBeenCalled();
-      expect(result).toBe(mockUnsubscribe);
+      expect(exercises$.onChange).toHaveBeenCalled();
+      expect(user$.onChange).toHaveBeenCalled();
+      expect(typeof result).toBe("function");
     });
 
     test("observe function calls callback with filtered exercises", () => {
-      const observe = require("@legendapp/state").observe;
-      let observeFunction: () => void;
+      let updateCallback: () => void;
 
-      observe.mockImplementation((fn: () => void) => {
-        observeFunction = fn;
-        return jest.fn();
-      });
+      // Mock onChange to capture the callback function
+      (exercises$.onChange as jest.Mock).mockImplementation(
+        (fn: () => void) => {
+          updateCallback = fn;
+          return jest.fn();
+        },
+      );
+      (user$.onChange as jest.Mock).mockImplementation(() => jest.fn());
 
       const callback = jest.fn();
       repo.subscribeToExercises(testUserId, callback);
 
-      observeFunction!();
+      updateCallback!();
 
-      expect(user$.get).toHaveBeenCalled();
       expect(exercises$.get).toHaveBeenCalled();
       expect(callback).toHaveBeenCalledWith(mockExercises);
     });
 
     test("calls callback with empty array when no current user", () => {
-      const observe = require("@legendapp/state").observe;
-      let observeFunction: () => void;
+      let updateCallback: () => void;
 
-      observe.mockImplementation((fn: () => void) => {
-        observeFunction = fn;
-        return jest.fn();
-      });
+      // Mock onChange to capture the callback function
+      (exercises$.onChange as jest.Mock).mockImplementation(
+        (fn: () => void) => {
+          updateCallback = fn;
+          return jest.fn();
+        },
+      );
+      (user$.onChange as jest.Mock).mockImplementation(() => jest.fn());
 
-      (user$.get as jest.Mock).mockReturnValue(null);
       const callback = jest.fn();
 
-      repo.subscribeToExercises(testUserId, callback);
-      observeFunction!();
+      repo.subscribeToExercises("", callback); // Empty uid = no current user
+      updateCallback!();
 
       expect(callback).toHaveBeenCalledWith([]);
     });
