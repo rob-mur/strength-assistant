@@ -334,6 +334,17 @@ for test_file in .maestro/android/*.yml; do
           2>&1 | tee "maestro-debug-output/maestro-${TEST_NAME}.log"
 
         INDIVIDUAL_EXIT_CODE=$?
+
+        # IMPORTANT: Maestro doesn't return proper exit codes for test failures
+        # Check the output for failure indicators instead
+        if grep -q "Flow Failed\|Failed]" "maestro-debug-output/maestro-${TEST_NAME}.log"; then
+            echo "🔍 Detected test failure in maestro output (maestro doesn't use proper exit codes)"
+            INDIVIDUAL_EXIT_CODE=1
+        elif grep -q "Flow path does not exist" "maestro-debug-output/maestro-${TEST_NAME}.log"; then
+            echo "🔍 Detected missing test file in maestro output"
+            INDIVIDUAL_EXIT_CODE=1
+        fi
+
         set -e  # Re-enable exit on error
         
         # Stop logcat capture processes
@@ -368,7 +379,10 @@ for test_file in .maestro/android/*.yml; do
             echo "Failure details: Maestro test execution failed - check debug logs for specifics"
             echo "❌ Test $TEST_NAME failed with exit code $INDIVIDUAL_EXIT_CODE"
             echo "Status: FAILED (exit code $INDIVIDUAL_EXIT_CODE)" >> maestro-debug-output/test-summary.txt
-            MAESTRO_EXIT_CODE=$INDIVIDUAL_EXIT_CODE
+            # Only set MAESTRO_EXIT_CODE if it's currently 0 (preserve first failure)
+            if [ $MAESTRO_EXIT_CODE -eq 0 ]; then
+                MAESTRO_EXIT_CODE=$INDIVIDUAL_EXIT_CODE
+            fi
             
             # Enhanced debugging for failed tests
             echo "🔍 Capturing enhanced debug info for failed test..."
@@ -426,8 +440,12 @@ echo "Overall result: $([ $MAESTRO_EXIT_CODE -eq 0 ] && echo "SUCCESS" || echo "
 echo "Final exit code: $MAESTRO_EXIT_CODE" >> maestro-debug-output/test-summary.txt
 
 echo "=== POST-TEST DIAGNOSTICS ==="
-echo "Maestro tests completed with exit code: $MAESTRO_EXIT_CODE"
-echo "Tests passed: $PASSED_COUNT/$TEST_COUNT"
+echo "🔍 Final Test Results Summary:"
+echo "   Tests run: $TEST_COUNT"
+echo "   Tests passed: $PASSED_COUNT"
+echo "   Tests failed: $((TEST_COUNT - PASSED_COUNT))"
+echo "   Final exit code: $MAESTRO_EXIT_CODE"
+echo "   Overall result: $([ $MAESTRO_EXIT_CODE -eq 0 ] && echo "✅ SUCCESS" || echo "❌ FAILURE")"
 
 echo ""
 echo "📊 Test Summary from file:"
