@@ -3,6 +3,7 @@ import {
   AuthChangeEvent,
   Session,
   User,
+  AuthError,
 } from "@supabase/supabase-js";
 import { Database } from "../../models/supabase";
 import { getSupabaseClient } from "./supabase";
@@ -80,8 +81,44 @@ export class SupabaseClient {
     console.log("🔗 SupabaseClient - getCurrentUser called");
     console.log("🔗 SupabaseClient - Calling this.getClient().auth.getUser()");
 
-    const authCall = this.getClient().auth.getUser();
-    return SupabaseClientCore.processAuthResponse(authCall);
+    try {
+      // Add timeout to prevent hanging
+      const timeout = new Promise((_, reject) =>
+        setTimeout(
+          () => reject(new Error("getCurrentUser timeout after 10 seconds")),
+          10000,
+        ),
+      );
+
+      const authCall = this.getClient().auth.getUser();
+      console.log("🔗 SupabaseClient - Waiting for auth.getUser() response...");
+
+      const result = await Promise.race([authCall, timeout]);
+
+      // Type guard to ensure we have the auth response
+      if (!result || typeof result !== "object" || !("data" in result)) {
+        throw new Error("Invalid auth response");
+      }
+
+      const {
+        data: { user },
+        error,
+      } = result as { data: { user: User | null }; error: AuthError | null };
+
+      console.log(
+        "🔗 SupabaseClient - auth.getUser() completed, user:",
+        user ? "found" : "null",
+        "error:",
+        error,
+      );
+
+      if (error) {
+        return SupabaseClientCore.handleAuthError(error);
+      }
+      return user;
+    } catch (error) {
+      return SupabaseClientCore.handleAuthException(error);
+    }
   }
 
   /**

@@ -68,17 +68,17 @@ export class SupabaseClientCore {
    * Returns null for session missing errors, throws others
    */
   static handleAuthError(error: AuthError): User | null {
-    console.error("🔗 SupabaseClientCore - Auth error:", error);
+    console.error("🔗 SupabaseClient - auth.getUser() error:", error);
 
     // Don't throw on auth session missing - this is expected in offline-first apps
     if (this.isSessionMissingError(error)) {
       console.log(
-        "🔗 SupabaseClientCore - Auth session missing, returning null (offline-first)",
+        "🔗 SupabaseClient - Auth session missing, returning null (offline-first)",
       );
       return null;
     }
 
-    console.log("🔗 SupabaseClientCore - Non-session error, throwing:", error);
+    console.log("🔗 SupabaseClient - Non-auth error, throwing:", error);
     throw error;
   }
 
@@ -87,12 +87,12 @@ export class SupabaseClientCore {
    * Returns null for session missing errors, throws others
    */
   static handleAuthException(error: unknown): User | null {
-    console.error("🔗 SupabaseClientCore - Auth exception:", error);
+    console.error("🔗 SupabaseClient - getCurrentUser failed:", error);
 
     // Handle auth session missing errors gracefully in offline-first apps
     if (this.isSessionMissingException(error)) {
       console.log(
-        "🔗 SupabaseClientCore - Auth session missing in exception, returning null (offline-first)",
+        "🔗 SupabaseClient - Auth session missing in catch block, returning null (offline-first)",
       );
       return null;
     }
