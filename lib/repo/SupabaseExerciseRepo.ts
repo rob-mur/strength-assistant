@@ -125,8 +125,12 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
     console.log("🗄️ SupabaseExerciseRepo - Storing original exercises state for rollback");
     console.log("🗄️ SupabaseExerciseRepo - Performing optimistic update to local state");
 
-    // Optimistic update
-    exercises$.set((current) => [...current, newExercise]);
+    // Optimistic update - be more explicit and safe
+    const currentExercises = exercises$.get();
+    console.log("🗄️ SupabaseExerciseRepo - Current exercises count:", currentExercises.length);
+    const updatedExercises = [...currentExercises, newExercise];
+    console.log("🗄️ SupabaseExerciseRepo - Setting updated exercises count:", updatedExercises.length);
+    exercises$.set(updatedExercises);
 
     try {
       console.log("🗄️ SupabaseExerciseRepo - Syncing exercise to Supabase via syncExerciseToSupabase");
@@ -293,18 +297,50 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
     uid: string,
     callback: (exercises: Exercise[]) => void,
   ): () => void {
-    // Use Legend State's observe method for reactive updates with Supabase user filtering
-    return observe(() => {
-      const currentUser = user$.get();
-      if (!currentUser) {
+    console.log("🔔 SupabaseExerciseRepo - Setting up subscription for uid:", uid);
+
+    // Function to filter and send exercises
+    const updateCallback = () => {
+      console.log("🔔 SupabaseExerciseRepo - updateCallback triggered, using uid:", uid);
+
+      if (!uid) {
+        console.log("🔔 SupabaseExerciseRepo - No uid provided, returning empty exercises");
         callback([]);
         return;
       }
-      const filteredExercises = exercises$
-        .get()
-        .filter((ex) => ex.user_id === currentUser.id && !ex.deleted);
+
+      const allExercises = exercises$.get();
+      console.log("🔔 SupabaseExerciseRepo - All exercises in store:", allExercises.length);
+
+      const filteredExercises = allExercises.filter((ex) => {
+        const matches = ex.user_id === uid && !ex.deleted;
+        console.log("🔔 SupabaseExerciseRepo - Exercise filter:", {
+          exerciseId: ex.id,
+          exerciseUserId: ex.user_id,
+          filterUserId: uid,
+          deleted: ex.deleted,
+          matches
+        });
+        return matches;
+      });
+
+      console.log("🔔 SupabaseExerciseRepo - Filtered exercises count:", filteredExercises.length);
       callback(filteredExercises);
-    });
+    };
+
+    // Listen to both exercises and user changes
+    const unsubscribeExercises = exercises$.onChange(updateCallback);
+    const unsubscribeUser = user$.onChange(updateCallback);
+
+    // Call immediately to get initial state
+    updateCallback();
+
+    // Return cleanup function
+    return () => {
+      console.log("🔔 SupabaseExerciseRepo - Unsubscribing from exercises subscription");
+      unsubscribeExercises();
+      unsubscribeUser();
+    };
   }
 
   /**

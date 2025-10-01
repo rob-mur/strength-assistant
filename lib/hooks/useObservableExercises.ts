@@ -13,7 +13,7 @@ export function useObservableExercises() {
   const exercises = useObservable(exercises$);
 
   return {
-    exercises: exercises.get(),
+    exercises, // ✅ Return the observable directly, no .get() needed
 
     // Helper to add exercise optimistically
     addExercise: (exercise: Exercise) => {
