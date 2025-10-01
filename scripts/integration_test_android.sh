@@ -83,10 +83,29 @@ echo "✅ Android AVD created and optimized successfully"
 adb start-server
 
 # Set up error handler early to cleanup any processes
+EMULATOR_PID=""
+
 errorhandler () {
     echo "🧹 Cleaning up processes on exit..."
-    # Kill any emulator processes
+
+    # Restore original .env if we backed it up
+    if [ -f ".env.integration_backup" ]; then
+        echo "📄 Restoring original .env file..."
+        mv .env.integration_backup .env
+        echo "✅ Original .env restored"
+    fi
+
+    # Kill the specific emulator process if we have the PID
+    if [ ! -z "$EMULATOR_PID" ]; then
+        echo "🔄 Stopping emulator process $EMULATOR_PID..."
+        kill $EMULATOR_PID 2>/dev/null || true
+        # Wait a bit for graceful shutdown
+        sleep 2
+    fi
+
+    # Kill any remaining emulator processes
     pkill -f "emulator.*test" 2>/dev/null || true
+
     # Stop Supabase
     supabase stop 2>/dev/null || true
 }
@@ -99,6 +118,32 @@ supabase stop || true
 echo "🧹 Cleaning up Docker resources to save disk space..."
 docker system prune -f || true
 sleep 2
+
+# Set up integration test environment
+echo "⚙️ Setting up integration test environment..."
+
+# Backup current .env to allow devbox environment variables to take precedence
+if [ -f ".env" ]; then
+    echo "📄 Backing up .env file (devbox env vars will be used instead)..."
+    mv .env .env.integration_backup
+    echo "✅ .env backed up - devbox integration environment now active"
+    echo "   Supabase URL: http://10.0.2.2:54321 (emulator -> host, from devbox.json)"
+else
+    echo "📄 No .env file found - devbox environment variables will be used"
+    echo "   Supabase URL: http://10.0.2.2:54321 (emulator -> host, from devbox.json)"
+fi
+
+# Use the existing APK if it exists, or note that a new build may be needed
+if [ -f "$APK_NAME" ]; then
+    echo "📱 Using existing APK: $APK_NAME"
+    echo "⚠️  Note: APK may have been built with different environment variables"
+    echo "   If tests fail due to network issues, rebuild APK with current environment"
+else
+    echo "📱 APK not found: $APK_NAME"
+    echo "   Integration tests require a pre-built APK with correct environment"
+    echo "   Please build APK first: npx expo run:android --variant release"
+    exit 1
+fi
 
 # Start Supabase
 echo "🔄 Starting Supabase at $(date)..."
@@ -130,25 +175,22 @@ adb devices | grep emulator && {
     sleep 3
 }
 
-# Start Android emulator in headless mode
+# Start Android emulator in headless mode with more stable settings
 echo "🚀 Starting Android emulator in headless mode..."
-emulator -avd test -no-snapshot-load -no-window -no-audio -no-boot-anim -gpu off &
+# Use more stable emulator settings - avoid -gpu off which can cause crashes
+emulator -avd test -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect &
 EMULATOR_PID=$!
+echo "📱 Emulator started with PID: $EMULATOR_PID"
 
-# Update error handler to include the emulator PID
-errorhandler () {
-    echo "🧹 Cleaning up processes on exit..."
-    # Kill the specific emulator process
-    kill $EMULATOR_PID 2>/dev/null || true
-    # Kill any other emulator processes
-    pkill -f "emulator.*test" 2>/dev/null || true
-    # Stop Supabase
-    supabase stop 2>/dev/null || true
-}
-trap errorhandler ERR EXIT
-
-# Wait for device to be ready
+# Wait for device to be ready with health checks
 echo "⏳ Waiting for Android emulator to be ready..."
+
+# First check if emulator process is still running
+if ! kill -0 $EMULATOR_PID 2>/dev/null; then
+    echo "❌ Emulator process died during startup"
+    exit 1
+fi
+
 adb wait-for-device
 
 # Wait a bit more for the emulator to fully boot
@@ -156,18 +198,36 @@ echo "⏳ Waiting for emulator boot to complete..."
 BOOT_COMPLETED=""
 BOOT_ATTEMPTS=0
 while [ "$BOOT_COMPLETED" != "1" ] && [ $BOOT_ATTEMPTS -lt 60 ]; do
-    sleep 2
+    # Check if emulator process is still alive
+    if ! kill -0 $EMULATOR_PID 2>/dev/null; then
+        echo "❌ Emulator process died during boot (attempt $BOOT_ATTEMPTS)"
+        exit 1
+    fi
+
+    sleep 3
     BOOT_COMPLETED=$(adb shell getprop sys.boot_completed 2>/dev/null || echo "0")
     echo "   Boot status: $BOOT_COMPLETED (attempt $BOOT_ATTEMPTS/60)"
     BOOT_ATTEMPTS=$((BOOT_ATTEMPTS + 1))
+
+    # Also check if device is still connected
+    if ! adb devices | grep -q emulator; then
+        echo "❌ Emulator disconnected during boot"
+        exit 1
+    fi
 done
 
 if [ "$BOOT_COMPLETED" != "1" ]; then
     echo "❌ Emulator failed to boot after 60 attempts"
+    echo "🔍 Emulator process status:"
+    if kill -0 $EMULATOR_PID 2>/dev/null; then
+        echo "   Emulator process is still running"
+    else
+        echo "   Emulator process has died"
+    fi
     exit 1
 fi
 
-echo "✅ Android emulator is ready"
+echo "✅ Android emulator is ready and fully booted"
 
 # Install the APK
 echo "📱 Installing APK to emulator: $APK_NAME"
@@ -199,7 +259,7 @@ adb logcat -d | tail -20
 echo ""
 
 echo "Testing manual app launch..."
-adb shell am start -n com.jimmy_solutions.strength_assistant.test/.MainActivity
+adb shell am start -n com.jimmysolutions.strengthassistant.test/.MainActivity
 sleep 3
 echo "App launch result:"
 adb shell dumpsys activity activities | grep -i strength || echo "No strength activity found"

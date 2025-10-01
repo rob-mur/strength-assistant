@@ -78,7 +78,10 @@ export class SupabaseClient {
     try {
       // Add timeout to prevent hanging
       const timeout = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('getCurrentUser timeout after 10 seconds')), 10000)
+        setTimeout(
+          () => reject(new Error("getCurrentUser timeout after 10 seconds")),
+          10000,
+        ),
       );
 
       const authCall = this.getClient().auth.getUser();
@@ -89,13 +92,23 @@ export class SupabaseClient {
         error,
       } = await Promise.race([authCall, timeout]);
 
-      console.log("🔗 SupabaseClient - auth.getUser() completed, user:", user ? "found" : "null", "error:", error);
+      console.log(
+        "🔗 SupabaseClient - auth.getUser() completed, user:",
+        user ? "found" : "null",
+        "error:",
+        error,
+      );
 
       if (error) {
         console.error("🔗 SupabaseClient - auth.getUser() error:", error);
         // Don't throw on auth session missing - this is expected in offline-first apps
-        if (error.message?.includes('Auth session missing') || error.name === 'AuthSessionMissingError') {
-          console.log("🔗 SupabaseClient - Auth session missing, returning null (offline-first)");
+        if (
+          error.message?.includes("Auth session missing") ||
+          error.name === "AuthSessionMissingError"
+        ) {
+          console.log(
+            "🔗 SupabaseClient - Auth session missing, returning null (offline-first)",
+          );
           return null;
         }
         console.log("🔗 SupabaseClient - Non-auth error, throwing:", error);
@@ -105,8 +118,13 @@ export class SupabaseClient {
     } catch (error) {
       console.error("🔗 SupabaseClient - getCurrentUser failed:", error);
       // Handle auth session missing errors gracefully in offline-first apps
-      if (error.message?.includes('Auth session missing') || error.name === 'AuthSessionMissingError') {
-        console.log("🔗 SupabaseClient - Auth session missing in catch block, returning null (offline-first)");
+      if (
+        error.message?.includes("Auth session missing") ||
+        error.name === "AuthSessionMissingError"
+      ) {
+        console.log(
+          "🔗 SupabaseClient - Auth session missing in catch block, returning null (offline-first)",
+        );
         return null;
       }
       throw error;

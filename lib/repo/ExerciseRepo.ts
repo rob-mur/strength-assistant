@@ -39,10 +39,20 @@ export class ExerciseRepo implements IExerciseRepo {
     userId: string,
     exercise: import("../models/Exercise").ExerciseInput,
   ): Promise<void> {
-    console.log("📚 ExerciseRepo - addExercise called with userId:", userId, "exercise:", exercise);
-    console.log("📚 ExerciseRepo - Delegating to:", this.delegate.constructor.name);
+    console.log(
+      "📚 ExerciseRepo - addExercise called with userId:",
+      userId,
+      "exercise:",
+      exercise,
+    );
+    console.log(
+      "📚 ExerciseRepo - Delegating to:",
+      this.delegate.constructor.name,
+    );
     const result = await this.delegate.addExercise(userId, exercise);
-    console.log("📚 ExerciseRepo - delegate.addExercise completed successfully");
+    console.log(
+      "📚 ExerciseRepo - delegate.addExercise completed successfully",
+    );
     console.log("📚 ExerciseRepo - About to return from addExercise...");
     return result;
   }

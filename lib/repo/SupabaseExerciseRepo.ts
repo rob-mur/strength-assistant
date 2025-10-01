@@ -99,18 +99,28 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
    * Note: userId parameter is kept for backwards compatibility but Supabase user ID is used internally
    */
   async addExercise(userId: string, exercise: ExerciseInput): Promise<void> {
-    console.log("🗄️ SupabaseExerciseRepo - addExercise started with userId:", userId, "exercise:", exercise);
+    console.log(
+      "🗄️ SupabaseExerciseRepo - addExercise started with userId:",
+      userId,
+      "exercise:",
+      exercise,
+    );
 
     // Validate and prepare exercise data
     console.log("🗄️ SupabaseExerciseRepo - Validating and sanitizing exercise");
     const sanitizedName = this.validateAndSanitizeExercise(exercise);
     console.log("🗄️ SupabaseExerciseRepo - Sanitized name:", sanitizedName);
 
-    console.log("🗄️ SupabaseExerciseRepo - Skipping auth validation for offline-first experience");
+    console.log(
+      "🗄️ SupabaseExerciseRepo - Skipping auth validation for offline-first experience",
+    );
     // TEMPORARY: Skip auth validation entirely to focus on exercise creation flow
     // In an offline-first app, we trust the userId provided by the local auth system
     const authenticatedUser = { id: userId };
-    console.log("🗄️ SupabaseExerciseRepo - Using provided userId as authenticated user:", authenticatedUser.id);
+    console.log(
+      "🗄️ SupabaseExerciseRepo - Using provided userId as authenticated user:",
+      authenticatedUser.id,
+    );
 
     console.log("🗄️ SupabaseExerciseRepo - Creating new exercise object");
     const newExercise = this.createNewExercise(
@@ -122,30 +132,51 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
     // Store original state for rollback
     const originalExercises = exercises$.get();
 
-    console.log("🗄️ SupabaseExerciseRepo - Storing original exercises state for rollback");
-    console.log("🗄️ SupabaseExerciseRepo - Performing optimistic update to local state");
+    console.log(
+      "🗄️ SupabaseExerciseRepo - Storing original exercises state for rollback",
+    );
+    console.log(
+      "🗄️ SupabaseExerciseRepo - Performing optimistic update to local state",
+    );
 
     // Optimistic update - be more explicit and safe
     const currentExercises = exercises$.get();
-    console.log("🗄️ SupabaseExerciseRepo - Current exercises count:", currentExercises.length);
+    console.log(
+      "🗄️ SupabaseExerciseRepo - Current exercises count:",
+      currentExercises.length,
+    );
     const updatedExercises = [...currentExercises, newExercise];
-    console.log("🗄️ SupabaseExerciseRepo - Setting updated exercises count:", updatedExercises.length);
+    console.log(
+      "🗄️ SupabaseExerciseRepo - Setting updated exercises count:",
+      updatedExercises.length,
+    );
     exercises$.set(updatedExercises);
 
     try {
-      console.log("🗄️ SupabaseExerciseRepo - Syncing exercise to Supabase via syncExerciseToSupabase");
+      console.log(
+        "🗄️ SupabaseExerciseRepo - Syncing exercise to Supabase via syncExerciseToSupabase",
+      );
       // Use sync function instead of direct Supabase client
       await syncExerciseToSupabase(newExercise);
-      console.log("🗄️ SupabaseExerciseRepo - syncExerciseToSupabase completed successfully");
-      console.log("🗄️ SupabaseExerciseRepo - Sync successful, continuing with function completion...");
+      console.log(
+        "🗄️ SupabaseExerciseRepo - syncExerciseToSupabase completed successfully",
+      );
+      console.log(
+        "🗄️ SupabaseExerciseRepo - Sync successful, continuing with function completion...",
+      );
     } catch (error) {
-      console.error("🗄️ SupabaseExerciseRepo - syncExerciseToSupabase failed, reverting optimistic update:", error);
+      console.error(
+        "🗄️ SupabaseExerciseRepo - syncExerciseToSupabase failed, reverting optimistic update:",
+        error,
+      );
       // Revert optimistic update on error
       exercises$.set(originalExercises);
       throw error;
     }
 
-    console.log("🗄️ SupabaseExerciseRepo - addExercise completed successfully!");
+    console.log(
+      "🗄️ SupabaseExerciseRepo - addExercise completed successfully!",
+    );
   }
 
   /**
@@ -162,39 +193,68 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
   private async validateUserAuthentication(
     userId: string,
   ): Promise<{ id: string }> {
-    console.log("🔐 SupabaseExerciseRepo - validateUserAuthentication called with userId:", userId);
+    console.log(
+      "🔐 SupabaseExerciseRepo - validateUserAuthentication called with userId:",
+      userId,
+    );
 
     // FIXED: Use direct supabaseClient.getCurrentUser() instead of storageManager auth backend
     // The storageManager.getAuthBackend().getCurrentUser() was hanging, but direct calls work fine
-    console.log("🔐 SupabaseExerciseRepo - Using direct supabaseClient.getCurrentUser() for consistency...");
+    console.log(
+      "🔐 SupabaseExerciseRepo - Using direct supabaseClient.getCurrentUser() for consistency...",
+    );
 
     // Log the current Supabase URL being used
-    const { getSupabaseUrl } = require('../config/supabase-env');
+    const { getSupabaseUrl } = require("../config/supabase-env");
     console.log("🔐 SupabaseExerciseRepo - Supabase URL:", getSupabaseUrl());
 
     let currentUser;
     try {
       // Add a 3-second timeout to prevent hanging
       const timeout = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Auth validation timeout - proceeding without strict validation')), 3000)
+        setTimeout(
+          () =>
+            reject(
+              new Error(
+                "Auth validation timeout - proceeding without strict validation",
+              ),
+            ),
+          3000,
+        ),
       );
 
       const authCall = supabaseClient.getCurrentUser();
       currentUser = await Promise.race([authCall, timeout]);
-      console.log("🔐 SupabaseExerciseRepo - supabaseClient.getCurrentUser() call completed");
+      console.log(
+        "🔐 SupabaseExerciseRepo - supabaseClient.getCurrentUser() call completed",
+      );
     } catch (error) {
-      console.error("🔐 SupabaseExerciseRepo - supabaseClient.getCurrentUser() failed with error:", error);
+      console.error(
+        "🔐 SupabaseExerciseRepo - supabaseClient.getCurrentUser() failed with error:",
+        error,
+      );
       // For offline-first experience, don't block exercise creation on auth validation failures
       // Handle both timeout and AuthSessionMissingError gracefully
-      if (error.message?.includes('Auth session missing') || error.message?.includes('timeout') || error.name === 'AuthSessionMissingError') {
-        console.log("🔐 SupabaseExerciseRepo - Auth issue detected, proceeding with offline-first approach");
+      if (
+        error.message?.includes("Auth session missing") ||
+        error.message?.includes("timeout") ||
+        error.name === "AuthSessionMissingError"
+      ) {
+        console.log(
+          "🔐 SupabaseExerciseRepo - Auth issue detected, proceeding with offline-first approach",
+        );
       } else {
-        console.log("🔐 SupabaseExerciseRepo - Unknown auth error, proceeding with fallback");
+        console.log(
+          "🔐 SupabaseExerciseRepo - Unknown auth error, proceeding with fallback",
+        );
       }
       currentUser = { id: userId }; // Use provided userId as fallback
     }
 
-    console.log("🔐 SupabaseExerciseRepo - supabaseClient.getCurrentUser() returned:", currentUser ? "user found" : "no user");
+    console.log(
+      "🔐 SupabaseExerciseRepo - supabaseClient.getCurrentUser() returned:",
+      currentUser ? "user found" : "no user",
+    );
 
     if (!currentUser) {
       console.error("🔐 SupabaseExerciseRepo - No user authenticated");
@@ -202,16 +262,26 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
     }
 
     console.log("🔐 SupabaseExerciseRepo - Current user ID:", currentUser.id);
-    console.log("🔐 SupabaseExerciseRepo - Comparing with provided userId:", userId);
+    console.log(
+      "🔐 SupabaseExerciseRepo - Comparing with provided userId:",
+      userId,
+    );
 
     if (userId && userId !== currentUser.id) {
-      console.error("🔐 SupabaseExerciseRepo - User ID mismatch! Expected:", userId, "Got:", currentUser.id);
+      console.error(
+        "🔐 SupabaseExerciseRepo - User ID mismatch! Expected:",
+        userId,
+        "Got:",
+        currentUser.id,
+      );
       throw new Error(
         `User ID mismatch: Expected ${userId}, but authenticated user is ${currentUser.id}.`,
       );
     }
 
-    console.log("🔐 SupabaseExerciseRepo - User authentication validation successful");
+    console.log(
+      "🔐 SupabaseExerciseRepo - User authentication validation successful",
+    );
     return currentUser;
   }
 
@@ -297,20 +367,31 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
     uid: string,
     callback: (exercises: Exercise[]) => void,
   ): () => void {
-    console.log("🔔 SupabaseExerciseRepo - Setting up subscription for uid:", uid);
+    console.log(
+      "🔔 SupabaseExerciseRepo - Setting up subscription for uid:",
+      uid,
+    );
 
     // Function to filter and send exercises
     const updateCallback = () => {
-      console.log("🔔 SupabaseExerciseRepo - updateCallback triggered, using uid:", uid);
+      console.log(
+        "🔔 SupabaseExerciseRepo - updateCallback triggered, using uid:",
+        uid,
+      );
 
       if (!uid) {
-        console.log("🔔 SupabaseExerciseRepo - No uid provided, returning empty exercises");
+        console.log(
+          "🔔 SupabaseExerciseRepo - No uid provided, returning empty exercises",
+        );
         callback([]);
         return;
       }
 
       const allExercises = exercises$.get();
-      console.log("🔔 SupabaseExerciseRepo - All exercises in store:", allExercises.length);
+      console.log(
+        "🔔 SupabaseExerciseRepo - All exercises in store:",
+        allExercises.length,
+      );
 
       const filteredExercises = allExercises.filter((ex) => {
         const matches = ex.user_id === uid && !ex.deleted;
@@ -319,12 +400,15 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
           exerciseUserId: ex.user_id,
           filterUserId: uid,
           deleted: ex.deleted,
-          matches
+          matches,
         });
         return matches;
       });
 
-      console.log("🔔 SupabaseExerciseRepo - Filtered exercises count:", filteredExercises.length);
+      console.log(
+        "🔔 SupabaseExerciseRepo - Filtered exercises count:",
+        filteredExercises.length,
+      );
       callback(filteredExercises);
     };
 
@@ -337,7 +421,9 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
 
     // Return cleanup function
     return () => {
-      console.log("🔔 SupabaseExerciseRepo - Unsubscribing from exercises subscription");
+      console.log(
+        "🔔 SupabaseExerciseRepo - Unsubscribing from exercises subscription",
+      );
       unsubscribeExercises();
       unsubscribeUser();
     };

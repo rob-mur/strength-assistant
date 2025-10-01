@@ -65,7 +65,10 @@ export function useAuth(): AuthState & {
         // Get current user
         console.log("🔐 useAuth - Getting current user");
         const currentUser = await authBackend.getCurrentUser();
-        console.log("🔐 useAuth - Current user:", currentUser ? "authenticated" : "not authenticated");
+        console.log(
+          "🔐 useAuth - Current user:",
+          currentUser ? "authenticated" : "not authenticated",
+        );
         handleUserStateChange(currentUser);
       } catch (error) {
         setState((prevState) => ({
@@ -94,7 +97,10 @@ export function useAuth(): AuthState & {
     try {
       console.log("🔐 useAuth - Calling authBackend.signInAnonymously()");
       const result = await authBackend.signInAnonymously();
-      console.log("🔐 useAuth - Anonymous sign in result:", result ? "success" : "failed");
+      console.log(
+        "🔐 useAuth - Anonymous sign in result:",
+        result ? "success" : "failed",
+      );
 
       // CRITICAL FIX: Update user state immediately, don't rely only on callbacks
       handleUserStateChange(result);

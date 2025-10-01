@@ -280,28 +280,42 @@ export class SupabaseStorage implements StorageBackend {
 
   async signInAnonymously(): Promise<UserAccount> {
     // Try to create a real Supabase anonymous session first
-    console.log("🔐 SupabaseStorage - Attempting Supabase anonymous sign in...");
+    console.log(
+      "🔐 SupabaseStorage - Attempting Supabase anonymous sign in...",
+    );
     try {
       const {
         data: { user },
         error,
       } = await this.getClient().auth.signInAnonymously();
 
-      console.log("🔐 SupabaseStorage - Supabase anonymous sign in result:", { user: user ? "found" : "null", error: error ? error.message : "none" });
+      console.log("🔐 SupabaseStorage - Supabase anonymous sign in result:", {
+        user: user ? "found" : "null",
+        error: error ? error.message : "none",
+      });
 
       if (error) {
-        console.error("🔐 SupabaseStorage - Supabase anonymous sign in error:", error);
+        console.error(
+          "🔐 SupabaseStorage - Supabase anonymous sign in error:",
+          error,
+        );
         throw error;
       }
       if (user) {
-        console.log("🔐 SupabaseStorage - Successfully created Supabase anonymous user:", user.id);
+        console.log(
+          "🔐 SupabaseStorage - Successfully created Supabase anonymous user:",
+          user.id,
+        );
         const realUser = this.mapSupabaseUserToAccount(user);
         this.currentUser = realUser;
         this.notifyAuthStateChange(realUser);
         return realUser;
       }
     } catch (error) {
-      console.error("🔐 SupabaseStorage - Supabase anonymous sign in failed, falling back to local user:", error);
+      console.error(
+        "🔐 SupabaseStorage - Supabase anonymous sign in failed, falling back to local user:",
+        error,
+      );
     }
 
     // Fallback: create a local anonymous user if Supabase auth fails

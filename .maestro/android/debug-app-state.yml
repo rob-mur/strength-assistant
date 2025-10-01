@@ -1,4 +1,4 @@
-url: com.jimmy_solutions.strength_assistant.test
+url: com.jimmysolutions.strengthassistant.test
 ---
 # Debug test to understand app state in CI - simplified for Android Maestro
 - launchApp

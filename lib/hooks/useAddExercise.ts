@@ -4,7 +4,12 @@ export function useAddExercise(
   uid: string,
 ): (exercise: string) => Promise<void> {
   const addExercise = async (exercise: string) => {
-    console.log("🏋️ useAddExercise - Starting addExercise with uid:", uid, "exercise:", exercise);
+    console.log(
+      "🏋️ useAddExercise - Starting addExercise with uid:",
+      uid,
+      "exercise:",
+      exercise,
+    );
 
     if (!uid) {
       console.error("🏋️ useAddExercise - No uid provided, throwing error");
@@ -18,7 +23,9 @@ export function useAddExercise(
     await repo.addExercise(uid, { name: exercise });
 
     console.log("🏋️ useAddExercise - repo.addExercise completed successfully");
-    console.log("🏋️ useAddExercise - Exercise addition flow completed, returning...");
+    console.log(
+      "🏋️ useAddExercise - Exercise addition flow completed, returning...",
+    );
   };
 
   return addExercise;
