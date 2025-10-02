@@ -40,7 +40,14 @@ jobs:
           artifact-name: production-release-apk
         id: build-production
 
-      - name: Upload APK Artifact
+      - name: Upload APK Artifact for CI
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.build-production.outputs.artifact-name }}
+          path: ${{ steps.build-production.outputs.apk-path }}
+          retention-days: 30
+
+      - name: Create GitHub Release
         id: upload
         uses: softprops/action-gh-release@v2
         with:
@@ -116,64 +123,23 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Download Production APK
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-production-apk.outputs.apk-artifact-name }}
+          path: ./artifacts
+
+      - name: Setup APK for Testing
         shell: bash
         run: |
-          # Create artifacts directory
-          mkdir -p ./artifacts
+          # Find the downloaded APK file
+          APK_FILE=$(find ./artifacts -name "*.apk" -type f | head -1)
 
-          # Check if any releases exist
-          if ! gh release list --limit 1 >/dev/null 2>&1; then
-            echo "::error title=No GitHub Releases Found::No GitHub releases exist for this repository. Check if build-production workflow completed successfully."
-            exit 1
-          fi
-
-          # Get latest release tag using GitHub API
-          echo "🔍 Resolving latest release tag..."
-          LATEST_TAG=$(gh api repos/:owner/:repo/releases/latest --jq '.tag_name' 2>/dev/null)
-          if [ -z "$LATEST_TAG" ]; then
-            echo "::error title=Cannot Resolve Latest Release::Failed to get latest release tag from GitHub API."
-            exit 1
-          fi
-          echo "📋 Latest release tag: $LATEST_TAG"
-
-          # Verify latest release contains APK assets before download
-          echo "🔍 Checking release $LATEST_TAG for APK assets..."
-          APK_ASSETS=$(gh release view "$LATEST_TAG" --json assets --jq '.assets[] | select(.name | endswith(".apk")) | .name' 2>/dev/null)
-          if [ -z "$APK_ASSETS" ]; then
-            echo "::error title=No APK Assets Found::Release $LATEST_TAG exists but contains no APK files."
-            exit 3
-          fi
-          echo "📦 Found APK assets: $APK_ASSETS"
-
-          # Download APK using resolved tag
-          echo "📥 Downloading APK from release $LATEST_TAG..."
-          if ! gh release download "$LATEST_TAG" --pattern "*.apk" --dir ./artifacts 2>/dev/null; then
-            echo "::error title=APK Download Failed::Failed to download APK from release $LATEST_TAG"
-            exit 2
-          fi
-
-          # Validate APK file was downloaded successfully
-          APK_FILE=$(ls ./artifacts/*.apk 2>/dev/null | head -1)
           if [ ! -f "$APK_FILE" ]; then
-            echo "::error title=APK Download Verification Failed::APK assets were verified in release but file not found after download."
-            exit 5
+            echo "::error title=APK Not Found::No APK file found in downloaded artifacts"
+            exit 1
           fi
 
-          # Validate APK file integrity and format
-          if [ ! -s "$APK_FILE" ]; then
-            echo "::error title=Corrupted APK File::Downloaded APK file is empty or corrupted."
-            exit 6
-          fi
-
-          # Validate APK file format (basic ZIP signature check)
-          APK_HEADER=$(head -c 4 "$APK_FILE" | od -An -tx1 | tr -d ' ')
-          if [ "$APK_HEADER" != "504b0304" ]; then
-            echo "::error title=Invalid APK Format::Downloaded file does not have valid APK/ZIP signature."
-            exit 7
-          fi
-
-          echo "✅ Successfully downloaded and validated APK: $APK_FILE"
-          echo "📋 Using APK filename: ${{ needs.build-production-apk.outputs.apk-filename }}"
+          echo "✅ Found APK: $APK_FILE"
 
           # Copy APK to expected location for testing
           cp "$APK_FILE" "${{ needs.build-production-apk.outputs.apk-filename }}"
@@ -182,8 +148,6 @@ jobs:
           echo "apk-path=$APK_FILE" >> $GITHUB_OUTPUT
           echo "build-successful=true" >> $GITHUB_OUTPUT
         id: download-apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run Production Validation
         uses: ./.github/actions/maestro-test
