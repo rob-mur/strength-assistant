@@ -34,6 +34,7 @@ module.exports = {
     "!__tests__/test-utils/**", // Exclude test infrastructure from coverage
     "!**/*.test.{ts,tsx}",
     "!**/*.spec.{ts,tsx}",
+    "!lib/data/**", // Exclude data layer from coverage - mainly integration layer
   ],
 
   // Coverage thresholds adjusted for current codebase coverage levels

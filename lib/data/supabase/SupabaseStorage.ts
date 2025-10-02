@@ -77,10 +77,7 @@ export class SupabaseStorage implements StorageBackend {
   private authStateCallbacks: ((user: UserAccount | null) => void)[] = [];
 
   private getClient(): SupabaseClient {
-    if (!this.client) {
-      // Use the singleton Supabase client to ensure session sharing
-      this.client = getSupabaseClient();
-    }
+    this.client ??= getSupabaseClient();
     return this.client;
   }
 
