@@ -31,8 +31,7 @@ EXPO_PUBLIC_USE_SUPABASE_EMULATOR=true
 
 **Android Emulator Specific**:
 ```bash
-EXPO_PUBLIC_SUPABASE_EMULATOR_HOST=10.0.2.2  # Maps to host machine
-EXPO_PUBLIC_SUPABASE_EMULATOR_PORT=54321
+EXPO_PUBLIC_SUPABASE_URL=http://10.0.2.2:54321  # Direct URL for Android emulator
 ```
 
 ## App Configuration Contract

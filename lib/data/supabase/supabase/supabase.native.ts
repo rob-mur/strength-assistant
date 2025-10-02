@@ -14,11 +14,6 @@ class SupabaseNativeService extends SupabaseService {
   protected getClientConfig(): { detectSessionInUrl: boolean } {
     return { detectSessionInUrl: false };
   }
-
-  protected getEmulatorHost(): string {
-    // Native apps need 10.0.2.2 for Android emulator, allow override
-    return process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_HOST || "10.0.2.2";
-  }
 }
 
 const supabaseService = new SupabaseNativeService();

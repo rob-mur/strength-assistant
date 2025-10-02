@@ -6,9 +6,6 @@
 export interface SupabaseEnvConfig {
   url: string;
   anonKey: string;
-  useEmulator: boolean;
-  emulatorHost: string;
-  emulatorPort: string;
 }
 
 /**
@@ -31,37 +28,17 @@ export function getSupabaseEnvConfig(): SupabaseEnvConfig {
     );
   }
 
-  const useEmulator = process.env.EXPO_PUBLIC_USE_SUPABASE_EMULATOR === "true";
-  const emulatorHost =
-    process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_HOST || "127.0.0.1";
-  const emulatorPort =
-    process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_PORT || "54321";
-
   return {
     url,
     anonKey,
-    useEmulator,
-    emulatorHost,
-    emulatorPort,
   };
 }
 
 /**
- * Returns the effective Supabase URL (emulator or production)
+ * Returns the Supabase URL from environment configuration
  */
 export function getSupabaseUrl(): string {
   const config = getSupabaseEnvConfig();
-
-  // Always prefer the explicit URL if provided
-  if (config.url) {
-    return config.url;
-  }
-
-  // Fallback to building URL from host+port for emulator mode
-  if (config.useEmulator) {
-    return `http://${config.emulatorHost}:${config.emulatorPort}`;
-  }
-
   return config.url;
 }
 

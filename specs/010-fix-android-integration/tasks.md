@@ -66,10 +66,7 @@
 - [x] T008 [NOTIFICATION] **USER ACTION**: Verify current devbox configuration contains these exact values for development/preview:
   ```bash
   # In devbox environment:
-  EXPO_PUBLIC_USE_SUPABASE_EMULATOR=true
   EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 (local) or http://10.0.2.2:54321 (Android)
-  EXPO_PUBLIC_SUPABASE_EMULATOR_HOST=10.0.2.2
-  EXPO_PUBLIC_SUPABASE_EMULATOR_PORT=54321
   ```
 
 - [x] T009 [P] Validate environment variable loading logic in `lib/config/supabase-env.ts` matches contract requirements
