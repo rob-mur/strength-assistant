@@ -8,6 +8,7 @@
  */
 
 import { StorageBackend } from "../../lib/data/supabase/SupabaseStorage";
+import { initSupabase } from "../../lib/data/supabase/supabase";
 import type { ExerciseRecord } from "../../lib/models/ExerciseRecord";
 import type { UserAccount } from "../../lib/models/UserAccount";
 import type { SyncStateRecord } from "../../lib/models/SyncStateRecord";
@@ -16,6 +17,9 @@ describe("StorageBackend Contract", () => {
   let storageBackend: StorageBackend;
 
   beforeEach(() => {
+    // Initialize Supabase service first
+    initSupabase();
+
     // Import and instantiate SupabaseStorage
     const {
       SupabaseStorage,

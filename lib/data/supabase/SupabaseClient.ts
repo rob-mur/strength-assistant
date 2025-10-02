@@ -7,25 +7,19 @@ import {
 } from "@supabase/supabase-js";
 import { Database } from "../../models/supabase";
 import { getSupabaseClient } from "./supabase";
-import { SupabaseClientCore } from "./SupabaseClientCore";
 
 /**
  * Typed Supabase client utility
  * Provides a strongly typed interface to the Supabase database
- *
- * Infrastructure code below is excluded from coverage as it's tested via integration tests
  */
-/* istanbul ignore next */
 export class SupabaseClient {
   private client: BaseSupabaseClient<Database> | null = null;
 
-  /* istanbul ignore next */
   private getClient(): BaseSupabaseClient<Database> {
     this.client ??= this.initializeClient();
     return this.client;
   }
 
-  /* istanbul ignore next */
   private initializeClient(): BaseSupabaseClient<Database> {
     // In test environment, avoid actual client initialization as tests use mocks
     if (process.env.NODE_ENV === "test") {
@@ -35,14 +29,18 @@ export class SupabaseClient {
     return this.createValidatedClient();
   }
 
-  /* istanbul ignore next */
   private createValidatedClient(): BaseSupabaseClient<Database> {
     const client = getSupabaseClient();
-    SupabaseClientCore.validateClient(client);
+    this.validateClient(client);
     return client;
   }
 
-  /* istanbul ignore next */
+  private validateClient(client: BaseSupabaseClient<Database>): void {
+    if (!client || typeof client.from !== "function") {
+      throw new Error("Invalid Supabase client: missing required methods");
+    }
+  }
+
   private createMockClient(): BaseSupabaseClient<Database> {
     // Return a minimal mock client for test environment
     // Tests will override this with jest.mock() anyway
@@ -60,7 +58,6 @@ export class SupabaseClient {
   /**
    * Get the underlying Supabase client with full type safety
    */
-  /* istanbul ignore next */
   getSupabaseClient(): BaseSupabaseClient<Database> {
     return this.getClient();
   }
@@ -68,7 +65,6 @@ export class SupabaseClient {
   /**
    * Get a reference to the exercises table with type safety
    */
-  /* istanbul ignore next */
   get exercises() {
     return this.getClient().from("exercises");
   }
@@ -113,18 +109,41 @@ export class SupabaseClient {
       );
 
       if (error) {
-        return SupabaseClientCore.handleAuthError(error);
+        console.error("🔗 SupabaseClient - auth.getUser() error:", error);
+        // Don't throw on auth session missing - this is expected in offline-first apps
+        if (
+          error.message?.includes("Auth session missing") ||
+          error.name === "AuthSessionMissingError"
+        ) {
+          console.log(
+            "🔗 SupabaseClient - Auth session missing, returning null (offline-first)",
+          );
+          return null;
+        }
+        console.log("🔗 SupabaseClient - Non-auth error, throwing:", error);
+        throw error;
       }
       return user;
     } catch (error) {
-      return SupabaseClientCore.handleAuthException(error);
+      console.error("🔗 SupabaseClient - getCurrentUser failed:", error);
+      // Handle auth session missing errors gracefully in offline-first apps
+      if (
+        (error instanceof Error &&
+          error.message?.includes("Auth session missing")) ||
+        (error instanceof Error && error.name === "AuthSessionMissingError")
+      ) {
+        console.log(
+          "🔗 SupabaseClient - Auth session missing in catch block, returning null (offline-first)",
+        );
+        return null;
+      }
+      throw error;
     }
   }
 
   /**
    * Subscribe to auth state changes
    */
-  /* istanbul ignore next */
   onAuthStateChange(
     callback: (event: AuthChangeEvent, session: Session | null) => void,
   ) {
@@ -133,5 +152,4 @@ export class SupabaseClient {
 }
 
 // Export a singleton instance
-/* istanbul ignore next */
 export const supabaseClient = new SupabaseClient();

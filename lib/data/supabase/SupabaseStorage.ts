@@ -9,11 +9,8 @@
 import type { ExerciseRecord } from "../../models/ExerciseRecord";
 import type { UserAccount } from "../../models/UserAccount";
 import type { SyncStateRecord } from "../../models/SyncStateRecord";
-import { createClient, SupabaseClient, User } from "@supabase/supabase-js";
-import {
-  getSupabaseUrl,
-  getSupabaseEnvConfig,
-} from "../../config/supabase-env";
+import { SupabaseClient, User } from "@supabase/supabase-js";
+import { getSupabaseClient } from "./supabase";
 import {
   createExerciseRecord,
   updateExerciseRecord,
@@ -81,16 +78,8 @@ export class SupabaseStorage implements StorageBackend {
 
   private getClient(): SupabaseClient {
     if (!this.client) {
-      const config = getSupabaseEnvConfig();
-      const supabaseUrl = getSupabaseUrl();
-
-      this.client = createClient(supabaseUrl, config.anonKey, {
-        auth: {
-          autoRefreshToken: true,
-          persistSession: true,
-          detectSessionInUrl: true,
-        },
-      });
+      // Use the singleton Supabase client to ensure session sharing
+      this.client = getSupabaseClient();
     }
     return this.client;
   }
