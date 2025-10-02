@@ -40,12 +40,6 @@ jobs:
           artifact-name: production-release-apk
         id: build-production
 
-      - name: Upload APK Artifact for CI
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.build-production.outputs.artifact-name }}
-          path: ${{ steps.build-production.outputs.apk-path }}
-          retention-days: 30
 
       - name: Create GitHub Release
         id: upload
