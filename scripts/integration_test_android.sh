@@ -259,6 +259,21 @@ adb logcat -d | tail -20
 echo ""
 
 echo "Testing manual app launch..."
+
+echo "=== PACKAGE DIAGNOSTICS ==="
+echo "Checking what packages are installed:"
+adb shell pm list packages | grep strength || echo "No strength packages found"
+echo ""
+
+echo "Checking APK package info:"
+aapt dump badging ${1:-build_production.apk} | grep package || echo "Could not read APK package info"
+echo ""
+
+echo "Checking installed package details:"
+adb shell dumpsys package com.jimmysolutions.strengthassistant.test | grep -E "(Package|Activity|versionName)" | head -10 || echo "Package not found on device"
+echo ""
+
+echo "Attempting to launch app..."
 adb shell am start -n com.jimmysolutions.strengthassistant.test/.MainActivity
 sleep 3
 echo "App launch result:"
