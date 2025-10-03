@@ -8,11 +8,15 @@
  */
 
 import type { UserAccount } from "../../lib/models/UserAccount";
+import { initSupabase } from "../../lib/data/supabase/supabase";
 
 describe("Supabase Auth Contract", () => {
   let supabaseAuth: any;
 
   beforeEach(() => {
+    // Initialize Supabase service first
+    initSupabase();
+
     // This will fail initially - SupabaseAuth doesn't exist yet
     const { SupabaseAuth } = require("../../lib/data/supabase/SupabaseAuth");
     supabaseAuth = new SupabaseAuth();

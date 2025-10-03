@@ -68,7 +68,7 @@ if command -v adb &> /dev/null; then
   # Clear any existing app data if emulator is running
   # But respect SKIP_DATA_CLEANUP for anonymous user handling
   if [ "$SKIP_DATA_CLEANUP" != "true" ]; then
-    adb shell pm clear com.anonymous.strengthassistant 2>/dev/null || true
+    adb shell pm clear com.jimmysolutions.strengthassistant.test 2>/dev/null || true
   fi
   
   echo "✅ Android environment ready"

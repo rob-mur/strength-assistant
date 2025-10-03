@@ -216,25 +216,69 @@ export class SupabaseAuth {
    * Create anonymous user session
    */
   async signInAnonymously(): Promise<UserAccount> {
-    const { data, error } = await this.client.auth.signInAnonymously();
+    console.log("🔐 SupabaseAuth - Starting signInAnonymously");
 
-    return this.handleAuthResponse(data, error, "Anonymous sign in");
+    try {
+      const { data, error } = await this.client.auth.signInAnonymously();
+
+      console.log("🔐 SupabaseAuth - signInAnonymously response:", {
+        hasData: !!data,
+        hasUser: !!(data as { user: { id: string } | null })?.user,
+        userId: (data as { user: { id: string } | null })?.user?.id,
+        hasError: !!error,
+        errorMessage: error ? (error as Error).message : null,
+      });
+
+      return this.handleAuthResponse(data, error, "Anonymous sign in");
+    } catch (error) {
+      console.error("🔐 SupabaseAuth - signInAnonymously failed:", error);
+      throw error;
+    }
   }
 
   /**
    * Get current authenticated user
    */
   async getCurrentUser(): Promise<UserAccount | null> {
-    const { data } = await this.client.auth.getUser();
-    let user: unknown = undefined;
-    if (data && typeof data === "object" && "user" in data) {
-      user = (data as { user?: unknown }).user;
-    }
-    if (!user) {
-      return null;
-    }
+    try {
+      const { data, error } = await this.client.auth.getUser();
 
-    return this.mapSupabaseUserToUserAccount(user);
+      if (error) {
+        console.log("🔐 SupabaseAuth - getCurrentUser error:", error);
+        // Handle auth session missing errors gracefully (offline-first)
+        if (
+          (error as Error).message?.includes("Auth session missing") ||
+          (error as Error & { name: string }).name === "AuthSessionMissingError"
+        ) {
+          console.log("🔐 SupabaseAuth - Auth session missing, returning null");
+          return null;
+        }
+        throw error;
+      }
+
+      let user: unknown = undefined;
+      if (data && typeof data === "object" && "user" in data) {
+        user = (data as { user?: unknown }).user;
+      }
+      if (!user) {
+        return null;
+      }
+
+      return this.mapSupabaseUserToUserAccount(user);
+    } catch (error) {
+      console.error("🔐 SupabaseAuth - getCurrentUser failed:", error);
+      // Handle auth session missing errors gracefully
+      if (
+        (error as Error)?.message?.includes("Auth session missing") ||
+        (error as Error & { name: string })?.name === "AuthSessionMissingError"
+      ) {
+        console.log(
+          "🔐 SupabaseAuth - Auth session missing in catch, returning null",
+        );
+        return null;
+      }
+      throw error;
+    }
   }
 
   /**

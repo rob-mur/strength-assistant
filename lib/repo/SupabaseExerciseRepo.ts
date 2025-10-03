@@ -1,6 +1,6 @@
 import { Exercise, ExerciseInput, ExerciseValidator } from "../models/Exercise";
 import { IExerciseRepo } from "./IExerciseRepo";
-import { Observable, observe, computed } from "@legendapp/state";
+import { Observable, computed } from "@legendapp/state";
 import { exercises$, user$ } from "../data/store";
 import { supabaseClient } from "../data/supabase/SupabaseClient";
 import {
@@ -98,28 +98,78 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
    * Note: userId parameter is kept for backwards compatibility but Supabase user ID is used internally
    */
   async addExercise(userId: string, exercise: ExerciseInput): Promise<void> {
+    console.log(
+      "🗄️ SupabaseExerciseRepo - addExercise started with userId:",
+      userId,
+      "exercise:",
+      exercise,
+    );
+
     // Validate and prepare exercise data
+    console.log("🗄️ SupabaseExerciseRepo - Validating and sanitizing exercise");
     const sanitizedName = this.validateAndSanitizeExercise(exercise);
+    console.log("🗄️ SupabaseExerciseRepo - Sanitized name:", sanitizedName);
+
+    console.log("🗄️ SupabaseExerciseRepo - Validating user authentication");
     const authenticatedUser = await this.validateUserAuthentication(userId);
+
+    console.log("🗄️ SupabaseExerciseRepo - Creating new exercise object");
     const newExercise = this.createNewExercise(
       sanitizedName,
       authenticatedUser.id,
     );
+    console.log("🗄️ SupabaseExerciseRepo - New exercise created:", newExercise);
 
     // Store original state for rollback
     const originalExercises = exercises$.get();
 
-    // Optimistic update
-    exercises$.set((current) => [...current, newExercise]);
+    console.log(
+      "🗄️ SupabaseExerciseRepo - Storing original exercises state for rollback",
+    );
+    console.log(
+      "🗄️ SupabaseExerciseRepo - Performing optimistic update to local state",
+    );
+
+    // Optimistic update - use callback pattern
+    console.log("🗄️ SupabaseExerciseRepo - Performing optimistic update");
+    exercises$.set((currentExercises) => {
+      console.log(
+        "🗄️ SupabaseExerciseRepo - Current exercises count:",
+        currentExercises.length,
+      );
+      const updatedExercises = [...currentExercises, newExercise];
+      console.log(
+        "🗄️ SupabaseExerciseRepo - Setting updated exercises count:",
+        updatedExercises.length,
+      );
+      return updatedExercises;
+    });
 
     try {
+      console.log(
+        "🗄️ SupabaseExerciseRepo - Syncing exercise to Supabase via syncExerciseToSupabase",
+      );
       // Use sync function instead of direct Supabase client
       await syncExerciseToSupabase(newExercise);
+      console.log(
+        "🗄️ SupabaseExerciseRepo - syncExerciseToSupabase completed successfully",
+      );
+      console.log(
+        "🗄️ SupabaseExerciseRepo - Sync successful, continuing with function completion...",
+      );
     } catch (error) {
+      console.error(
+        "🗄️ SupabaseExerciseRepo - syncExerciseToSupabase failed, reverting optimistic update:",
+        error,
+      );
       // Revert optimistic update on error
       exercises$.set(originalExercises);
       throw error;
     }
+
+    console.log(
+      "🗄️ SupabaseExerciseRepo - addExercise completed successfully!",
+    );
   }
 
   /**
@@ -136,18 +186,107 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
   private async validateUserAuthentication(
     userId: string,
   ): Promise<{ id: string }> {
-    const supabaseUser = await supabaseClient.getCurrentUser();
-    if (!supabaseUser) {
+    console.log(
+      "🔐 SupabaseExerciseRepo - validateUserAuthentication called with userId:",
+      userId,
+    );
+
+    // FIXED: Use direct supabaseClient.getCurrentUser() instead of storageManager auth backend
+    // The storageManager.getAuthBackend().getCurrentUser() was hanging, but direct calls work fine
+    console.log(
+      "🔐 SupabaseExerciseRepo - Using direct supabaseClient.getCurrentUser() for consistency...",
+    );
+
+    // Note: Supabase URL logging removed to avoid require() import
+
+    let currentUser: { id: string } | null = null;
+    try {
+      // Add a 3-second timeout to prevent hanging
+      const timeout = new Promise((_, reject) =>
+        setTimeout(
+          () =>
+            reject(
+              new Error(
+                "Auth validation timeout - proceeding without strict validation",
+              ),
+            ),
+          3000,
+        ),
+      );
+
+      const authCall = supabaseClient.getCurrentUser();
+      const result = await Promise.race([authCall, timeout]);
+      console.log(
+        "🔐 SupabaseExerciseRepo - supabaseClient.getCurrentUser() call completed",
+      );
+
+      // Check if result is a User object (not the timeout error)
+      if (
+        result &&
+        typeof result === "object" &&
+        "id" in result &&
+        typeof result.id === "string"
+      ) {
+        currentUser = { id: result.id };
+      }
+      // If no valid user, currentUser remains null (initialized above)
+    } catch (error) {
+      console.error(
+        "🔐 SupabaseExerciseRepo - supabaseClient.getCurrentUser() failed with error:",
+        error,
+      );
+      // For offline-first experience, don't block exercise creation on auth validation failures
+      // Handle both timeout and AuthSessionMissingError gracefully
+      if (
+        (error instanceof Error &&
+          error.message?.includes("Auth session missing")) ||
+        (error instanceof Error && error.message?.includes("timeout")) ||
+        (error instanceof Error && error.name === "AuthSessionMissingError")
+      ) {
+        console.log(
+          "🔐 SupabaseExerciseRepo - Auth issue detected, proceeding with offline-first approach",
+        );
+        currentUser = null; // Set to null for these specific auth issues
+      } else {
+        console.log(
+          "🔐 SupabaseExerciseRepo - Unknown auth error, re-throwing original error",
+        );
+        throw error; // Re-throw other errors (like test errors)
+      }
+    }
+
+    console.log(
+      "🔐 SupabaseExerciseRepo - supabaseClient.getCurrentUser() returned:",
+      currentUser ? "user found" : "no user",
+    );
+
+    if (!currentUser) {
+      console.error("🔐 SupabaseExerciseRepo - No user authenticated");
       throw new Error("User not authenticated with Supabase");
     }
 
-    if (userId && userId !== supabaseUser.id) {
+    console.log("🔐 SupabaseExerciseRepo - Current user ID:", currentUser.id);
+    console.log(
+      "🔐 SupabaseExerciseRepo - Comparing with provided userId:",
+      userId,
+    );
+
+    if (userId && userId !== currentUser.id) {
+      console.error(
+        "🔐 SupabaseExerciseRepo - User ID mismatch! Expected:",
+        userId,
+        "Got:",
+        currentUser.id,
+      );
       throw new Error(
-        `User ID mismatch: Expected ${userId}, but Supabase user is ${supabaseUser.id}. This may indicate a user mapping issue during Firebase-to-Supabase migration.`,
+        `User ID mismatch: Expected ${userId}, but authenticated user is ${currentUser.id}.`,
       );
     }
 
-    return supabaseUser;
+    console.log(
+      "🔐 SupabaseExerciseRepo - User authentication validation successful",
+    );
+    return currentUser;
   }
 
   /**
@@ -208,10 +347,11 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
     const originalExercises = exercises$.get();
 
     // Optimistic delete - remove from local list (only for current user)
-    const updatedExercises = originalExercises.filter(
-      (ex) => !(ex.id === exerciseId && ex.user_id === authenticatedUser.id),
+    exercises$.set((currentExercises) =>
+      currentExercises.filter(
+        (ex) => !(ex.id === exerciseId && ex.user_id === authenticatedUser.id),
+      ),
     );
-    exercises$.set(updatedExercises);
 
     try {
       // Use sync function instead of direct Supabase client
@@ -232,18 +372,66 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
     uid: string,
     callback: (exercises: Exercise[]) => void,
   ): () => void {
-    // Use Legend State's observe method for reactive updates with Supabase user filtering
-    return observe(() => {
-      const currentUser = user$.get();
-      if (!currentUser) {
+    console.log(
+      "🔔 SupabaseExerciseRepo - Setting up subscription for uid:",
+      uid,
+    );
+
+    // Function to filter and send exercises
+    const updateCallback = () => {
+      console.log(
+        "🔔 SupabaseExerciseRepo - updateCallback triggered, using uid:",
+        uid,
+      );
+
+      if (!uid) {
+        console.log(
+          "🔔 SupabaseExerciseRepo - No uid provided, returning empty exercises",
+        );
         callback([]);
         return;
       }
-      const filteredExercises = exercises$
-        .get()
-        .filter((ex) => ex.user_id === currentUser.id && !ex.deleted);
+
+      const allExercises = exercises$.get();
+      console.log(
+        "🔔 SupabaseExerciseRepo - All exercises in store:",
+        allExercises.length,
+      );
+
+      const filteredExercises = allExercises.filter((ex) => {
+        const matches = ex.user_id === uid && !ex.deleted;
+        console.log("🔔 SupabaseExerciseRepo - Exercise filter:", {
+          exerciseId: ex.id,
+          exerciseUserId: ex.user_id,
+          filterUserId: uid,
+          deleted: ex.deleted,
+          matches,
+        });
+        return matches;
+      });
+
+      console.log(
+        "🔔 SupabaseExerciseRepo - Filtered exercises count:",
+        filteredExercises.length,
+      );
       callback(filteredExercises);
-    });
+    };
+
+    // Listen to both exercises and user changes
+    const unsubscribeExercises = exercises$.onChange(updateCallback);
+    const unsubscribeUser = user$.onChange(updateCallback);
+
+    // Call immediately to get initial state
+    updateCallback();
+
+    // Return cleanup function
+    return () => {
+      console.log(
+        "🔔 SupabaseExerciseRepo - Unsubscribing from exercises subscription",
+      );
+      unsubscribeExercises();
+      unsubscribeUser();
+    };
   }
 
   /**

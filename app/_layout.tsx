@@ -17,6 +17,9 @@ export const unstable_settings = { initialRouteName: "(tabs)" };
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
+// Debug: Basic console log to verify app is running
+console.log("🚀 App starting - RootLayout loading");
+
 // Catch any errors in test mode so maestro properly crashes
 handleErrors();
 

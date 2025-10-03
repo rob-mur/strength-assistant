@@ -35,47 +35,24 @@ export abstract class SupabaseService {
     }
   }
 
-  protected isEmulatorEnabled(): boolean {
-    // Check if we're in development mode and should use local Supabase
-    return (
-      process.env.NODE_ENV === "development" ||
-      process.env.EXPO_PUBLIC_USE_SUPABASE_EMULATOR === "true"
-    );
-  }
-
-  protected getEmulatorHost(): string {
-    // Default to localhost for web, but allow override
-    // Native apps might need different host (e.g., 10.0.2.2 for Android emulator)
-    return process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_HOST || "127.0.0.1";
-  }
-
-  protected getEmulatorPort(): number {
-    return parseInt(
-      process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_PORT || "54321",
-      10,
-    );
-  }
-
   protected getSupabaseUrl(): string {
-    if (this.isEmulatorEnabled()) {
-      const host = this.getEmulatorHost();
-      const port = this.getEmulatorPort();
-      return `http://${host}:${port}`;
+    const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
+    if (!url) {
+      throw new Error(
+        "EXPO_PUBLIC_SUPABASE_URL environment variable is required",
+      );
     }
-
-    return process.env.EXPO_PUBLIC_SUPABASE_URL || "";
+    return url;
   }
 
   protected getSupabaseAnonKey(): string {
-    if (this.isEmulatorEnabled()) {
-      // Local Supabase has a default anon key for development
-      return (
-        process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ||
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0"
+    const key = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+    if (!key) {
+      throw new Error(
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY environment variable is required",
       );
     }
-
-    return process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || "";
+    return key;
   }
 
   protected sanitizeUrl(url: string): string {
@@ -98,33 +75,27 @@ export abstract class SupabaseService {
       operation: "config_check",
       hasUrl: !!supabaseUrl,
       hasKey: !!supabaseAnonKey,
-      emulatorEnabled: this.isEmulatorEnabled(),
       url: this.sanitizeUrl(supabaseUrl),
-      emulatorHost: this.getEmulatorHost(),
-      emulatorPort: this.getEmulatorPort(),
     });
 
-    if (!supabaseUrl || !supabaseAnonKey) {
-      const error = `Missing Supabase configuration. URL: ${!!supabaseUrl}, Key: ${!!supabaseAnonKey}`;
-      this.logError(error, {
-        operation: "config_validation",
-        supabaseUrl,
-        hasAnonKey: !!supabaseAnonKey,
-        emulatorEnabled: this.isEmulatorEnabled(),
-      });
-      throw new Error(error);
-    }
+    // URL and key validation is now handled in the getter methods
 
     this.logInfo("Creating Supabase client", {
       operation: "create_client",
       url: this.sanitizeUrl(supabaseUrl),
     });
 
+    // Import AsyncStorage for session persistence in React Native
+    const AsyncStorage =
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      require("@react-native-async-storage/async-storage").default;
+
     this.client = createClient<Database>(supabaseUrl, supabaseAnonKey, {
       auth: {
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: config.detectSessionInUrl,
+        storage: AsyncStorage,
       },
     });
 

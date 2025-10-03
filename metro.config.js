@@ -6,23 +6,31 @@ const config = getDefaultConfig(__dirname);
 
 // Remove custom transformer - use default Metro transformer
 
-// Configure web polyfills to prevent Node.js module issues
+// Configure polyfills to prevent Node.js module issues in React Native
+const nodeModuleAliases = {
+  // Disable Node.js modules that don't work in React Native
+  tty: false,
+  fs: false,
+  os: false,
+  path: false,
+  crypto: false,
+  stream: false,
+  util: false,
+  buffer: false,
+  events: false,
+  assert: false,
+  constants: false,
+  // Use browser-compatible process polyfill
+  process: require.resolve("process/browser"),
+};
+
 if (config.resolver.alias) {
   config.resolver.alias = {
     ...config.resolver.alias,
-    // Disable TTY module for web builds - prevents debug package errors
-    tty: false,
-    // Use browser-compatible process polyfill
-    process: require.resolve("process/browser"),
-    // Disable util module for web builds
-    util: false,
+    ...nodeModuleAliases,
   };
 } else {
-  config.resolver.alias = {
-    tty: false,
-    process: require.resolve("process/browser"),
-    util: false,
-  };
+  config.resolver.alias = nodeModuleAliases;
 }
 
 // Ensure proper platform resolution for web builds
@@ -50,15 +58,15 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   return context.resolveRequest(context, moduleName, platform);
 };
 
-// Exclude Storybook from production builds and integration tests
-const isProduction =
-  process.env.EAS_BUILD_PROFILE === "production" ||
-  process.env.NODE_ENV === "production";
-
-const isChromeIntegrationTest = process.env.CHROME_TEST === "true";
-
-if (isProduction || isChromeIntegrationTest) {
-  // Add resolver to exclude all storybook-related files and modules
+// Only include Storybook when explicitly requested
+if (process.env.WITH_STORYBOOK === "true") {
+  const withStorybook = require("@storybook/react-native/metro/withStorybook");
+  module.exports = withStorybook(config, {
+    enabled: true,
+    onDisabledRemoveStorybook: true,
+  });
+} else {
+  // Exclude Storybook by default to avoid Node.js dependencies
   const storybookExclusions = [
     /.*\.stories\.(js|jsx|ts|tsx)$/,
     /.*storybook.*/,
@@ -79,13 +87,5 @@ if (isProduction || isChromeIntegrationTest) {
     config.resolver.blockList = storybookExclusions;
   }
 
-  module.exports = config;
-} else if (process.env.WITH_STORYBOOK) {
-  const withStorybook = require("@storybook/react-native/metro/withStorybook");
-  module.exports = withStorybook(config, {
-    enabled: true,
-    onDisabledRemoveStorybook: true,
-  });
-} else {
   module.exports = config;
 }

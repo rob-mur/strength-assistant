@@ -119,7 +119,7 @@ find . -name "*.apk" -type f
 ls -la build/
 
 # Clear emulator storage
-adb shell pm clear com.jimmy_solutions.strength_assistant
+adb shell pm clear com.jimmysolutions.strengthassistant
 ```
 
 #### Issue: Maestro Flow Execution Failed

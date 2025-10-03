@@ -11,12 +11,6 @@ class SupabaseNativeService extends SupabaseService {
     return "Initializing Supabase client for React Native...";
   }
 
-  protected getEmulatorHost(): string {
-    // Android emulator needs 10.0.2.2 to access host machine
-    // iOS simulator can use localhost/127.0.0.1
-    return process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_HOST || "10.0.2.2";
-  }
-
   protected getClientConfig(): { detectSessionInUrl: boolean } {
     return { detectSessionInUrl: false };
   }

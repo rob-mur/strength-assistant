@@ -8,6 +8,15 @@ import { ExerciseInsert } from "../../models/supabase";
 // const _SYNC_TIMEOUT = 30000; // 30 seconds
 // const _NETWORK_CHECK_INTERVAL = 5000; // 5 seconds
 
+// Type for dependency injection in tests
+interface StorageManagerModule {
+  storageManager: {
+    getAuthBackend: () => {
+      getCurrentUser: () => Promise<{ id: string } | null>;
+    };
+  };
+}
+
 /**
  * Configuration for Legend State sync with Supabase
  * Provides offline-first data synchronization with automatic conflict resolution
@@ -21,9 +30,20 @@ export function configureSyncEngine() {
 /**
  * Load initial exercises data from Supabase
  */
-async function loadInitialData() {
+async function loadInitialData(storageManagerModule?: StorageManagerModule) {
   try {
-    const user = await supabaseClient.getCurrentUser();
+    console.log("📥 loadInitialData - Loading initial exercises data");
+
+    // FIXED: Use consistent auth backend instead of supabaseClient.getCurrentUser()
+    const { storageManager } =
+      storageManagerModule || (await import("../StorageManager"));
+    const authBackend = storageManager.getAuthBackend();
+    const user = await authBackend.getCurrentUser();
+
+    console.log(
+      "📥 loadInitialData - User authenticated:",
+      user ? "yes" : "no",
+    );
     if (!user) return;
 
     const { data, error } = await (
@@ -152,23 +172,115 @@ function setupRealtimeSubscription() {
  */
 export async function syncExerciseToSupabase(
   exercise: Exercise,
+  storageManagerModule?: StorageManagerModule,
 ): Promise<void> {
-  const user = await supabaseClient.getCurrentUser();
-  if (!user) throw new Error("User not authenticated");
+  console.log(
+    "🔄 syncExerciseToSupabase - Starting sync for exercise:",
+    exercise.id,
+  );
 
+  // FIXED: Use consistent auth backend instead of supabaseClient.getCurrentUser()
+  const { storageManager } =
+    storageManagerModule || (await import("../StorageManager"));
+  const authBackend = storageManager.getAuthBackend();
+  const user = await authBackend.getCurrentUser();
+
+  console.log(
+    "🔄 syncExerciseToSupabase - User authenticated:",
+    user ? "yes" : "no",
+  );
+
+  // CRITICAL: For RLS to work, we need the actual Supabase session user ID
+  // Check if there's a Supabase session that can satisfy RLS policies
+  let supabaseSessionUser;
+  try {
+    supabaseSessionUser = await supabaseClient.getCurrentUser();
+    console.log(
+      "🔄 syncExerciseToSupabase - Supabase session user:",
+      supabaseSessionUser ? supabaseSessionUser.id : "none",
+    );
+  } catch (error) {
+    console.log(
+      "🔄 syncExerciseToSupabase - No Supabase session available:",
+      error instanceof Error ? error.message : String(error),
+    );
+  }
+
+  if (!supabaseSessionUser) {
+    console.log(
+      "🔄 syncExerciseToSupabase - No Supabase session, cannot satisfy RLS policy. Skipping sync (offline-first).",
+    );
+    return; // Gracefully skip sync instead of throwing error
+  }
+
+  console.log("🔄 syncExerciseToSupabase - Creating exercise upsert object");
   const exerciseToUpsert: ExerciseInsert = {
     id: exercise.id,
     name: exercise.name,
-    user_id: exercise.user_id,
+    user_id: supabaseSessionUser.id, // Use Supabase session user ID for RLS compatibility
     created_at: exercise.created_at,
   };
 
-  const { error } = await (
-    supabaseClient
-      .getSupabaseClient()
-      .from("exercises") as unknown as SupabaseQueryBuilder
-  ).upsert(exerciseToUpsert);
-  if (error) throw error;
+  console.log(
+    "🔄 syncExerciseToSupabase - Using Supabase user ID for RLS:",
+    supabaseSessionUser.id,
+  );
+
+  console.log(
+    "🔄 syncExerciseToSupabase - Upserting exercise to Supabase database",
+  );
+  console.log("🔄 syncExerciseToSupabase - Target table: exercises");
+  console.log("🔄 syncExerciseToSupabase - Exercise data:", exerciseToUpsert);
+
+  try {
+    // Simplified approach: Make the call directly and handle success
+    console.log(
+      "🔄 syncExerciseToSupabase - Making direct upsert call to Supabase...",
+    );
+
+    const { error } = await (
+      supabaseClient
+        .getSupabaseClient()
+        .from("exercises") as unknown as SupabaseQueryBuilder
+    ).upsert(exerciseToUpsert);
+
+    console.log(
+      "🔄 syncExerciseToSupabase - Supabase upsert returned, error:",
+      error || "none",
+    );
+
+    if (error) {
+      console.error("🔄 syncExerciseToSupabase - Upsert failed:", error);
+      throw error;
+    }
+
+    console.log(
+      "🔄 syncExerciseToSupabase - Exercise synced successfully to Supabase!",
+    );
+    console.log("🔄 syncExerciseToSupabase - About to return from function...");
+    return;
+  } catch (error) {
+    console.error(
+      "🔄 syncExerciseToSupabase - Database operation failed:",
+      error,
+    );
+
+    // GRACEFUL FALLBACK: For offline-first experience, don't throw on network errors
+    // The exercise is already saved locally via optimistic update
+    if (
+      (error instanceof Error && error.message?.includes("timeout")) ||
+      (error instanceof Error && error.message?.includes("Network"))
+    ) {
+      console.log(
+        "🔄 syncExerciseToSupabase - Continuing in offline mode - exercise saved locally",
+      );
+      // Don't throw - let the app continue working offline
+      return;
+    }
+
+    // Only throw for non-network errors (validation, etc.)
+    throw error;
+  }
 }
 
 /**

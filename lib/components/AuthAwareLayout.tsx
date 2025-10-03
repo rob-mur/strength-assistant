@@ -12,6 +12,15 @@ export function AuthAwareLayout({ children }: AuthAwareLayoutProps) {
   const { user, loading } = useAuthContext();
   const [forceShowAuth, setForceShowAuth] = useState(false);
 
+  console.log(
+    "🔒 AuthAwareLayout - user:",
+    user ? "authenticated" : "not authenticated",
+    "loading:",
+    loading,
+    "forceShowAuth:",
+    forceShowAuth,
+  );
+
   // Show auth screen appropriately for different environments
   useEffect(() => {
     if (!loading) {

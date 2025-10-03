@@ -37,6 +37,7 @@ export const useAppInit = () => {
     const prepare = async () => {
       const startTime = Date.now();
 
+      console.log("📱 useAppInit - Starting app initialization");
       logger.info("Starting app initialization", {
         service: "App Init",
         platform: "React Native",

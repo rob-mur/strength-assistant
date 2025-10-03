@@ -2,6 +2,8 @@
 
 ## Active Technologies
 
+- TypeScript/JavaScript with React Native/Expo + Expo SDK, Maestro (integration testing), EAS Build, Supabase (010-fix-android-integration)
+
 - TypeScript/JavaScript with React Native/Expo
 - Supabase (PostgreSQL) for backend services
 - Legend State for local state management
@@ -56,6 +58,8 @@ npm start # Start Expo dev server
 - TDD approach: tests before implementation
 
 ## Recent Changes
+
+- 010-fix-android-integration: Added TypeScript/JavaScript with React Native/Expo + Expo SDK, Maestro (integration testing), EAS Build, Supabase
 
 - Fixed production deployment pipeline APK path resolution and devbox environment setup
 

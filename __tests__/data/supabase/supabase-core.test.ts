@@ -18,11 +18,6 @@ const originalEnv = process.env;
 
 // Create a concrete test implementation of the abstract class
 class TestSupabaseService extends SupabaseService {
-  private mockNodeEnv?: string;
-  private mockEmulatorFlag?: string;
-  private mockEmulatorHost?: string;
-  private mockEmulatorPort?: string;
-
   constructor() {
     super("TestService");
   }
@@ -39,62 +34,9 @@ class TestSupabaseService extends SupabaseService {
     return this.initialized && this.client !== null;
   }
 
-  // Override for testing
-  protected isEmulatorEnabled(): boolean {
-    const nodeEnv = this.mockNodeEnv ?? process.env.NODE_ENV;
-    const emulatorFlag =
-      this.mockEmulatorFlag ?? process.env.EXPO_PUBLIC_USE_SUPABASE_EMULATOR;
-    return nodeEnv === "development" || emulatorFlag === "true";
-  }
-
-  protected getEmulatorHost(): string {
-    return (
-      this.mockEmulatorHost ??
-      process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_HOST ??
-      "127.0.0.1"
-    );
-  }
-
-  protected getEmulatorPort(): number {
-    const port =
-      this.mockEmulatorPort ??
-      process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_PORT ??
-      "54321";
-    return parseInt(port, 10);
-  }
-
-  // Test helper methods
-  public setMockNodeEnv(value?: string): void {
-    this.mockNodeEnv = value;
-  }
-
-  public setMockEmulatorFlag(value?: string): void {
-    this.mockEmulatorFlag = value;
-  }
-
-  public setMockEmulatorHost(value?: string): void {
-    this.mockEmulatorHost = value;
-  }
-
-  public setMockEmulatorPort(value?: string): void {
-    this.mockEmulatorPort = value;
-  }
-
   // Expose protected methods for testing
   public testAssertInitialized(operation: string): void {
     this.assertInitialized(operation);
-  }
-
-  public testIsEmulatorEnabled(): boolean {
-    return this.isEmulatorEnabled();
-  }
-
-  public testGetEmulatorHost(): string {
-    return this.getEmulatorHost();
-  }
-
-  public testGetEmulatorPort(): number {
-    return this.getEmulatorPort();
   }
 
   public testLogInfo(message: string, context?: Record<string, unknown>): void {
@@ -124,9 +66,6 @@ describe("SupabaseService", () => {
     process.env = { ...originalEnv };
     delete process.env.EXPO_PUBLIC_SUPABASE_URL;
     delete process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
-    delete process.env.EXPO_PUBLIC_USE_SUPABASE_EMULATOR;
-    delete process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_HOST;
-    delete process.env.EXPO_PUBLIC_SUPABASE_EMULATOR_PORT;
 
     // Create a mock logger instance
     mockLogger = {
@@ -158,9 +97,13 @@ describe("SupabaseService", () => {
     });
 
     test("becomes ready after initialization", () => {
-      // Set up required environment variables
-      process.env.EXPO_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
-      process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "test-key";
+      // Mock the getSupabaseUrl and getSupabaseAnonKey methods
+      jest
+        .spyOn(service as any, "getSupabaseUrl")
+        .mockReturnValue("https://test.supabase.co");
+      jest
+        .spyOn(service as any, "getSupabaseAnonKey")
+        .mockReturnValue("test-key");
 
       // Mock createSupabaseClient to set client
       (service as any).createSupabaseClient = jest
@@ -174,9 +117,13 @@ describe("SupabaseService", () => {
     });
 
     test("returns client after initialization", () => {
-      // Set up required environment variables
-      process.env.EXPO_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
-      process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "test-key";
+      // Mock the getSupabaseUrl and getSupabaseAnonKey methods
+      jest
+        .spyOn(service as any, "getSupabaseUrl")
+        .mockReturnValue("https://test.supabase.co");
+      jest
+        .spyOn(service as any, "getSupabaseAnonKey")
+        .mockReturnValue("test-key");
 
       // Mock createSupabaseClient to set client
       (service as any).createSupabaseClient = jest
@@ -202,9 +149,13 @@ describe("SupabaseService", () => {
     });
 
     test("does not throw when initialized", () => {
-      // Set up required environment variables
-      process.env.EXPO_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
-      process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = "test-key";
+      // Mock the getSupabaseUrl and getSupabaseAnonKey methods
+      jest
+        .spyOn(service as any, "getSupabaseUrl")
+        .mockReturnValue("https://test.supabase.co");
+      jest
+        .spyOn(service as any, "getSupabaseAnonKey")
+        .mockReturnValue("test-key");
 
       // Mock createSupabaseClient to avoid actual client creation
       (service as any).createSupabaseClient = jest
@@ -246,48 +197,6 @@ describe("SupabaseService", () => {
       service.testLogError(message, context);
 
       expect(mockLogger.error).toHaveBeenCalledWith(message, context);
-    });
-  });
-
-  describe("emulator configuration", () => {
-    test("detects development environment", () => {
-      service.setMockNodeEnv("development");
-      expect(service.testIsEmulatorEnabled()).toBe(true);
-    });
-
-    test("detects emulator flag", () => {
-      service.setMockNodeEnv("production"); // Ensure not development
-      service.setMockEmulatorFlag("true");
-      expect(service.testIsEmulatorEnabled()).toBe(true);
-    });
-
-    test("returns false for production", () => {
-      service.setMockNodeEnv("production");
-      service.setMockEmulatorFlag("false");
-      expect(service.testIsEmulatorEnabled()).toBe(false);
-    });
-
-    test("uses default emulator host", () => {
-      expect(service.testGetEmulatorHost()).toBe("127.0.0.1");
-    });
-
-    test("uses custom emulator host", () => {
-      service.setMockEmulatorHost("10.0.2.2");
-      expect(service.testGetEmulatorHost()).toBe("10.0.2.2");
-    });
-
-    test("uses default emulator port", () => {
-      expect(service.testGetEmulatorPort()).toBe(54321);
-    });
-
-    test("uses custom emulator port", () => {
-      service.setMockEmulatorPort("8000");
-      expect(service.testGetEmulatorPort()).toBe(8000);
-    });
-
-    test("handles invalid port gracefully", () => {
-      service.setMockEmulatorPort("invalid");
-      expect(service.testGetEmulatorPort()).toBe(NaN);
     });
   });
 });

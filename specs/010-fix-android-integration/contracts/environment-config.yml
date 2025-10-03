@@ -1,0 +1,125 @@
+# Environment Configuration Contract
+
+## EAS Environment Variables Interface
+
+### Production Build Profile
+
+**Required EAS Environment Variables** (set via `eas env:set`):
+```bash
+EXPO_PUBLIC_SUPABASE_URL=https://oddphoddejomqiyctctq.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+EXPO_PUBLIC_USE_SUPABASE=true
+EXPO_PUBLIC_USE_EMULATOR=false
+```
+
+**Validation Contract**:
+- All variables must be set before production build
+- `EXPO_PUBLIC_SUPABASE_URL` must be valid HTTPS URL
+- `EXPO_PUBLIC_SUPABASE_ANON_KEY` must be valid JWT format
+- `EXPO_PUBLIC_USE_EMULATOR` must be "false" for production
+
+### Development/Preview Build Profiles
+
+**Required Devbox Configuration**:
+```bash
+EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321  # or http://10.0.2.2:54321 for Android
+EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+EXPO_PUBLIC_USE_SUPABASE=true
+EXPO_PUBLIC_USE_EMULATOR=true
+EXPO_PUBLIC_USE_SUPABASE_EMULATOR=true
+```
+
+**Android Emulator Specific**:
+```bash
+EXPO_PUBLIC_SUPABASE_URL=http://10.0.2.2:54321  # Direct URL for Android emulator
+```
+
+## App Configuration Contract
+
+### Environment Detection
+
+```javascript
+// Contract for app.config.js
+const isProduction = process.env.EAS_BUILD_PROFILE === 'production';
+const isPreview = process.env.EAS_BUILD_PROFILE === 'preview';
+const isDevelopment = process.env.EAS_BUILD_PROFILE === 'development';
+
+// Feature flag handling
+const useSupabaseData = process.env.USE_SUPABASE_DATA === 'true';
+```
+
+### Security Configuration
+
+```javascript
+// Network security contract
+{
+  android: {
+    usesCleartextTraffic: !isProduction,  // Only allow HTTP in dev/preview
+    networkSecurityConfig: isProduction ? "network_security_config" : undefined
+  }
+}
+```
+
+## Environment Variable Validation Contract
+
+### Runtime Validation
+
+Required validation in `lib/config/supabase-env.ts`:
+
+```typescript
+interface SupabaseConfig {
+  url: string;
+  anonKey: string;
+  useEmulator: boolean;
+  emulatorHost?: string;
+  emulatorPort?: number;
+}
+
+function validateSupabaseConfig(): SupabaseConfig {
+  // Must validate all required environment variables
+  // Must throw error for missing required variables
+  // Must handle emulator vs production URL logic
+}
+```
+
+### Build-time Validation
+
+Required checks during EAS build:
+1. Verify all required environment variables are set
+2. Validate URL format and reachability
+3. Confirm JWT format for anon key
+4. Check feature flag consistency
+
+## Error Handling Contract
+
+### Missing Variables
+- Build must fail if required environment variables are missing
+- Clear error messages indicating which variables are missing
+- Differentiate between production and development requirements
+
+### Invalid Values
+- URL validation with proper error messages
+- JWT format validation for Supabase keys
+- Boolean validation for feature flags
+
+### Network Configuration
+- Android emulator networking validation (10.0.2.2 accessibility)
+- Production URL reachability validation
+- HTTPS enforcement for production builds
+
+## Testing Contract
+
+### Local Testing (Devbox)
+- Must use emulator configuration
+- Must connect to local Supabase instance
+- Must allow cleartext traffic for development
+
+### CI Testing
+- Must use test-specific configuration
+- Must connect to appropriate test environment
+- Must handle Android emulator networking
+
+### Production Validation
+- Must use production EAS environment variables
+- Must connect to production Supabase instance
+- Must enforce HTTPS-only communication

@@ -1,16 +1,14 @@
 import { Redirect } from "expo-router";
 
-// Only export storybook in development/non-production builds
-const isProduction =
-  process.env.EAS_BUILD_PROFILE === "production" ||
-  process.env.NODE_ENV === "production";
+// Only use storybook when explicitly enabled
+const isStorybookEnabled = process.env.WITH_STORYBOOK === "true";
 
-// In production, redirect to home, otherwise use storybook
-const StorybookScreen = isProduction
-  ? function ProductionStorybook() {
+// If storybook is not enabled, redirect to home
+const StorybookScreen = isStorybookEnabled
+  ? // eslint-disable-next-line @typescript-eslint/no-require-imports
+    require("../.rnstorybook").default
+  : function DisabledStorybook() {
       return <Redirect href="/" />;
-    }
-  : // eslint-disable-next-line @typescript-eslint/no-require-imports
-    require("../.rnstorybook").default;
+    };
 
 export default StorybookScreen;
