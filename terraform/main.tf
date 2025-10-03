@@ -34,6 +34,7 @@ resource "supabase_settings" "main" {
     jwt_expiry = 3600
     enable_signup = true
     enable_email_confirmations = false
+    enable_anonymous_sign_ins = true
   })
 }
 
