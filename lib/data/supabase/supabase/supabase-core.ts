@@ -86,7 +86,8 @@ export abstract class SupabaseService {
     });
 
     // Import AsyncStorage for session persistence in React Native
-    const AsyncStorage = require("@react-native-async-storage/async-storage").default;
+    const AsyncStorage =
+      require("@react-native-async-storage/async-storage").default;
 
     this.client = createClient<Database>(supabaseUrl, supabaseAnonKey, {
       auth: {

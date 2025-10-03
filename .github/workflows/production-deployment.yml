@@ -40,7 +40,6 @@ jobs:
           artifact-name: production-release-apk
         id: build-production
 
-
       - name: Create GitHub Release
         id: upload
         uses: softprops/action-gh-release@v2
