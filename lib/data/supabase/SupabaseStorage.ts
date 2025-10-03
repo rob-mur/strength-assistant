@@ -205,7 +205,29 @@ export class SupabaseStorage implements StorageBackend {
 
   // User management
   async getCurrentUser(): Promise<UserAccount | null> {
+    // Check if we have a local user
     if (this.currentUser) {
+      // In production, validate that local users have valid Supabase sessions
+      if (process.env.NODE_ENV === "production") {
+        console.log("🔐 SupabaseStorage - Production mode: validating local user session");
+        try {
+          const {
+            data: { session },
+          } = await this.getClient().auth.getSession();
+
+          if (!session?.user) {
+            console.log("🔐 SupabaseStorage - Local user has no valid Supabase session, clearing");
+            this.currentUser = null;
+            this.notifyAuthStateChange(null);
+            return null;
+          }
+        } catch (error) {
+          console.error("🔐 SupabaseStorage - Error validating session, clearing local user:", error);
+          this.currentUser = null;
+          this.notifyAuthStateChange(null);
+          return null;
+        }
+      }
       return this.currentUser;
     }
 
@@ -299,12 +321,21 @@ export class SupabaseStorage implements StorageBackend {
       }
     } catch (error) {
       console.error(
-        "🔐 SupabaseStorage - Supabase anonymous sign in failed, falling back to local user:",
+        "🔐 SupabaseStorage - Supabase anonymous sign in failed:",
         error,
       );
+
+      // In production, don't create fallback users that can't perform real operations
+      if (process.env.NODE_ENV === "production") {
+        console.error("🔐 SupabaseStorage - Production mode: not creating fallback user");
+        throw new Error("Anonymous authentication failed: " + (error as Error).message);
+      }
+
+      // Only create fallback in development/test environments
+      console.log("🔐 SupabaseStorage - Development mode: creating local anonymous user fallback");
     }
 
-    // Fallback: create a local anonymous user if Supabase auth fails
+    // Fallback: create a local anonymous user if Supabase auth fails (dev/test only)
     console.log("🔐 SupabaseStorage - Creating local anonymous user fallback");
     const anonymousUser = createAnonymousUser();
     this.currentUser = anonymousUser;
