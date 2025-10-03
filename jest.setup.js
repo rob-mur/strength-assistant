@@ -1,6 +1,11 @@
 // Temporarily disable fake timers to debug hanging issue
 // jest.useFakeTimers();
 
+// Mock AsyncStorage for React Native tests
+jest.mock("@react-native-async-storage/async-storage", () =>
+  require("@react-native-async-storage/async-storage/jest/async-storage-mock"),
+);
+
 // Mock platform detection and React Native animations
 jest.mock("react-native", () => {
   const RN = jest.requireActual("react-native");

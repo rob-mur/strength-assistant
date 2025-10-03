@@ -223,10 +223,10 @@ export class SupabaseAuth {
 
       console.log("🔐 SupabaseAuth - signInAnonymously response:", {
         hasData: !!data,
-        hasUser: !!(data as any)?.user,
-        userId: (data as any)?.user?.id,
+        hasUser: !!(data as { user: { id: string } | null })?.user,
+        userId: (data as { user: { id: string } | null })?.user?.id,
         hasError: !!error,
-        errorMessage: error ? (error as any).message : null,
+        errorMessage: error ? (error as Error).message : null,
       });
 
       return this.handleAuthResponse(data, error, "Anonymous sign in");
@@ -247,8 +247,8 @@ export class SupabaseAuth {
         console.log("🔐 SupabaseAuth - getCurrentUser error:", error);
         // Handle auth session missing errors gracefully (offline-first)
         if (
-          error.message?.includes("Auth session missing") ||
-          (error as any).name === "AuthSessionMissingError"
+          (error as Error).message?.includes("Auth session missing") ||
+          (error as Error & { name: string }).name === "AuthSessionMissingError"
         ) {
           console.log("🔐 SupabaseAuth - Auth session missing, returning null");
           return null;
@@ -269,8 +269,8 @@ export class SupabaseAuth {
       console.error("🔐 SupabaseAuth - getCurrentUser failed:", error);
       // Handle auth session missing errors gracefully
       if (
-        (error as any)?.message?.includes("Auth session missing") ||
-        (error as any)?.name === "AuthSessionMissingError"
+        (error as Error)?.message?.includes("Auth session missing") ||
+        (error as Error & { name: string })?.name === "AuthSessionMissingError"
       ) {
         console.log(
           "🔐 SupabaseAuth - Auth session missing in catch, returning null",
