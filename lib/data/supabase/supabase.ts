@@ -78,21 +78,45 @@ class SupabaseService {
       platform: Platform.OS,
     });
 
-    // Import AsyncStorage for session persistence in React Native
-    const importModule = eval("require");
-    const AsyncStorage = importModule(
-      "@react-native-async-storage/async-storage",
-    ).default;
-
     // Platform-specific configuration
     const detectSessionInUrl = Platform.OS === "web";
+
+    // Platform-specific storage configuration
+    let storage;
+    if (Platform.OS === "web") {
+      // Use localStorage for web
+      storage = {
+        getItem: (key: string) => {
+          if (typeof window !== "undefined" && window.localStorage) {
+            return window.localStorage.getItem(key);
+          }
+          return null;
+        },
+        setItem: (key: string, value: string) => {
+          if (typeof window !== "undefined" && window.localStorage) {
+            window.localStorage.setItem(key, value);
+          }
+        },
+        removeItem: (key: string) => {
+          if (typeof window !== "undefined" && window.localStorage) {
+            window.localStorage.removeItem(key);
+          }
+        },
+      };
+    } else {
+      // Use AsyncStorage for React Native
+      const importModule = eval("require");
+      storage = importModule(
+        "@react-native-async-storage/async-storage",
+      ).default;
+    }
 
     this.client = createClient<Database>(supabaseUrl, supabaseAnonKey, {
       auth: {
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl,
-        storage: AsyncStorage,
+        storage,
       },
     });
 
