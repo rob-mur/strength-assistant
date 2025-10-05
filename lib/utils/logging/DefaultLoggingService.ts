@@ -25,6 +25,7 @@ export interface LoggingServiceConfig {
   maxRetentionDays?: number;
   enableLocalPersistence?: boolean;
   environment?: string;
+  enableConsoleLogging?: boolean;
 }
 
 export class DefaultLoggingService implements LoggingService {
@@ -42,6 +43,8 @@ export class DefaultLoggingService implements LoggingService {
       maxRetentionDays: config.maxRetentionDays ?? 7,
       enableLocalPersistence: config.enableLocalPersistence ?? true,
       environment: config.environment ?? this.detectEnvironment(),
+      enableConsoleLogging:
+        config.enableConsoleLogging ?? this.shouldEnableConsoleLogging(),
     };
 
     this.sessionId = this.generateSessionId();
@@ -106,8 +109,10 @@ export class DefaultLoggingService implements LoggingService {
         await this.persistToStorage(errorEvent, errorContext, logEntry);
       }
 
-      // Log to console based on severity
-      this.logToConsole(errorEvent, errorContext);
+      // Log to console based on severity (if enabled)
+      if (this.config.enableConsoleLogging) {
+        this.logToConsole(errorEvent, errorContext);
+      }
 
       // Manage buffer size
       this.manageBufferSize();
@@ -344,6 +349,21 @@ export class DefaultLoggingService implements LoggingService {
       return process.env.NODE_ENV;
     }
     return "production";
+  }
+
+  private shouldEnableConsoleLogging(): boolean {
+    const environment = this.detectEnvironment();
+
+    // Disable console logging in test environment to prevent CI output issues
+    if (
+      environment === "test" ||
+      process.env.JEST_TEST_ENVIRONMENT === "true"
+    ) {
+      return false;
+    }
+
+    // Enable console logging in development and production
+    return true;
   }
 
   private generateSessionId(): string {

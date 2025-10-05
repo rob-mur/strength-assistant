@@ -33,6 +33,7 @@ describe("Error Event Logging Flow Integration", () => {
       maxRetentionDays: 7,
       enableLocalPersistence: true,
       environment: "test",
+      enableConsoleLogging: false,
     });
     errorHandler = loggingServiceFactory.createErrorHandler(loggingService);
     userErrorDisplay = loggingServiceFactory.createUserErrorDisplay();

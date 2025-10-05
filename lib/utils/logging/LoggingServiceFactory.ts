@@ -29,6 +29,7 @@ export interface FactoryConfig {
   environment?: string;
   useEnhancedErrorDisplay?: boolean;
   globalErrorHandling?: boolean;
+  enableConsoleLogging?: boolean;
 }
 
 export class LoggingServiceFactory implements ILoggingServiceFactory {
@@ -64,6 +65,8 @@ export class LoggingServiceFactory implements ILoggingServiceFactory {
       enableLocalPersistence:
         config.enableLocalPersistence ?? this.getDefaultPersistenceEnabled(),
       environment: config.environment ?? this.detectEnvironment(),
+      enableConsoleLogging:
+        config.enableConsoleLogging ?? this.getDefaultConsoleLoggingEnabled(),
     };
 
     this.loggingServiceInstance = new DefaultLoggingService(loggingConfig);
@@ -216,6 +219,18 @@ export class LoggingServiceFactory implements ILoggingServiceFactory {
     return this.isStorageAvailable();
   }
 
+  private getDefaultConsoleLoggingEnabled(): boolean {
+    const environment = this.detectEnvironment();
+
+    // Disable console logging in test environment to prevent CI output issues
+    if (environment === "test") {
+      return false;
+    }
+
+    // Enable console logging in development and production
+    return true;
+  }
+
   private detectEnvironment(): string {
     // Check for React Native __DEV__ flag
     if (typeof __DEV__ !== "undefined" && __DEV__) {
@@ -326,6 +341,7 @@ export const EnvironmentConfigs = {
     environment: "development",
     useEnhancedErrorDisplay: true,
     globalErrorHandling: true,
+    enableConsoleLogging: true,
   }),
 
   production: (): FactoryConfig => ({
@@ -335,6 +351,7 @@ export const EnvironmentConfigs = {
     environment: "production",
     useEnhancedErrorDisplay: true,
     globalErrorHandling: true,
+    enableConsoleLogging: true,
   }),
 
   test: (): FactoryConfig => ({
@@ -344,6 +361,7 @@ export const EnvironmentConfigs = {
     environment: "test",
     useEnhancedErrorDisplay: false,
     globalErrorHandling: false,
+    enableConsoleLogging: false,
   }),
 };
 
