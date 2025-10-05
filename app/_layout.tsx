@@ -7,6 +7,8 @@ import handleErrors from "./error";
 import { useAppInit } from "@/lib/hooks/useAppInit";
 import { AuthProvider } from "@/lib/components/AuthProvider";
 import { AuthAwareLayout } from "@/lib/components/AuthAwareLayout";
+import { initializeErrorHandling } from "@/lib/utils/logging/LoggingServiceFactory";
+import { initializeRecoverySystem } from "@/lib/utils/logging/RecoveryConfig";
 
 // Catch any errors thrown by the Layout component.
 export { ErrorBoundary } from "expo-router";
@@ -19,6 +21,12 @@ SplashScreen.preventAutoHideAsync();
 
 // Debug: Basic console log to verify app is running
 console.log("🚀 App starting - RootLayout loading");
+
+// Initialize global error handling system
+initializeErrorHandling();
+
+// Initialize recovery actions for all error types
+initializeRecoverySystem();
 
 // Catch any errors in test mode so maestro properly crashes
 handleErrors();

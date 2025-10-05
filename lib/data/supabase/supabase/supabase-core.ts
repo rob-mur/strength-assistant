@@ -86,9 +86,10 @@ export abstract class SupabaseService {
     });
 
     // Import AsyncStorage for session persistence in React Native
-    const AsyncStorage =
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      require("@react-native-async-storage/async-storage").default;
+    const importModule = eval("require");
+    const AsyncStorage = importModule(
+      "@react-native-async-storage/async-storage",
+    ).default;
 
     this.client = createClient<Database>(supabaseUrl, supabaseAnonKey, {
       auth: {

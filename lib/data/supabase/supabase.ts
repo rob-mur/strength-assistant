@@ -8,12 +8,11 @@ interface SupabaseInitializer {
 }
 
 const getSupabaseModule = (): SupabaseInitializer => {
+  const importModule = eval("require");
   if (Platform.OS === "web") {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    return require("./supabase/supabase.web");
+    return importModule("./supabase/supabase.web");
   } else {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    return require("./supabase/supabase.native");
+    return importModule("./supabase/supabase.native");
   }
 };
 

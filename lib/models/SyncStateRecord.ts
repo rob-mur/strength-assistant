@@ -5,6 +5,10 @@
  * Manages retry logic and error handling for failed sync operations.
  */
 
+import { initializeErrorHandling } from "../utils/logging/LoggingServiceFactory";
+
+const { loggingService } = initializeErrorHandling();
+
 export type SyncOperationType = "create" | "update" | "delete";
 
 export interface SyncStateRecord {
@@ -268,8 +272,19 @@ export function fromDbFormat(
   if (dbRecord.payload) {
     try {
       syncState.payload = JSON.parse(dbRecord.payload as string);
-    } catch {
-      /* Silent error handling */
+    } catch (error) {
+      loggingService
+        .logError(error as Error, "sync-payload-parse", "Error", "Logic")
+        .catch((loggingError) =>
+          console.error("Logging failed:", loggingError),
+        );
+
+      console.warn(
+        "Failed to parse sync payload JSON:",
+        (error as Error).message,
+      );
+      // Continue without payload data to avoid breaking sync state
+      syncState.payload = undefined;
     }
   }
 
