@@ -190,8 +190,8 @@ export class DefaultUserErrorDisplay implements UserErrorDisplay {
 
     // Clean up operation string
     return operation
-      .replace(/[-_]/g, " ") // Replace hyphens and underscores with spaces
-      .replace(/([a-z])([A-Z])/g, "$1 $2") // Add space before capital letters
+      .replaceAll(/[-_]/g, " ") // Replace hyphens and underscores with spaces
+      .replaceAll(/([a-z])([A-Z])/g, "$1 $2") // Add space before capital letters
       .toLowerCase()
       .trim();
   }

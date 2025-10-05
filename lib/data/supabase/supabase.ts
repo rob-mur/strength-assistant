@@ -87,19 +87,19 @@ class SupabaseService {
       // Use localStorage for web
       storage = {
         getItem: (key: string) => {
-          if (typeof window !== "undefined" && window.localStorage) {
-            return window.localStorage.getItem(key);
+          if (typeof globalThis !== "undefined" && globalThis.localStorage) {
+            return globalThis.localStorage.getItem(key);
           }
           return null;
         },
         setItem: (key: string, value: string) => {
-          if (typeof window !== "undefined" && window.localStorage) {
-            window.localStorage.setItem(key, value);
+          if (typeof globalThis !== "undefined" && globalThis.localStorage) {
+            globalThis.localStorage.setItem(key, value);
           }
         },
         removeItem: (key: string) => {
-          if (typeof window !== "undefined" && window.localStorage) {
-            window.localStorage.removeItem(key);
+          if (typeof globalThis !== "undefined" && globalThis.localStorage) {
+            globalThis.localStorage.removeItem(key);
           }
         },
       };

@@ -49,86 +49,93 @@ export class ErrorContext implements IErrorContext {
   private validate(): void {
     const errors: string[] = [];
 
-    // Validate required fields
-    if (!this.errorEventId || this.errorEventId.trim().length === 0) {
-      errors.push("errorEventId must reference valid ErrorEvent");
-    }
-
-    // Validate optional fields if provided
-    if (this.userAction !== undefined && typeof this.userAction !== "string") {
-      errors.push("userAction must be a string if provided");
-    }
-
-    if (this.userAction !== undefined && this.userAction.trim().length === 0) {
-      errors.push("userAction must be non-empty if provided");
-    }
-
-    // Validate navigation state structure
-    if (this.navigationState) {
-      if (
-        !this.navigationState.currentRoute ||
-        typeof this.navigationState.currentRoute !== "string"
-      ) {
-        errors.push("navigationState.currentRoute must be a valid string");
-      }
-      if (
-        this.navigationState.previousRoute !== undefined &&
-        typeof this.navigationState.previousRoute !== "string"
-      ) {
-        errors.push(
-          "navigationState.previousRoute must be a string if provided",
-        );
-      }
-    }
-
-    // Validate network state
-    if (this.networkState !== undefined) {
-      const validNetworkStates = ["connected", "disconnected", "limited"];
-      if (!validNetworkStates.includes(this.networkState)) {
-        errors.push(
-          `networkState must be one of: ${validNetworkStates.join(", ")}`,
-        );
-      }
-    }
-
-    // Validate performance metrics structure
-    if (this.performanceMetrics) {
-      if (
-        this.performanceMetrics.memoryUsage !== undefined &&
-        typeof this.performanceMetrics.memoryUsage !== "number"
-      ) {
-        errors.push(
-          "performanceMetrics.memoryUsage must be a number if provided",
-        );
-      }
-      if (
-        this.performanceMetrics.cpuUsage !== undefined &&
-        typeof this.performanceMetrics.cpuUsage !== "number"
-      ) {
-        errors.push("performanceMetrics.cpuUsage must be a number if provided");
-      }
-      if (
-        this.performanceMetrics.memoryUsage !== undefined &&
-        this.performanceMetrics.memoryUsage < 0
-      ) {
-        errors.push("performanceMetrics.memoryUsage must be non-negative");
-      }
-      if (
-        this.performanceMetrics.cpuUsage !== undefined &&
-        (this.performanceMetrics.cpuUsage < 0 ||
-          this.performanceMetrics.cpuUsage > 100)
-      ) {
-        errors.push("performanceMetrics.cpuUsage must be between 0 and 100");
-      }
-    }
-
-    // Validate data state doesn't contain sensitive information
-    if (this.dataState) {
-      this.validateDataStateSafety(this.dataState);
-    }
+    this.validateRequiredFields(errors);
+    this.validateUserAction(errors);
+    this.validateNavigationState(errors);
+    this.validateNetworkState(errors);
+    this.validatePerformanceMetrics(errors);
+    this.validateDataState();
 
     if (errors.length > 0) {
       throw new Error(`ErrorContext validation failed: ${errors.join(", ")}`);
+    }
+  }
+
+  private validateRequiredFields(errors: string[]): void {
+    if (!this.errorEventId || this.errorEventId.trim().length === 0) {
+      errors.push("errorEventId must reference valid ErrorEvent");
+    }
+  }
+
+  private validateUserAction(errors: string[]): void {
+    if (this.userAction === undefined) return;
+
+    if (typeof this.userAction !== "string") {
+      errors.push("userAction must be a string if provided");
+      return;
+    }
+
+    if (this.userAction.trim().length === 0) {
+      errors.push("userAction must be non-empty if provided");
+    }
+  }
+
+  private validateNavigationState(errors: string[]): void {
+    if (!this.navigationState) return;
+
+    if (
+      !this.navigationState.currentRoute ||
+      typeof this.navigationState.currentRoute !== "string"
+    ) {
+      errors.push("navigationState.currentRoute must be a valid string");
+    }
+
+    if (
+      this.navigationState.previousRoute !== undefined &&
+      typeof this.navigationState.previousRoute !== "string"
+    ) {
+      errors.push("navigationState.previousRoute must be a string if provided");
+    }
+  }
+
+  private validateNetworkState(errors: string[]): void {
+    if (this.networkState === undefined) return;
+
+    const validNetworkStates = ["connected", "disconnected", "limited"];
+    if (!validNetworkStates.includes(this.networkState)) {
+      errors.push(
+        `networkState must be one of: ${validNetworkStates.join(", ")}`,
+      );
+    }
+  }
+
+  private validatePerformanceMetrics(errors: string[]): void {
+    if (!this.performanceMetrics) return;
+
+    const { memoryUsage, cpuUsage } = this.performanceMetrics;
+
+    if (memoryUsage !== undefined) {
+      if (typeof memoryUsage !== "number") {
+        errors.push(
+          "performanceMetrics.memoryUsage must be a number if provided",
+        );
+      } else if (memoryUsage < 0) {
+        errors.push("performanceMetrics.memoryUsage must be non-negative");
+      }
+    }
+
+    if (cpuUsage !== undefined) {
+      if (typeof cpuUsage !== "number") {
+        errors.push("performanceMetrics.cpuUsage must be a number if provided");
+      } else if (cpuUsage < 0 || cpuUsage > 100) {
+        errors.push("performanceMetrics.cpuUsage must be between 0 and 100");
+      }
+    }
+  }
+
+  private validateDataState(): void {
+    if (this.dataState) {
+      this.validateDataStateSafety(this.dataState);
     }
   }
 

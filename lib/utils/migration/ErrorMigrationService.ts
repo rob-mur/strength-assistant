@@ -171,9 +171,12 @@ export class ErrorMigrationService implements IErrorMigrationService {
 
     // Replace template variables
     replacementCode = replacementCode
-      .replace(/\{operation\}/g, operation)
-      .replace(/\{errorType\}/g, block.errorType)
-      .replace(/\{functionName\}/g, block.functionName || "unknown-function");
+      .replaceAll(/\{operation\}/g, operation)
+      .replaceAll(/\{errorType\}/g, block.errorType)
+      .replaceAll(
+        /\{functionName\}/g,
+        block.functionName || "unknown-function",
+      );
 
     return replacementCode;
   }

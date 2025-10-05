@@ -29,10 +29,10 @@ export interface LoggingServiceConfig {
 }
 
 export class DefaultLoggingService implements LoggingService {
-  private errorBuffer: Map<string, ErrorEvent> = new Map();
-  private logEntries: Map<string, LogEntry> = new Map();
-  private errorContexts: Map<string, ErrorContext> = new Map();
-  private recoveryActions: Map<ErrorType, RecoveryAction> = new Map();
+  private readonly errorBuffer: Map<string, ErrorEvent> = new Map();
+  private readonly logEntries: Map<string, LogEntry> = new Map();
+  private readonly errorContexts: Map<string, ErrorContext> = new Map();
+  private readonly recoveryActions: Map<ErrorType, RecoveryAction> = new Map();
 
   private readonly config: Required<LoggingServiceConfig>;
   private readonly sessionId: string;
@@ -509,55 +509,64 @@ export class DefaultLoggingService implements LoggingService {
     try {
       const cutoffTime = Date.now() - olderThanDays * 24 * 60 * 60 * 1000;
 
-      // Clear from localStorage
-      if (typeof localStorage !== "undefined") {
-        const keysToRemove: string[] = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key: string | null = localStorage.key(i);
-          if (key && key.startsWith("error-logs-")) {
-            try {
-              const data = JSON.parse(localStorage.getItem(key) || "{}");
-              if (data.timestamp && data.timestamp < cutoffTime) {
-                keysToRemove.push(key);
-              }
-            } catch {
-              // Invalid data, remove it
-              keysToRemove.push(key);
-            }
-          }
-        }
-        keysToRemove.forEach((key: string) => localStorage.removeItem(key));
-      }
-
-      // Clear from platform storage
-      try {
-        const allKeys = await platformStorage.getAllKeys();
-        const errorLogKeys = allKeys.filter((key: string) =>
-          key.startsWith("error-logs-"),
-        );
-
-        const keysToRemove: string[] = [];
-        for (const key of errorLogKeys) {
-          try {
-            const data = JSON.parse(
-              (await platformStorage.getItem(key)) || "{}",
-            );
-            if (data.timestamp && data.timestamp < cutoffTime) {
-              keysToRemove.push(key);
-            }
-          } catch {
-            keysToRemove.push(key);
-          }
-        }
-
-        if (keysToRemove.length > 0) {
-          await platformStorage.multiRemove(keysToRemove);
-        }
-      } catch {
-        // Storage not available
-      }
+      await this.clearFromLocalStorage(cutoffTime);
+      await this.clearFromPlatformStorage(cutoffTime);
     } catch {
       // Silent storage cleanup failure
+    }
+  }
+
+  private clearFromLocalStorage(cutoffTime: number): void {
+    if (typeof localStorage === "undefined") return;
+
+    const keysToRemove: string[] = [];
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key: string | null = localStorage.key(i);
+      if (key && key.startsWith("error-logs-")) {
+        try {
+          const data = JSON.parse(localStorage.getItem(key) || "{}");
+          if (data.timestamp && data.timestamp < cutoffTime) {
+            keysToRemove.push(key);
+          }
+        } catch {
+          // Invalid data, remove it
+          keysToRemove.push(key);
+        }
+      }
+    }
+
+    for (const key of keysToRemove) {
+      localStorage.removeItem(key);
+    }
+  }
+
+  private async clearFromPlatformStorage(cutoffTime: number): Promise<void> {
+    try {
+      const allKeys = await platformStorage.getAllKeys();
+      const errorLogKeys = allKeys.filter((key: string) =>
+        key.startsWith("error-logs-"),
+      );
+
+      const keysToRemove: string[] = [];
+
+      for (const key of errorLogKeys) {
+        try {
+          const item = await platformStorage.getItem(key);
+          const data = JSON.parse(item || "{}");
+          if (data.timestamp && data.timestamp < cutoffTime) {
+            keysToRemove.push(key);
+          }
+        } catch {
+          keysToRemove.push(key);
+        }
+      }
+
+      if (keysToRemove.length > 0) {
+        await platformStorage.multiRemove(keysToRemove);
+      }
+    } catch {
+      // Storage not available
     }
   }
 

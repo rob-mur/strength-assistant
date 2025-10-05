@@ -5,7 +5,7 @@
 import type { PlatformNetworkInfo, NetworkState } from "./networkInfo";
 
 class WebNetworkInfo implements PlatformNetworkInfo {
-  private listeners: Set<(state: NetworkState) => void> = new Set();
+  private readonly listeners: Set<(state: NetworkState) => void> = new Set();
 
   constructor() {
     // Set up browser event listeners

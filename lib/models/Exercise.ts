@@ -67,6 +67,6 @@ export class ExerciseValidator {
    * @returns Sanitized name
    */
   static sanitizeExerciseName(name: string): string {
-    return name.trim().replace(/\s+/g, " ");
+    return name.trim().replaceAll(/\s+/g, " ");
   }
 }

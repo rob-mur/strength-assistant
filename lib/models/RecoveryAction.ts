@@ -83,12 +83,25 @@ export class RecoveryAction implements IRecoveryAction {
   private validate(): void {
     const errors: string[] = [];
 
-    // Validate required fields
+    this.validateRequiredFields(errors);
+    this.validateErrorType(errors);
+    this.validateActionType(errors);
+    this.validateRetryFields(errors);
+    this.validateUserPromptFields(errors);
+    this.validateOptionalStringFields(errors);
+
+    if (errors.length > 0) {
+      throw new Error(`RecoveryAction validation failed: ${errors.join(", ")}`);
+    }
+  }
+
+  private validateRequiredFields(errors: string[]): void {
     if (!this.actionId || this.actionId.trim().length === 0) {
       errors.push("actionId is required and must be non-empty");
     }
+  }
 
-    // Validate errorType
+  private validateErrorType(errors: string[]): void {
     const validErrorTypes: ErrorType[] = [
       "Network",
       "Database",
@@ -99,8 +112,9 @@ export class RecoveryAction implements IRecoveryAction {
     if (!validErrorTypes.includes(this.errorType)) {
       errors.push(`errorType must be one of: ${validErrorTypes.join(", ")}`);
     }
+  }
 
-    // Validate actionType
+  private validateActionType(errors: string[]): void {
     const validActionTypes: RecoveryActionType[] = [
       "Retry",
       "Fallback",
@@ -110,47 +124,50 @@ export class RecoveryAction implements IRecoveryAction {
     if (!validActionTypes.includes(this.actionType)) {
       errors.push(`actionType must be one of: ${validActionTypes.join(", ")}`);
     }
+  }
 
-    // Validate retry-specific fields
-    if (this.actionType === "Retry") {
-      if (
-        this.retryCount !== undefined &&
-        (typeof this.retryCount !== "number" || this.retryCount < 0)
-      ) {
-        errors.push("retryCount must be a non-negative integer");
-      }
+  private validateRetryFields(errors: string[]): void {
+    if (this.actionType !== "Retry") return;
 
-      if (
-        this.retryDelay !== undefined &&
-        (typeof this.retryDelay !== "number" || this.retryDelay <= 0)
-      ) {
-        errors.push("retryDelay must be a positive integer");
-      }
-
-      if (
-        this.maxRetries !== undefined &&
-        (typeof this.maxRetries !== "number" || this.maxRetries <= 0)
-      ) {
-        errors.push("maxRetries must be a positive integer");
-      }
-
-      if (
-        this.retryCount !== undefined &&
-        this.maxRetries !== undefined &&
-        this.retryCount > this.maxRetries
-      ) {
-        errors.push("retryCount cannot exceed maxRetries");
-      }
+    if (
+      this.retryCount !== undefined &&
+      (typeof this.retryCount !== "number" || this.retryCount < 0)
+    ) {
+      errors.push("retryCount must be a non-negative integer");
     }
 
-    // Validate UserPrompt requirements
+    if (
+      this.retryDelay !== undefined &&
+      (typeof this.retryDelay !== "number" || this.retryDelay <= 0)
+    ) {
+      errors.push("retryDelay must be a positive integer");
+    }
+
+    if (
+      this.maxRetries !== undefined &&
+      (typeof this.maxRetries !== "number" || this.maxRetries <= 0)
+    ) {
+      errors.push("maxRetries must be a positive integer");
+    }
+
+    if (
+      this.retryCount !== undefined &&
+      this.maxRetries !== undefined &&
+      this.retryCount > this.maxRetries
+    ) {
+      errors.push("retryCount cannot exceed maxRetries");
+    }
+  }
+
+  private validateUserPromptFields(errors: string[]): void {
     if (this.actionType === "UserPrompt") {
       if (!this.userMessage || this.userMessage.trim().length === 0) {
         errors.push("userMessage is required for UserPrompt actions");
       }
     }
+  }
 
-    // Validate optional string fields
+  private validateOptionalStringFields(errors: string[]): void {
     if (
       this.fallbackBehavior !== undefined &&
       typeof this.fallbackBehavior !== "string"
@@ -163,10 +180,6 @@ export class RecoveryAction implements IRecoveryAction {
       typeof this.userMessage !== "string"
     ) {
       errors.push("userMessage must be a string if provided");
-    }
-
-    if (errors.length > 0) {
-      throw new Error(`RecoveryAction validation failed: ${errors.join(", ")}`);
     }
   }
 

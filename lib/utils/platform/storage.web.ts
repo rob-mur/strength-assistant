@@ -6,45 +6,47 @@ import type { PlatformStorage } from "./storage";
 
 export const platformStorage: PlatformStorage = {
   async getItem(key: string): Promise<string | null> {
-    if (typeof window === "undefined" || !window.localStorage) {
+    if (typeof globalThis === "undefined" || !globalThis.localStorage) {
       return null;
     }
-    return window.localStorage.getItem(key);
+    return globalThis.localStorage.getItem(key);
   },
 
   async setItem(key: string, value: string): Promise<void> {
-    if (typeof window === "undefined" || !window.localStorage) {
+    if (typeof globalThis === "undefined" || !globalThis.localStorage) {
       throw new Error("localStorage not available");
     }
-    window.localStorage.setItem(key, value);
+    globalThis.localStorage.setItem(key, value);
   },
 
   async removeItem(key: string): Promise<void> {
-    if (typeof window === "undefined" || !window.localStorage) {
+    if (typeof globalThis === "undefined" || !globalThis.localStorage) {
       return;
     }
-    window.localStorage.removeItem(key);
+    globalThis.localStorage.removeItem(key);
   },
 
   async clear(): Promise<void> {
-    if (typeof window === "undefined" || !window.localStorage) {
+    if (typeof globalThis === "undefined" || !globalThis.localStorage) {
       return;
     }
-    window.localStorage.clear();
+    globalThis.localStorage.clear();
   },
 
   async getAllKeys(): Promise<string[]> {
-    if (typeof window === "undefined" || !window.localStorage) {
+    if (typeof globalThis === "undefined" || !globalThis.localStorage) {
       return [];
     }
-    return Object.keys(window.localStorage);
+    return Object.keys(globalThis.localStorage);
   },
 
   async multiRemove(keys: string[]): Promise<void> {
-    if (typeof window === "undefined" || !window.localStorage) {
+    if (typeof globalThis === "undefined" || !globalThis.localStorage) {
       return;
     }
-    keys.forEach((key) => window.localStorage.removeItem(key));
+    for (const key of keys) {
+      globalThis.localStorage.removeItem(key);
+    }
   },
 };
 

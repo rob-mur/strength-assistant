@@ -41,7 +41,7 @@ class ExpoDeviceInfo implements IDeviceInfo {
 
       // Create a simple hash-like ID
       const combined = `${brand}-${model}-${os}-${sessionId}`;
-      return combined.toLowerCase().replace(/[^a-z0-9-]/g, "");
+      return combined.toLowerCase().replaceAll(/[^a-z0-9-]/g, "");
     } catch {
       // Ultimate fallback
       return `device-${Date.now()}`;
