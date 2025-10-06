@@ -94,13 +94,13 @@ class UnifiedAlertService implements IAlertService {
    */
   private async tryWebAlert(options: AlertOptions): Promise<boolean> {
     try {
-      if (typeof window === "undefined") {
+      if (typeof globalThis.window === "undefined") {
         return false;
       }
 
       // If no buttons or just one button, use simple alert
       if (!options.buttons || options.buttons.length <= 1) {
-        window.alert(
+        globalThis.window.alert(
           `${options.title}${options.message ? `\n\n${options.message}` : ""}`,
         );
         if (options.buttons?.[0]?.onPress) {
@@ -111,7 +111,7 @@ class UnifiedAlertService implements IAlertService {
 
       // For multiple buttons, use confirm dialog
       if (options.buttons.length === 2) {
-        const confirmed = window.confirm(
+        const confirmed = globalThis.window.confirm(
           `${options.title}${options.message ? `\n\n${options.message}` : ""}`,
         );
 

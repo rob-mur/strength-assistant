@@ -28,7 +28,9 @@ class WebNetworkInfo implements PlatformNetworkInfo {
 
   private handleConnectionChange = (): void => {
     this.getCurrentState().then((state) => {
-      this.listeners.forEach((callback) => callback(state));
+      for (const callback of this.listeners) {
+        callback(state);
+      }
     });
   };
 

@@ -19,7 +19,7 @@ import { LoggingService } from "../../../specs/011-improve-error-logging/contrac
 
 export class ErrorMigrationService implements IErrorMigrationService {
   private codeAnalysisService: CodeAnalysisService;
-  private templates: Map<string, ReplacementTemplate> = new Map();
+  private readonly templates: Map<string, ReplacementTemplate> = new Map();
 
   constructor() {
     this.codeAnalysisService = new CodeAnalysisService();

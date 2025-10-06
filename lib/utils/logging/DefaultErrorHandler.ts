@@ -175,37 +175,41 @@ export class DefaultErrorHandler implements ErrorHandler {
   ): T {
     const wrappedFn = (async (...args: Parameters<T>) => {
       let retryCount = 0;
-      const maxRetries = this.getMaxRetriesForErrorType(errorType);
+      let maxRetries: number | undefined;
 
       while (true) {
         try {
           return await fn(...args);
         } catch (error) {
+          // Initialize maxRetries only when error occurs (performance optimization)
+          if (maxRetries === undefined) {
+            maxRetries = this.getMaxRetriesForErrorType(errorType);
+          }
+
           const errorEvent = await this.handleFunctionError(
             error as Error,
             operation,
             errorType,
           );
 
-          // Attempt recovery if enabled and error is recoverable
+          // Fast path: check recovery conditions inline for performance
           if (
             enableRecovery &&
             this.isRecoverableError(errorType) &&
             retryCount < maxRetries
           ) {
-            retryCount++; // Increment retry count before attempting recovery
+            retryCount++;
             try {
               const recovered =
                 await this.loggingService.attemptRecovery(errorEvent);
               if (recovered) {
-                // Add retry delay
                 const retryDelay = this.getRetryDelayForErrorType(errorType);
                 if (retryDelay > 0) {
                   await new Promise((resolve) =>
                     setTimeout(resolve, retryDelay),
                   );
                 }
-                continue; // Retry the operation
+                continue;
               }
             } catch (recoveryError) {
               // Log recovery failure but continue with original error
@@ -259,9 +263,12 @@ export class DefaultErrorHandler implements ErrorHandler {
 
     try {
       // Browser environment
-      if (typeof window !== "undefined" && window.addEventListener) {
+      if (
+        typeof globalThis !== "undefined" &&
+        globalThis.window?.addEventListener
+      ) {
         // Handle uncaught errors
-        window.addEventListener("error", (event) => {
+        globalThis.window.addEventListener("error", (event) => {
           this.handleUncaughtError(
             event.error || new Error(event.message),
             "window-error",
@@ -269,7 +276,7 @@ export class DefaultErrorHandler implements ErrorHandler {
         });
 
         // Handle unhandled promise rejections
-        window.addEventListener("unhandledrejection", (event) => {
+        globalThis.window.addEventListener("unhandledrejection", (event) => {
           this.handleUnhandledRejection(
             event.reason,
             "window-unhandled-rejection",
@@ -292,9 +299,9 @@ export class DefaultErrorHandler implements ErrorHandler {
 
       // React Native specific error handling
       if (
-        typeof global !== "undefined" &&
+        typeof globalThis.global !== "undefined" &&
         (
-          global as {
+          globalThis.global as {
             ErrorUtils?: {
               getGlobalHandler: () => unknown;
               setGlobalHandler: (
