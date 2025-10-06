@@ -341,10 +341,7 @@ export class ErrorContext implements IErrorContext {
   }
 
   private collectBrowserMemoryUsage(metrics: { memoryUsage?: number }): void {
-    if (
-      typeof globalThis.window !== "undefined" &&
-      "performance" in globalThis.window
-    ) {
+    if (globalThis.window && "performance" in globalThis.window) {
       const perfMemory = (
         performance as { memory?: { usedJSHeapSize?: number } }
       ).memory;

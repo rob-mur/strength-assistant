@@ -14,8 +14,8 @@ import {
 } from "../../../specs/011-improve-error-logging/contracts/logging-service";
 
 export class DefaultErrorHandler implements ErrorHandler {
-  private loggingService: LoggingService;
-  private userErrorDisplay?: UserErrorDisplay;
+  private readonly loggingService: LoggingService;
+  private readonly userErrorDisplay?: UserErrorDisplay;
   private static globalHandlersSetup = false;
   private static globalHandlerCleanup: (() => void)[] = [];
 
@@ -175,66 +175,132 @@ export class DefaultErrorHandler implements ErrorHandler {
     enableRecovery: boolean = false,
   ): T {
     const wrappedFn = (async (...args: Parameters<T>) => {
-      let retryCount = 0;
-      let maxRetries: number | undefined;
-
-      while (true) {
-        try {
-          return await fn(...args);
-        } catch (error) {
-          // Initialize maxRetries only when error occurs (performance optimization)
-          if (maxRetries === undefined) {
-            maxRetries = this.getMaxRetriesForErrorType(errorType);
-          }
-
-          const errorEvent = await this.handleFunctionError(
-            error as Error,
-            operation,
-            errorType,
-          );
-
-          // Fast path: check recovery conditions inline for performance
-          if (
-            enableRecovery &&
-            this.isRecoverableError(errorType) &&
-            retryCount < maxRetries
-          ) {
-            retryCount++;
-            try {
-              const recovered =
-                await this.loggingService.attemptRecovery(errorEvent);
-              if (recovered) {
-                const retryDelay = this.getRetryDelayForErrorType(errorType);
-                if (retryDelay > 0) {
-                  await new Promise((resolve) =>
-                    setTimeout(resolve, retryDelay),
-                  );
-                }
-                continue;
-              }
-            } catch (recoveryError) {
-              // Log recovery failure but continue with original error
-              this.loggingService
-                .logError(
-                  recoveryError as Error,
-                  `${operation}-recovery`,
-                  "Warning",
-                  "Logic",
-                )
-                .catch(() => {
-                  // Silent failure for recovery logging
-                });
-            }
-          }
-
-          // Swallow error after logging and attempted recovery (defensive error handling)
-          // The contract expects wrapped functions to always return undefined on error
-          return undefined;
-        }
-      }
+      return await this.executeWithRetry(
+        fn,
+        args,
+        operation,
+        errorType,
+        enableRecovery,
+      );
     }) as T;
 
     return wrappedFn;
+  }
+
+  /**
+   * Execute function with retry logic
+   */
+  private async executeWithRetry<
+    T extends (...args: unknown[]) => Promise<unknown>,
+  >(
+    fn: T,
+    args: Parameters<T>,
+    operation: string,
+    errorType: ErrorType,
+    enableRecovery: boolean,
+  ): Promise<unknown> {
+    let retryCount = 0;
+    const maxRetries = this.getMaxRetriesForErrorType(errorType);
+
+    while (true) {
+      try {
+        return await fn(...args);
+      } catch (error) {
+        const retryContext = await this.processRetryError(
+          error as Error,
+          operation,
+          errorType,
+          retryCount,
+          maxRetries,
+          enableRecovery,
+        );
+
+        if (retryContext.shouldRetry) {
+          retryCount++;
+          await this.delayBeforeRetry(errorType);
+          continue;
+        }
+
+        // Swallow error after logging and attempted recovery (defensive error handling)
+        return undefined;
+      }
+    }
+  }
+
+  /**
+   * Process error for retry decision
+   */
+  private async processRetryError(
+    error: Error,
+    operation: string,
+    errorType: ErrorType,
+    retryCount: number,
+    maxRetries: number,
+    enableRecovery: boolean,
+  ): Promise<{ shouldRetry: boolean }> {
+    const errorEvent = await this.handleFunctionError(
+      error,
+      operation,
+      errorType,
+    );
+
+    const shouldRetry = await this.shouldAttemptRetry(
+      enableRecovery,
+      errorType,
+      retryCount,
+      maxRetries,
+      errorEvent,
+      operation,
+    );
+
+    return { shouldRetry };
+  }
+
+  private async shouldAttemptRetry(
+    enableRecovery: boolean,
+    errorType: ErrorType,
+    retryCount: number,
+    maxRetries: number,
+    errorEvent: ErrorEvent,
+    operation: string,
+  ): Promise<boolean> {
+    if (
+      !enableRecovery ||
+      !this.isRecoverableError(errorType) ||
+      retryCount >= maxRetries
+    ) {
+      return false;
+    }
+
+    try {
+      return await this.loggingService.attemptRecovery(errorEvent);
+    } catch (recoveryError) {
+      await this.logRecoveryFailure(recoveryError as Error, operation);
+      return false;
+    }
+  }
+
+  private async delayBeforeRetry(errorType: ErrorType): Promise<void> {
+    const retryDelay = this.getRetryDelayForErrorType(errorType);
+    if (retryDelay > 0) {
+      await new Promise((resolve) => setTimeout(resolve, retryDelay));
+    }
+  }
+
+  private async logRecoveryFailure(
+    error: Error,
+    operation: string,
+  ): Promise<void> {
+    try {
+      await this.loggingService.logError(
+        error,
+        `${operation}-recovery`,
+        "Warning",
+        "Logic",
+      );
+    } catch {
+      // Silent failure for recovery logging
+    }
   }
 
   /**
@@ -263,113 +329,141 @@ export class DefaultErrorHandler implements ErrorHandler {
     }
 
     try {
-      // Browser environment
-      if (
-        typeof globalThis !== "undefined" &&
-        globalThis.window?.addEventListener
-      ) {
-        const errorHandler = (event: Event) => {
-          const errorEvent = event as globalThis.ErrorEvent;
-          this.handleUncaughtError(
-            errorEvent.error || new Error(errorEvent.message),
-            "window-error",
-          );
-        };
-
-        const rejectionHandler = (event: PromiseRejectionEvent) => {
-          this.handleUnhandledRejection(
-            event.reason,
-            "window-unhandled-rejection",
-          );
-        };
-
-        globalThis.window.addEventListener("error", errorHandler);
-        globalThis.window.addEventListener(
-          "unhandledrejection",
-          rejectionHandler,
-        );
-
-        // Store cleanup functions
-        DefaultErrorHandler.globalHandlerCleanup.push(() => {
-          globalThis.window?.removeEventListener("error", errorHandler);
-          globalThis.window?.removeEventListener(
-            "unhandledrejection",
-            rejectionHandler,
-          );
-        });
-      }
-
-      // Node.js environment
-      if (typeof process !== "undefined") {
-        const uncaughtHandler = (error: Error) => {
-          this.handleUncaughtError(error, "process-uncaught-exception");
-        };
-
-        const rejectionHandler = (reason: unknown) => {
-          this.handleUnhandledRejection(reason, "process-unhandled-rejection");
-        };
-
-        // Only add listeners if we haven't exceeded the limit
-        const currentListeners = process.listenerCount("uncaughtException");
-        if (currentListeners < 8) {
-          // Leave some room under the 10 limit
-          process.on("uncaughtException", uncaughtHandler);
-          process.on("unhandledRejection", rejectionHandler);
-
-          // Store cleanup functions
-          DefaultErrorHandler.globalHandlerCleanup.push(() => {
-            process.removeListener("uncaughtException", uncaughtHandler);
-            process.removeListener("unhandledRejection", rejectionHandler);
-          });
-        }
-      }
-
-      // React Native specific error handling
-      if (
-        typeof globalThis.global !== "undefined" &&
-        (
-          globalThis.global as {
-            ErrorUtils?: {
-              getGlobalHandler: () => unknown;
-              setGlobalHandler: (
-                handler: (error: Error, isFatal: boolean) => void,
-              ) => void;
-            };
-          }
-        ).ErrorUtils
-      ) {
-        const globalWithErrorUtils = global as unknown as {
-          ErrorUtils: {
-            getGlobalHandler: () => unknown;
-            setGlobalHandler: (
-              handler: (error: Error, isFatal: boolean) => void,
-            ) => void;
-          };
-        };
-        const originalHandler =
-          globalWithErrorUtils.ErrorUtils.getGlobalHandler();
-        globalWithErrorUtils.ErrorUtils.setGlobalHandler(
-          (error: Error, isFatal: boolean) => {
-            this.handleUncaughtError(
-              error,
-              isFatal ? "fatal-error" : "non-fatal-error",
-            );
-
-            // Call original handler if it exists
-            if (originalHandler && typeof originalHandler === "function") {
-              (originalHandler as (error: Error, isFatal: boolean) => void)(
-                error,
-                isFatal,
-              );
-            }
-          },
-        );
-      }
+      this.setupBrowserErrorHandlers();
+      this.setupNodeErrorHandlers();
+      this.setupReactNativeErrorHandlers();
 
       DefaultErrorHandler.globalHandlersSetup = true;
     } catch (setupError) {
       console.error("Failed to setup global error handlers:", setupError);
     }
+  }
+
+  /**
+   * Setup error handlers for browser environment
+   */
+  private setupBrowserErrorHandlers(): void {
+    if (
+      typeof globalThis === "undefined" ||
+      !globalThis.window?.addEventListener
+    ) {
+      return;
+    }
+
+    const errorHandler = (event: Event) => {
+      const errorEvent = event as globalThis.ErrorEvent;
+      this.handleUncaughtError(
+        errorEvent.error || new Error(errorEvent.message),
+        "window-error",
+      );
+    };
+
+    const rejectionHandler = (event: PromiseRejectionEvent) => {
+      this.handleUnhandledRejection(event.reason, "window-unhandled-rejection");
+    };
+
+    globalThis.window.addEventListener("error", errorHandler);
+    globalThis.window.addEventListener("unhandledrejection", rejectionHandler);
+
+    // Store cleanup functions
+    DefaultErrorHandler.globalHandlerCleanup.push(() => {
+      globalThis.window?.removeEventListener("error", errorHandler);
+      globalThis.window?.removeEventListener(
+        "unhandledrejection",
+        rejectionHandler,
+      );
+    });
+  }
+
+  /**
+   * Setup error handlers for Node.js environment
+   */
+  private setupNodeErrorHandlers(): void {
+    if (typeof process === "undefined") {
+      return;
+    }
+
+    const uncaughtHandler = (error: Error) => {
+      this.handleUncaughtError(error, "process-uncaught-exception");
+    };
+
+    const rejectionHandler = (reason: unknown) => {
+      this.handleUnhandledRejection(reason, "process-unhandled-rejection");
+    };
+
+    // Only add listeners if we haven't exceeded the limit
+    const currentListeners = process.listenerCount("uncaughtException");
+    if (currentListeners < 8) {
+      // Leave some room under the 10 limit
+      process.on("uncaughtException", uncaughtHandler);
+      process.on("unhandledRejection", rejectionHandler);
+
+      // Store cleanup functions
+      DefaultErrorHandler.globalHandlerCleanup.push(() => {
+        process.removeListener("uncaughtException", uncaughtHandler);
+        process.removeListener("unhandledRejection", rejectionHandler);
+      });
+    }
+  }
+
+  /**
+   * Setup error handlers for React Native environment
+   */
+  private setupReactNativeErrorHandlers(): void {
+    const globalWithErrorUtils = this.getReactNativeGlobal();
+    if (!globalWithErrorUtils?.ErrorUtils) {
+      return;
+    }
+
+    const originalHandler = globalWithErrorUtils.ErrorUtils.getGlobalHandler();
+
+    globalWithErrorUtils.ErrorUtils.setGlobalHandler(
+      (error: Error, isFatal: boolean) => {
+        this.handleUncaughtError(
+          error,
+          isFatal ? "fatal-error" : "non-fatal-error",
+        );
+
+        // Call original handler if it exists
+        if (originalHandler && typeof originalHandler === "function") {
+          (originalHandler as (error: Error, isFatal: boolean) => void)(
+            error,
+            isFatal,
+          );
+        }
+      },
+    );
+  }
+
+  /**
+   * Get React Native global object with proper typing
+   */
+  private getReactNativeGlobal(): {
+    ErrorUtils: {
+      getGlobalHandler: () => unknown;
+      setGlobalHandler: (
+        handler: (error: Error, isFatal: boolean) => void,
+      ) => void;
+    };
+  } | null {
+    if (typeof globalThis.global === "undefined") {
+      return null;
+    }
+
+    const globalObj = globalThis.global as {
+      ErrorUtils?: {
+        getGlobalHandler: () => unknown;
+        setGlobalHandler: (
+          handler: (error: Error, isFatal: boolean) => void,
+        ) => void;
+      };
+    };
+
+    return globalObj.ErrorUtils
+      ? (globalObj as typeof globalObj & {
+          ErrorUtils: NonNullable<typeof globalObj.ErrorUtils>;
+        })
+      : null;
   }
 
   /**

@@ -52,8 +52,8 @@ export class DefaultLoggingService implements LoggingService {
     // Initialize default recovery actions
     this.initializeDefaultRecoveryActions();
 
-    // Cleanup old entries on startup
-    this.performPeriodicCleanup();
+    // Schedule cleanup to run asynchronously after construction
+    this.scheduleInitialCleanup();
   }
 
   /**
@@ -500,6 +500,18 @@ export class DefaultLoggingService implements LoggingService {
     }
   }
 
+  /**
+   * Schedule cleanup to run asynchronously after construction
+   */
+  private scheduleInitialCleanup(): void {
+    // Use setTimeout to defer the async operation until after construction
+    setTimeout(() => {
+      this.performPeriodicCleanup().catch(() => {
+        // Silent cleanup failure
+      });
+    }, 0);
+  }
+
   private async performPeriodicCleanup(): Promise<void> {
     try {
       await this.clearOldErrors(this.config.maxRetentionDays);
@@ -512,7 +524,7 @@ export class DefaultLoggingService implements LoggingService {
     try {
       const cutoffTime = Date.now() - olderThanDays * 24 * 60 * 60 * 1000;
 
-      await this.clearFromLocalStorage(cutoffTime);
+      this.clearFromLocalStorage(cutoffTime);
       await this.clearFromPlatformStorage(cutoffTime);
     } catch {
       // Silent storage cleanup failure

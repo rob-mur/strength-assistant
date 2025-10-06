@@ -74,7 +74,8 @@ export interface StorageBackend {
 export class SupabaseStorage implements StorageBackend {
   private client: SupabaseClient | null = null;
   private currentUser: UserAccount | null = null;
-  private authStateCallbacks: ((user: UserAccount | null) => void)[] = [];
+  private readonly authStateCallbacks: ((user: UserAccount | null) => void)[] =
+    [];
 
   private getClient(): SupabaseClient {
     this.client ??= getSupabaseClient();

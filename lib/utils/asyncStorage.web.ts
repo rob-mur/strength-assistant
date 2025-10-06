@@ -6,10 +6,7 @@
 const AsyncStorageWeb = {
   getItem: async (key: string): Promise<string | null> => {
     try {
-      if (
-        typeof globalThis.window !== "undefined" &&
-        globalThis.window.localStorage
-      ) {
+      if (globalThis.window?.localStorage) {
         return globalThis.window.localStorage.getItem(key);
       }
       return null;
@@ -24,10 +21,7 @@ const AsyncStorageWeb = {
 
   setItem: async (key: string, value: string): Promise<void> => {
     try {
-      if (
-        typeof globalThis.window !== "undefined" &&
-        globalThis.window.localStorage
-      ) {
+      if (globalThis.window?.localStorage) {
         globalThis.window.localStorage.setItem(key, value);
       }
     } catch (error) {
@@ -40,10 +34,7 @@ const AsyncStorageWeb = {
 
   removeItem: async (key: string): Promise<void> => {
     try {
-      if (
-        typeof globalThis.window !== "undefined" &&
-        globalThis.window.localStorage
-      ) {
+      if (globalThis.window?.localStorage) {
         globalThis.window.localStorage.removeItem(key);
       }
     } catch (error) {
@@ -56,10 +47,7 @@ const AsyncStorageWeb = {
 
   clear: async (): Promise<void> => {
     try {
-      if (
-        typeof globalThis.window !== "undefined" &&
-        globalThis.window.localStorage
-      ) {
+      if (globalThis.window?.localStorage) {
         globalThis.window.localStorage.clear();
       }
     } catch (error) {

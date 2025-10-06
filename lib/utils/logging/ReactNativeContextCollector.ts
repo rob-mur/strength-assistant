@@ -175,7 +175,7 @@ export class ReactNativeContextCollector {
     try {
       // Try to get NetInfo
       const NetInfo = await this.getNetInfo();
-      if (NetInfo && NetInfo.fetch) {
+      if (NetInfo?.fetch) {
         const state = await NetInfo.fetch();
         return {
           type: state.type || "unknown",
@@ -230,13 +230,13 @@ export class ReactNativeContextCollector {
     try {
       // Get JavaScript heap usage if available
       const performance = (
-        global as {
+        globalThis.global as {
           performance?: {
             memory?: { usedJSHeapSize?: number; totalJSHeapSize?: number };
           };
         }
       ).performance;
-      if (performance && performance.memory) {
+      if (performance?.memory) {
         return {
           memoryUsage: performance.memory.usedJSHeapSize,
         };

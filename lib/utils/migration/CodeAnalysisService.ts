@@ -10,6 +10,43 @@ import {
   EmptyCatchBlock,
 } from "../../../specs/011-improve-error-logging/contracts/error-migration";
 
+type ErrorTypeUnion =
+  | "Network"
+  | "Database"
+  | "Logic"
+  | "UI"
+  | "Authentication"
+  | "Storage";
+
+type CatchBlockContext = {
+  functionName?: string;
+  operation: string;
+  tryBlockCode: string;
+  surroundingCode: string;
+  imports: string[];
+  errorType: ErrorTypeUnion;
+  isTransient: boolean;
+};
+
+type TryBlockAnalysis = {
+  errorType: ErrorTypeUnion;
+  isTransient: boolean;
+  suggestedAction:
+    | "log-only"
+    | "log-and-retry"
+    | "log-and-fail"
+    | "log-and-fallback";
+  confidence: number;
+};
+
+type RecoveryActionType = {
+  actionType: "Retry" | "Fallback" | "UserPrompt" | "FailGracefully";
+  retryCount?: number;
+  retryDelay?: number;
+  maxRetries?: number;
+  userMessage?: string;
+};
+
 export interface FileAnalysisResult {
   filePath: string;
   emptyCatchBlocks: EmptyCatchBlock[];
@@ -42,23 +79,9 @@ export class CodeAnalysisService implements ICodeAnalysisService {
   async extractCatchBlockContext(
     filePath: string,
     lineNumber: number,
-  ): Promise<{
-    functionName?: string;
-    operation: string;
-    tryBlockCode: string;
-    surroundingCode: string;
-    imports: string[];
-    errorType:
-      | "Network"
-      | "Database"
-      | "Logic"
-      | "UI"
-      | "Authentication"
-      | "Storage";
-    isTransient: boolean;
-  }> {
+  ): Promise<CatchBlockContext> {
     try {
-      const content = await this.readFile(filePath);
+      const content = this.readFile(filePath);
       const lines = content.split("\n");
 
       return this.buildContextFromLines(lines, lineNumber);
@@ -95,25 +118,7 @@ export class CodeAnalysisService implements ICodeAnalysisService {
   /**
    * Analyze try block to determine appropriate error handling strategy
    */
-  analyzeTryBlock(
-    tryBlockCode: string,
-    _imports: string[],
-  ): {
-    errorType:
-      | "Network"
-      | "Database"
-      | "Logic"
-      | "UI"
-      | "Authentication"
-      | "Storage";
-    isTransient: boolean;
-    suggestedAction:
-      | "log-only"
-      | "log-and-retry"
-      | "log-and-fail"
-      | "log-and-fallback";
-    confidence: number;
-  } {
+  analyzeTryBlock(tryBlockCode: string, _imports: string[]): TryBlockAnalysis {
     const content = tryBlockCode.toLowerCase();
     const { errorType, confidence } = this.analyzeErrorTypeFromContent(content);
     const isTransient = this.isTransientError(errorType);
@@ -131,13 +136,7 @@ export class CodeAnalysisService implements ICodeAnalysisService {
   }
 
   private analyzeErrorTypeFromContent(content: string): {
-    errorType:
-      | "Network"
-      | "Database"
-      | "Logic"
-      | "UI"
-      | "Authentication"
-      | "Storage";
+    errorType: ErrorTypeUnion;
     confidence: number;
   } {
     const errorTypeIndicators = new Map([
@@ -175,13 +174,7 @@ export class CodeAnalysisService implements ICodeAnalysisService {
     for (const [errorType, { keywords, confidence }] of errorTypeIndicators) {
       if (keywords.some((keyword) => content.includes(keyword))) {
         return {
-          errorType: errorType as
-            | "Network"
-            | "Database"
-            | "Logic"
-            | "UI"
-            | "Authentication"
-            | "Storage",
+          errorType: errorType as ErrorTypeUnion,
           confidence,
         };
       }
@@ -194,21 +187,9 @@ export class CodeAnalysisService implements ICodeAnalysisService {
    * Generate appropriate recovery action for error type
    */
   generateRecoveryAction(
-    errorType:
-      | "Network"
-      | "Database"
-      | "Logic"
-      | "UI"
-      | "Authentication"
-      | "Storage",
+    errorType: ErrorTypeUnion,
     operation: string,
-  ): {
-    actionType: "Retry" | "Fallback" | "UserPrompt" | "FailGracefully";
-    retryCount?: number;
-    retryDelay?: number;
-    maxRetries?: number;
-    userMessage?: string;
-  } {
+  ): RecoveryActionType {
     const recoveryStrategies = this.getRecoveryStrategies(operation);
     return (
       recoveryStrategies.get(errorType) ??
@@ -216,16 +197,9 @@ export class CodeAnalysisService implements ICodeAnalysisService {
     );
   }
 
-  private getRecoveryStrategies(operation: string): Map<
-    string,
-    {
-      actionType: "Retry" | "Fallback" | "UserPrompt" | "FailGracefully";
-      retryCount?: number;
-      retryDelay?: number;
-      maxRetries?: number;
-      userMessage?: string;
-    }
-  > {
+  private getRecoveryStrategies(
+    operation: string,
+  ): Map<string, RecoveryActionType> {
     return new Map([
       [
         "Network",
@@ -287,58 +261,134 @@ export class CodeAnalysisService implements ICodeAnalysisService {
     excludePatterns: string[],
   ): Promise<string[]> {
     try {
-      if (!this.glob) {
-        // Fallback implementation without glob
-        return this.findFilesRecursive(
-          rootPath,
-          includePatterns,
-          excludePatterns,
-        );
-      }
-
-      const files: string[] = [];
-
-      // Handle both sync and async versions of glob
-      if (typeof this.glob === "function") {
-        // Try to call with all patterns at once (for jest mocks)
-        try {
-          const matches = this.glob(includePatterns, {
-            cwd: rootPath,
-            ignore: excludePatterns,
-          });
-          files.push(...matches);
-        } catch {
-          // If that fails, try one pattern at a time
-          for (const pattern of includePatterns) {
-            try {
-              const matches = this.glob(pattern, {
-                cwd: rootPath,
-                ignore: excludePatterns,
-              });
-              files.push(...matches);
-            } catch {
-              // If sync fails, try async version
-              const matches = await this.glob(pattern, {
-                cwd: rootPath,
-                ignore: excludePatterns,
-              });
-              files.push(...matches);
-            }
-          }
-        }
-      } else {
-        // Fallback to recursive search
-        const matches = await this.findFilesRecursive(
-          rootPath,
-          includePatterns,
-          excludePatterns,
-        );
-        files.push(...matches);
-      }
-
+      const files = await this.executeFileSearch(
+        rootPath,
+        includePatterns,
+        excludePatterns,
+      );
       return [...new Set(files)]; // Remove duplicates
     } catch (error) {
       throw new Error(`Failed to find files: ${error}`);
+    }
+  }
+
+  /**
+   * Execute file search using available glob implementation or fallback
+   */
+  private async executeFileSearch(
+    rootPath: string,
+    includePatterns: string[],
+    excludePatterns: string[],
+  ): Promise<string[]> {
+    if (!this.glob) {
+      return this.findFilesRecursive(
+        rootPath,
+        includePatterns,
+        excludePatterns,
+      );
+    }
+
+    if (typeof this.glob === "function") {
+      return this.executeGlobSearch(rootPath, includePatterns, excludePatterns);
+    }
+
+    // Fallback to recursive search
+    return this.findFilesRecursive(rootPath, includePatterns, excludePatterns);
+  }
+
+  /**
+   * Execute glob-based file search with fallback strategies
+   */
+  private async executeGlobSearch(
+    rootPath: string,
+    includePatterns: string[],
+    excludePatterns: string[],
+  ): Promise<string[]> {
+    const files: string[] = [];
+
+    // Try to call with all patterns at once (for jest mocks)
+    if (
+      await this.tryGlobAllPatterns(
+        rootPath,
+        includePatterns,
+        excludePatterns,
+        files,
+      )
+    ) {
+      return files;
+    }
+
+    // If that fails, try one pattern at a time
+    await this.tryGlobIndividualPatterns(
+      rootPath,
+      includePatterns,
+      excludePatterns,
+      files,
+    );
+    return files;
+  }
+
+  /**
+   * Try to execute glob with all patterns at once
+   */
+  private async tryGlobAllPatterns(
+    rootPath: string,
+    includePatterns: string[],
+    excludePatterns: string[],
+    files: string[],
+  ): Promise<boolean> {
+    try {
+      const matches = this.glob!(includePatterns, {
+        cwd: rootPath,
+        ignore: excludePatterns,
+      });
+      files.push(...matches);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Try to execute glob with individual patterns
+   */
+  private async tryGlobIndividualPatterns(
+    rootPath: string,
+    includePatterns: string[],
+    excludePatterns: string[],
+    files: string[],
+  ): Promise<void> {
+    for (const pattern of includePatterns) {
+      const matches = await this.tryGlobSinglePattern(
+        rootPath,
+        pattern,
+        excludePatterns,
+      );
+      files.push(...matches);
+    }
+  }
+
+  /**
+   * Try to execute glob for a single pattern with sync/async fallback
+   */
+  private async tryGlobSinglePattern(
+    rootPath: string,
+    pattern: string,
+    excludePatterns: string[],
+  ): Promise<string[]> {
+    const options = { cwd: rootPath, ignore: excludePatterns };
+
+    try {
+      // Try sync version first
+      return this.glob!(pattern, options);
+    } catch {
+      try {
+        // If sync fails, try async version
+        return await this.glob!(pattern, options);
+      } catch {
+        // If both fail, return empty array
+        return [];
+      }
     }
   }
 
@@ -347,7 +397,7 @@ export class CodeAnalysisService implements ICodeAnalysisService {
    */
   async validateSyntax(filePath: string): Promise<boolean> {
     try {
-      const content = await this.readFile(filePath);
+      const content = this.readFile(filePath);
       return this.performBasicSyntaxCheck(content);
     } catch {
       return false;
@@ -355,11 +405,11 @@ export class CodeAnalysisService implements ICodeAnalysisService {
   }
 
   /**
-   * Read file content
+   * Read file content synchronously
    */
-  async readFile(filePath: string): Promise<string> {
+  readFile(filePath: string): string {
     try {
-      if (this.fs && this.fs.readFileSync) {
+      if (this.fs?.readFileSync) {
         return this.fs.readFileSync(filePath, "utf8");
       }
 
@@ -526,42 +576,12 @@ export class CodeAnalysisService implements ICodeAnalysisService {
     lines: string[],
     catchLineNumber: number,
   ): string {
-    // Find the try block that corresponds to this catch
-    let tryStart = -1;
-    let tryEnd = -1;
-
-    // Look backwards for the try statement
-    for (let i = catchLineNumber - 1; i >= 0; i--) {
-      const line = lines[i].trim();
-      if (line.includes("try") && line.includes("{")) {
-        tryStart = i;
-        break;
-      }
-    }
-
+    const tryStart = this.findTryStatementStart(lines, catchLineNumber);
     if (tryStart === -1) {
       return "";
     }
 
-    // Find the end of the try block
-    let braceCount = 0;
-    for (let i = tryStart; i < lines.length; i++) {
-      const line = lines[i];
-
-      for (const char of line) {
-        if (char === "{") braceCount++;
-        else if (char === "}") {
-          braceCount--;
-          if (braceCount === 0) {
-            tryEnd = i;
-            break;
-          }
-        }
-      }
-
-      if (tryEnd !== -1) break;
-    }
-
+    const tryEnd = this.findTryBlockEnd(lines, tryStart);
     if (tryEnd === -1) {
       return "";
     }
@@ -569,21 +589,66 @@ export class CodeAnalysisService implements ICodeAnalysisService {
     return lines.slice(tryStart, tryEnd + 1).join("\n");
   }
 
-  private inferErrorType(
+  private findTryStatementStart(
     lines: string[],
-    lineNumber: number,
-  ): "Network" | "Database" | "Logic" | "UI" | "Authentication" | "Storage" {
+    catchLineNumber: number,
+  ): number {
+    // Look backwards for the try statement
+    for (let i = catchLineNumber - 1; i >= 0; i--) {
+      const line = lines[i].trim();
+      if (line.includes("try") && line.includes("{")) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  private findTryBlockEnd(lines: string[], tryStart: number): number {
+    // Find the end of the try block using brace counting
+    let braceCount = 0;
+
+    for (let i = tryStart; i < lines.length; i++) {
+      const lineEndIndex = this.processBracesInLine(lines[i], braceCount);
+
+      if (lineEndIndex.braceCount === 0 && lineEndIndex.foundEnd) {
+        return i;
+      }
+
+      braceCount = lineEndIndex.braceCount;
+    }
+
+    return -1;
+  }
+
+  private processBracesInLine(
+    line: string,
+    initialBraceCount: number,
+  ): {
+    braceCount: number;
+    foundEnd: boolean;
+  } {
+    let braceCount = initialBraceCount;
+
+    for (const char of line) {
+      if (char === "{") {
+        braceCount++;
+      } else if (char === "}") {
+        braceCount--;
+        if (braceCount === 0) {
+          return { braceCount, foundEnd: true };
+        }
+      }
+    }
+
+    return { braceCount, foundEnd: false };
+  }
+
+  private inferErrorType(lines: string[], lineNumber: number): ErrorTypeUnion {
     const contextLines = this.getSurroundingCode(lines, lineNumber, 5);
     const content = contextLines.join(" ").toLowerCase();
 
     const { errorType } = this.analyzeErrorTypeFromContent(content);
-    return errorType as
-      | "Network"
-      | "Database"
-      | "Logic"
-      | "UI"
-      | "Authentication"
-      | "Storage";
+    return errorType;
   }
 
   private isTransientError(errorType: string): boolean {

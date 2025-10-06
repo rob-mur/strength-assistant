@@ -18,7 +18,7 @@ import { CodeAnalysisService } from "./CodeAnalysisService";
 import { LoggingService } from "../../../specs/011-improve-error-logging/contracts/logging-service";
 
 export class ErrorMigrationService implements IErrorMigrationService {
-  private codeAnalysisService: CodeAnalysisService;
+  private readonly codeAnalysisService: CodeAnalysisService;
   private readonly templates: Map<string, ReplacementTemplate> = new Map();
 
   constructor() {

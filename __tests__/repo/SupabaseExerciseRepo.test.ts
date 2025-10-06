@@ -237,9 +237,9 @@ describe("SupabaseExerciseRepo", () => {
 
   describe("getExercises", () => {
     test("returns computed observable filtered by current user", () => {
-      const computed = require("@legendapp/state").computed;
+      const { computed } = require("@legendapp/state");
       const mockObservable = { subscribe: jest.fn() };
-      computed.mockReturnValue(mockObservable);
+      (computed as jest.Mock).mockReturnValue(mockObservable);
 
       const result = repo.getExercises(testUserId);
 
@@ -248,10 +248,10 @@ describe("SupabaseExerciseRepo", () => {
     });
 
     test("computed function filters exercises by current user", () => {
-      const computed = require("@legendapp/state").computed;
+      const { computed } = require("@legendapp/state");
       let computedFunction: (() => Exercise[]) | undefined;
 
-      computed.mockImplementation((fn: () => Exercise[]) => {
+      (computed as jest.Mock).mockImplementation((fn: () => Exercise[]) => {
         computedFunction = fn;
         return { subscribe: jest.fn() };
       });
@@ -267,10 +267,10 @@ describe("SupabaseExerciseRepo", () => {
     });
 
     test("returns empty array when no current user", () => {
-      const computed = require("@legendapp/state").computed;
+      const { computed } = require("@legendapp/state");
       let computedFunction: (() => Exercise[]) | undefined;
 
-      computed.mockImplementation((fn: () => Exercise[]) => {
+      (computed as jest.Mock).mockImplementation((fn: () => Exercise[]) => {
         computedFunction = fn;
         return { subscribe: jest.fn() };
       });

@@ -52,18 +52,35 @@ class UnifiedAlertService implements IAlertService {
   }
 
   /**
-   * Try react-native-paper-alerts implementation
+   * Check if react-native-paper-alerts is available
+   * Currently not used as it requires hook-based integration at component level
    */
-  private async tryPaperAlerts(_options: AlertOptions): Promise<boolean> {
+  private async isPaperAlertsAvailable(): Promise<boolean> {
     try {
       await import("react-native-paper-alerts");
-
-      // react-native-paper-alerts uses a hook-based API, not a direct Alert.alert
-      // For now, skip this implementation and fall back to React Native Alert
-      return false;
+      return true;
     } catch {
       return false;
     }
+  }
+
+  /**
+   * Try react-native-paper-alerts implementation
+   * Currently disabled as it uses a hook-based API that requires component integration
+   */
+  private async tryPaperAlerts(_options: AlertOptions): Promise<boolean> {
+    const isAvailable = await this.isPaperAlertsAvailable();
+
+    if (isAvailable) {
+      // react-native-paper-alerts uses a hook-based API, not a direct Alert.alert
+      // This would require integration at the component level, not service level
+      console.warn(
+        "react-native-paper-alerts requires hook-based integration. Use AlertProvider in your component tree.",
+      );
+    }
+
+    // Always return false since we can't use the service-level API
+    return false;
   }
 
   /**
@@ -100,9 +117,9 @@ class UnifiedAlertService implements IAlertService {
 
       // If no buttons or just one button, use simple alert
       if (!options.buttons || options.buttons.length <= 1) {
-        globalThis.window.alert(
-          `${options.title}${options.message ? `\n\n${options.message}` : ""}`,
-        );
+        const messageText = options.message ? "\n\n" + options.message : "";
+        const fullMessage = options.title + messageText;
+        globalThis.window.alert(fullMessage);
         if (options.buttons?.[0]?.onPress) {
           options.buttons[0].onPress();
         }
@@ -111,9 +128,9 @@ class UnifiedAlertService implements IAlertService {
 
       // For multiple buttons, use confirm dialog
       if (options.buttons.length === 2) {
-        const confirmed = globalThis.window.confirm(
-          `${options.title}${options.message ? `\n\n${options.message}` : ""}`,
-        );
+        const messageText = options.message ? "\n\n" + options.message : "";
+        const fullMessage = options.title + messageText;
+        const confirmed = globalThis.window.confirm(fullMessage);
 
         // Find the appropriate button to call
         const confirmButton =
@@ -207,23 +224,20 @@ class UnifiedAlertService implements IAlertService {
         const button = document.createElement("button");
         button.textContent = buttonConfig.text;
 
+        const buttonColors = this.getButtonColors(buttonConfig.style);
+
         Object.assign(button.style, {
           padding: "8px 16px",
           border: "none",
           borderRadius: "4px",
           fontSize: "14px",
           cursor: "pointer",
-          backgroundColor:
-            buttonConfig.style === "destructive"
-              ? "#ef4444"
-              : buttonConfig.style === "cancel"
-                ? "#f3f4f6"
-                : "#3b82f6",
-          color: buttonConfig.style === "cancel" ? "#374151" : "white",
+          backgroundColor: buttonColors.backgroundColor,
+          color: buttonColors.color,
         });
 
         button.onclick = () => {
-          document.body.removeChild(overlay);
+          overlay.remove();
           if (buttonConfig.onPress) {
             buttonConfig.onPress();
           }
@@ -240,12 +254,30 @@ class UnifiedAlertService implements IAlertService {
     if (options.cancelable !== false) {
       overlay.onclick = (e) => {
         if (e.target === overlay) {
-          document.body.removeChild(overlay);
+          overlay.remove();
         }
       };
     }
 
     document.body.appendChild(overlay);
+  }
+
+  /**
+   * Get button colors based on style
+   */
+  private getButtonColors(style?: "default" | "cancel" | "destructive"): {
+    backgroundColor: string;
+    color: string;
+  } {
+    if (style === "destructive") {
+      return { backgroundColor: "#ef4444", color: "white" };
+    }
+
+    if (style === "cancel") {
+      return { backgroundColor: "#f3f4f6", color: "#374151" };
+    }
+
+    return { backgroundColor: "#3b82f6", color: "white" };
   }
 
   /**
