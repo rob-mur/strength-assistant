@@ -3,10 +3,6 @@
  * in Chrome/browser environments during testing
  */
 
-import { initializeErrorHandling } from "./logging/LoggingServiceFactory";
-
-const { loggingService } = initializeErrorHandling();
-
 const AsyncStorageWeb = {
   getItem: async (key: string): Promise<string | null> => {
     try {
@@ -18,12 +14,6 @@ const AsyncStorageWeb = {
       }
       return null;
     } catch (error) {
-      loggingService
-        .logError(error as Error, "localStorage-getItem", "Error", "Database")
-        .catch((loggingError) =>
-          console.error("Logging failed:", loggingError),
-        );
-
       console.warn(
         "Storage operation failed for localStorage-getItem:",
         (error as Error).message,
@@ -41,12 +31,6 @@ const AsyncStorageWeb = {
         globalThis.window.localStorage.setItem(key, value);
       }
     } catch (error) {
-      loggingService
-        .logError(error as Error, "localStorage-setItem", "Error", "Database")
-        .catch((loggingError) =>
-          console.error("Logging failed:", loggingError),
-        );
-
       console.warn(
         "Storage operation failed for localStorage-setItem:",
         (error as Error).message,
@@ -63,17 +47,6 @@ const AsyncStorageWeb = {
         globalThis.window.localStorage.removeItem(key);
       }
     } catch (error) {
-      loggingService
-        .logError(
-          error as Error,
-          "localStorage-removeItem",
-          "Error",
-          "Database",
-        )
-        .catch((loggingError) =>
-          console.error("Logging failed:", loggingError),
-        );
-
       console.warn(
         "Storage operation failed for localStorage-removeItem:",
         (error as Error).message,
@@ -90,12 +63,6 @@ const AsyncStorageWeb = {
         globalThis.window.localStorage.clear();
       }
     } catch (error) {
-      loggingService
-        .logError(error as Error, "localStorage-clear", "Error", "Database")
-        .catch((loggingError) =>
-          console.error("Logging failed:", loggingError),
-        );
-
       console.warn(
         "Storage operation failed for localStorage-clear:",
         (error as Error).message,

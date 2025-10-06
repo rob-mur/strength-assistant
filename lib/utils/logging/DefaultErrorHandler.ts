@@ -16,7 +16,8 @@ import {
 export class DefaultErrorHandler implements ErrorHandler {
   private loggingService: LoggingService;
   private userErrorDisplay?: UserErrorDisplay;
-  private globalHandlersSetup = false;
+  private static globalHandlersSetup = false;
+  private static globalHandlerCleanup: Array<() => void> = [];
 
   constructor(
     loggingService: LoggingService,
@@ -257,7 +258,7 @@ export class DefaultErrorHandler implements ErrorHandler {
    */
 
   private setupGlobalErrorHandlers(): void {
-    if (this.globalHandlersSetup) {
+    if (DefaultErrorHandler.globalHandlersSetup) {
       return;
     }
 
@@ -267,34 +268,60 @@ export class DefaultErrorHandler implements ErrorHandler {
         typeof globalThis !== "undefined" &&
         globalThis.window?.addEventListener
       ) {
-        // Handle uncaught errors
-        globalThis.window.addEventListener("error", (event) => {
+        const errorHandler = (event: Event) => {
+          const errorEvent = event as globalThis.ErrorEvent;
           this.handleUncaughtError(
-            event.error || new Error(event.message),
+            errorEvent.error || new Error(errorEvent.message),
             "window-error",
           );
-        });
+        };
 
-        // Handle unhandled promise rejections
-        globalThis.window.addEventListener("unhandledrejection", (event) => {
+        const rejectionHandler = (event: PromiseRejectionEvent) => {
           this.handleUnhandledRejection(
             event.reason,
             "window-unhandled-rejection",
+          );
+        };
+
+        globalThis.window.addEventListener("error", errorHandler);
+        globalThis.window.addEventListener(
+          "unhandledrejection",
+          rejectionHandler,
+        );
+
+        // Store cleanup functions
+        DefaultErrorHandler.globalHandlerCleanup.push(() => {
+          globalThis.window?.removeEventListener("error", errorHandler);
+          globalThis.window?.removeEventListener(
+            "unhandledrejection",
+            rejectionHandler,
           );
         });
       }
 
       // Node.js environment
       if (typeof process !== "undefined") {
-        // Handle uncaught exceptions
-        process.on("uncaughtException", (error) => {
+        const uncaughtHandler = (error: Error) => {
           this.handleUncaughtError(error, "process-uncaught-exception");
-        });
+        };
 
-        // Handle unhandled promise rejections
-        process.on("unhandledRejection", (reason) => {
+        const rejectionHandler = (reason: unknown) => {
           this.handleUnhandledRejection(reason, "process-unhandled-rejection");
-        });
+        };
+
+        // Only add listeners if we haven't exceeded the limit
+        const currentListeners = process.listenerCount("uncaughtException");
+        if (currentListeners < 8) {
+          // Leave some room under the 10 limit
+          process.on("uncaughtException", uncaughtHandler);
+          process.on("unhandledRejection", rejectionHandler);
+
+          // Store cleanup functions
+          DefaultErrorHandler.globalHandlerCleanup.push(() => {
+            process.removeListener("uncaughtException", uncaughtHandler);
+            process.removeListener("unhandledRejection", rejectionHandler);
+          });
+        }
       }
 
       // React Native specific error handling
@@ -339,10 +366,19 @@ export class DefaultErrorHandler implements ErrorHandler {
         );
       }
 
-      this.globalHandlersSetup = true;
+      DefaultErrorHandler.globalHandlersSetup = true;
     } catch (setupError) {
       console.error("Failed to setup global error handlers:", setupError);
     }
+  }
+
+  /**
+   * Clean up global error handlers - primarily for testing
+   */
+  static cleanupGlobalHandlers(): void {
+    DefaultErrorHandler.globalHandlerCleanup.forEach((cleanup) => cleanup());
+    DefaultErrorHandler.globalHandlerCleanup = [];
+    DefaultErrorHandler.globalHandlersSetup = false;
   }
 
   private async handleFunctionError(
