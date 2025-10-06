@@ -446,7 +446,7 @@ export class DefaultErrorHandler implements ErrorHandler {
       ) => void;
     };
   } | null {
-    if (typeof globalThis.global === "undefined") {
+    if (globalThis.global === undefined) {
       return null;
     }
 

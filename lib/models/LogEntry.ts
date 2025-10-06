@@ -251,7 +251,8 @@ export class LogEntry implements ILogEntry {
   static detectComponent(): string {
     try {
       // Get stack trace to determine calling component
-      const stack = new Error().stack || "";
+      const stack =
+        new Error("Stack trace for component detection").stack || "";
       const stackLines = stack.split("\n");
 
       // Look for the first line that's not this file

@@ -292,38 +292,12 @@ export class DefaultLoggingService implements LoggingService {
    */
   async clearOldErrors(olderThanDays: number): Promise<number> {
     try {
-      const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
+      const cutoffDate = this.calculateCutoffDate(olderThanDays);
+      const clearedCount = this.clearOldErrorsFromBuffer(cutoffDate);
 
-      let clearedCount = 0;
+      this.cleanupOrphanedContextsAndEntries();
 
-      // Clear old errors from buffer
-      for (const [id, errorEvent] of this.errorBuffer) {
-        if (new Date(errorEvent.timestamp) < cutoffDate) {
-          this.errorBuffer.delete(id);
-          clearedCount++;
-        }
-      }
-
-      // Clear related contexts and log entries
-      const errorIds = Array.from(this.errorBuffer.keys());
-
-      for (const [contextId, context] of this.errorContexts) {
-        if (!errorIds.includes(context.errorEventId)) {
-          this.errorContexts.delete(contextId);
-        }
-      }
-
-      for (const [entryId, entry] of this.logEntries) {
-        if (!errorIds.includes(entry.errorEventId)) {
-          this.logEntries.delete(entryId);
-        }
-      }
-
-      // Clear from persistent storage if enabled
-      if (this.config.enableLocalPersistence) {
-        await this.clearOldFromStorage(olderThanDays);
-      }
+      await this.clearFromPersistentStorageIfEnabled(olderThanDays);
 
       return clearedCount;
     } catch (error) {
@@ -334,6 +308,53 @@ export class DefaultLoggingService implements LoggingService {
         "Logic",
       );
       return 0;
+    }
+  }
+
+  private calculateCutoffDate(olderThanDays: number): Date {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
+    return cutoffDate;
+  }
+
+  private clearOldErrorsFromBuffer(cutoffDate: Date): number {
+    let clearedCount = 0;
+    for (const [id, errorEvent] of this.errorBuffer) {
+      if (new Date(errorEvent.timestamp) < cutoffDate) {
+        this.errorBuffer.delete(id);
+        clearedCount++;
+      }
+    }
+    return clearedCount;
+  }
+
+  private cleanupOrphanedContextsAndEntries(): void {
+    const errorIds = Array.from(this.errorBuffer.keys());
+    this.cleanupOrphanedContexts(errorIds);
+    this.cleanupOrphanedLogEntries(errorIds);
+  }
+
+  private cleanupOrphanedContexts(errorIds: string[]): void {
+    for (const [contextId, context] of this.errorContexts) {
+      if (!errorIds.includes(context.errorEventId)) {
+        this.errorContexts.delete(contextId);
+      }
+    }
+  }
+
+  private cleanupOrphanedLogEntries(errorIds: string[]): void {
+    for (const [entryId, entry] of this.logEntries) {
+      if (!errorIds.includes(entry.errorEventId)) {
+        this.logEntries.delete(entryId);
+      }
+    }
+  }
+
+  private async clearFromPersistentStorageIfEnabled(
+    olderThanDays: number,
+  ): Promise<void> {
+    if (this.config.enableLocalPersistence) {
+      await this.clearOldFromStorage(olderThanDays);
     }
   }
 

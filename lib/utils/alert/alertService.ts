@@ -28,12 +28,10 @@ class UnifiedAlertService implements IAlertService {
    */
   async show(options: AlertOptions): Promise<void> {
     try {
-      // Try to use react-native-paper-alerts
-      if (await this.tryPaperAlerts(options)) {
-        return;
-      }
+      // Note: react-native-paper-alerts is not used as it requires hook-based integration
+      // See isPaperAlertsAvailable() method for detection logic
 
-      // Fallback to React Native Alert
+      // Try React Native Alert
       if (await this.tryReactNativeAlert(options)) {
         return;
       }
@@ -55,9 +53,11 @@ class UnifiedAlertService implements IAlertService {
    * Check if react-native-paper-alerts is available
    * Currently not used as it requires hook-based integration at component level
    */
-  private async isPaperAlertsAvailable(): Promise<boolean> {
+  private isPaperAlertsAvailable(): boolean {
     try {
-      await import("react-native-paper-alerts");
+      // Use synchronous check to avoid always returning false
+      const importModule = eval("require");
+      importModule("react-native-paper-alerts");
       return true;
     } catch {
       return false;
@@ -66,20 +66,21 @@ class UnifiedAlertService implements IAlertService {
 
   /**
    * Try react-native-paper-alerts implementation
-   * Currently disabled as it uses a hook-based API that requires component integration
+   * Note: Currently not implemented as it requires hook-based integration
    */
-  private async tryPaperAlerts(_options: AlertOptions): Promise<boolean> {
-    const isAvailable = await this.isPaperAlertsAvailable();
+  private tryPaperAlerts(_options: AlertOptions): boolean {
+    // react-native-paper-alerts uses a hook-based API that requires component-level integration
+    // This service-level implementation cannot use it directly
 
-    if (isAvailable) {
-      // react-native-paper-alerts uses a hook-based API, not a direct Alert.alert
-      // This would require integration at the component level, not service level
+    if (this.isPaperAlertsAvailable()) {
       console.warn(
-        "react-native-paper-alerts requires hook-based integration. Use AlertProvider in your component tree.",
+        "react-native-paper-alerts detected but requires hook-based integration. Use AlertProvider in your component tree.",
       );
+      // Return false to indicate we cannot handle it at service level
+      return false;
     }
 
-    // Always return false since we can't use the service-level API
+    // Library not available
     return false;
   }
 
@@ -111,7 +112,7 @@ class UnifiedAlertService implements IAlertService {
    */
   private async tryWebAlert(options: AlertOptions): Promise<boolean> {
     try {
-      if (typeof globalThis.window === "undefined") {
+      if (globalThis.window === undefined) {
         return false;
       }
 
@@ -284,9 +285,8 @@ class UnifiedAlertService implements IAlertService {
    * Console fallback for alert
    */
   private fallbackToConsole(options: AlertOptions): void {
-    console.log(
-      `Alert: ${options.title}${options.message ? ` - ${options.message}` : ""}`,
-    );
+    const messageText = options.message ? ` - ${options.message}` : "";
+    console.log(`Alert: ${options.title}${messageText}`);
 
     if (options.buttons) {
       console.log("Buttons:", options.buttons.map((b) => b.text).join(", "));

@@ -230,9 +230,7 @@ export class ErrorContext implements IErrorContext {
    * Generates a unique identifier for the error context
    */
   private generateContextId(): string {
-    return (
-      "ctx-" + Date.now() + "-" + Math.random().toString(36).substring(2, 11)
-    );
+    return "ctx-" + Date.now() + "-" + Math.random().toString(36).slice(2, 11);
   }
 
   /**

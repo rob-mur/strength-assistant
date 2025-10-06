@@ -54,20 +54,26 @@ export interface FileAnalysisResult {
   analysisTime: number;
 }
 
+type FileSystemApi = {
+  readFileSync?: (path: string, encoding: string) => string;
+  existsSync?: (path: string) => boolean;
+  writeFileSync?: (path: string, data: string, encoding?: string) => void;
+} | null;
+
+type PathApi = {
+  join?: (...paths: string[]) => string;
+  dirname?: (path: string) => string;
+  basename?: (path: string) => string;
+} | null;
+
+type GlobApi =
+  | ((pattern: string | string[], options?: unknown) => string[])
+  | null;
+
 export class CodeAnalysisService implements ICodeAnalysisService {
-  private fs: {
-    readFileSync?: (path: string, encoding: string) => string;
-    existsSync?: (path: string) => boolean;
-    writeFileSync?: (path: string, data: string, encoding?: string) => void;
-  } | null = null;
-  private path: {
-    join?: (...paths: string[]) => string;
-    dirname?: (path: string) => string;
-    basename?: (path: string) => string;
-  } | null = null;
-  private glob:
-    | ((pattern: string | string[], options?: unknown) => string[])
-    | null = null;
+  private fs: FileSystemApi = null;
+  private path: PathApi = null;
+  private glob: GlobApi = null;
 
   constructor() {
     this.initializeDependencies();
@@ -304,91 +310,80 @@ export class CodeAnalysisService implements ICodeAnalysisService {
     includePatterns: string[],
     excludePatterns: string[],
   ): Promise<string[]> {
-    const files: string[] = [];
-
     // Try to call with all patterns at once (for jest mocks)
-    if (
-      await this.tryGlobAllPatterns(
-        rootPath,
-        includePatterns,
-        excludePatterns,
-        files,
-      )
-    ) {
-      return files;
-    }
-
-    // If that fails, try one pattern at a time
-    await this.tryGlobIndividualPatterns(
+    const allPatternsResult = this.tryGlobAllPatterns(
       rootPath,
       includePatterns,
       excludePatterns,
-      files,
     );
-    return files;
+
+    if (allPatternsResult.length > 0) {
+      return allPatternsResult;
+    }
+
+    // If that fails, try one pattern at a time
+    return this.tryGlobIndividualPatterns(
+      rootPath,
+      includePatterns,
+      excludePatterns,
+    );
   }
 
   /**
    * Try to execute glob with all patterns at once
    */
-  private async tryGlobAllPatterns(
+  private tryGlobAllPatterns(
     rootPath: string,
     includePatterns: string[],
     excludePatterns: string[],
-    files: string[],
-  ): Promise<boolean> {
+  ): string[] {
     try {
       const matches = this.glob!(includePatterns, {
         cwd: rootPath,
         ignore: excludePatterns,
       });
-      files.push(...matches);
-      return true;
+      return Array.isArray(matches) ? matches : [];
     } catch {
-      return false;
+      return [];
     }
   }
 
   /**
    * Try to execute glob with individual patterns
    */
-  private async tryGlobIndividualPatterns(
+  private tryGlobIndividualPatterns(
     rootPath: string,
     includePatterns: string[],
     excludePatterns: string[],
-    files: string[],
-  ): Promise<void> {
+  ): string[] {
+    const files: string[] = [];
     for (const pattern of includePatterns) {
-      const matches = await this.tryGlobSinglePattern(
+      const matches = this.tryGlobSinglePattern(
         rootPath,
         pattern,
         excludePatterns,
       );
       files.push(...matches);
     }
+    return files;
   }
 
   /**
    * Try to execute glob for a single pattern with sync/async fallback
    */
-  private async tryGlobSinglePattern(
+  private tryGlobSinglePattern(
     rootPath: string,
     pattern: string,
     excludePatterns: string[],
-  ): Promise<string[]> {
+  ): string[] {
     const options = { cwd: rootPath, ignore: excludePatterns };
 
     try {
       // Try sync version first
       return this.glob!(pattern, options);
     } catch {
-      try {
-        // If sync fails, try async version
-        return await this.glob!(pattern, options);
-      } catch {
-        // If both fail, return empty array
-        return [];
-      }
+      // If sync fails, return empty array
+      return [];
     }
   }
 
@@ -466,14 +461,45 @@ export class CodeAnalysisService implements ICodeAnalysisService {
   }
 
   private async findFilesRecursive(
-    _rootPath: string,
+    rootPath: string,
+    includePatterns: string[],
+    excludePatterns: string[],
+  ): Promise<string[]> {
+    // This is a simplified fallback implementation when glob is not available
+    console.warn("Using fallback file discovery - glob not available");
+
+    if (!this.fs?.readFileSync || !this.path?.join) {
+      console.warn(
+        "File system operations not available - returning empty array",
+      );
+      return [];
+    }
+
+    try {
+      return await this.searchDirectoryRecursively(
+        rootPath,
+        includePatterns,
+        excludePatterns,
+      );
+    } catch (error) {
+      console.warn("Fallback file search failed:", error);
+      return [];
+    }
+  }
+
+  private async searchDirectoryRecursively(
+    _dirPath: string,
     _includePatterns: string[],
     _excludePatterns: string[],
   ): Promise<string[]> {
     const files: string[] = [];
 
-    // This is a simplified fallback implementation
-    console.warn("Using fallback file discovery - glob not available");
+    // Basic implementation - would need actual directory traversal
+    // For now, return empty array as this is a fallback that should rarely be used
+    // In production, glob should be available
+
+    // TODO: Implement actual recursive directory search if needed
+    // This would require fs.readdirSync and recursive directory walking
 
     return files;
   }
