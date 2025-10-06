@@ -71,13 +71,13 @@ export class SupabaseAuth {
           ? this.mapSupabaseUserToUserAccount(user)
           : null;
         // Notify all listeners
-        this.authStateListeners.forEach((listener) => {
+        for (const listener of this.authStateListeners) {
           try {
             listener(mappedUser);
           } catch {
             /* Silent error handling */
           }
-        });
+        }
       });
     }
   }

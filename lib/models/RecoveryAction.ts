@@ -83,16 +83,23 @@ export class RecoveryAction implements IRecoveryAction {
   private validate(): void {
     const errors: string[] = [];
 
+    this.collectAllValidationErrors(errors);
+
+    if (errors.length > 0) {
+      throw new Error(`RecoveryAction validation failed: ${errors.join(", ")}`);
+    }
+  }
+
+  /**
+   * Collects all validation errors from different validation methods
+   */
+  private collectAllValidationErrors(errors: string[]): void {
     this.validateRequiredFields(errors);
     this.validateErrorType(errors);
     this.validateActionType(errors);
     this.validateRetryFields(errors);
     this.validateUserPromptFields(errors);
     this.validateOptionalStringFields(errors);
-
-    if (errors.length > 0) {
-      throw new Error(`RecoveryAction validation failed: ${errors.join(", ")}`);
-    }
   }
 
   private validateRequiredFields(errors: string[]): void {
@@ -102,54 +109,71 @@ export class RecoveryAction implements IRecoveryAction {
   }
 
   private validateErrorType(errors: string[]): void {
-    const validErrorTypes: ErrorType[] = [
+    const validErrorTypes = new Set<ErrorType>([
       "Network",
       "Database",
       "Logic",
       "UI",
       "Authentication",
-    ];
-    if (!validErrorTypes.includes(this.errorType)) {
-      errors.push(`errorType must be one of: ${validErrorTypes.join(", ")}`);
+    ]);
+    if (!validErrorTypes.has(this.errorType)) {
+      errors.push(
+        `errorType must be one of: ${Array.from(validErrorTypes).join(", ")}`,
+      );
     }
   }
 
   private validateActionType(errors: string[]): void {
-    const validActionTypes: RecoveryActionType[] = [
+    const validActionTypes = new Set<RecoveryActionType>([
       "Retry",
       "Fallback",
       "UserPrompt",
       "FailGracefully",
-    ];
-    if (!validActionTypes.includes(this.actionType)) {
-      errors.push(`actionType must be one of: ${validActionTypes.join(", ")}`);
+    ]);
+    if (!validActionTypes.has(this.actionType)) {
+      errors.push(
+        `actionType must be one of: ${Array.from(validActionTypes).join(", ")}`,
+      );
     }
   }
 
   private validateRetryFields(errors: string[]): void {
     if (this.actionType !== "Retry") return;
 
+    this.validateRetryCount(errors);
+    this.validateRetryDelay(errors);
+    this.validateMaxRetries(errors);
+    this.validateRetryCountVsMaxRetries(errors);
+  }
+
+  private validateRetryCount(errors: string[]): void {
     if (
       this.retryCount !== undefined &&
       (typeof this.retryCount !== "number" || this.retryCount < 0)
     ) {
       errors.push("retryCount must be a non-negative integer");
     }
+  }
 
+  private validateRetryDelay(errors: string[]): void {
     if (
       this.retryDelay !== undefined &&
       (typeof this.retryDelay !== "number" || this.retryDelay <= 0)
     ) {
       errors.push("retryDelay must be a positive integer");
     }
+  }
 
+  private validateMaxRetries(errors: string[]): void {
     if (
       this.maxRetries !== undefined &&
       (typeof this.maxRetries !== "number" || this.maxRetries <= 0)
     ) {
       errors.push("maxRetries must be a positive integer");
     }
+  }
 
+  private validateRetryCountVsMaxRetries(errors: string[]): void {
     if (
       this.retryCount !== undefined &&
       this.maxRetries !== undefined &&
@@ -407,23 +431,18 @@ export class RecoveryAction implements IRecoveryAction {
    * Gets user-facing message for this action
    */
   getUserMessage(): string {
-    if (this.userMessage) {
-      return this.userMessage;
-    }
+    return this.userMessage ?? this.getDefaultMessageForActionType();
+  }
 
-    // Provide default messages based on action type
-    switch (this.actionType) {
-      case "Retry":
-        return "Retrying operation...";
-      case "Fallback":
-        return "Using alternative approach...";
-      case "UserPrompt":
-        return "Please try again.";
-      case "FailGracefully":
-        return "Operation could not be completed.";
-      default:
-        return "Handling error...";
-    }
+  private getDefaultMessageForActionType(): string {
+    const defaultMessages = new Map([
+      ["Retry", "Retrying operation..."],
+      ["Fallback", "Using alternative approach..."],
+      ["UserPrompt", "Please try again."],
+      ["FailGracefully", "Operation could not be completed."],
+    ]);
+
+    return defaultMessages.get(this.actionType) ?? "Handling error...";
   }
 
   /**
@@ -464,49 +483,59 @@ export class RecoveryAction implements IRecoveryAction {
    */
   static forErrorType(errorType: ErrorType): RecoveryAction {
     const actionId = `auto-${errorType.toLowerCase()}-recovery`;
+    const recoveryStrategies = this.getRecoveryStrategies();
 
-    switch (errorType) {
-      case "Network":
-        return RecoveryAction.createRetry(
-          actionId,
-          errorType,
-          3, // 3 retries for network issues
-          2000, // 2 second delay
-        );
+    const strategy =
+      recoveryStrategies.get(errorType) ??
+      (() => RecoveryAction.createFailGracefully(actionId, errorType));
 
-      case "Database":
-        return RecoveryAction.createRetry(
-          actionId,
-          errorType,
-          2, // 2 retries for database issues
-          1000, // 1 second delay
-        );
+    return strategy(actionId, errorType);
+  }
 
-      case "Authentication":
-        return RecoveryAction.createUserPrompt(
-          actionId,
-          errorType,
-          "Authentication required. Please sign in again.",
-        );
-
-      case "Logic":
-        return RecoveryAction.createFailGracefully(
-          actionId,
-          errorType,
-          "An unexpected error occurred. Please try again.",
-        );
-
-      case "UI":
-        return RecoveryAction.createFallback(
-          actionId,
-          errorType,
-          "Use default UI behavior",
-          "Display issue detected. Using fallback interface.",
-        );
-
-      default:
-        return RecoveryAction.createFailGracefully(actionId, errorType);
-    }
+  private static getRecoveryStrategies(): Map<
+    ErrorType,
+    (actionId: string, errorType: ErrorType) => RecoveryAction
+  > {
+    return new Map([
+      [
+        "Network",
+        (actionId, errorType) =>
+          RecoveryAction.createRetry(actionId, errorType, 3, 2000),
+      ],
+      [
+        "Database",
+        (actionId, errorType) =>
+          RecoveryAction.createRetry(actionId, errorType, 2, 1000),
+      ],
+      [
+        "Authentication",
+        (actionId, errorType) =>
+          RecoveryAction.createUserPrompt(
+            actionId,
+            errorType,
+            "Authentication required. Please sign in again.",
+          ),
+      ],
+      [
+        "Logic",
+        (actionId, errorType) =>
+          RecoveryAction.createFailGracefully(
+            actionId,
+            errorType,
+            "An unexpected error occurred. Please try again.",
+          ),
+      ],
+      [
+        "UI",
+        (actionId, errorType) =>
+          RecoveryAction.createFallback(
+            actionId,
+            errorType,
+            "Use default UI behavior",
+            "Display issue detected. Using fallback interface.",
+          ),
+      ],
+    ]);
   }
 
   /**

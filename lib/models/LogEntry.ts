@@ -127,14 +127,18 @@ export class LogEntry implements ILogEntry {
    * Generates a unique identifier for the log entry
    */
   private generateEntryId(): string {
-    return "log-" + Date.now() + "-" + Math.random().toString(36).substr(2, 9);
+    return (
+      "log-" + Date.now() + "-" + Math.random().toString(36).substring(2, 11)
+    );
   }
 
   /**
    * Generates a correlation ID for tracking related operations
    */
   private generateCorrelationId(): string {
-    return "corr-" + Date.now() + "-" + Math.random().toString(36).substr(2, 6);
+    return (
+      "corr-" + Date.now() + "-" + Math.random().toString(36).substring(2, 8)
+    );
   }
 
   /**

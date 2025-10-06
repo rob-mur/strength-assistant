@@ -61,33 +61,35 @@ export class CodeAnalysisService implements ICodeAnalysisService {
       const content = await this.readFile(filePath);
       const lines = content.split("\n");
 
-      const surroundingCode = this.getSurroundingCode(
-        lines,
-        lineNumber,
-        5,
-      ).join("\n");
-      const functionName = this.getFunctionContext(lines, lineNumber);
-      const imports = this.extractImports(lines);
-      const operation =
-        this.extractOperation(lines, lineNumber) || "unknown-operation";
-      const tryBlockCode = this.extractTryBlockCode(lines, lineNumber);
-      const errorType = this.inferErrorType(lines, lineNumber);
-      const isTransient = this.isTransientError(errorType);
-
-      return {
-        functionName,
-        operation,
-        tryBlockCode,
-        surroundingCode,
-        imports,
-        errorType,
-        isTransient,
-      };
+      return this.buildContextFromLines(lines, lineNumber);
     } catch (error) {
       throw new Error(
         `Failed to extract context for ${filePath}:${lineNumber}: ${error}`,
       );
     }
+  }
+
+  private buildContextFromLines(lines: string[], lineNumber: number) {
+    const surroundingCode = this.getSurroundingCode(lines, lineNumber, 5).join(
+      "\n",
+    );
+    const functionName = this.getFunctionContext(lines, lineNumber);
+    const imports = this.extractImports(lines);
+    const operation =
+      this.extractOperation(lines, lineNumber) || "unknown-operation";
+    const tryBlockCode = this.extractTryBlockCode(lines, lineNumber);
+    const errorType = this.inferErrorType(lines, lineNumber);
+    const isTransient = this.isTransientError(errorType);
+
+    return {
+      functionName,
+      operation,
+      tryBlockCode,
+      surroundingCode,
+      imports,
+      errorType,
+      isTransient,
+    };
   }
 
   /**
@@ -113,59 +115,7 @@ export class CodeAnalysisService implements ICodeAnalysisService {
     confidence: number;
   } {
     const content = tryBlockCode.toLowerCase();
-    let errorType:
-      | "Network"
-      | "Database"
-      | "Logic"
-      | "UI"
-      | "Authentication"
-      | "Storage" = "Logic";
-    let confidence = 0.5;
-
-    // Analyze content for error type indicators
-    if (
-      content.includes("fetch") ||
-      content.includes("api") ||
-      content.includes("request") ||
-      content.includes("http") ||
-      content.includes("axios")
-    ) {
-      errorType = "Network";
-      confidence = 0.9;
-    } else if (
-      content.includes("supabase") ||
-      content.includes("database") ||
-      content.includes("query") ||
-      content.includes("sql")
-    ) {
-      errorType = "Database";
-      confidence = 0.9;
-    } else if (
-      content.includes("asyncstorage") ||
-      content.includes("localstorage") ||
-      content.includes("storage") ||
-      content.includes("setitem")
-    ) {
-      errorType = "Storage";
-      confidence = 0.8;
-    } else if (
-      content.includes("auth") ||
-      content.includes("login") ||
-      content.includes("token") ||
-      content.includes("signin")
-    ) {
-      errorType = "Authentication";
-      confidence = 0.8;
-    } else if (
-      content.includes("render") ||
-      content.includes("component") ||
-      content.includes("jsx") ||
-      content.includes("usestate")
-    ) {
-      errorType = "UI";
-      confidence = 0.7;
-    }
-
+    const { errorType, confidence } = this.analyzeErrorTypeFromContent(content);
     const isTransient = this.isTransientError(errorType);
     const suggestedAction = this.determineSuggestedAction(
       errorType,
@@ -178,6 +128,66 @@ export class CodeAnalysisService implements ICodeAnalysisService {
       suggestedAction,
       confidence,
     };
+  }
+
+  private analyzeErrorTypeFromContent(content: string): {
+    errorType:
+      | "Network"
+      | "Database"
+      | "Logic"
+      | "UI"
+      | "Authentication"
+      | "Storage";
+    confidence: number;
+  } {
+    const errorTypeIndicators = new Map([
+      [
+        "Network",
+        {
+          keywords: ["fetch", "api", "request", "http", "axios"],
+          confidence: 0.9,
+        },
+      ],
+      [
+        "Database",
+        { keywords: ["supabase", "database", "query", "sql"], confidence: 0.9 },
+      ],
+      [
+        "Storage",
+        {
+          keywords: ["asyncstorage", "localstorage", "storage", "setitem"],
+          confidence: 0.8,
+        },
+      ],
+      [
+        "Authentication",
+        { keywords: ["auth", "login", "token", "signin"], confidence: 0.8 },
+      ],
+      [
+        "UI",
+        {
+          keywords: ["render", "component", "jsx", "usestate"],
+          confidence: 0.7,
+        },
+      ],
+    ]);
+
+    for (const [errorType, { keywords, confidence }] of errorTypeIndicators) {
+      if (keywords.some((keyword) => content.includes(keyword))) {
+        return {
+          errorType: errorType as
+            | "Network"
+            | "Database"
+            | "Logic"
+            | "UI"
+            | "Authentication"
+            | "Storage",
+          confidence,
+        };
+      }
+    }
+
+    return { errorType: "Logic" as const, confidence: 0.5 };
   }
 
   /**
@@ -199,50 +209,73 @@ export class CodeAnalysisService implements ICodeAnalysisService {
     maxRetries?: number;
     userMessage?: string;
   } {
-    switch (errorType) {
-      case "Network":
-        return {
+    const recoveryStrategies = this.getRecoveryStrategies(operation);
+    return (
+      recoveryStrategies.get(errorType) ??
+      this.getDefaultRecoveryAction(operation)
+    );
+  }
+
+  private getRecoveryStrategies(operation: string): Map<
+    string,
+    {
+      actionType: "Retry" | "Fallback" | "UserPrompt" | "FailGracefully";
+      retryCount?: number;
+      retryDelay?: number;
+      maxRetries?: number;
+      userMessage?: string;
+    }
+  > {
+    return new Map([
+      [
+        "Network",
+        {
           actionType: "Retry",
           retryCount: 0,
           retryDelay: 2000,
           maxRetries: 3,
           userMessage: `Network error during ${operation}. Retrying...`,
-        };
-
-      case "Database":
-        return {
+        },
+      ],
+      [
+        "Database",
+        {
           actionType: "Retry",
           retryCount: 0,
           retryDelay: 1000,
           maxRetries: 2,
           userMessage: `Database error during ${operation}. Please try again.`,
-        };
-
-      case "Authentication":
-        return {
+        },
+      ],
+      [
+        "Authentication",
+        {
           actionType: "UserPrompt",
           userMessage: `Authentication required for ${operation}. Please sign in again.`,
-        };
-
-      case "Storage":
-        return {
+        },
+      ],
+      [
+        "Storage",
+        {
           actionType: "Fallback",
           userMessage: `Storage error during ${operation}. Using temporary storage.`,
-        };
-
-      case "UI":
-        return {
+        },
+      ],
+      [
+        "UI",
+        {
           actionType: "Fallback",
           userMessage: `Display issue detected. Using fallback interface.`,
-        };
+        },
+      ],
+    ]);
+  }
 
-      case "Logic":
-      default:
-        return {
-          actionType: "FailGracefully",
-          userMessage: `An error occurred during ${operation}. Please try again.`,
-        };
-    }
+  private getDefaultRecoveryAction(operation: string) {
+    return {
+      actionType: "FailGracefully" as const,
+      userMessage: `An error occurred during ${operation}. Please try again.`,
+    };
   }
 
   /**
@@ -543,53 +576,14 @@ export class CodeAnalysisService implements ICodeAnalysisService {
     const contextLines = this.getSurroundingCode(lines, lineNumber, 5);
     const content = contextLines.join(" ").toLowerCase();
 
-    if (
-      content.includes("fetch") ||
-      content.includes("api") ||
-      content.includes("request") ||
-      content.includes("http") ||
-      content.includes("axios")
-    ) {
-      return "Network";
-    }
-
-    if (
-      content.includes("supabase") ||
-      content.includes("database") ||
-      content.includes("query") ||
-      content.includes("sql")
-    ) {
-      return "Database";
-    }
-
-    if (
-      content.includes("asyncstorage") ||
-      content.includes("localstorage") ||
-      content.includes("storage") ||
-      content.includes("setitem")
-    ) {
-      return "Storage";
-    }
-
-    if (
-      content.includes("auth") ||
-      content.includes("login") ||
-      content.includes("token") ||
-      content.includes("signin")
-    ) {
-      return "Authentication";
-    }
-
-    if (
-      content.includes("render") ||
-      content.includes("component") ||
-      content.includes("ui") ||
-      content.includes("jsx")
-    ) {
-      return "UI";
-    }
-
-    return "Logic";
+    const { errorType } = this.analyzeErrorTypeFromContent(content);
+    return errorType as
+      | "Network"
+      | "Database"
+      | "Logic"
+      | "UI"
+      | "Authentication"
+      | "Storage";
   }
 
   private isTransientError(errorType: string): boolean {

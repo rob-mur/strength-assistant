@@ -17,7 +17,7 @@ export class DefaultErrorHandler implements ErrorHandler {
   private loggingService: LoggingService;
   private userErrorDisplay?: UserErrorDisplay;
   private static globalHandlersSetup = false;
-  private static globalHandlerCleanup: Array<() => void> = [];
+  private static globalHandlerCleanup: (() => void)[] = [];
 
   constructor(
     loggingService: LoggingService,
@@ -376,7 +376,9 @@ export class DefaultErrorHandler implements ErrorHandler {
    * Clean up global error handlers - primarily for testing
    */
   static cleanupGlobalHandlers(): void {
-    DefaultErrorHandler.globalHandlerCleanup.forEach((cleanup) => cleanup());
+    for (const cleanup of DefaultErrorHandler.globalHandlerCleanup) {
+      cleanup();
+    }
     DefaultErrorHandler.globalHandlerCleanup = [];
     DefaultErrorHandler.globalHandlersSetup = false;
   }

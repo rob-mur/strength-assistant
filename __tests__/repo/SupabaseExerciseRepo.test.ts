@@ -249,7 +249,7 @@ describe("SupabaseExerciseRepo", () => {
 
     test("computed function filters exercises by current user", () => {
       const computed = require("@legendapp/state").computed;
-      let computedFunction: () => Exercise[];
+      let computedFunction: (() => Exercise[]) | undefined;
 
       computed.mockImplementation((fn: () => Exercise[]) => {
         computedFunction = fn;
@@ -259,6 +259,7 @@ describe("SupabaseExerciseRepo", () => {
       repo.getExercises(testUserId);
 
       // Test the computed function
+      expect(computedFunction).toBeDefined();
       const result = computedFunction!();
       expect(user$.get).toHaveBeenCalled();
       expect(exercises$.get).toHaveBeenCalled();
@@ -267,7 +268,7 @@ describe("SupabaseExerciseRepo", () => {
 
     test("returns empty array when no current user", () => {
       const computed = require("@legendapp/state").computed;
-      let computedFunction: () => Exercise[];
+      let computedFunction: (() => Exercise[]) | undefined;
 
       computed.mockImplementation((fn: () => Exercise[]) => {
         computedFunction = fn;
@@ -278,6 +279,7 @@ describe("SupabaseExerciseRepo", () => {
 
       repo.getExercises(testUserId);
 
+      expect(computedFunction).toBeDefined();
       const result = computedFunction!();
       expect(result).toEqual([]);
     });

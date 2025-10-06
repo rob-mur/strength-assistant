@@ -202,34 +202,36 @@ class UnifiedAlertService implements IAlertService {
     });
 
     // Add buttons
-    options.buttons?.forEach((buttonConfig) => {
-      const button = document.createElement("button");
-      button.textContent = buttonConfig.text;
+    if (options.buttons) {
+      for (const buttonConfig of options.buttons) {
+        const button = document.createElement("button");
+        button.textContent = buttonConfig.text;
 
-      Object.assign(button.style, {
-        padding: "8px 16px",
-        border: "none",
-        borderRadius: "4px",
-        fontSize: "14px",
-        cursor: "pointer",
-        backgroundColor:
-          buttonConfig.style === "destructive"
-            ? "#ef4444"
-            : buttonConfig.style === "cancel"
-              ? "#f3f4f6"
-              : "#3b82f6",
-        color: buttonConfig.style === "cancel" ? "#374151" : "white",
-      });
+        Object.assign(button.style, {
+          padding: "8px 16px",
+          border: "none",
+          borderRadius: "4px",
+          fontSize: "14px",
+          cursor: "pointer",
+          backgroundColor:
+            buttonConfig.style === "destructive"
+              ? "#ef4444"
+              : buttonConfig.style === "cancel"
+                ? "#f3f4f6"
+                : "#3b82f6",
+          color: buttonConfig.style === "cancel" ? "#374151" : "white",
+        });
 
-      button.onclick = () => {
-        document.body.removeChild(overlay);
-        if (buttonConfig.onPress) {
-          buttonConfig.onPress();
-        }
-      };
+        button.onclick = () => {
+          document.body.removeChild(overlay);
+          if (buttonConfig.onPress) {
+            buttonConfig.onPress();
+          }
+        };
 
-      buttonContainer.appendChild(button);
-    });
+        buttonContainer.appendChild(button);
+      }
+    }
 
     modal.appendChild(buttonContainer);
     overlay.appendChild(modal);

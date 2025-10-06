@@ -49,16 +49,23 @@ export class ErrorContext implements IErrorContext {
   private validate(): void {
     const errors: string[] = [];
 
-    this.validateRequiredFields(errors);
-    this.validateUserAction(errors);
-    this.validateNavigationState(errors);
-    this.validateNetworkState(errors);
-    this.validatePerformanceMetrics(errors);
+    this.collectValidationErrors(errors);
     this.validateDataState();
 
     if (errors.length > 0) {
       throw new Error(`ErrorContext validation failed: ${errors.join(", ")}`);
     }
+  }
+
+  /**
+   * Collects all validation errors from different validation methods
+   */
+  private collectValidationErrors(errors: string[]): void {
+    this.validateRequiredFields(errors);
+    this.validateUserAction(errors);
+    this.validateNavigationState(errors);
+    this.validateNetworkState(errors);
+    this.validatePerformanceMetrics(errors);
   }
 
   private validateRequiredFields(errors: string[]): void {
@@ -101,10 +108,14 @@ export class ErrorContext implements IErrorContext {
   private validateNetworkState(errors: string[]): void {
     if (this.networkState === undefined) return;
 
-    const validNetworkStates = ["connected", "disconnected", "limited"];
-    if (!validNetworkStates.includes(this.networkState)) {
+    const validNetworkStates = new Set([
+      "connected",
+      "disconnected",
+      "limited",
+    ]);
+    if (!validNetworkStates.has(this.networkState)) {
       errors.push(
-        `networkState must be one of: ${validNetworkStates.join(", ")}`,
+        `networkState must be one of: ${Array.from(validNetworkStates).join(", ")}`,
       );
     }
   }
@@ -114,22 +125,35 @@ export class ErrorContext implements IErrorContext {
 
     const { memoryUsage, cpuUsage } = this.performanceMetrics;
 
-    if (memoryUsage !== undefined) {
-      if (typeof memoryUsage !== "number") {
-        errors.push(
-          "performanceMetrics.memoryUsage must be a number if provided",
-        );
-      } else if (memoryUsage < 0) {
-        errors.push("performanceMetrics.memoryUsage must be non-negative");
-      }
-    }
+    this.validateMemoryUsage(memoryUsage, errors);
+    this.validateCpuUsage(cpuUsage, errors);
+  }
 
-    if (cpuUsage !== undefined) {
-      if (typeof cpuUsage !== "number") {
-        errors.push("performanceMetrics.cpuUsage must be a number if provided");
-      } else if (cpuUsage < 0 || cpuUsage > 100) {
-        errors.push("performanceMetrics.cpuUsage must be between 0 and 100");
-      }
+  private validateMemoryUsage(
+    memoryUsage: number | undefined,
+    errors: string[],
+  ): void {
+    if (memoryUsage === undefined) return;
+
+    if (typeof memoryUsage !== "number") {
+      errors.push(
+        "performanceMetrics.memoryUsage must be a number if provided",
+      );
+    } else if (memoryUsage < 0) {
+      errors.push("performanceMetrics.memoryUsage must be non-negative");
+    }
+  }
+
+  private validateCpuUsage(
+    cpuUsage: number | undefined,
+    errors: string[],
+  ): void {
+    if (cpuUsage === undefined) return;
+
+    if (typeof cpuUsage !== "number") {
+      errors.push("performanceMetrics.cpuUsage must be a number if provided");
+    } else if (cpuUsage < 0 || cpuUsage > 100) {
+      errors.push("performanceMetrics.cpuUsage must be between 0 and 100");
     }
   }
 
@@ -143,7 +167,7 @@ export class ErrorContext implements IErrorContext {
    * Validates that data state doesn't contain potentially sensitive information
    */
   private validateDataStateSafety(dataState: Record<string, unknown>): void {
-    const sensitiveKeys = [
+    const sensitiveKeys = new Set([
       "password",
       "token",
       "secret",
@@ -152,37 +176,63 @@ export class ErrorContext implements IErrorContext {
       "credential",
       "ssn",
       "credit",
-    ];
+    ]);
 
-    const checkObject = (obj: unknown, path = ""): void => {
-      if (typeof obj === "object" && obj !== null) {
-        for (const [key, value] of Object.entries(obj)) {
-          const currentPath = path ? `${path}.${key}` : key;
-          const lowerKey = key.toLowerCase();
+    this.checkObjectForSensitiveData(dataState, sensitiveKeys);
+  }
 
-          // Check if key name suggests sensitive data
-          if (sensitiveKeys.some((sensitive) => lowerKey.includes(sensitive))) {
-            console.warn(
-              `Potentially sensitive data in error context at ${currentPath}. Consider excluding this field.`,
-            );
-          }
+  private checkObjectForSensitiveData(
+    obj: unknown,
+    sensitiveKeys: Set<string>,
+    path = "",
+    maxDepth = 3,
+  ): void {
+    if (
+      typeof obj !== "object" ||
+      obj === null ||
+      path.split(".").length >= maxDepth
+    ) {
+      return;
+    }
 
-          // Recursively check nested objects (limited depth to avoid circular references)
-          if (path.split(".").length < 3) {
-            checkObject(value, currentPath);
-          }
-        }
+    for (const [key, value] of Object.entries(obj)) {
+      const currentPath = path ? `${path}.${key}` : key;
+      const lowerKey = key.toLowerCase();
+
+      if (this.containsSensitiveKeyword(lowerKey, sensitiveKeys)) {
+        console.warn(
+          `Potentially sensitive data in error context at ${currentPath}. Consider excluding this field.`,
+        );
       }
-    };
 
-    checkObject(dataState);
+      this.checkObjectForSensitiveData(
+        value,
+        sensitiveKeys,
+        currentPath,
+        maxDepth,
+      );
+    }
+  }
+
+  private containsSensitiveKeyword(
+    key: string,
+    sensitiveKeys: Set<string>,
+  ): boolean {
+    for (const sensitive of sensitiveKeys) {
+      if (key.includes(sensitive)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
    * Generates a unique identifier for the error context
    */
   private generateContextId(): string {
-    return "ctx-" + Date.now() + "-" + Math.random().toString(36).substr(2, 9);
+    return (
+      "ctx-" + Date.now() + "-" + Math.random().toString(36).substring(2, 11)
+    );
   }
 
   /**
@@ -210,27 +260,30 @@ export class ErrorContext implements IErrorContext {
    */
   private detectNetworkState(): "connected" | "disconnected" | "limited" {
     try {
-      // Check if running in browser environment
-      if (typeof navigator !== "undefined" && "onLine" in navigator) {
-        return navigator.onLine ? "connected" : "disconnected";
-      }
-
-      // Check if React Native NetInfo is available
-      try {
-        const importModule = eval("require");
-        const NetInfo = importModule("@react-native-community/netinfo");
-        if (NetInfo) {
-          // For React Native, we'd need to make this async, but for initialization we'll assume connected
-          return "connected";
-        }
-      } catch {
-        // NetInfo not available
-      }
-
-      // Default assumption
-      return "connected";
+      return (
+        this.detectBrowserNetworkState() ??
+        this.detectReactNativeNetworkState() ??
+        "connected"
+      );
     } catch {
       return "connected";
+    }
+  }
+
+  private detectBrowserNetworkState(): "connected" | "disconnected" | null {
+    if (typeof navigator !== "undefined" && "onLine" in navigator) {
+      return navigator.onLine ? "connected" : "disconnected";
+    }
+    return null;
+  }
+
+  private detectReactNativeNetworkState(): "connected" | null {
+    try {
+      const importModule = eval("require");
+      const NetInfo = importModule("@react-native-community/netinfo");
+      return NetInfo ? "connected" : null;
+    } catch {
+      return null;
     }
   }
 
@@ -241,25 +294,32 @@ export class ErrorContext implements IErrorContext {
     | { currentRoute: string; previousRoute?: string }
     | undefined {
     try {
-      // Check for React Navigation
-      // Note: This is a simplified detection - real implementation would need proper navigation context
-      if (typeof window !== "undefined") {
-        return {
-          currentRoute: window.location?.pathname || "/unknown",
-          previousRoute: document.referrer
-            ? new URL(document.referrer).pathname
-            : undefined,
-        };
-      }
-
-      // For React Native, we'd need access to navigation state
-      // This would typically be passed in rather than detected
-      return {
-        currentRoute: "/app", // Default mobile app route
-      };
+      return (
+        this.detectWebNavigationState() ?? this.detectMobileNavigationState()
+      );
     } catch {
       return undefined;
     }
+  }
+
+  private detectWebNavigationState(): {
+    currentRoute: string;
+    previousRoute?: string;
+  } | null {
+    if (typeof globalThis.window === "undefined") return null;
+
+    return {
+      currentRoute: globalThis.window.location?.pathname || "/unknown",
+      previousRoute: document.referrer
+        ? new URL(document.referrer).pathname
+        : undefined,
+    };
+  }
+
+  private detectMobileNavigationState(): { currentRoute: string } {
+    return {
+      currentRoute: "/app",
+    };
   }
 
   /**
@@ -271,28 +331,33 @@ export class ErrorContext implements IErrorContext {
     try {
       const metrics: { memoryUsage?: number; cpuUsage?: number } = {};
 
-      // Memory usage (browser)
-      if (typeof window !== "undefined" && "performance" in window) {
-        const perfMemory = (
-          performance as { memory?: { usedJSHeapSize?: number } }
-        ).memory;
-        if (perfMemory) {
-          metrics.memoryUsage = perfMemory.usedJSHeapSize || undefined;
-        }
-      }
-
-      // Node.js memory usage
-      if (typeof process !== "undefined" && process.memoryUsage) {
-        const nodeMemory = process.memoryUsage();
-        metrics.memoryUsage = nodeMemory.heapUsed;
-      }
-
-      // CPU usage is harder to determine without specific APIs
-      // We'd need a performance monitoring library for accurate CPU metrics
+      this.collectBrowserMemoryUsage(metrics);
+      this.collectNodeMemoryUsage(metrics);
 
       return Object.keys(metrics).length > 0 ? metrics : undefined;
     } catch {
       return undefined;
+    }
+  }
+
+  private collectBrowserMemoryUsage(metrics: { memoryUsage?: number }): void {
+    if (
+      typeof globalThis.window !== "undefined" &&
+      "performance" in globalThis.window
+    ) {
+      const perfMemory = (
+        performance as { memory?: { usedJSHeapSize?: number } }
+      ).memory;
+      if (perfMemory?.usedJSHeapSize) {
+        metrics.memoryUsage = perfMemory.usedJSHeapSize;
+      }
+    }
+  }
+
+  private collectNodeMemoryUsage(metrics: { memoryUsage?: number }): void {
+    if (typeof process !== "undefined" && process.memoryUsage) {
+      const nodeMemory = process.memoryUsage();
+      metrics.memoryUsage = nodeMemory.heapUsed;
     }
   }
 
@@ -376,43 +441,48 @@ export class ErrorContext implements IErrorContext {
   sanitizeDataState(): void {
     if (!this.dataState) return;
 
-    const sensitiveKeys = [
+    const sensitiveKeys = new Set([
       "password",
       "token",
       "secret",
       "key",
       "auth",
       "credential",
-    ];
+    ]);
 
-    const sanitizeObject = (
-      obj: Record<string, unknown>,
-    ): Record<string, unknown> => {
-      const sanitized: Record<string, unknown> = {};
+    this.dataState = this.sanitizeObject(this.dataState, sensitiveKeys);
+  }
 
-      for (const [key, value] of Object.entries(obj)) {
-        const lowerKey = key.toLowerCase();
-        const isSensitive = sensitiveKeys.some((sensitive) =>
-          lowerKey.includes(sensitive),
+  private sanitizeObject(
+    obj: Record<string, unknown>,
+    sensitiveKeys: Set<string>,
+  ): Record<string, unknown> {
+    const sanitized: Record<string, unknown> = {};
+
+    for (const [key, value] of Object.entries(obj)) {
+      const lowerKey = key.toLowerCase();
+      const isSensitive = this.containsSensitiveKeyword(
+        lowerKey,
+        sensitiveKeys,
+      );
+
+      if (isSensitive) {
+        sanitized[key] = "[REDACTED]";
+      } else if (this.isNestedObject(value)) {
+        sanitized[key] = this.sanitizeObject(
+          value as Record<string, unknown>,
+          sensitiveKeys,
         );
-
-        if (isSensitive) {
-          sanitized[key] = "[REDACTED]";
-        } else if (
-          typeof value === "object" &&
-          value !== null &&
-          !Array.isArray(value)
-        ) {
-          sanitized[key] = sanitizeObject(value as Record<string, unknown>);
-        } else {
-          sanitized[key] = value;
-        }
+      } else {
+        sanitized[key] = value;
       }
+    }
 
-      return sanitized;
-    };
+    return sanitized;
+  }
 
-    this.dataState = sanitizeObject(this.dataState);
+  private isNestedObject(value: unknown): boolean {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
   }
 
   /**

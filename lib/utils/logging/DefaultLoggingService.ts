@@ -368,7 +368,10 @@ export class DefaultLoggingService implements LoggingService {
 
   private generateSessionId(): string {
     return (
-      "session-" + Date.now() + "-" + Math.random().toString(36).substr(2, 9)
+      "session-" +
+      Date.now() +
+      "-" +
+      Math.random().toString(36).substring(2, 11)
     );
   }
 

@@ -116,7 +116,7 @@ export class ErrorEvent implements IErrorEvent {
   private generateEventId(): string {
     // Generate UUID-like identifier
     return (
-      "error-" + Date.now() + "-" + Math.random().toString(36).substr(2, 9)
+      "error-" + Date.now() + "-" + Math.random().toString(36).substring(2, 11)
     );
   }
 

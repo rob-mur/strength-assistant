@@ -82,13 +82,13 @@ export class SupabaseStorage implements StorageBackend {
   }
 
   private notifyAuthStateChange(user: UserAccount | null): void {
-    this.authStateCallbacks.forEach((callback) => {
+    for (const callback of this.authStateCallbacks) {
       try {
         callback(user);
       } catch {
         // Silent error handling
       }
-    });
+    }
   }
   /**
    * Call this after construction to initialize the session asynchronously.
