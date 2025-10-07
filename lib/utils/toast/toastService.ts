@@ -62,9 +62,7 @@ class UnifiedToastService implements IToastService {
    */
   async hide(): Promise<void> {
     try {
-      if (this.toastRef && this.toastRef.hideAll) {
-        this.toastRef.hideAll();
-      }
+      this.toastRef?.hideAll?.();
     } catch {
       // Silent failure - hide is not critical
     }

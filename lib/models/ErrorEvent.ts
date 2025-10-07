@@ -35,7 +35,10 @@ export class ErrorEvent implements IErrorEvent {
     this.id = data.id || this.generateEventId();
 
     // Use provided timestamp or generate current timestamp in ISO 8601 format
-    this.timestamp = data.timestamp || new Date().toISOString();
+    this.timestamp = (data.timestamp || new Date().toISOString()).replace(
+      /\.\d{3}Z$/,
+      "",
+    );
 
     // Required fields
     this.message = data.message;
@@ -124,12 +127,9 @@ export class ErrorEvent implements IErrorEvent {
    * Validates if a timestamp string is in valid ISO 8601 format
    */
   private isValidISOTimestamp(timestamp: string): boolean {
-    try {
-      const date = new Date(timestamp);
-      return date.toISOString() === timestamp;
-    } catch {
-      return false;
-    }
+    // Updated validation to be more flexible with ISO 8601 format
+    const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/;
+    return iso8601Regex.test(timestamp);
   }
 
   /**

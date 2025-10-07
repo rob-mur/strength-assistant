@@ -20,12 +20,17 @@ let loggingService: LoggingService;
 
 describe("LoggingService Contract", () => {
   beforeEach(() => {
-    // This will throw until DefaultLoggingService is implemented
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const {
       DefaultLoggingService,
     } = require("../../lib/utils/logging/DefaultLoggingService");
-    loggingService = new DefaultLoggingService();
+    const mockConfig = {
+      maxBufferSize: 100,
+      maxRetentionDays: 30,
+      enableLocalPersistence: false,
+      environment: "test",
+      enableConsoleLogging: true,
+    };
+    loggingService = new DefaultLoggingService(mockConfig);
   });
 
   describe("logError method", () => {

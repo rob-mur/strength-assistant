@@ -61,11 +61,13 @@ describe("SupabaseExerciseRepo", () => {
   };
 
   const mockUser = { id: testUserId, email: "test@example.com" };
-  const mockExercises = [testExercise];
+  let mockExercises: Exercise[];
 
   beforeEach(() => {
     // Reset all mocks
     jest.clearAllMocks();
+
+    mockExercises = [testExercise];
 
     // Setup default mock implementations
     (supabaseClient.getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
@@ -86,18 +88,13 @@ describe("SupabaseExerciseRepo", () => {
         })),
       })),
     });
-    (exercises$.get as jest.Mock).mockReturnValue(mockExercises);
-    // Mock exercises$.set to simulate Legend State behavior
+    // Make exercises$ mock stateful
+    (exercises$.get as jest.Mock).mockImplementation(() => mockExercises);
     (exercises$.set as jest.Mock).mockImplementation((setterOrValue) => {
       if (typeof setterOrValue === "function") {
-        // For callback setters like exercises$.set(current => [...current, newExercise])
-        // Simulate Legend State by calling get() and then setting the result
-        const currentValue = (exercises$.get as jest.Mock)();
-        const newValue = setterOrValue(currentValue);
-        return newValue;
+        mockExercises = setterOrValue(mockExercises);
       } else {
-        // For direct value setters
-        return setterOrValue;
+        mockExercises = setterOrValue;
       }
     });
     (user$.get as jest.Mock).mockReturnValue(mockUser);
@@ -495,7 +492,7 @@ describe("SupabaseExerciseRepo", () => {
       (syncExerciseToSupabase as jest.Mock).mockRejectedValue(syncError);
 
       // Get initial state
-      const initialExercises = exercises$.get();
+      const initialExercises = [...exercises$.get()];
 
       await expect(
         repo.addExercise(testUserId, { name: "Test" }),
@@ -510,7 +507,7 @@ describe("SupabaseExerciseRepo", () => {
       (deleteExerciseFromSupabase as jest.Mock).mockRejectedValue(syncError);
 
       // Get initial state
-      const initialExercises = exercises$.get();
+      const initialExercises = [...exercises$.get()];
 
       await expect(
         repo.deleteExercise(testUserId, testExerciseId),

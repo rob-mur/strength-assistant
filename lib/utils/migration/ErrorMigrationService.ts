@@ -105,7 +105,7 @@ export class ErrorMigrationService implements IErrorMigrationService {
       );
 
       // Read the file
-      const content = await this.codeAnalysisService.readFile(block.filePath);
+      const content = this.codeAnalysisService.readFile(block.filePath);
       const lines = content.split("\n");
 
       // Find and replace the catch block
@@ -206,7 +206,7 @@ export class ErrorMigrationService implements IErrorMigrationService {
   private async analyzeFileForEmptyCatchBlocks(
     filePath: string,
   ): Promise<EmptyCatchBlock[]> {
-    const content = await this.codeAnalysisService.readFile(filePath);
+    const content = this.codeAnalysisService.readFile(filePath);
     const lines = content.split("\n");
     const blocks: EmptyCatchBlock[] = [];
 

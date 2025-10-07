@@ -121,13 +121,13 @@ export class DefaultUserErrorDisplay implements UserErrorDisplay {
   ): Promise<boolean> {
     try {
       // Check if we're in a web environment
-      if (typeof window === "undefined" || !window.alert) {
+      if (typeof globalThis.alert !== "function") {
         return false;
       }
 
       // Use native web alert
       const fullMessage = `${title}\n\n${message}`;
-      window.alert(fullMessage);
+      globalThis.alert(fullMessage);
       return true;
     } catch {
       return false;

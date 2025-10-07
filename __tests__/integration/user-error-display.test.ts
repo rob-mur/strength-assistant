@@ -14,6 +14,8 @@ import {
   UserErrorDisplay,
 } from "../../specs/011-improve-error-logging/contracts/logging-service";
 
+jest.mock("expo-constants");
+
 // Mock React Native Alert and other components
 const mockAlert = {
   alert: jest.fn(),

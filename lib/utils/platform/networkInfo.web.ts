@@ -9,9 +9,9 @@ class WebNetworkInfo implements PlatformNetworkInfo {
 
   constructor() {
     // Set up browser event listeners
-    if (typeof window !== "undefined") {
-      window.addEventListener("online", this.handleConnectionChange);
-      window.addEventListener("offline", this.handleConnectionChange);
+    if (typeof globalThis.addEventListener === "function") {
+      globalThis.addEventListener("online", this.handleConnectionChange);
+      globalThis.addEventListener("offline", this.handleConnectionChange);
 
       // Modern browsers support connection API
       if ("connection" in navigator) {
@@ -35,7 +35,7 @@ class WebNetworkInfo implements PlatformNetworkInfo {
   };
 
   async getCurrentState(): Promise<NetworkState> {
-    if (typeof window === "undefined") {
+    if (typeof globalThis.navigator === "undefined") {
       return {
         isConnected: false,
         type: "unknown",

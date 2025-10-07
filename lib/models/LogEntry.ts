@@ -5,6 +5,7 @@
  * This model represents the log entry created when an error event is recorded.
  */
 
+import Constants from "expo-constants";
 import {
   ErrorSeverity,
   LogEntry as ILogEntry,
@@ -46,14 +47,10 @@ export class LogEntry implements ILogEntry {
     this.correlationId = data.correlationId;
 
     // Auto-populate device info if not provided
-    if (!this.deviceInfo) {
-      this.deviceInfo = this.collectDeviceInfo();
-    }
+    this.deviceInfo ??= this.collectDeviceInfo();
 
     // Generate correlation ID if not provided
-    if (!this.correlationId) {
-      this.correlationId = this.generateCorrelationId();
-    }
+    this.correlationId ??= this.generateCorrelationId();
 
     // Validate the constructed object
     this.validate();
@@ -146,29 +143,14 @@ export class LogEntry implements ILogEntry {
    */
   private collectDeviceInfo(): { platform: string; version: string } {
     try {
-      // Try to detect React Native environment
-      if (
-        typeof navigator !== "undefined" &&
-        navigator.product === "ReactNative"
-      ) {
-        // React Native environment
-        const platform = this.detectPlatform();
-        const version = this.detectVersion();
+      if (Constants.platform && Object.keys(Constants.platform).length > 0) {
+        const platform = Object.keys(Constants.platform)[0];
+        const version = Constants.osVersion || "unknown";
         return { platform, version };
       }
-
-      // Web environment
-      if (typeof window !== "undefined") {
-        return {
-          platform: "web",
-          version: navigator.userAgent || "unknown",
-        };
-      }
-
-      // Node.js or other environment
       return {
-        platform: process?.platform || "unknown",
-        version: process?.version || "unknown",
+        platform: "unknown",
+        version: "unknown",
       };
     } catch {
       // Fallback for any environment detection errors
@@ -176,34 +158,6 @@ export class LogEntry implements ILogEntry {
         platform: "unknown",
         version: "unknown",
       };
-    }
-  }
-
-  /**
-   * Detects the current platform
-   */
-  private detectPlatform(): string {
-    try {
-      // In React Native, Platform should be available
-      const importModule = eval("require");
-      const { Platform } = importModule("react-native");
-      return Platform.OS || "react-native";
-    } catch {
-      return "react-native";
-    }
-  }
-
-  /**
-   * Detects the application/platform version
-   */
-  private detectVersion(): string {
-    try {
-      // Try to get React Native version info
-      const importModule = eval("require");
-      const { Platform } = importModule("react-native");
-      return Platform.Version?.toString() || "unknown";
-    } catch {
-      return "unknown";
     }
   }
 
@@ -258,7 +212,7 @@ export class LogEntry implements ILogEntry {
       // Look for the first line that's not this file
       for (const line of stackLines) {
         if (line.includes(".ts") || line.includes(".js")) {
-          const match = line.match(/([^/\\]+)\.(ts|js)/);
+          const match = /([^/\\]+)\.(ts|js)/.exec(line);
           if (match && !match[1].includes("LogEntry")) {
             return match[1];
           }

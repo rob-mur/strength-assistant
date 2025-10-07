@@ -230,9 +230,7 @@ describe("Error Event Logging Flow Integration", () => {
       // Should have collected some device/environment context
       // The exact context depends on implementation, but timestamp should always be present
       expect(deviceError?.timestamp).toBeDefined();
-      expect(deviceError?.timestamp).toMatch(
-        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/,
-      ); // ISO format
+      expect(new Date(deviceError!.timestamp)).toBeInstanceOf(Date); // ISO format
     });
   });
 

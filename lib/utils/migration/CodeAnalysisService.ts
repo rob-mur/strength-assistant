@@ -498,9 +498,6 @@ export class CodeAnalysisService implements ICodeAnalysisService {
     // For now, return empty array as this is a fallback that should rarely be used
     // In production, glob should be available
 
-    // TODO: Implement actual recursive directory search if needed
-    // This would require fs.readdirSync and recursive directory walking
-
     return files;
   }
 
@@ -551,7 +548,7 @@ export class CodeAnalysisService implements ICodeAnalysisService {
     ];
 
     for (const pattern of patterns) {
-      const match = line.match(pattern);
+      const match = pattern.exec(line);
       if (match) {
         return match[1];
       }
@@ -584,12 +581,12 @@ export class CodeAnalysisService implements ICodeAnalysisService {
 
     // Look for function names or operation descriptors
     for (const line of contextLines) {
-      const functionMatch = line.match(/(\w+)\s*\(/);
+      const functionMatch = /(\w+)\s*\(/.exec(line);
       if (functionMatch) {
         return functionMatch[1];
       }
 
-      const commentMatch = line.match(/\/\/\s*(.+)/);
+      const commentMatch = /\/\/\s*(.+)/.exec(line);
       if (commentMatch) {
         return commentMatch[1].trim();
       }

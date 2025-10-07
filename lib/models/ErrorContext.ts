@@ -238,14 +238,10 @@ export class ErrorContext implements IErrorContext {
    */
   private autoCollectContext(): void {
     // Collect network state if not provided
-    if (!this.networkState) {
-      this.networkState = this.detectNetworkState();
-    }
+    this.networkState ??= this.detectNetworkState();
 
     // Collect navigation state if not provided
-    if (!this.navigationState) {
-      this.navigationState = this.detectNavigationState();
-    }
+    this.navigationState ??= this.detectNavigationState();
 
     // Collect performance metrics if not provided
     if (!this.performanceMetrics) {
@@ -304,7 +300,7 @@ export class ErrorContext implements IErrorContext {
     currentRoute: string;
     previousRoute?: string;
   } | null {
-    if (typeof globalThis.window === "undefined") return null;
+    if (globalThis.window === undefined) return null;
 
     return {
       currentRoute: globalThis.window.location?.pathname || "/unknown",
@@ -424,9 +420,7 @@ export class ErrorContext implements IErrorContext {
    * Adds or updates data state
    */
   addDataState(key: string, value: unknown): void {
-    if (!this.dataState) {
-      this.dataState = {};
-    }
+    this.dataState ??= {};
     this.dataState[key] = value;
   }
 

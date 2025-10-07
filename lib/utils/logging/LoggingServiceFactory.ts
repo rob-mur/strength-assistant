@@ -12,6 +12,7 @@ import {
   LoggingServiceFactory as ILoggingServiceFactory,
 } from "../../../specs/011-improve-error-logging/contracts/logging-service";
 
+import Constants from "expo-constants";
 import {
   DefaultLoggingService,
   LoggingServiceConfig,
@@ -244,8 +245,8 @@ export class LoggingServiceFactory implements ILoggingServiceFactory {
 
     // Check for Expo environment
     if (
-      typeof global !== "undefined" &&
-      (global as { __expo?: unknown }).__expo
+      typeof globalThis !== "undefined" &&
+      (globalThis as { __expo?: unknown }).__expo
     ) {
       return "development";
     }
@@ -292,8 +293,8 @@ export class LoggingServiceFactory implements ILoggingServiceFactory {
     try {
       // Check if we're in React Native environment
       if (
-        typeof navigator !== "undefined" &&
-        navigator.product === "ReactNative"
+        Constants.platform &&
+        (Constants.platform.ios || Constants.platform.android)
       ) {
         // Check if toast libraries are available
         try {
