@@ -35,7 +35,7 @@ class WebNetworkInfo implements PlatformNetworkInfo {
   };
 
   async getCurrentState(): Promise<NetworkState> {
-    if (typeof globalThis.navigator === "undefined") {
+    if (globalThis.navigator === undefined) {
       return {
         isConnected: false,
         type: "unknown",

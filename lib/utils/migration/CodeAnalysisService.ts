@@ -468,7 +468,9 @@ export class CodeAnalysisService implements ICodeAnalysisService {
     // This is a simplified fallback implementation when glob is not available
     console.warn("Using fallback file discovery - glob not available");
 
-    if (!this.fs?.readFileSync || !this.path?.join) {
+    const readFileSync = this.fs?.readFileSync;
+    const join = this.path?.join;
+    if (!readFileSync || !join) {
       console.warn(
         "File system operations not available - returning empty array",
       );

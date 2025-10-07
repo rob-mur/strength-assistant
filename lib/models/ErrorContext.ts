@@ -244,9 +244,7 @@ export class ErrorContext implements IErrorContext {
     this.navigationState ??= this.detectNavigationState();
 
     // Collect performance metrics if not provided
-    if (!this.performanceMetrics) {
-      this.performanceMetrics = this.collectPerformanceMetrics();
-    }
+    this.performanceMetrics ??= this.collectPerformanceMetrics();
   }
 
   /**

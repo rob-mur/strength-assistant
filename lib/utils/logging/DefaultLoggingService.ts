@@ -18,9 +18,9 @@ export interface LoggingServiceConfig {
 }
 
 export class DefaultLoggingService implements LoggingService {
-  private recoveryActions: Map<ErrorType, RecoveryAction> = new Map();
+  private readonly recoveryActions: Map<ErrorType, RecoveryAction> = new Map();
   private errors: ErrorEvent[] = [];
-  private config: LoggingServiceConfig;
+  private readonly config: LoggingServiceConfig;
 
   constructor(config: LoggingServiceConfig) {
     this.config = config;
