@@ -223,13 +223,8 @@ export class LoggingServiceFactory implements ILoggingServiceFactory {
   private getDefaultConsoleLoggingEnabled(): boolean {
     const environment = this.detectEnvironment();
 
-    // Disable console logging in test environment to prevent CI output issues
-    if (environment === "test") {
-      return false;
-    }
-
-    // Enable console logging in development and production
-    return true;
+    // Only enable console logging in development
+    return environment === "development";
   }
 
   private detectEnvironment(): string {

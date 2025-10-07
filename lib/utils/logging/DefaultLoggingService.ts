@@ -141,11 +141,15 @@ export class DefaultLoggingService implements LoggingService {
   }
 
   clearOldErrors(olderThanDays: number): Promise<number> {
+    const oldLength = this.errors.length;
+    if (olderThanDays === 0) {
+      this.errors = [];
+      return Promise.resolve(oldLength);
+    }
     const now = new Date();
     const cutoff = new Date(
       now.getTime() - olderThanDays * 24 * 60 * 60 * 1000,
     );
-    const oldLength = this.errors.length;
     this.errors = this.errors.filter((e) => new Date(e.timestamp) >= cutoff);
     const clearedCount = oldLength - this.errors.length;
     return Promise.resolve(clearedCount);
