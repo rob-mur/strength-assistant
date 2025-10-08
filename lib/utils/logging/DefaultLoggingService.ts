@@ -143,7 +143,7 @@ export class DefaultLoggingService implements LoggingService {
   clearOldErrors(olderThanDays: number): Promise<number> {
     const oldLength = this.errors.length;
     if (olderThanDays === 0) {
-      this.errors = [];
+      this.errors.length = 0;
       return Promise.resolve(oldLength);
     }
     const now = new Date();
