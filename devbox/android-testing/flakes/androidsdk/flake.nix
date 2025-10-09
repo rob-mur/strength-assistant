@@ -15,15 +15,12 @@
       };
 
       androidComposition = pkgs.androidenv.composeAndroidPackages {
-        buildToolsVersions = ["35.0.0"];
         platformVersions = ["35"];
         abiVersions = ["x86_64"];
         includeEmulator = true;
         emulatorVersion = "35.5.10";
         includeSystemImages = true;
         systemImageTypes = ["default"];
-        includeNDK = false;
-        includeCmake = false;
       };
       androidSdk = androidComposition.androidsdk;
     in {

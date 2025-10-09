@@ -66,8 +66,8 @@ fi
 
 # Optimize AVD for disk space savings
 echo "🔧 Optimizing AVD for reduced disk usage..."
-# Reduce userdata partition from default 7GB to 2GB
-echo "disk.dataPartition.size=2GB" >> "$AVD_CONFIG_FILE"
+# Reduce userdata partition from default 7GB to 512MB
+echo "disk.dataPartition.size=512MB" >> "$AVD_CONFIG_FILE"
 # Use minimal RAM (2GB instead of default 4GB)
 echo "hw.ramSize=2048" >> "$AVD_CONFIG_FILE"
 # Disable GPU acceleration to save space/resources

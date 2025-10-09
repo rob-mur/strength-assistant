@@ -153,7 +153,7 @@ describe("RecoveryAction Model", () => {
         errorType: "Network",
         actionType: "Retry",
       });
-      
+
       expect(retryAction.isRetryAction()).toBe(true);
       expect(retryAction.isFallbackAction()).toBe(false);
       expect(retryAction.requiresUserInteraction()).toBe(false);
@@ -165,7 +165,7 @@ describe("RecoveryAction Model", () => {
         errorType: "UI",
         actionType: "Fallback",
       });
-      
+
       expect(fallbackAction.isFallbackAction()).toBe(true);
       expect(fallbackAction.isRetryAction()).toBe(false);
       expect(fallbackAction.requiresUserInteraction()).toBe(false);
@@ -177,7 +177,7 @@ describe("RecoveryAction Model", () => {
         errorType: "Authentication",
         actionType: "UserPrompt",
       });
-      
+
       expect(promptAction.requiresUserInteraction()).toBe(true);
       expect(promptAction.isRetryAction()).toBe(false);
       expect(promptAction.isFallbackAction()).toBe(false);
@@ -192,13 +192,13 @@ describe("RecoveryAction Model", () => {
         actionType: "Retry",
         retryDelay: 5000,
       });
-      
+
       const actionWithoutDelay = new RecoveryAction({
         actionId: "test",
         errorType: "Network",
         actionType: "Retry",
       });
-      
+
       expect(actionWithDelay.getRetryDelay()).toBe(5000);
       expect(actionWithoutDelay.getRetryDelay()).toBe(1000); // default
     });
@@ -210,13 +210,13 @@ describe("RecoveryAction Model", () => {
         actionType: "Retry",
         maxRetries: 5,
       });
-      
+
       const actionWithoutMax = new RecoveryAction({
         actionId: "test",
         errorType: "Network",
         actionType: "Retry",
       });
-      
+
       expect(actionWithMax.getMaxRetries()).toBe(5);
       expect(actionWithoutMax.getMaxRetries()).toBe(3); // default
     });
@@ -228,15 +228,17 @@ describe("RecoveryAction Model", () => {
         actionType: "Retry",
         userMessage: "Custom retry message",
       });
-      
+
       const actionWithoutMessage = new RecoveryAction({
         actionId: "test",
         errorType: "Network",
         actionType: "Retry",
       });
-      
+
       expect(actionWithMessage.getUserMessage()).toBe("Custom retry message");
-      expect(actionWithoutMessage.getUserMessage()).toBe("Retrying operation...");
+      expect(actionWithoutMessage.getUserMessage()).toBe(
+        "Retrying operation...",
+      );
     });
 
     it("should provide default messages for all action types", () => {
@@ -245,28 +247,30 @@ describe("RecoveryAction Model", () => {
         errorType: "Network",
         actionType: "Retry",
       });
-      
+
       const fallback = new RecoveryAction({
         actionId: "test",
         errorType: "UI",
         actionType: "Fallback",
       });
-      
+
       const prompt = new RecoveryAction({
         actionId: "test",
         errorType: "Authentication",
         actionType: "UserPrompt",
       });
-      
+
       const fail = new RecoveryAction({
         actionId: "test",
         errorType: "Logic",
         actionType: "FailGracefully",
       });
-      
+
       expect(retry.getUserMessage()).toBe("Retrying operation...");
       expect(fallback.getUserMessage()).toBe("Using alternative approach...");
-      expect(prompt.getUserMessage()).toBe("An error occurred. Please try again.");
+      expect(prompt.getUserMessage()).toBe(
+        "An error occurred. Please try again.",
+      );
       expect(fail.getUserMessage()).toBe("Operation could not be completed.");
     });
   });
@@ -283,9 +287,9 @@ describe("RecoveryAction Model", () => {
         fallbackBehavior: "Use cached data",
         userMessage: "Retrying connection...",
       });
-      
+
       const json = action.toJSON();
-      
+
       expect(json).toEqual({
         actionId: "serialize-test",
         errorType: "Network",
@@ -309,9 +313,9 @@ describe("RecoveryAction Model", () => {
         fallbackBehavior: "Use local data",
         userMessage: "Using backup data...",
       };
-      
+
       const action = RecoveryAction.fromJSON(data);
-      
+
       expect(action.actionId).toBe("deserialize-test");
       expect(action.errorType).toBe("Database");
       expect(action.actionType).toBe("Fallback");
@@ -332,13 +336,13 @@ describe("RecoveryAction Model", () => {
         retryCount: 1,
         maxRetries: 3,
       });
-      
+
       const cloned = original.clone({
         actionId: "cloned",
         retryCount: 2,
         userMessage: "Modified message",
       });
-      
+
       expect(cloned.actionId).toBe("cloned");
       expect(cloned.errorType).toBe("Network"); // unchanged
       expect(cloned.actionType).toBe("Retry"); // unchanged
@@ -354,9 +358,9 @@ describe("RecoveryAction Model", () => {
         actionType: "Fallback",
         fallbackBehavior: "Use cache",
       });
-      
+
       const cloned = original.clone();
-      
+
       expect(cloned.actionId).toBe(original.actionId);
       expect(cloned.errorType).toBe(original.errorType);
       expect(cloned.actionType).toBe(original.actionType);
@@ -372,23 +376,25 @@ describe("RecoveryAction Model", () => {
       expect(networkAction.actionType).toBe("Retry");
       expect(networkAction.maxRetries).toBe(3);
       expect(networkAction.retryDelay).toBe(2000);
-      
+
       const dbAction = RecoveryAction.forErrorType("Database");
       expect(dbAction.errorType).toBe("Database");
       expect(dbAction.actionType).toBe("Retry");
       expect(dbAction.maxRetries).toBe(2);
       expect(dbAction.retryDelay).toBe(1000);
-      
+
       const authAction = RecoveryAction.forErrorType("Authentication");
       expect(authAction.errorType).toBe("Authentication");
       expect(authAction.actionType).toBe("UserPrompt");
-      expect(authAction.userMessage).toBe("Authentication required. Please sign in again.");
-      
+      expect(authAction.userMessage).toBe(
+        "Authentication required. Please sign in again.",
+      );
+
       const uiAction = RecoveryAction.forErrorType("UI");
       expect(uiAction.errorType).toBe("UI");
       expect(uiAction.actionType).toBe("Fallback");
       expect(uiAction.fallbackBehavior).toBe("Use default UI behavior");
-      
+
       const logicAction = RecoveryAction.forErrorType("Logic");
       expect(logicAction.errorType).toBe("Logic");
       expect(logicAction.actionType).toBe("FailGracefully");
@@ -399,7 +405,9 @@ describe("RecoveryAction Model", () => {
       const logicAction = RecoveryAction.forErrorType("Logic");
       expect(logicAction.errorType).toBe("Logic");
       expect(logicAction.actionType).toBe("FailGracefully");
-      expect(logicAction.userMessage).toBe("An unexpected error occurred. Please try again.");
+      expect(logicAction.userMessage).toBe(
+        "An unexpected error occurred. Please try again.",
+      );
     });
   });
 
@@ -412,7 +420,7 @@ describe("RecoveryAction Model", () => {
         maxRetries: 5,
         retryDelay: 3000,
       });
-      
+
       const description = retryAction.getDescription();
       expect(description).toBe("Retry up to 5 times with 3000ms delay");
     });
@@ -424,7 +432,7 @@ describe("RecoveryAction Model", () => {
         actionType: "Fallback",
         fallbackBehavior: "Use simple layout",
       });
-      
+
       const description = fallbackAction.getDescription();
       expect(description).toBe("Fallback: Use simple layout");
     });
@@ -436,7 +444,7 @@ describe("RecoveryAction Model", () => {
         actionType: "UserPrompt",
         userMessage: "Please log in again",
       });
-      
+
       const description = promptAction.getDescription();
       expect(description).toBe("Prompt user: Please log in again");
     });
@@ -447,9 +455,11 @@ describe("RecoveryAction Model", () => {
         errorType: "Logic",
         actionType: "FailGracefully",
       });
-      
+
       const description = failAction.getDescription();
-      expect(description).toBe("Fail gracefully: Operation could not be completed.");
+      expect(description).toBe(
+        "Fail gracefully: Operation could not be completed.",
+      );
     });
   });
 });

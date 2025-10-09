@@ -134,7 +134,7 @@ describe("ErrorContext Model", () => {
 
     it("should warn about sensitive data in context", () => {
       const consoleSpy = jest.spyOn(console, "warn").mockImplementation();
-      
+
       new ErrorContext({
         errorEventId: "test-event-id",
         dataState: {
@@ -144,23 +144,29 @@ describe("ErrorContext Model", () => {
           creditCardNumber: "4111-1111-1111-1111",
         },
       });
-      
+
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Potentially sensitive data in error context at password")
+        expect.stringContaining(
+          "Potentially sensitive data in error context at password",
+        ),
       );
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Potentially sensitive data in error context at userToken")
+        expect.stringContaining(
+          "Potentially sensitive data in error context at userToken",
+        ),
       );
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Potentially sensitive data in error context at creditCardNumber")
+        expect.stringContaining(
+          "Potentially sensitive data in error context at creditCardNumber",
+        ),
       );
-      
+
       consoleSpy.mockRestore();
     });
 
     it("should handle nested objects in sensitive data check", () => {
       const consoleSpy = jest.spyOn(console, "warn").mockImplementation();
-      
+
       new ErrorContext({
         errorEventId: "test-event-id",
         dataState: {
@@ -174,20 +180,24 @@ describe("ErrorContext Model", () => {
           },
         },
       });
-      
+
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Potentially sensitive data in error context at user.profile.authToken")
+        expect.stringContaining(
+          "Potentially sensitive data in error context at user.profile.authToken",
+        ),
       );
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Potentially sensitive data in error context at config.apiKey")
+        expect.stringContaining(
+          "Potentially sensitive data in error context at config.apiKey",
+        ),
       );
-      
+
       consoleSpy.mockRestore();
     });
 
     it("should limit depth when checking for sensitive data", () => {
       const consoleSpy = jest.spyOn(console, "warn").mockImplementation();
-      
+
       new ErrorContext({
         errorEventId: "test-event-id",
         dataState: {
@@ -202,12 +212,12 @@ describe("ErrorContext Model", () => {
           },
         },
       });
-      
+
       // Should not warn about deeply nested sensitive data (maxDepth = 3)
       expect(consoleSpy).not.toHaveBeenCalledWith(
-        expect.stringContaining("level1.level2.level3.level4.password")
+        expect.stringContaining("level1.level2.level3.level4.password"),
       );
-      
+
       consoleSpy.mockRestore();
     });
   });
@@ -217,7 +227,7 @@ describe("ErrorContext Model", () => {
       const context = new ErrorContext({
         errorEventId: "test-event-id",
       });
-      
+
       context.setUserAction("form-submit");
       expect(context.userAction).toBe("form-submit");
     });
@@ -226,7 +236,7 @@ describe("ErrorContext Model", () => {
       const context = new ErrorContext({
         errorEventId: "test-event-id",
       });
-      
+
       context.setNavigationState("/profile", "/home");
       expect(context.navigationState).toEqual({
         currentRoute: "/profile",
@@ -238,10 +248,10 @@ describe("ErrorContext Model", () => {
       const context = new ErrorContext({
         errorEventId: "test-event-id",
       });
-      
+
       context.addDataState("formData", { name: "test" });
       context.addDataState("timestamp", Date.now());
-      
+
       expect(context.dataState).toEqual({
         formData: { name: "test" },
         timestamp: expect.any(Number),
@@ -258,9 +268,9 @@ describe("ErrorContext Model", () => {
           normalData: "safe",
         },
       });
-      
+
       context.sanitizeDataState();
-      
+
       expect(context.dataState).toEqual({
         userName: "john",
         password: "[REDACTED]",
@@ -273,7 +283,7 @@ describe("ErrorContext Model", () => {
       const context = new ErrorContext({
         errorEventId: "test-event-id",
       });
-      
+
       expect(() => context.sanitizeDataState()).not.toThrow();
       expect(context.dataState).toBeUndefined();
     });
