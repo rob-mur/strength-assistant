@@ -66,15 +66,15 @@ fi
 
 # Optimize AVD for disk space savings
 echo "🔧 Optimizing AVD for reduced disk usage..."
-# Reduce userdata partition from default 7GB to 512MB
-echo "disk.dataPartition.size=512MB" >> "$AVD_CONFIG_FILE"
+# Reduce userdata partition from default 7GB to 512MB using sed to overwrite existing setting
+sed -i 's/disk\.dataPartition\.size=.*/disk.dataPartition.size=512M/' "$AVD_CONFIG_FILE"
 # Use minimal RAM (2GB instead of default 4GB)
-echo "hw.ramSize=2048" >> "$AVD_CONFIG_FILE"
+sed -i 's/hw\.ramSize=.*/hw.ramSize=2048/' "$AVD_CONFIG_FILE" || echo "hw.ramSize=2048" >> "$AVD_CONFIG_FILE"
 # Disable GPU acceleration to save space/resources
-echo "hw.gpu.enabled=no" >> "$AVD_CONFIG_FILE"
+sed -i 's/hw\.gpu\.enabled=.*/hw.gpu.enabled=no/' "$AVD_CONFIG_FILE" || echo "hw.gpu.enabled=no" >> "$AVD_CONFIG_FILE"
 # Disable audio to save resources
-echo "hw.audioOutput=no" >> "$AVD_CONFIG_FILE"
-echo "hw.audioInput=no" >> "$AVD_CONFIG_FILE"
+sed -i 's/hw\.audioOutput=.*/hw.audioOutput=no/' "$AVD_CONFIG_FILE" || echo "hw.audioOutput=no" >> "$AVD_CONFIG_FILE"
+sed -i 's/hw\.audioInput=.*/hw.audioInput=no/' "$AVD_CONFIG_FILE" || echo "hw.audioInput=no" >> "$AVD_CONFIG_FILE"
 # Reduce internal storage size
 echo "disk.dataPartition.initPath=" >> "$AVD_CONFIG_FILE"
 
@@ -178,7 +178,8 @@ adb devices | grep emulator && {
 # Start Android emulator in headless mode with more stable settings
 echo "🚀 Starting Android emulator in headless mode..."
 # Use more stable emulator settings - avoid -gpu off which can cause crashes
-emulator -avd test -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect &
+# Add -partition-size as additional safeguard for userdata partition size
+emulator -avd test -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -partition-size 512 &
 EMULATOR_PID=$!
 echo "📱 Emulator started with PID: $EMULATOR_PID"
 
