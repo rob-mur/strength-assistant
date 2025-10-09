@@ -131,5 +131,151 @@ describe("ErrorContext Model", () => {
       expect(summary).toContain("Route: /home");
       expect(summary).toContain("Network: disconnected");
     });
+
+    it("should warn about sensitive data in context", () => {
+      const consoleSpy = jest.spyOn(console, "warn").mockImplementation();
+      
+      new ErrorContext({
+        errorEventId: "test-event-id",
+        dataState: {
+          userName: "john",
+          password: "secret123",
+          userToken: "abc123",
+          creditCardNumber: "4111-1111-1111-1111",
+        },
+      });
+      
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Potentially sensitive data in error context at password")
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Potentially sensitive data in error context at userToken")
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Potentially sensitive data in error context at creditCardNumber")
+      );
+      
+      consoleSpy.mockRestore();
+    });
+
+    it("should handle nested objects in sensitive data check", () => {
+      const consoleSpy = jest.spyOn(console, "warn").mockImplementation();
+      
+      new ErrorContext({
+        errorEventId: "test-event-id",
+        dataState: {
+          user: {
+            profile: {
+              authToken: "secret-token",
+            },
+          },
+          config: {
+            apiKey: "api-secret",
+          },
+        },
+      });
+      
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Potentially sensitive data in error context at user.profile.authToken")
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Potentially sensitive data in error context at config.apiKey")
+      );
+      
+      consoleSpy.mockRestore();
+    });
+
+    it("should limit depth when checking for sensitive data", () => {
+      const consoleSpy = jest.spyOn(console, "warn").mockImplementation();
+      
+      new ErrorContext({
+        errorEventId: "test-event-id",
+        dataState: {
+          level1: {
+            level2: {
+              level3: {
+                level4: {
+                  password: "should-not-warn-too-deep",
+                },
+              },
+            },
+          },
+        },
+      });
+      
+      // Should not warn about deeply nested sensitive data (maxDepth = 3)
+      expect(consoleSpy).not.toHaveBeenCalledWith(
+        expect.stringContaining("level1.level2.level3.level4.password")
+      );
+      
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe("State Management", () => {
+    it("should update user action", () => {
+      const context = new ErrorContext({
+        errorEventId: "test-event-id",
+      });
+      
+      context.setUserAction("form-submit");
+      expect(context.userAction).toBe("form-submit");
+    });
+
+    it("should update navigation state", () => {
+      const context = new ErrorContext({
+        errorEventId: "test-event-id",
+      });
+      
+      context.setNavigationState("/profile", "/home");
+      expect(context.navigationState).toEqual({
+        currentRoute: "/profile",
+        previousRoute: "/home",
+      });
+    });
+
+    it("should add data to state", () => {
+      const context = new ErrorContext({
+        errorEventId: "test-event-id",
+      });
+      
+      context.addDataState("formData", { name: "test" });
+      context.addDataState("timestamp", Date.now());
+      
+      expect(context.dataState).toEqual({
+        formData: { name: "test" },
+        timestamp: expect.any(Number),
+      });
+    });
+
+    it("should sanitize data state by redacting sensitive keys", () => {
+      const context = new ErrorContext({
+        errorEventId: "test-event-id",
+        dataState: {
+          userName: "john",
+          password: "secret123",
+          apiToken: "abc123",
+          normalData: "safe",
+        },
+      });
+      
+      context.sanitizeDataState();
+      
+      expect(context.dataState).toEqual({
+        userName: "john",
+        password: "[REDACTED]",
+        apiToken: "[REDACTED]",
+        normalData: "safe",
+      });
+    });
+
+    it("should handle sanitization when dataState is null", () => {
+      const context = new ErrorContext({
+        errorEventId: "test-event-id",
+      });
+      
+      expect(() => context.sanitizeDataState()).not.toThrow();
+      expect(context.dataState).toBeUndefined();
+    });
   });
 });
