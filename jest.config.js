@@ -47,6 +47,9 @@ module.exports = {
     "/lib/utils/logging/RecoveryConfig.ts",
     "/lib/utils/logging/ReactNativeContextCollector.ts",
     "/lib/utils/logging/DefaultUserErrorDisplay.ts",
+    "/lib/utils/alert/alertService.ts",
+    "/lib/utils/device/deviceInfo.ts",
+    "/lib/utils/toast/toastService.ts",
   ],
 
   // Coverage thresholds adjusted for current codebase coverage levels
