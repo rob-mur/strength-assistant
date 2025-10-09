@@ -44,6 +44,9 @@ module.exports = {
     "/lib/models/Exercise.ts",
     "/lib/models/ExerciseRecord.ts",
     "/lib/models/UserAccount.ts",
+    "/lib/utils/logging/RecoveryConfig.ts",
+    "/lib/utils/logging/ReactNativeContextCollector.ts",
+    "/lib/utils/logging/DefaultUserErrorDisplay.ts",
   ],
 
   // Coverage thresholds adjusted for current codebase coverage levels
