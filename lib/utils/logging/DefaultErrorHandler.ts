@@ -405,29 +405,75 @@ export class DefaultErrorHandler implements ErrorHandler {
    */
   private setupNodeErrorHandlers(): void {
     if (typeof process === "undefined") {
+      console.log("🔍 No process object found - skipping Node error handler setup");
       return;
     }
 
-    const uncaughtHandler = (error: Error) => {
-      this.handleUncaughtError(error, "process-uncaught-exception");
-    };
+    console.log("🔍 Process object found, setting up Node error handlers...");
 
-    const rejectionHandler = (reason: unknown) => {
-      this.handleUnhandledRejection(reason, "process-unhandled-rejection");
-    };
+    try {
+      // Validate that required methods exist before setting up handlers
+      if (typeof this.handleUncaughtError !== 'function') {
+        console.error("❌ this.handleUncaughtError is not a function:", typeof this.handleUncaughtError);
+        return;
+      }
 
-    // Only add listeners if we haven't exceeded the limit
-    const currentListeners = process.listenerCount("uncaughtException");
-    if (currentListeners < 8) {
-      // Leave some room under the 10 limit
-      process.on("uncaughtException", uncaughtHandler);
-      process.on("unhandledRejection", rejectionHandler);
+      if (typeof this.handleUnhandledRejection !== 'function') {
+        console.error("❌ this.handleUnhandledRejection is not a function:", typeof this.handleUnhandledRejection);
+        return;
+      }
 
-      // Store cleanup functions
-      DefaultErrorHandler.globalHandlerCleanup.push(() => {
-        process.removeListener("uncaughtException", uncaughtHandler);
-        process.removeListener("unhandledRejection", rejectionHandler);
-      });
+      const uncaughtHandler = (error: Error) => {
+        try {
+          this.handleUncaughtError(error, "process-uncaught-exception");
+        } catch (handlerError) {
+          console.error("❌ Error in uncaught exception handler:", handlerError);
+        }
+      };
+
+      const rejectionHandler = (reason: unknown) => {
+        try {
+          this.handleUnhandledRejection(reason, "process-unhandled-rejection");
+        } catch (handlerError) {
+          console.error("❌ Error in unhandled rejection handler:", handlerError);
+        }
+      };
+
+      // Check if process methods exist
+      if (typeof process.listenerCount !== 'function') {
+        console.error("❌ process.listenerCount is not a function");
+        return;
+      }
+
+      if (typeof process.on !== 'function') {
+        console.error("❌ process.on is not a function");
+        return;
+      }
+
+      // Only add listeners if we haven't exceeded the limit
+      const currentListeners = process.listenerCount("uncaughtException");
+      console.log("🔍 Current uncaughtException listeners:", currentListeners);
+      
+      if (currentListeners < 8) {
+        // Leave some room under the 10 limit
+        process.on("uncaughtException", uncaughtHandler);
+        process.on("unhandledRejection", rejectionHandler);
+
+        // Store cleanup functions
+        DefaultErrorHandler.globalHandlerCleanup.push(() => {
+          if (typeof process.removeListener === 'function') {
+            process.removeListener("uncaughtException", uncaughtHandler);
+            process.removeListener("unhandledRejection", rejectionHandler);
+          }
+        });
+        
+        console.log("✅ Node error handlers attached successfully");
+      } else {
+        console.log("⚠️ Too many uncaughtException listeners, skipping Node error handler setup");
+      }
+    } catch (nodeSetupError) {
+      console.error("❌ Error setting up Node error handlers:", nodeSetupError);
+      throw nodeSetupError; // Re-throw to be caught by the caller
     }
   }
 
