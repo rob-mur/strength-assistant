@@ -329,11 +329,36 @@ export class DefaultErrorHandler implements ErrorHandler {
     }
 
     try {
-      this.setupBrowserErrorHandlers();
-      this.setupNodeErrorHandlers();
-      this.setupReactNativeErrorHandlers();
+      // Setup with individual error handling to isolate issues
+      try {
+        console.log("🔧 Setting up browser error handlers...");
+        this.setupBrowserErrorHandlers();
+        console.log("✅ Browser error handlers setup complete");
+      } catch (browserError) {
+        console.error("❌ Browser error handler setup failed:", browserError);
+      }
+
+      try {
+        console.log("🔧 Setting up Node error handlers...");
+        this.setupNodeErrorHandlers();
+        console.log("✅ Node error handlers setup complete");
+      } catch (nodeError) {
+        console.error("❌ Node error handler setup failed:", nodeError);
+      }
+
+      try {
+        console.log("🔧 Setting up React Native error handlers...");
+        this.setupReactNativeErrorHandlers();
+        console.log("✅ React Native error handlers setup complete");
+      } catch (reactNativeError) {
+        console.error(
+          "❌ React Native error handler setup failed:",
+          reactNativeError,
+        );
+      }
 
       DefaultErrorHandler.globalHandlersSetup = true;
+      console.log("✅ Global error handlers setup complete");
     } catch (setupError) {
       console.error("Failed to setup global error handlers:", setupError);
     }
@@ -412,27 +437,70 @@ export class DefaultErrorHandler implements ErrorHandler {
   private setupReactNativeErrorHandlers(): void {
     const globalWithErrorUtils = this.getReactNativeGlobal();
     if (!globalWithErrorUtils?.ErrorUtils) {
+      console.log(
+        "🔍 No React Native ErrorUtils found - skipping RN error handler setup",
+      );
       return;
     }
 
-    const originalHandler = globalWithErrorUtils.ErrorUtils.getGlobalHandler();
+    try {
+      console.log("🔍 React Native ErrorUtils found, setting up handlers...");
 
-    globalWithErrorUtils.ErrorUtils.setGlobalHandler(
-      (error: Error, isFatal: boolean) => {
-        this.handleUncaughtError(
-          error,
-          isFatal ? "fatal-error" : "non-fatal-error",
+      // Check if getGlobalHandler exists and is a function
+      if (
+        typeof globalWithErrorUtils.ErrorUtils.getGlobalHandler !== "function"
+      ) {
+        console.error(
+          "❌ ErrorUtils.getGlobalHandler is not a function:",
+          typeof globalWithErrorUtils.ErrorUtils.getGlobalHandler,
         );
+        return;
+      }
+
+      const originalHandler =
+        globalWithErrorUtils.ErrorUtils.getGlobalHandler();
+      console.log("🔍 Original handler type:", typeof originalHandler);
+
+      // Check if setGlobalHandler exists and is a function
+      if (
+        typeof globalWithErrorUtils.ErrorUtils.setGlobalHandler !== "function"
+      ) {
+        console.error(
+          "❌ ErrorUtils.setGlobalHandler is not a function:",
+          typeof globalWithErrorUtils.ErrorUtils.setGlobalHandler,
+        );
+        return;
+      }
+
+      const boundErrorHandler = (error: Error, isFatal: boolean) => {
+        try {
+          this.handleUncaughtError(
+            error,
+            isFatal ? "fatal-error" : "non-fatal-error",
+          );
+        } catch (handlerError) {
+          console.error("❌ Error in bound error handler:", handlerError);
+        }
 
         // Call original handler if it exists
-        if (originalHandler && typeof originalHandler === "function") {
-          (originalHandler as (error: Error, isFatal: boolean) => void)(
-            error,
-            isFatal,
-          );
+        try {
+          if (originalHandler && typeof originalHandler === "function") {
+            (originalHandler as (error: Error, isFatal: boolean) => void)(
+              error,
+              isFatal,
+            );
+          }
+        } catch (originalHandlerError) {
+          console.error("❌ Error in original handler:", originalHandlerError);
         }
-      },
-    );
+      };
+
+      globalWithErrorUtils.ErrorUtils.setGlobalHandler(boundErrorHandler);
+
+      console.log("✅ React Native error handler setup successful");
+    } catch (rnError) {
+      console.error("❌ Failed to setup React Native error handlers:", rnError);
+    }
   }
 
   /**
