@@ -105,6 +105,19 @@ grep -E "(disk\.dataPartition\.size|hw\.ramSize|sdcard\.size)" "$AVD_CONFIG_FILE
 
 echo "✅ Android AVD created and optimized successfully"
 
+# CRITICAL: Create custom userdata image to bypass 7.37GB default allocation
+echo "🔧 Creating custom 256MB userdata image to avoid disk space issues..."
+CUSTOM_USERDATA_IMG="$(dirname "$AVD_CONFIG_FILE")/userdata-custom-256mb.img"
+if [ ! -f "$CUSTOM_USERDATA_IMG" ]; then
+    # Create 256MB userdata image
+    dd if=/dev/zero of="$CUSTOM_USERDATA_IMG" bs=1M count=256 2>/dev/null
+    # Format as ext4 filesystem
+    mkfs.ext4 -F "$CUSTOM_USERDATA_IMG" >/dev/null 2>&1
+    echo "✅ Created and formatted custom 256MB userdata image"
+else
+    echo "✅ Using existing custom userdata image"
+fi
+
 adb start-server
 
 # Set up error handler early to cleanup any processes
@@ -200,15 +213,16 @@ adb devices | grep emulator && {
     sleep 3
 }
 
-# Start Android emulator in headless mode with minimal disk usage
-echo "🚀 Starting Android emulator with aggressive disk space optimization..."
-# CRITICAL: Use minimal settings to stay within CI disk constraints
-# -partition-size 256: Match our 256MB userdata partition config
+# Start Android emulator with custom userdata image to bypass 7.37GB default
+echo "🚀 Starting Android emulator with custom 256MB userdata image..."
+# CRITICAL: Use -data parameter to specify custom userdata image
+# This completely bypasses the default 7.37GB userdata allocation that causes CI failures
+# -data: Use our custom 256MB userdata image instead of default
 # -memory 1024: Force 1GB RAM limit
 # -no-cache: Disable cache to save disk space
-# -wipe-data: Ensure clean start with new partition sizes
+# -no-snapshot-save/load: Avoid snapshot overhead
 emulator -avd test -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect \
-  -partition-size 256 -memory 1024 -no-cache -wipe-data &
+  -data "$CUSTOM_USERDATA_IMG" -memory 1024 -no-cache -no-snapshot-save -no-snapshot-load &
 EMULATOR_PID=$!
 echo "📱 Emulator started with PID: $EMULATOR_PID"
 
