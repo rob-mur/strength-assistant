@@ -302,23 +302,27 @@ export class SupabaseStorage implements StorageBackend {
 
     // Try Supabase with a very short timeout, then immediately fallback
     try {
-      console.log("🔐 SupabaseStorage - Quick Supabase attempt (2s timeout)...");
-      
+      console.log(
+        "🔐 SupabaseStorage - Quick Supabase attempt (2s timeout)...",
+      );
+
       // Create a very aggressive timeout
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => {
-          console.log("🔐 SupabaseStorage - TIMEOUT: Supabase took too long, rejecting...");
+          console.log(
+            "🔐 SupabaseStorage - TIMEOUT: Supabase took too long, rejecting...",
+          );
           reject(new Error("Supabase timeout after 2 seconds"));
         }, 2000); // Even shorter timeout
       });
 
       console.log("🔐 SupabaseStorage - Starting signInAnonymously call...");
       const signInPromise = this.getClient().auth.signInAnonymously();
-      
+
       console.log("🔐 SupabaseStorage - Racing promises...");
       // Race with a short timeout - this will either return Supabase result or throw timeout
       const result = await Promise.race([signInPromise, timeoutPromise]);
-      
+
       // If we get here, Supabase succeeded within timeout
       console.log("🔐 SupabaseStorage - Supabase succeeded:", {
         user: result.data?.user ? "found" : "null",
@@ -326,10 +330,13 @@ export class SupabaseStorage implements StorageBackend {
       });
 
       if (result.error) {
-        console.log("🔐 SupabaseStorage - Supabase returned error:", result.error.message);
+        console.log(
+          "🔐 SupabaseStorage - Supabase returned error:",
+          result.error.message,
+        );
         throw result.error;
       }
-      
+
       if (result.data?.user) {
         console.log(
           "🔐 SupabaseStorage - Successfully created Supabase anonymous user:",
@@ -340,10 +347,15 @@ export class SupabaseStorage implements StorageBackend {
         this.notifyAuthStateChange(realUser);
         return realUser;
       }
-      
-      console.log("🔐 SupabaseStorage - Supabase returned success but no user, falling back");
+
+      console.log(
+        "🔐 SupabaseStorage - Supabase returned success but no user, falling back",
+      );
     } catch (error) {
-      console.log("🔐 SupabaseStorage - Supabase failed/timeout, using fallback:", error);
+      console.log(
+        "🔐 SupabaseStorage - Supabase failed/timeout, using fallback:",
+        error,
+      );
     }
 
     // Fallback: create a local anonymous user if Supabase auth fails
