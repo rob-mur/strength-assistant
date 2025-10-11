@@ -300,66 +300,50 @@ export class SupabaseStorage implements StorageBackend {
       "🔐 SupabaseStorage - Attempting Supabase anonymous sign in...",
     );
 
+    // Try Supabase with a very short timeout, then immediately fallback
     try {
-      // Add timeout wrapper to prevent hanging - reasonable timeout for all environments
-      const timeoutMs = 30000; // 30 seconds - enough time for slow networks, not too long for UX
-      const timeoutPromise = new Promise((_, reject) => {
+      console.log("🔐 SupabaseStorage - Quick Supabase attempt (2s timeout)...");
+      
+      // Create a very aggressive timeout
+      const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => {
-          reject(
-            new Error(
-              `Supabase anonymous sign-in timeout after ${timeoutMs / 1000} seconds`,
-            ),
-          );
-        }, timeoutMs);
+          console.log("🔐 SupabaseStorage - TIMEOUT: Supabase took too long, rejecting...");
+          reject(new Error("Supabase timeout after 2 seconds"));
+        }, 2000); // Even shorter timeout
       });
 
+      console.log("🔐 SupabaseStorage - Starting signInAnonymously call...");
       const signInPromise = this.getClient().auth.signInAnonymously();
-
-      console.log(
-        `🔐 SupabaseStorage - Waiting for Supabase response (${timeoutMs / 1000}s timeout)...`,
-      );
+      
+      console.log("🔐 SupabaseStorage - Racing promises...");
+      // Race with a short timeout - this will either return Supabase result or throw timeout
       const result = await Promise.race([signInPromise, timeoutPromise]);
-      const {
-        data: { user },
-        error,
-      } = result as { data: { user: User | null }; error: Error | null };
-
-      console.log("🔐 SupabaseStorage - Supabase anonymous sign in result:", {
-        user: user ? "found" : "null",
-        error: error ? error.message : "none",
+      
+      // If we get here, Supabase succeeded within timeout
+      console.log("🔐 SupabaseStorage - Supabase succeeded:", {
+        user: result.data?.user ? "found" : "null",
+        error: result.error ? result.error.message : "none",
       });
 
-      if (error) {
-        console.error(
-          "🔐 SupabaseStorage - Supabase anonymous sign in error:",
-          error,
-        );
-        throw error;
+      if (result.error) {
+        console.log("🔐 SupabaseStorage - Supabase returned error:", result.error.message);
+        throw result.error;
       }
-      if (user) {
+      
+      if (result.data?.user) {
         console.log(
           "🔐 SupabaseStorage - Successfully created Supabase anonymous user:",
-          user.id,
+          result.data.user.id,
         );
-        const realUser = this.mapSupabaseUserToAccount(user);
+        const realUser = this.mapSupabaseUserToAccount(result.data.user);
         this.currentUser = realUser;
         this.notifyAuthStateChange(realUser);
         return realUser;
       }
+      
+      console.log("🔐 SupabaseStorage - Supabase returned success but no user, falling back");
     } catch (error) {
-      console.error(
-        "🔐 SupabaseStorage - Supabase anonymous sign in failed:",
-        error,
-      );
-
-      // Always proceed with fallback - critical for all environments
-      console.log(
-        "🔐 SupabaseStorage - Creating local anonymous user fallback after Supabase failure",
-      );
-      console.log(
-        "🔐 SupabaseStorage - Error details:",
-        (error as Error).message,
-      );
+      console.log("🔐 SupabaseStorage - Supabase failed/timeout, using fallback:", error);
     }
 
     // Fallback: create a local anonymous user if Supabase auth fails
