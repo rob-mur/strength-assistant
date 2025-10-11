@@ -26,7 +26,9 @@ export function AuthAwareLayout({ children }: AuthAwareLayoutProps) {
   useEffect(() => {
     // Reset forceShowAuth when we have a user (auth completed successfully)
     if (user && forceShowAuth) {
-      console.log("🔍 AuthAwareLayout - Auth completed, clearing forceShowAuth");
+      console.log(
+        "🔍 AuthAwareLayout - Auth completed, clearing forceShowAuth",
+      );
       setForceShowAuth(false);
     }
   }, [user, forceShowAuth]);
