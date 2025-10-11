@@ -27,25 +27,23 @@ export function AuthAwareLayout({ children }: AuthAwareLayoutProps) {
       return;
     }
 
-    // In Chrome test environment, no need to force - auth hook already handles this
-    // Priority: Chrome test environment overrides CI environment
-    const isChromeTest =
+    // In test environments, let auth hook handle state - don't force auth screen
+    const isTestEnvironment =
       process.env.CHROME_TEST === "true" ||
-      process.env.EXPO_PUBLIC_CHROME_TEST === "true";
-    const isCITest =
-      process.env.CI === "true" &&
-      process.env.CHROME_TEST !== "true" &&
-      process.env.EXPO_PUBLIC_CHROME_TEST !== "true";
+      process.env.EXPO_PUBLIC_CHROME_TEST === "true" ||
+      process.env.CI === "true" ||
+      process.env.NODE_ENV === "test";
 
-    if (isChromeTest || isCITest) {
-      // Let the useAuth hook handle the state, don't force anything here
+    if (isTestEnvironment) {
+      // Let the useAuth hook handle the state completely in test environments
+      // This prevents premature auth screen forcing before fallback auth completes
       return;
     }
 
-    // Normal timeout for other environments
+    // Only set timeout for production/development environments
     const timeout = setTimeout(() => {
       setForceShowAuth(true);
-    }, 5000); // 5 seconds timeout
+    }, 5000); // 5 seconds timeout for normal environments
 
     return () => clearTimeout(timeout);
   }, [loading]);

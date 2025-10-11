@@ -301,24 +301,26 @@ export class SupabaseStorage implements StorageBackend {
     );
 
     try {
-      // Add timeout wrapper to prevent hanging
+      // Add timeout wrapper to prevent hanging - longer timeout for CI environments
+      const timeoutMs = process.env.CI ? 30000 : 15000; // 30s for CI, 15s for local
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => {
           reject(
-            new Error("Supabase anonymous sign-in timeout after 10 seconds"),
+            new Error(`Supabase anonymous sign-in timeout after ${timeoutMs / 1000} seconds`),
           );
-        }, 10000);
+        }, timeoutMs);
       });
 
       const signInPromise = this.getClient().auth.signInAnonymously();
 
       console.log(
-        "🔐 SupabaseStorage - Waiting for Supabase response (10s timeout)...",
+        `🔐 SupabaseStorage - Waiting for Supabase response (${timeoutMs / 1000}s timeout)...`,
       );
+      const result = await Promise.race([signInPromise, timeoutPromise]);
       const {
         data: { user },
         error,
-      } = (await Promise.race([signInPromise, timeoutPromise])) as any;
+      } = result as { data: { user: User | null }; error: Error | null };
 
       console.log("🔐 SupabaseStorage - Supabase anonymous sign in result:", {
         user: user ? "found" : "null",
@@ -348,22 +350,17 @@ export class SupabaseStorage implements StorageBackend {
         error,
       );
 
-      // Handle authentication failure
-      if (process.env.NODE_ENV === "production") {
-        console.error(
-          "🔐 SupabaseStorage - Production mode: Supabase auth failed, but proceeding with local fallback for testing",
-        );
-        console.log(
-          "🔐 SupabaseStorage - Error details:",
-          (error as Error).message,
-        );
-        // In production testing environments, we still need to allow fallback
-        // to prevent test failures. The app can function with local state.
-      } else {
-        console.log(
-          "🔐 SupabaseStorage - Development mode: creating local anonymous user fallback",
-        );
-      }
+      // Always proceed with fallback - critical for CI/test environments
+      const environment = process.env.NODE_ENV === "production" ? "Production" : "Development";
+      const isCi = process.env.CI ? " (CI environment)" : "";
+      
+      console.log(
+        `🔐 SupabaseStorage - ${environment} mode${isCi}: Creating local anonymous user fallback`,
+      );
+      console.log(
+        "🔐 SupabaseStorage - Error details:",
+        (error as Error).message,
+      );
     }
 
     // Fallback: create a local anonymous user if Supabase auth fails (dev/test only)
