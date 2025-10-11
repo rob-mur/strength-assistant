@@ -21,43 +21,15 @@ export function AuthAwareLayout({ children }: AuthAwareLayoutProps) {
     forceShowAuth,
   );
 
-  // Show auth screen appropriately for different environments
+  // Only show auth screen if user explicitly needs to authenticate
+  // Remove complex timeout logic - let the auth hook handle state completely
   useEffect(() => {
-    if (!loading) {
-      return;
+    // Reset forceShowAuth when we have a user (auth completed successfully)
+    if (user && forceShowAuth) {
+      console.log("🔍 AuthAwareLayout - Auth completed, clearing forceShowAuth");
+      setForceShowAuth(false);
     }
-
-    // Debug: Log environment variables to understand what's available at runtime
-    console.log("🔍 AuthAwareLayout environment debug:", {
-      "process.env.CI": process.env.CI,
-      "process.env.CHROME_TEST": process.env.CHROME_TEST,
-      "process.env.EXPO_PUBLIC_CHROME_TEST": process.env.EXPO_PUBLIC_CHROME_TEST,
-      "process.env.NODE_ENV": process.env.NODE_ENV,
-    });
-
-    // In test environments, let auth hook handle state - don't force auth screen
-    const isTestEnvironment =
-      process.env.CHROME_TEST === "true" ||
-      process.env.EXPO_PUBLIC_CHROME_TEST === "true" ||
-      process.env.CI === "true" ||
-      process.env.NODE_ENV === "test";
-
-    console.log("🔍 AuthAwareLayout - isTestEnvironment:", isTestEnvironment);
-
-    if (isTestEnvironment) {
-      // Let the useAuth hook handle the state completely in test environments
-      // This prevents premature auth screen forcing before fallback auth completes
-      console.log("🔍 AuthAwareLayout - Test environment detected, skipping timeout");
-      return;
-    }
-
-    // Only set timeout for production/development environments
-    const timeout = setTimeout(() => {
-      setForceShowAuth(true);
-    }, 5000); // 5 seconds timeout for normal environments
-
-    return () => clearTimeout(timeout);
-  }, [loading]);
+  }, [user, forceShowAuth]);
 
   if (loading && !forceShowAuth) {
     return (

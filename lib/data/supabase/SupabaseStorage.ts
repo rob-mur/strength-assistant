@@ -301,8 +301,8 @@ export class SupabaseStorage implements StorageBackend {
     );
 
     try {
-      // Add timeout wrapper to prevent hanging - longer timeout for CI environments
-      const timeoutMs = process.env.CI ? 30000 : 15000; // 30s for CI, 15s for local
+      // Add timeout wrapper to prevent hanging - reasonable timeout for all environments
+      const timeoutMs = 30000; // 30 seconds - enough time for slow networks, not too long for UX
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => {
           reject(
@@ -352,13 +352,9 @@ export class SupabaseStorage implements StorageBackend {
         error,
       );
 
-      // Always proceed with fallback - critical for CI/test environments
-      const environment =
-        process.env.NODE_ENV === "production" ? "Production" : "Development";
-      const isCi = process.env.CI ? " (CI environment)" : "";
-
+      // Always proceed with fallback - critical for all environments
       console.log(
-        `🔐 SupabaseStorage - ${environment} mode${isCi}: Creating local anonymous user fallback`,
+        "🔐 SupabaseStorage - Creating local anonymous user fallback after Supabase failure",
       );
       console.log(
         "🔐 SupabaseStorage - Error details:",
@@ -366,7 +362,7 @@ export class SupabaseStorage implements StorageBackend {
       );
     }
 
-    // Fallback: create a local anonymous user if Supabase auth fails (dev/test only)
+    // Fallback: create a local anonymous user if Supabase auth fails
     console.log("🔐 SupabaseStorage - Creating local anonymous user fallback");
     const anonymousUser = createAnonymousUser();
     this.currentUser = anonymousUser;
