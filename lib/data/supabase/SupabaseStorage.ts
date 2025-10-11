@@ -306,7 +306,9 @@ export class SupabaseStorage implements StorageBackend {
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => {
           reject(
-            new Error(`Supabase anonymous sign-in timeout after ${timeoutMs / 1000} seconds`),
+            new Error(
+              `Supabase anonymous sign-in timeout after ${timeoutMs / 1000} seconds`,
+            ),
           );
         }, timeoutMs);
       });
@@ -351,9 +353,10 @@ export class SupabaseStorage implements StorageBackend {
       );
 
       // Always proceed with fallback - critical for CI/test environments
-      const environment = process.env.NODE_ENV === "production" ? "Production" : "Development";
+      const environment =
+        process.env.NODE_ENV === "production" ? "Production" : "Development";
       const isCi = process.env.CI ? " (CI environment)" : "";
-      
+
       console.log(
         `🔐 SupabaseStorage - ${environment} mode${isCi}: Creating local anonymous user fallback`,
       );
