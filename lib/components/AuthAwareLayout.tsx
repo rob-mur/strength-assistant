@@ -27,6 +27,14 @@ export function AuthAwareLayout({ children }: AuthAwareLayoutProps) {
       return;
     }
 
+    // Debug: Log environment variables to understand what's available at runtime
+    console.log("🔍 AuthAwareLayout environment debug:", {
+      "process.env.CI": process.env.CI,
+      "process.env.CHROME_TEST": process.env.CHROME_TEST,
+      "process.env.EXPO_PUBLIC_CHROME_TEST": process.env.EXPO_PUBLIC_CHROME_TEST,
+      "process.env.NODE_ENV": process.env.NODE_ENV,
+    });
+
     // In test environments, let auth hook handle state - don't force auth screen
     const isTestEnvironment =
       process.env.CHROME_TEST === "true" ||
@@ -34,9 +42,12 @@ export function AuthAwareLayout({ children }: AuthAwareLayoutProps) {
       process.env.CI === "true" ||
       process.env.NODE_ENV === "test";
 
+    console.log("🔍 AuthAwareLayout - isTestEnvironment:", isTestEnvironment);
+
     if (isTestEnvironment) {
       // Let the useAuth hook handle the state completely in test environments
       // This prevents premature auth screen forcing before fallback auth completes
+      console.log("🔍 AuthAwareLayout - Test environment detected, skipping timeout");
       return;
     }
 
