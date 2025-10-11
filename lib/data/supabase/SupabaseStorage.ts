@@ -492,8 +492,13 @@ export class SupabaseStorage implements StorageBackend {
     const {
       data: { subscription },
     } = this.getClient().auth.onAuthStateChange(async (event, session) => {
-      console.log(`🔐 SupabaseStorage - Auth state change: ${event}, session:`, session?.user ? 'exists' : 'null', 'currentUser:', this.currentUser ? 'exists' : 'null');
-      
+      console.log(
+        `🔐 SupabaseStorage - Auth state change: ${event}, session:`,
+        session?.user ? "exists" : "null",
+        "currentUser:",
+        this.currentUser ? "exists" : "null",
+      );
+
       if (session?.user) {
         console.log("🔐 SupabaseStorage - Setting user from Supabase session");
         const userAccount = this.mapSupabaseUserToAccount(session.user);
@@ -503,12 +508,16 @@ export class SupabaseStorage implements StorageBackend {
         // CRITICAL FIX: Never override local anonymous users when Supabase has no session
         // This prevents the race condition where local anonymous auth gets wiped out
         if (this.currentUser?.isAnonymous) {
-          console.log("🔐 SupabaseStorage - Preserving existing anonymous user, ignoring Supabase null session");
+          console.log(
+            "🔐 SupabaseStorage - Preserving existing anonymous user, ignoring Supabase null session",
+          );
           return;
         }
-        
+
         // Only reset if we don't have a local anonymous user
-        console.log("🔐 SupabaseStorage - No Supabase session and no local user, setting to null");
+        console.log(
+          "🔐 SupabaseStorage - No Supabase session and no local user, setting to null",
+        );
         this.currentUser = null;
         callback(null);
       }
@@ -516,7 +525,9 @@ export class SupabaseStorage implements StorageBackend {
 
     // Immediately call callback with current user if exists (for anonymous users)
     if (this.currentUser) {
-      console.log("🔐 SupabaseStorage - Immediately calling callback with existing user");
+      console.log(
+        "🔐 SupabaseStorage - Immediately calling callback with existing user",
+      );
       callback(this.currentUser);
     }
 
