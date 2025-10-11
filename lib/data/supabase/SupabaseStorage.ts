@@ -299,22 +299,26 @@ export class SupabaseStorage implements StorageBackend {
     console.log(
       "🔐 SupabaseStorage - Attempting Supabase anonymous sign in...",
     );
-    
+
     try {
       // Add timeout wrapper to prevent hanging
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => {
-          reject(new Error("Supabase anonymous sign-in timeout after 10 seconds"));
+          reject(
+            new Error("Supabase anonymous sign-in timeout after 10 seconds"),
+          );
         }, 10000);
       });
 
       const signInPromise = this.getClient().auth.signInAnonymously();
-      
-      console.log("🔐 SupabaseStorage - Waiting for Supabase response (10s timeout)...");
+
+      console.log(
+        "🔐 SupabaseStorage - Waiting for Supabase response (10s timeout)...",
+      );
       const {
         data: { user },
         error,
-      } = await Promise.race([signInPromise, timeoutPromise]) as any;
+      } = (await Promise.race([signInPromise, timeoutPromise])) as any;
 
       console.log("🔐 SupabaseStorage - Supabase anonymous sign in result:", {
         user: user ? "found" : "null",
@@ -350,7 +354,8 @@ export class SupabaseStorage implements StorageBackend {
           "🔐 SupabaseStorage - Production mode: Supabase auth failed, but proceeding with local fallback for testing",
         );
         console.log(
-          "🔐 SupabaseStorage - Error details:", (error as Error).message,
+          "🔐 SupabaseStorage - Error details:",
+          (error as Error).message,
         );
         // In production testing environments, we still need to allow fallback
         // to prevent test failures. The app can function with local state.
