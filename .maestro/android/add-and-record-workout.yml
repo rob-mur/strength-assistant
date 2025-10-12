@@ -1,24 +1,5 @@
-url: com.jimmysolutions.strengthassistant.test
 ---
-- launchApp
-
-- tapOn:
-    id: "continue-as-guest"
-    optional: true
-
-- extendedWaitUntil:
-    visible:
-      id: "get-started"
-    timeout: 15000
-- tapOn:
-    id: "get-started"
-- tapOn:
-    id: "add-exercise"
-- tapOn:
-    id: "name"
-- inputText: "ExerciseName"
-- tapOn:
-    id: "submit"
-- assertVisible: "ExerciseName"
-- tapOn:
-    id: "add-workout"
+- runFlow:
+    file: ../shared/add-and-record-workout.yml
+    env:
+      APP_URL: "com.jimmysolutions.strengthassistant.test"

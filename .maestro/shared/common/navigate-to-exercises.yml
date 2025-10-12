@@ -1,0 +1,10 @@
+# Navigate to exercises tab and wait for it to load
+---
+- tapOn:
+    id: "exercisesTab"
+    optional: true
+- takeScreenshot: "exercises-tab-selected.png"
+
+# Wait for exercises screen to load
+- waitForAnimationToEnd:
+    timeout: 5000
