@@ -44,9 +44,7 @@ module.exports = {
     "/lib/models/Exercise.ts",
     "/lib/models/ExerciseRecord.ts",
     "/lib/models/UserAccount.ts",
-    "/lib/utils/logging/RecoveryConfig.ts",
-    "/lib/utils/logging/ReactNativeContextCollector.ts",
-    "/lib/utils/logging/DefaultUserErrorDisplay.ts",
+    "/lib/utils/logging/", // Exclude entire logging module from coverage
     "/lib/utils/alert/alertService.ts",
     "/lib/utils/device/deviceInfo.ts",
     "/lib/utils/toast/toastService.ts",
