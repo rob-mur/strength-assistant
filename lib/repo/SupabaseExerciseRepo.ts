@@ -278,7 +278,7 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
   /**
    * Extract user information from Supabase result
    */
-  private extractUserFromResult(result: any): { id: string } | null {
+  private extractUserFromResult(result: unknown): { id: string } | null {
     if (
       result &&
       typeof result === "object" &&
