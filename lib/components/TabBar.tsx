@@ -44,6 +44,16 @@ const TabBar = (props: BottomTabBarProps) => {
 
         return label;
       }}
+      getTestID={({ route }) => {
+        // Map route names to specific testIDs for Maestro tests
+        const testIDMap: Record<string, string> = {
+          exercises: "exercisesTab",
+          workout: "workoutTab",
+          index: "homeTab",
+          profile: "profileTab",
+        };
+        return testIDMap[route.name] || `${route.name}Tab`;
+      }}
     />
   );
 };
