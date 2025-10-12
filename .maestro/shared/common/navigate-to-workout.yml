@@ -1,4 +1,6 @@
 # Navigate to workout tab and wait for it to load
+url: ${APP_URL}
+timeout: 60000
 ---
 - tapOn:
     id: "workoutTab"

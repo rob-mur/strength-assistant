@@ -1,4 +1,6 @@
 # Handle authentication and onboarding flows
+url: ${APP_URL}
+timeout: 60000
 ---
 # Wait for auth screen to appear
 - waitForAnimationToEnd:
