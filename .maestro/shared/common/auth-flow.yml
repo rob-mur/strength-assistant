@@ -1,4 +1,4 @@
-timeout: 60000
+# Handle authentication and onboarding flows
 ---
 # Wait for auth screen to appear
 - waitForAnimationToEnd:

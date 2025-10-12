@@ -1,3 +1,4 @@
+url: http://localhost:8081
 ---
 - runFlow:
     file: ../shared/add-and-record-workout.yml
