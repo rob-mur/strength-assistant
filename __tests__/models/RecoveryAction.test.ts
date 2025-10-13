@@ -131,18 +131,23 @@ describe("RecoveryAction Model", () => {
       expect(action.isExhausted()).toBe(true);
     });
 
-    it("should calculate time until next retry", (done) => {
+    it("should calculate time until next retry", () => {
       const action = RecoveryAction.createRetry(
         "retry-action",
         "Network",
         3,
-        100,
+        1000,
       );
+
+      // Before incrementing retry, should return 0
+      expect(action.getTimeUntilNextRetry()).toBe(0);
+
       action.incrementRetry();
-      setTimeout(() => {
-        expect(action.getTimeUntilNextRetry()).toBeLessThanOrEqual(50);
-        done();
-      }, 50);
+
+      // Immediately after incrementing, should return close to full delay (1000ms)
+      const timeUntilRetry = action.getTimeUntilNextRetry();
+      expect(timeUntilRetry).toBeGreaterThan(950); // Allow some margin for execution time
+      expect(timeUntilRetry).toBeLessThanOrEqual(1000);
     });
   });
 
