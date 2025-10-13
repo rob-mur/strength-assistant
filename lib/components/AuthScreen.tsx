@@ -9,7 +9,7 @@ import {
   HelperText,
   Divider,
 } from "react-native-paper";
-import { useAuthContext } from "./AuthProvider";
+import { useAuth } from "@/lib/hooks/useAuth";
 
 type AuthMode = "signin" | "signup";
 
@@ -21,7 +21,7 @@ export function AuthScreen() {
     error,
     loading,
     clearError,
-  } = useAuthContext();
+  } = useAuth();
 
   const [mode, setMode] = useState<AuthMode>("signin");
   const [email, setEmail] = useState("");

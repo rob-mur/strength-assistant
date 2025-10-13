@@ -323,36 +323,10 @@ export class DefaultErrorHandler implements ErrorHandler {
    * Private helper methods
    */
 
-  private isRunningInCI(): boolean {
-    // Check common CI environment variables
-    return !!(
-      process.env.CI ||
-      process.env.GITHUB_ACTIONS ||
-      process.env.JENKINS ||
-      process.env.TRAVIS ||
-      process.env.GITLAB_CI ||
-      process.env.BUILDKITE ||
-      process.env.CIRCLECI
-    );
-  }
-
   private setupGlobalErrorHandlers(): void {
     if (DefaultErrorHandler.globalHandlersSetup) {
       return;
     }
-
-    // Skip global error handler setup in CI environments to prevent call stack issues
-    if (this.isRunningInCI()) {
-      console.log("🔍 CI environment detected - skipping global error handler setup to prevent recursion");
-      DefaultErrorHandler.globalHandlersSetup = true;
-      return;
-    }
-
-    // TEMPORARY: Disable global error handlers to fix call stack recursion issue
-    // TODO: Re-enable after identifying root cause of Supabase client stack overflow
-    console.log("🔍 Temporarily disabling global error handlers to prevent recursion with Supabase");
-    DefaultErrorHandler.globalHandlersSetup = true;
-    return;
 
     try {
       // Setup with individual error handling to isolate issues

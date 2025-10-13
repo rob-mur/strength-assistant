@@ -2,16 +2,23 @@
 url: ${APP_URL}
 timeout: 60000
 ---
+# Try multiple approaches to navigate to exercises screen
 - tapOn:
     id: "exercisesTab"
     optional: true
-- takeScreenshot: "exercises-tab-selected.png"
-
-# Wait for exercises screen to load
-- waitForAnimationToEnd:
-    timeout: 5000
+- takeScreenshot: "exercises-tab-attempt.png"
 
 # Alternative: if tab doesn't work, try tapping the Exercises text in header
 - tapOn:
     text: "Exercises"
     optional: true
+- takeScreenshot: "exercises-text-attempt.png"
+
+# Wait for navigation and screen load
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Additional wait to ensure screen is fully loaded
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: "navigation-complete.png"

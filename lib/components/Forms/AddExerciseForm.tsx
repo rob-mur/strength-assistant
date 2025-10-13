@@ -2,15 +2,18 @@ import { useRouter } from "expo-router";
 import React from "react";
 import { Button, Card, TextInput } from "react-native-paper";
 import { useAddExercise } from "@/lib/hooks/useAddExercise";
-import { useAuthContext } from "@/lib/components/AuthProvider";
+import { useAuth } from "@/lib/hooks/useAuth";
 import { Locales } from "@/lib/locales";
 
 export default function AddExerciseForm() {
   const [exercise, setExercise] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(false);
   const router = useRouter();
-  const { user } = useAuthContext();
-  const addExercise = useAddExercise(user?.uid || "");
+  const { user } = useAuth();
+
+  // CRITICAL FIX: Always pass current user.uid to useAddExercise, update when user changes
+  const currentUid = user?.uid || "";
+  const addExercise = useAddExercise(currentUid);
 
   console.log(
     "💪 AddExerciseForm - Current user state:",
@@ -41,17 +44,35 @@ export default function AddExerciseForm() {
           onPress={async () => {
             console.log(
               "💪 AddExerciseForm - Submit clicked, user:",
-              user ? "authenticated" : "not authenticated",
+              user ? `authenticated (${user.uid})` : "not authenticated",
               "exercise:",
               exercise,
             );
+
+            // CRITICAL FIX: Double-check authentication state at submission time
+            if (!user || !user.uid) {
+              console.error(
+                "💪 AddExerciseForm - User not authenticated at submit time, aborting",
+              );
+              console.error("💪 AddExerciseForm - Auth state:", {
+                userExists: !!user,
+                uid: user?.uid || "(empty)",
+                currentUid: currentUid || "(empty)",
+              });
+              return;
+            }
+
             setIsLoading(true);
             try {
               console.log(
-                "💪 AddExerciseForm - Calling addExercise with userId:",
-                user?.uid || "(empty)",
+                "💪 AddExerciseForm - ✅ User authenticated, calling addExercise with userId:",
+                user.uid,
+                "currentUid:",
+                currentUid,
               );
+
               await addExercise(exercise);
+
               console.log("💪 AddExerciseForm - Exercise added successfully");
               router.back();
               router.navigate(`/workout?exercise=${exercise}`);

@@ -62,15 +62,36 @@ export function useAuth(): AuthState & {
         console.log("🔐 useAuth - Subscribing to auth state changes");
         unsubscribe = authBackend.subscribeToAuthState(handleUserStateChange);
 
-        // Get current user
-        console.log("🔐 useAuth - Getting current user");
+        // Get current user - CRITICAL: Check if auth backend already has a user
+        console.log("🔐 useAuth - Getting current user from backend");
         const currentUser = await authBackend.getCurrentUser();
         console.log(
-          "🔐 useAuth - Current user:",
-          currentUser ? "authenticated" : "not authenticated",
+          "🔐 useAuth - Current user from backend:",
+          currentUser
+            ? `authenticated (${currentUser.id})`
+            : "not authenticated",
         );
+
+        // CRITICAL FIX: If we have a user, immediately update state to prevent delays
+        if (currentUser) {
+          console.log(
+            "🔐 useAuth - Found existing authenticated user, updating state immediately",
+          );
+          setState((prevState) => ({
+            ...prevState,
+            user: {
+              uid: currentUser.id,
+              email: currentUser.email || null,
+              isAnonymous: currentUser.isAnonymous,
+            },
+            loading: false,
+            error: null,
+          }));
+        }
+
         handleUserStateChange(currentUser);
       } catch (error) {
+        console.error("🔐 useAuth - Error during initialization:", error);
         setState((prevState) => ({
           ...prevState,
           error: {
