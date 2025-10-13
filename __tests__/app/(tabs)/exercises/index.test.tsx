@@ -15,8 +15,8 @@ jest.mock("@/lib/hooks/useExercises", () => ({
   }),
 }));
 
-jest.mock("@/lib/hooks/useAuth", () => ({
-  useAuth: () => ({
+jest.mock("@/lib/components/AuthProvider", () => ({
+  useAuthContext: () => ({
     user: { uid: "test-user" },
   }),
 }));

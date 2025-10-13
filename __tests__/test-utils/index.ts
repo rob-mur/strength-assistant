@@ -8,7 +8,6 @@
 // Core Test Infrastructure (currently implemented)
 export * from "./TestDevice";
 export * from "./TestApp";
-export * from "./MigrationTestApp";
 
 // Mock Factories
 export * from "./mocks";

@@ -15,12 +15,12 @@
   ],
   "shell": {
     "scripts": {
-      "test": ["../../scripts/test.sh"],
-      "build_preview": ["../../scripts/build.sh preview"],
-      "build_production": ["../../scripts/build.sh production"],
-      "integration_test_android": ["../../scripts/integration_test_android.sh"],
-      "integration_test_chrome": ["../../scripts/integration_test_chrome.sh"],
-      "sync_devbox": ["../../scripts/sync-devbox.sh"]
+      "test": ["scripts/test.sh"],
+      "build_preview": ["scripts/build.sh preview"],
+      "build_production": ["scripts/build.sh production"],
+      "integration_test_android": ["scripts/integration_test_android.sh"],
+      "integration_test_chrome": ["scripts/integration_test_chrome.sh"],
+      "sync_devbox": ["scripts/sync-devbox.sh"]
     }
   },
   "env": {

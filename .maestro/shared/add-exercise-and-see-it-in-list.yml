@@ -1,0 +1,25 @@
+url: ${APP_URL}
+timeout: 60000
+---
+- launchApp
+- takeScreenshot: "01-app-launched.png"
+
+# Handle authentication and onboarding
+- runFlow:
+    file: common/auth-flow.yml
+
+# Add an exercise (this already navigates to exercises tab)
+- runFlow:
+    file: common/add-exercise.yml
+    env:
+      EXERCISE_NAME: "ExerciseName"
+
+# Ensure we're still on the exercises tab and verify the exercise appears
+- runFlow:
+    file: common/navigate-to-exercises.yml
+
+- assertVisible:
+    id: "exercise-screen"
+- assertVisible:
+    id: "ExerciseName"
+- takeScreenshot: "final-exercise-list.png"

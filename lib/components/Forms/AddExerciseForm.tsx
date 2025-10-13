@@ -2,14 +2,14 @@ import { useRouter } from "expo-router";
 import React from "react";
 import { Button, Card, TextInput } from "react-native-paper";
 import { useAddExercise } from "@/lib/hooks/useAddExercise";
-import { useAuth } from "@/lib/hooks/useAuth";
+import { useAuthContext } from "@/lib/components/AuthProvider";
 import { Locales } from "@/lib/locales";
 
 export default function AddExerciseForm() {
   const [exercise, setExercise] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(false);
   const router = useRouter();
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const addExercise = useAddExercise(user?.uid || "");
 
   console.log(

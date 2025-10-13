@@ -37,6 +37,16 @@ if (config.resolver.alias) {
 config.resolver.platforms = ["web", "native", "ios", "android"];
 config.resolver.mainFields = ["browser", "module", "main"];
 
+// Add platform extensions for better resolution
+config.resolver.platformExtensions = [
+  "native.js",
+  "native.ts",
+  "native.tsx",
+  "web.js",
+  "web.ts",
+  "web.tsx",
+];
+
 const fs = require("fs");
 const path = require("path");
 

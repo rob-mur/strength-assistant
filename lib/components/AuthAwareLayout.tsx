@@ -21,34 +21,17 @@ export function AuthAwareLayout({ children }: AuthAwareLayoutProps) {
     forceShowAuth,
   );
 
-  // Show auth screen appropriately for different environments
+  // Only show auth screen if user explicitly needs to authenticate
+  // Remove complex timeout logic - let the auth hook handle state completely
   useEffect(() => {
-    if (!loading) {
-      return;
+    // Reset forceShowAuth when we have a user (auth completed successfully)
+    if (user && forceShowAuth) {
+      console.log(
+        "🔍 AuthAwareLayout - Auth completed, clearing forceShowAuth",
+      );
+      setForceShowAuth(false);
     }
-
-    // In Chrome test environment, no need to force - auth hook already handles this
-    // Priority: Chrome test environment overrides CI environment
-    const isChromeTest =
-      process.env.CHROME_TEST === "true" ||
-      process.env.EXPO_PUBLIC_CHROME_TEST === "true";
-    const isCITest =
-      process.env.CI === "true" &&
-      process.env.CHROME_TEST !== "true" &&
-      process.env.EXPO_PUBLIC_CHROME_TEST !== "true";
-
-    if (isChromeTest || isCITest) {
-      // Let the useAuth hook handle the state, don't force anything here
-      return;
-    }
-
-    // Normal timeout for other environments
-    const timeout = setTimeout(() => {
-      setForceShowAuth(true);
-    }, 5000); // 5 seconds timeout
-
-    return () => clearTimeout(timeout);
-  }, [loading]);
+  }, [user, forceShowAuth]);
 
   if (loading && !forceShowAuth) {
     return (

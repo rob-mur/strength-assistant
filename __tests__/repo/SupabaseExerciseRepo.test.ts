@@ -61,11 +61,13 @@ describe("SupabaseExerciseRepo", () => {
   };
 
   const mockUser = { id: testUserId, email: "test@example.com" };
-  const mockExercises = [testExercise];
+  let mockExercises: Exercise[];
 
   beforeEach(() => {
     // Reset all mocks
     jest.clearAllMocks();
+
+    mockExercises = [testExercise];
 
     // Setup default mock implementations
     (supabaseClient.getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
@@ -86,18 +88,13 @@ describe("SupabaseExerciseRepo", () => {
         })),
       })),
     });
-    (exercises$.get as jest.Mock).mockReturnValue(mockExercises);
-    // Mock exercises$.set to simulate Legend State behavior
+    // Make exercises$ mock stateful
+    (exercises$.get as jest.Mock).mockImplementation(() => mockExercises);
     (exercises$.set as jest.Mock).mockImplementation((setterOrValue) => {
       if (typeof setterOrValue === "function") {
-        // For callback setters like exercises$.set(current => [...current, newExercise])
-        // Simulate Legend State by calling get() and then setting the result
-        const currentValue = (exercises$.get as jest.Mock)();
-        const newValue = setterOrValue(currentValue);
-        return newValue;
+        mockExercises = setterOrValue(mockExercises);
       } else {
-        // For direct value setters
-        return setterOrValue;
+        mockExercises = setterOrValue;
       }
     });
     (user$.get as jest.Mock).mockReturnValue(mockUser);
@@ -237,9 +234,9 @@ describe("SupabaseExerciseRepo", () => {
 
   describe("getExercises", () => {
     test("returns computed observable filtered by current user", () => {
-      const computed = require("@legendapp/state").computed;
+      const { computed } = require("@legendapp/state");
       const mockObservable = { subscribe: jest.fn() };
-      computed.mockReturnValue(mockObservable);
+      (computed as jest.Mock).mockReturnValue(mockObservable);
 
       const result = repo.getExercises(testUserId);
 
@@ -248,10 +245,10 @@ describe("SupabaseExerciseRepo", () => {
     });
 
     test("computed function filters exercises by current user", () => {
-      const computed = require("@legendapp/state").computed;
-      let computedFunction: () => Exercise[];
+      const { computed } = require("@legendapp/state");
+      let computedFunction: (() => Exercise[]) | undefined;
 
-      computed.mockImplementation((fn: () => Exercise[]) => {
+      (computed as jest.Mock).mockImplementation((fn: () => Exercise[]) => {
         computedFunction = fn;
         return { subscribe: jest.fn() };
       });
@@ -259,6 +256,7 @@ describe("SupabaseExerciseRepo", () => {
       repo.getExercises(testUserId);
 
       // Test the computed function
+      expect(computedFunction).toBeDefined();
       const result = computedFunction!();
       expect(user$.get).toHaveBeenCalled();
       expect(exercises$.get).toHaveBeenCalled();
@@ -266,10 +264,10 @@ describe("SupabaseExerciseRepo", () => {
     });
 
     test("returns empty array when no current user", () => {
-      const computed = require("@legendapp/state").computed;
-      let computedFunction: () => Exercise[];
+      const { computed } = require("@legendapp/state");
+      let computedFunction: (() => Exercise[]) | undefined;
 
-      computed.mockImplementation((fn: () => Exercise[]) => {
+      (computed as jest.Mock).mockImplementation((fn: () => Exercise[]) => {
         computedFunction = fn;
         return { subscribe: jest.fn() };
       });
@@ -278,6 +276,7 @@ describe("SupabaseExerciseRepo", () => {
 
       repo.getExercises(testUserId);
 
+      expect(computedFunction).toBeDefined();
       const result = computedFunction!();
       expect(result).toEqual([]);
     });
@@ -493,7 +492,7 @@ describe("SupabaseExerciseRepo", () => {
       (syncExerciseToSupabase as jest.Mock).mockRejectedValue(syncError);
 
       // Get initial state
-      const initialExercises = exercises$.get();
+      const initialExercises = [...exercises$.get()];
 
       await expect(
         repo.addExercise(testUserId, { name: "Test" }),
@@ -508,7 +507,7 @@ describe("SupabaseExerciseRepo", () => {
       (deleteExerciseFromSupabase as jest.Mock).mockRejectedValue(syncError);
 
       // Get initial state
-      const initialExercises = exercises$.get();
+      const initialExercises = [...exercises$.get()];
 
       await expect(
         repo.deleteExercise(testUserId, testExerciseId),

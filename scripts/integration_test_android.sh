@@ -49,9 +49,25 @@ unset ANDROID_AVD_HOME
 unset XDG_CONFIG_HOME
 
 
+echo "🧹 Cleaning up old AVD files and temporary data to free disk space..."
+# Remove any existing AVD files
+rm -rf "$HOME/.android/avd/test.avd" 2>/dev/null || true
+rm -f "$HOME/.android/avd/test.ini" 2>/dev/null || true
+
+# Clean up Android SDK temporary files
+rm -rf "$ANDROID_SDK_ROOT/system-images/*/*/x86_64/userdata.img" 2>/dev/null || true
+rm -rf "$HOME/.android/cache" 2>/dev/null || true
+
+# Clear Docker build cache to free additional space
+echo "🧹 Clearing Docker cache to maximize available space..."
+docker system prune -f --volumes 2>/dev/null || true
+
+echo "📊 Available disk space before AVD creation:"
+df -h "$HOME/.android" 2>/dev/null || df -h "$HOME"
+
 echo "🔄 Creating Android AVD using devbox-managed system image..."
-# Use the default system image that's provided by the optimized flake
-echo -e "no\nno\nno" | avdmanager create avd --force -n test -k "system-images;android-35;default;x86_64" --device "Nexus 5X"
+# Use the default system image with minimal SD card size
+echo -e "no\nno\nno" | avdmanager create avd --force -n test -k "system-images;android-35;default;x86_64" --device "Nexus 5X" -c 128MB
 
 # Verify AVD was created successfully
 AVD_CONFIG_FILE="$HOME/.android/avd/test.avd/config.ini"
@@ -64,21 +80,43 @@ if [ ! -f "$AVD_CONFIG_FILE" ]; then
     exit 1
 fi
 
-# Optimize AVD for disk space savings
-echo "🔧 Optimizing AVD for reduced disk usage..."
-# Reduce userdata partition from default 7GB to 2GB
-echo "disk.dataPartition.size=2GB" >> "$AVD_CONFIG_FILE"
-# Use minimal RAM (2GB instead of default 4GB)
-echo "hw.ramSize=2048" >> "$AVD_CONFIG_FILE"
-# Disable GPU acceleration to save space/resources
-echo "hw.gpu.enabled=no" >> "$AVD_CONFIG_FILE"
-# Disable audio to save resources
-echo "hw.audioOutput=no" >> "$AVD_CONFIG_FILE"
-echo "hw.audioInput=no" >> "$AVD_CONFIG_FILE"
-# Reduce internal storage size
-echo "disk.dataPartition.initPath=" >> "$AVD_CONFIG_FILE"
+# Optimize AVD for minimal disk space usage (CRITICAL for CI disk space constraints)
+echo "🔧 Aggressively optimizing AVD for minimal disk usage..."
+
+# CRITICAL: Reduce userdata partition to absolute minimum (256MB instead of default 7GB+)
+sed -i 's/disk\.dataPartition\.size=.*/disk.dataPartition.size=256M/' "$AVD_CONFIG_FILE"
+# Force minimal RAM (1GB instead of default 4GB+)
+sed -i 's/hw\.ramSize=.*/hw.ramSize=1024/' "$AVD_CONFIG_FILE" || echo "hw.ramSize=1024" >> "$AVD_CONFIG_FILE"
+# Disable all unnecessary features to save space
+sed -i 's/hw\.gpu\.enabled=.*/hw.gpu.enabled=no/' "$AVD_CONFIG_FILE" || echo "hw.gpu.enabled=no" >> "$AVD_CONFIG_FILE"
+sed -i 's/hw\.audioOutput=.*/hw.audioOutput=no/' "$AVD_CONFIG_FILE" || echo "hw.audioOutput=no" >> "$AVD_CONFIG_FILE"
+sed -i 's/hw\.audioInput=.*/hw.audioInput=no/' "$AVD_CONFIG_FILE" || echo "hw.audioInput=no" >> "$AVD_CONFIG_FILE"
+# Disable hardware features that consume space
+sed -i 's/hw\.camera\.back=.*/hw.camera.back=none/' "$AVD_CONFIG_FILE" || echo "hw.camera.back=none" >> "$AVD_CONFIG_FILE"
+sed -i 's/hw\.camera\.front=.*/hw.camera.front=none/' "$AVD_CONFIG_FILE" || echo "hw.camera.front=none" >> "$AVD_CONFIG_FILE"
+# Minimize cache and other storage
+sed -i 's/disk\.cachePartition\.size=.*/disk.cachePartition.size=32MB/' "$AVD_CONFIG_FILE"
+sed -i 's/sdcard\.size=.*/sdcard.size=128 MB/' "$AVD_CONFIG_FILE"
+# Clear any existing data partition path to force recreation with new size
+sed -i 's/disk\.dataPartition\.initPath=.*/disk.dataPartition.initPath=/' "$AVD_CONFIG_FILE"
+
+echo "📊 Verifying AVD configuration:"
+grep -E "(disk\.dataPartition\.size|hw\.ramSize|sdcard\.size)" "$AVD_CONFIG_FILE" | head -5
 
 echo "✅ Android AVD created and optimized successfully"
+
+# CRITICAL: Create custom userdata image to bypass 7.37GB default allocation
+echo "🔧 Creating custom 2GB userdata image (balanced for boot success + disk savings)..."
+CUSTOM_USERDATA_IMG="$(dirname "$AVD_CONFIG_FILE")/userdata-custom-2gb.img"
+if [ ! -f "$CUSTOM_USERDATA_IMG" ]; then
+    # Create 2GB userdata image (minimum viable size for Android boot)
+    dd if=/dev/zero of="$CUSTOM_USERDATA_IMG" bs=1M count=2048 2>/dev/null
+    # Format as ext4 filesystem
+    mkfs.ext4 -F "$CUSTOM_USERDATA_IMG" >/dev/null 2>&1
+    echo "✅ Created and formatted custom 2GB userdata image"
+else
+    echo "✅ Using existing custom userdata image"
+fi
 
 adb start-server
 
@@ -175,10 +213,16 @@ adb devices | grep emulator && {
     sleep 3
 }
 
-# Start Android emulator in headless mode with more stable settings
-echo "🚀 Starting Android emulator in headless mode..."
-# Use more stable emulator settings - avoid -gpu off which can cause crashes
-emulator -avd test -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect &
+# Start Android emulator with custom userdata image to bypass 7.37GB default
+echo "🚀 Starting Android emulator with custom 2GB userdata image..."
+# CRITICAL: Use -data parameter to specify custom userdata image
+# This saves ~5.4GB compared to default 7.37GB userdata allocation
+# -data: Use our custom 2GB userdata image (minimum viable for Android boot)
+# -memory 768: Conservative RAM limit for better stability  
+# -no-cache: Disable cache to save disk space
+# -no-snapshot-save/load: Avoid snapshot overhead
+emulator -avd test -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect \
+  -data "$CUSTOM_USERDATA_IMG" -memory 768 -no-cache -no-snapshot-save -no-snapshot-load &
 EMULATOR_PID=$!
 echo "📱 Emulator started with PID: $EMULATOR_PID"
 

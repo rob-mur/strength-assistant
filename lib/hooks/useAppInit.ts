@@ -74,7 +74,7 @@ export const useAppInit = () => {
         });
 
         // In Chrome/test environments, show error in DOM for easier debugging
-        if (typeof window !== "undefined") {
+        if (globalThis.window) {
           // Create visible error indicator for integration tests
           const errorDiv = document.createElement("div");
           errorDiv.style.cssText = `

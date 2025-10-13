@@ -191,18 +191,66 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
       userId,
     );
 
-    // FIXED: Use direct supabaseClient.getCurrentUser() instead of storageManager auth backend
-    // The storageManager.getAuthBackend().getCurrentUser() was hanging, but direct calls work fine
+    // Check if this is a local anonymous user first
+    if (this.isLocalAnonymousUser(userId)) {
+      console.log(
+        "🔐 SupabaseExerciseRepo - Detected local anonymous user, skipping Supabase validation",
+      );
+      return { id: userId };
+    }
+
+    // For empty userId or real Supabase users, validate against Supabase
+    return await this.validateSupabaseUser(userId);
+  }
+
+  /**
+   * Check if the provided userId is a local anonymous user (UUID format)
+   */
+  private isLocalAnonymousUser(userId: string): boolean {
+    if (!userId || typeof userId !== "string" || userId.trim() === "") {
+      return false;
+    }
+
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(userId);
+  }
+
+  /**
+   * Validate user against Supabase authentication
+   */
+  private async validateSupabaseUser(userId: string): Promise<{ id: string }> {
+    if (!userId || typeof userId !== "string" || userId.trim() === "") {
+      console.log(
+        "🔐 SupabaseExerciseRepo - Empty userId provided, falling back to getCurrentUser()",
+      );
+    }
+
     console.log(
-      "🔐 SupabaseExerciseRepo - Using direct supabaseClient.getCurrentUser() for consistency...",
+      "🔐 SupabaseExerciseRepo - Real Supabase user detected, validating with getCurrentUser()...",
     );
 
-    // Note: Supabase URL logging removed to avoid require() import
+    const currentUser = await this.getCurrentUserWithTimeout();
 
-    let currentUser: { id: string } | null = null;
+    if (!currentUser) {
+      console.error("🔐 SupabaseExerciseRepo - No user authenticated");
+      throw new Error("User not authenticated with Supabase");
+    }
+
+    this.validateUserIdConsistency(userId, currentUser.id);
+
+    console.log(
+      "🔐 SupabaseExerciseRepo - User authentication validation successful",
+    );
+    return currentUser;
+  }
+
+  /**
+   * Get current user from Supabase with timeout handling
+   */
+  private async getCurrentUserWithTimeout(): Promise<{ id: string } | null> {
     try {
-      // Add a 3-second timeout to prevent hanging
-      const timeout = new Promise((_, reject) =>
+      const timeout = new Promise<never>((_, reject) =>
         setTimeout(
           () =>
             reject(
@@ -210,83 +258,99 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
                 "Auth validation timeout - proceeding without strict validation",
               ),
             ),
-          3000,
+          1000,
         ),
       );
 
       const authCall = supabaseClient.getCurrentUser();
       const result = await Promise.race([authCall, timeout]);
+
       console.log(
         "🔐 SupabaseExerciseRepo - supabaseClient.getCurrentUser() call completed",
       );
 
-      // Check if result is a User object (not the timeout error)
-      if (
-        result &&
-        typeof result === "object" &&
-        "id" in result &&
-        typeof result.id === "string"
-      ) {
-        currentUser = { id: result.id };
-      }
-      // If no valid user, currentUser remains null (initialized above)
+      return this.extractUserFromResult(result);
     } catch (error) {
-      console.error(
-        "🔐 SupabaseExerciseRepo - supabaseClient.getCurrentUser() failed with error:",
-        error,
+      return this.handleAuthError(error);
+    }
+  }
+
+  /**
+   * Extract user information from Supabase result
+   */
+  private extractUserFromResult(result: unknown): { id: string } | null {
+    if (
+      result &&
+      typeof result === "object" &&
+      "id" in result &&
+      typeof result.id === "string"
+    ) {
+      return { id: result.id };
+    }
+    return null;
+  }
+
+  /**
+   * Handle authentication errors with offline-first approach
+   */
+  private handleAuthError(error: unknown): { id: string } | null {
+    console.error(
+      "🔐 SupabaseExerciseRepo - supabaseClient.getCurrentUser() failed with error:",
+      error,
+    );
+
+    if (this.isRecoverableAuthError(error)) {
+      console.log(
+        "🔐 SupabaseExerciseRepo - Auth issue detected, proceeding with offline-first approach",
       );
-      // For offline-first experience, don't block exercise creation on auth validation failures
-      // Handle both timeout and AuthSessionMissingError gracefully
-      if (
-        (error instanceof Error &&
-          error.message?.includes("Auth session missing")) ||
-        (error instanceof Error && error.message?.includes("timeout")) ||
-        (error instanceof Error && error.name === "AuthSessionMissingError")
-      ) {
-        console.log(
-          "🔐 SupabaseExerciseRepo - Auth issue detected, proceeding with offline-first approach",
-        );
-        currentUser = null; // Set to null for these specific auth issues
-      } else {
-        console.log(
-          "🔐 SupabaseExerciseRepo - Unknown auth error, re-throwing original error",
-        );
-        throw error; // Re-throw other errors (like test errors)
-      }
+      return null;
     }
 
     console.log(
-      "🔐 SupabaseExerciseRepo - supabaseClient.getCurrentUser() returned:",
-      currentUser ? "user found" : "no user",
+      "🔐 SupabaseExerciseRepo - Unknown auth error, re-throwing original error",
     );
+    throw error;
+  }
 
-    if (!currentUser) {
-      console.error("🔐 SupabaseExerciseRepo - No user authenticated");
-      throw new Error("User not authenticated with Supabase");
+  /**
+   * Check if an authentication error is recoverable (offline-first approach)
+   */
+  private isRecoverableAuthError(error: unknown): boolean {
+    if (!(error instanceof Error)) {
+      return false;
     }
 
-    console.log("🔐 SupabaseExerciseRepo - Current user ID:", currentUser.id);
+    return (
+      error.message?.includes("Auth session missing") ||
+      error.message?.includes("timeout") ||
+      error.name === "AuthSessionMissingError"
+    );
+  }
+
+  /**
+   * Validate consistency between provided userId and authenticated user
+   */
+  private validateUserIdConsistency(
+    userId: string,
+    currentUserId: string,
+  ): void {
+    console.log("🔐 SupabaseExerciseRepo - Current user ID:", currentUserId);
     console.log(
       "🔐 SupabaseExerciseRepo - Comparing with provided userId:",
       userId,
     );
 
-    if (userId && userId !== currentUser.id) {
+    if (userId && userId !== currentUserId) {
       console.error(
         "🔐 SupabaseExerciseRepo - User ID mismatch! Expected:",
         userId,
         "Got:",
-        currentUser.id,
+        currentUserId,
       );
       throw new Error(
-        `User ID mismatch: Expected ${userId}, but authenticated user is ${currentUser.id}.`,
+        `User ID mismatch: Expected ${userId}, but authenticated user is ${currentUserId}.`,
       );
     }
-
-    console.log(
-      "🔐 SupabaseExerciseRepo - User authentication validation successful",
-    );
-    return currentUser;
   }
 
   /**

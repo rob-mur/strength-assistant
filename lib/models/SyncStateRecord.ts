@@ -268,8 +268,13 @@ export function fromDbFormat(
   if (dbRecord.payload) {
     try {
       syncState.payload = JSON.parse(dbRecord.payload as string);
-    } catch {
-      /* Silent error handling */
+    } catch (error) {
+      console.warn(
+        "Failed to parse sync payload JSON:",
+        (error as Error).message,
+      );
+      // Continue without payload data to avoid breaking sync state
+      syncState.payload = undefined;
     }
   }
 

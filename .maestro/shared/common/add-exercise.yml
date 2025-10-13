@@ -1,0 +1,21 @@
+# Add an exercise with the given name
+# Expects EXERCISE_NAME environment variable
+url: ${APP_URL}
+timeout: 60000
+---
+# Ensure we're on the exercises screen before trying to add an exercise
+- runFlow:
+    file: navigate-to-exercises.yml
+
+- tapOn:
+    id: "add-exercise"
+- takeScreenshot: "add-exercise-form-opened.png"
+- tapOn:
+    id: "name"
+- inputText: "${EXERCISE_NAME}"
+- takeScreenshot: "exercise-name-entered.png"
+- tapOn:
+    id: "submit"
+- takeScreenshot: "after-submit.png"
+- assertVisible: "${EXERCISE_NAME}"
+- takeScreenshot: "exercise-added.png"

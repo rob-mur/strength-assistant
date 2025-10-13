@@ -1,6 +1,6 @@
 import ExerciseList from "@/lib/components/ExerciseList";
 import { useExercises } from "@/lib/hooks/useExercises";
-import { useAuth } from "@/lib/hooks/useAuth";
+import { useAuthContext } from "@/lib/components/AuthProvider";
 import { useRouter } from "expo-router";
 import * as React from "react";
 import { View } from "react-native";
@@ -8,7 +8,7 @@ import { FAB } from "react-native-paper";
 
 export default function ExerciseScreen() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const { exercises } = useExercises(user?.uid || "");
 
   return (

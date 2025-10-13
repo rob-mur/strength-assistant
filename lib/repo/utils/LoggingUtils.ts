@@ -4,7 +4,7 @@ import { Logger } from "../../data/supabase/supabase/logger";
  * Common logging utilities for repository operations
  */
 export class RepositoryLogger {
-  private static logger = new Logger("Repository");
+  private static readonly logger = new Logger("Repository");
   /**
    * Log successful repository operation
    */

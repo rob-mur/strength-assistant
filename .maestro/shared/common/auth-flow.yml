@@ -1,0 +1,36 @@
+# Handle authentication and onboarding flows
+url: ${APP_URL}
+timeout: 60000
+---
+# Wait for auth screen to appear
+- waitForAnimationToEnd:
+    timeout: 10000
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Handle optional auth step (only if not already authenticated)
+- tapOn:
+    text: "Continue as Guest"
+    optional: true
+- takeScreenshot: "auth-attempt-by-text.png"
+
+# Try alternative click methods if the first didn't work
+- tapOn:
+    id: "continue-as-guest"
+    optional: true
+- takeScreenshot: "auth-attempt-by-id.png"
+
+# Wait a moment for auth to complete
+- waitForAnimationToEnd:
+    timeout: 10000
+- takeScreenshot: "after-auth-animation.png"
+
+# Handle optional onboarding step (only if not already seen)
+- tapOn:
+    id: "get-started"
+    optional: true
+- takeScreenshot: "after-onboarding-attempt.png"
+
+# Wait for main app to load
+- waitForAnimationToEnd:
+    timeout: 10000

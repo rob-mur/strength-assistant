@@ -74,7 +74,8 @@ export interface StorageBackend {
 export class SupabaseStorage implements StorageBackend {
   private client: SupabaseClient | null = null;
   private currentUser: UserAccount | null = null;
-  private authStateCallbacks: ((user: UserAccount | null) => void)[] = [];
+  private readonly authStateCallbacks: ((user: UserAccount | null) => void)[] =
+    [];
 
   private getClient(): SupabaseClient {
     this.client ??= getSupabaseClient();
@@ -82,13 +83,13 @@ export class SupabaseStorage implements StorageBackend {
   }
 
   private notifyAuthStateChange(user: UserAccount | null): void {
-    this.authStateCallbacks.forEach((callback) => {
+    for (const callback of this.authStateCallbacks) {
       try {
         callback(user);
       } catch {
         // Silent error handling
       }
-    });
+    }
   }
   /**
    * Call this after construction to initialize the session asynchronously.
@@ -298,57 +299,66 @@ export class SupabaseStorage implements StorageBackend {
     console.log(
       "🔐 SupabaseStorage - Attempting Supabase anonymous sign in...",
     );
-    try {
-      const {
-        data: { user },
-        error,
-      } = await this.getClient().auth.signInAnonymously();
 
-      console.log("🔐 SupabaseStorage - Supabase anonymous sign in result:", {
-        user: user ? "found" : "null",
-        error: error ? error.message : "none",
+    // Try Supabase with a very short timeout, then immediately fallback
+    try {
+      console.log(
+        "🔐 SupabaseStorage - Quick Supabase attempt (2s timeout)...",
+      );
+
+      // Create a very aggressive timeout
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          console.log(
+            "🔐 SupabaseStorage - TIMEOUT: Supabase took too long, rejecting...",
+          );
+          reject(new Error("Supabase timeout after 2 seconds"));
+        }, 2000); // Even shorter timeout
       });
 
-      if (error) {
-        console.error(
-          "🔐 SupabaseStorage - Supabase anonymous sign in error:",
-          error,
+      console.log("🔐 SupabaseStorage - Starting signInAnonymously call...");
+      const signInPromise = this.getClient().auth.signInAnonymously();
+
+      console.log("🔐 SupabaseStorage - Racing promises...");
+      // Race with a short timeout - this will either return Supabase result or throw timeout
+      const result = await Promise.race([signInPromise, timeoutPromise]);
+
+      // If we get here, Supabase succeeded within timeout
+      console.log("🔐 SupabaseStorage - Supabase succeeded:", {
+        user: result.data?.user ? "found" : "null",
+        error: result.error ? result.error.message : "none",
+      });
+
+      if (result.error) {
+        console.log(
+          "🔐 SupabaseStorage - Supabase returned error:",
+          result.error.message,
         );
-        throw error;
+        throw result.error;
       }
-      if (user) {
+
+      if (result.data?.user) {
         console.log(
           "🔐 SupabaseStorage - Successfully created Supabase anonymous user:",
-          user.id,
+          result.data.user.id,
         );
-        const realUser = this.mapSupabaseUserToAccount(user);
+        const realUser = this.mapSupabaseUserToAccount(result.data.user);
         this.currentUser = realUser;
         this.notifyAuthStateChange(realUser);
         return realUser;
       }
-    } catch (error) {
-      console.error(
-        "🔐 SupabaseStorage - Supabase anonymous sign in failed:",
-        error,
-      );
 
-      // In production, don't create fallback users that can't perform real operations
-      if (process.env.NODE_ENV === "production") {
-        console.error(
-          "🔐 SupabaseStorage - Production mode: not creating fallback user",
-        );
-        throw new Error(
-          "Anonymous authentication failed: " + (error as Error).message,
-        );
-      }
-
-      // Only create fallback in development/test environments
       console.log(
-        "🔐 SupabaseStorage - Development mode: creating local anonymous user fallback",
+        "🔐 SupabaseStorage - Supabase returned success but no user, falling back",
+      );
+    } catch (error) {
+      console.log(
+        "🔐 SupabaseStorage - Supabase failed/timeout, using fallback:",
+        error,
       );
     }
 
-    // Fallback: create a local anonymous user if Supabase auth fails (dev/test only)
+    // Fallback: create a local anonymous user if Supabase auth fails
     console.log("🔐 SupabaseStorage - Creating local anonymous user fallback");
     const anonymousUser = createAnonymousUser();
     this.currentUser = anonymousUser;
@@ -482,17 +492,32 @@ export class SupabaseStorage implements StorageBackend {
     const {
       data: { subscription },
     } = this.getClient().auth.onAuthStateChange(async (event, session) => {
+      console.log(
+        `🔐 SupabaseStorage - Auth state change: ${event}, session:`,
+        session?.user ? "exists" : "null",
+        "currentUser:",
+        this.currentUser ? "exists" : "null",
+      );
+
       if (session?.user) {
+        console.log("🔐 SupabaseStorage - Setting user from Supabase session");
         const userAccount = this.mapSupabaseUserToAccount(session.user);
         this.currentUser = userAccount;
         callback(userAccount);
       } else {
-        // CRITICAL FIX: Don't override local anonymous users when Supabase has no session
+        // CRITICAL FIX: Never override local anonymous users when Supabase has no session
         // This prevents the race condition where local anonymous auth gets wiped out
-        if (this.currentUser?.isAnonymous && event === "INITIAL_SESSION") {
-          // Keep the existing local anonymous user, don't call callback(null)
+        if (this.currentUser?.isAnonymous) {
+          console.log(
+            "🔐 SupabaseStorage - Preserving existing anonymous user, ignoring Supabase null session",
+          );
           return;
         }
+
+        // Only reset if we don't have a local anonymous user
+        console.log(
+          "🔐 SupabaseStorage - No Supabase session and no local user, setting to null",
+        );
         this.currentUser = null;
         callback(null);
       }
@@ -500,6 +525,9 @@ export class SupabaseStorage implements StorageBackend {
 
     // Immediately call callback with current user if exists (for anonymous users)
     if (this.currentUser) {
+      console.log(
+        "🔐 SupabaseStorage - Immediately calling callback with existing user",
+      );
       callback(this.currentUser);
     }
 

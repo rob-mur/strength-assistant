@@ -1,28 +1,5 @@
-url: com.jimmysolutions.strengthassistant.test
 ---
-- launchApp
-
-# Handle optional auth step (only if not already authenticated)
-- tapOn:
-    id: "continue-as-guest"
-    optional: true
-
-- extendedWaitUntil:
-    visible:
-      id: "get-started"
-    timeout: 15000
-- tapOn:
-    id: "get-started"
-- tapOn:
-    id: "add-exercise"
-- tapOn:
-    id: "name"
-- inputText: "ExerciseName"
-- tapOn:
-    id: "submit"
-- tapOn:
-    id: "exercisesTab"
-- assertVisible:
-    id: "exercise-screen"
-- assertVisible:
-    id: "ExerciseName"
+- runFlow:
+    file: ../shared/add-exercise-and-see-it-in-list.yml
+    env:
+      APP_URL: "com.jimmysolutions.strengthassistant.test"

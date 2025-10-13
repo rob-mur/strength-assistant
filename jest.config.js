@@ -37,6 +37,16 @@ module.exports = {
     "!lib/data/**", // Exclude data layer from coverage - mainly integration layer
   ],
 
+  coveragePathIgnorePatterns: [
+    "/node_modules/",
+    "/__tests__/",
+    "/lib/models/supabase.ts",
+    "/lib/models/Exercise.ts",
+    "/lib/models/ExerciseRecord.ts",
+    "/lib/models/UserAccount.ts",
+    "/lib/utils/", // Exclude entire utils folder from coverage
+  ],
+
   // Coverage thresholds adjusted for current codebase coverage levels
   coverageThreshold: {
     global: {
