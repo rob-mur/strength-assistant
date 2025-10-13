@@ -1,3 +1,4 @@
+appId: com.jimmysolutions.strengthassistant.test
 ---
 - runFlow:
     file: ../shared/add-and-record-workout.yml
