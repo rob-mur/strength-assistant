@@ -8,18 +8,23 @@ timeout: 60000
 - runFlow:
     file: common/auth-flow.yml
 
-# Add an exercise (this already navigates to exercises tab)
+# Add an exercise (this correctly navigates to workout screen after submission)
 - runFlow:
     file: common/add-exercise.yml
     env:
       EXERCISE_NAME: "ExerciseName"
 
-# Ensure we're still on the exercises tab and verify the exercise appears
+# After adding exercise, we should be on the workout screen with that exercise
+- assertVisible:
+    text: "ExerciseName"
+- takeScreenshot: "workout-screen-with-exercise.png"
+
+# Now navigate to exercises tab to verify the exercise was added to the list
 - runFlow:
     file: common/navigate-to-exercises.yml
 
 - assertVisible:
     id: "exercise-screen"
 - assertVisible:
-    id: "ExerciseName"
+    text: "ExerciseName"
 - takeScreenshot: "final-exercise-list.png"

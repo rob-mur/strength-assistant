@@ -10,3 +10,8 @@ timeout: 60000
 # Wait for exercises screen to load
 - waitForAnimationToEnd:
     timeout: 5000
+
+# Alternative: if tab doesn't work, try tapping the Exercises text in header
+- tapOn:
+    text: "Exercises"
+    optional: true

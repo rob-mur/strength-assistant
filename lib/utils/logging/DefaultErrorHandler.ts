@@ -348,6 +348,12 @@ export class DefaultErrorHandler implements ErrorHandler {
       return;
     }
 
+    // TEMPORARY: Disable global error handlers to fix call stack recursion issue
+    // TODO: Re-enable after identifying root cause of Supabase client stack overflow
+    console.log("🔍 Temporarily disabling global error handlers to prevent recursion with Supabase");
+    DefaultErrorHandler.globalHandlersSetup = true;
+    return;
+
     try {
       // Setup with individual error handling to isolate issues
       try {
