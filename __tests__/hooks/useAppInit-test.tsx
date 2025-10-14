@@ -65,7 +65,9 @@ describe("useAppInit", () => {
 
     const { result } = renderHook(() => useAppInit());
 
-    expect(result.current).toBe(false);
+    expect(result.current.loaded).toBe(false);
+    expect(result.current.fontsLoaded).toBe(false);
+    expect(result.current.error).toBe(null);
   });
 
   test("throws error when font loading fails", () => {
@@ -83,9 +85,11 @@ describe("useAppInit", () => {
     const { result } = renderHook(() => useAppInit());
 
     await waitFor(() => {
-      expect(result.current).toBe(true);
+      expect(result.current.loaded).toBe(true);
     });
 
+    expect(result.current.fontsLoaded).toBe(true);
+    expect(result.current.error).toBe(null);
     expect(mockInitializeDataLayer).toHaveBeenCalled();
     expect(mockHideAsync).toHaveBeenCalled();
     // Logger expectations removed - Firebase no longer used
@@ -103,8 +107,11 @@ describe("useAppInit", () => {
     const { result } = renderHook(() => useAppInit());
 
     await waitFor(() => {
-      expect(result.current).toBe(true);
+      expect(result.current.loaded).toBe(true);
     });
+
+    expect(result.current.fontsLoaded).toBe(true);
+    expect(result.current.error).toBe(null);
 
     // Logger expectations removed - Firebase no longer used
 
@@ -119,8 +126,11 @@ describe("useAppInit", () => {
     const { result } = renderHook(() => useAppInit());
 
     await waitFor(() => {
-      expect(result.current).toBe(true);
+      expect(result.current.loaded).toBe(true);
     });
+
+    expect(result.current.fontsLoaded).toBe(true);
+    expect(result.current.error).toBe(null);
 
     // Logger expectations removed - Firebase no longer used
   });

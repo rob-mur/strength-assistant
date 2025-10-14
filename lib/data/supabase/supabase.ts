@@ -2,6 +2,7 @@ import { Platform } from "react-native";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "../../models/supabase";
 import { Logger } from "./supabase/logger";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 class SupabaseService {
   private initialized: boolean = false;
@@ -105,10 +106,7 @@ class SupabaseService {
       };
     } else {
       // Use AsyncStorage for React Native
-      const importModule = eval("require");
-      storage = importModule(
-        "@react-native-async-storage/async-storage",
-      ).default;
+      storage = AsyncStorage;
     }
 
     this.client = createClient<Database>(supabaseUrl, supabaseAnonKey, {

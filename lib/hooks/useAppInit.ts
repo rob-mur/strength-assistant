@@ -125,5 +125,5 @@ export const useAppInit = () => {
     }
   }, [fontsLoaded, isAppReady, logger]);
 
-  return fontsLoaded && isAppReady;
+  return { loaded: isAppReady, fontsLoaded, error: fontError };
 };

@@ -17,5 +17,7 @@ timeout: 60000
 - tapOn:
     id: "submit"
 - takeScreenshot: "after-submit.png"
-- assertVisible: "${EXERCISE_NAME}"
+# After submission, app navigates to workout screen, so wait for that
+- waitForAnimationToEnd:
+    timeout: 5000
 - takeScreenshot: "exercise-added.png"

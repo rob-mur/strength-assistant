@@ -1,3 +1,4 @@
+appId: com.jimmysolutions.strengthassistant.test
 ---
 - runFlow:
     file: ../shared/add-exercise-and-see-it-in-list.yml

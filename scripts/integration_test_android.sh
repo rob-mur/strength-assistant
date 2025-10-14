@@ -452,10 +452,12 @@ for test_file in .maestro/android/*.yml; do
 
         INDIVIDUAL_EXIT_CODE=$?
 
-        # IMPORTANT: Maestro doesn't return proper exit codes for test failures
-        # Check the output for failure indicators instead
-        if grep -q "Flow Failed\|Failed]" "maestro-debug-output/maestro-${TEST_NAME}.log"; then
-            echo "🔍 Detected test failure in maestro output (maestro doesn't use proper exit codes)"
+        # IMPORTANT: Check both maestro exit code AND output for failures
+        # Maestro returns non-zero exit codes for syntax errors but not always for test failures
+        if [ $INDIVIDUAL_EXIT_CODE -ne 0 ]; then
+            echo "🔍 Maestro returned non-zero exit code: $INDIVIDUAL_EXIT_CODE"
+        elif grep -q "Flow Failed\|Failed\]\|Config Section Required\|Syntax error" "maestro-debug-output/maestro-${TEST_NAME}.log"; then
+            echo "🔍 Detected test failure in maestro output"
             INDIVIDUAL_EXIT_CODE=1
         elif grep -q "Flow path does not exist" "maestro-debug-output/maestro-${TEST_NAME}.log"; then
             echo "🔍 Detected missing test file in maestro output"

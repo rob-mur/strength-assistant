@@ -38,6 +38,27 @@ jobs:
           artifact-name: preview_build
         id: build-preview
 
+  build-production-apk:
+    name: Build Production APK
+    runs-on: ubuntu-latest
+    environment: Dev
+    outputs:
+      apk-artifact-name: ${{ steps.build-production.outputs.artifact-name }}
+      apk-filename: build_production.apk
+      apk-path: ${{ steps.build-production.outputs.apk-path }}
+      build-successful: ${{ steps.build-production.outputs.build-successful }}
+    steps:
+      - name: 🏗 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Production APK
+        uses: ./.github/actions/android-build
+        with:
+          build-type: production
+          devbox-config: android-build
+          artifact-name: pr-production-release-apk
+        id: build-production
+
   integration-tests-android:
     runs-on: ubuntu-latest
     needs: build-preview
@@ -129,17 +150,85 @@ jobs:
         with:
           scanMetadataReportFile: .scannerwork/report-task.txt
 
+  production-validation:
+    name: Validate Production Configuration
+    runs-on: ubuntu-latest
+    needs: build-production-apk
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Production APK
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-production-apk.outputs.apk-artifact-name }}
+          path: ./artifacts
+
+      - name: Setup APK for Testing
+        shell: bash
+        run: |
+          # Find the downloaded APK file
+          APK_FILE=$(find ./artifacts -name "*.apk" -type f | head -1)
+
+          if [ ! -f "$APK_FILE" ]; then
+            echo "::error title=APK Not Found::No APK file found in downloaded artifacts"
+            exit 1
+          fi
+
+          echo "✅ Found APK: $APK_FILE"
+
+          # Copy APK to expected location for testing
+          cp "$APK_FILE" "${{ needs.build-production-apk.outputs.apk-filename }}"
+          echo "📋 Copied APK to: ${{ needs.build-production-apk.outputs.apk-filename }}"
+
+          echo "apk-path=$APK_FILE" >> $GITHUB_OUTPUT
+          echo "build-successful=true" >> $GITHUB_OUTPUT
+        id: download-apk
+
+      - name: Run Production Configuration Validation
+        uses: ./.github/actions/maestro-test
+        with:
+          apk-path: ${{ github.workspace }}/${{ needs.build-production-apk.outputs.apk-filename }}
+          test-environment: production
+          skip-data-cleanup: true
+          devbox-config: android-testing
+        id: maestro-tests
+
+      - name: Process Test Results
+        run: |
+          echo "Production configuration validation completed"
+          echo "APK download successful: ${{ steps.download-apk.outputs.build-successful }}"
+          echo "Tests passed: ${{ steps.maestro-tests.outputs.tests-passed }}"
+          echo "Debug artifacts: ${{ steps.maestro-tests.outputs.debug-artifacts }}"
+
+      # Alert on failure
+      - name: Production Configuration Validation Failed
+        if: failure()
+        run: |
+          echo "::error title=Production Configuration Validation Failed::Production configuration validation has failed. This change may break production deployment."
+          echo "::error::Please review the configuration changes and ensure backwards compatibility"
+          exit 1
+
+      # Success notification
+      - name: Production Configuration Validation Succeeded
+        if: success()
+        run: |
+          echo "::notice title=Production Configuration Validation Passed::Production configuration validation completed successfully"
+          echo "::notice::This change is safe for production deployment"
+
   claude-review:
     runs-on: ubuntu-latest
     needs:
       [
         unit-tests,
         build-preview,
+        build-production-apk,
         integration-tests-android,
         integration-tests-chrome,
+        production-validation,
         sonarqube,
       ]
-    if: always() && (needs.unit-tests.result == 'success' && needs.build-preview.result == 'success' && needs.integration-tests-android.result == 'success' && needs.integration-tests-chrome.result == 'success' && needs.sonarqube.result == 'success')
+    if: always() && (needs.unit-tests.result == 'success' && needs.build-preview.result == 'success' && needs.build-production-apk.result == 'success' && needs.integration-tests-android.result == 'success' && needs.integration-tests-chrome.result == 'success' && needs.production-validation.result == 'success' && needs.sonarqube.result == 'success')
     permissions:
       contents: write
       pull-requests: write
