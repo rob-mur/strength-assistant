@@ -1,14 +1,12 @@
 import "react-native-get-random-values";
 import { SplashScreen, Stack } from "expo-router";
-import React from "react";
+import React, { useEffect } from "react";
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from "react-native-paper";
 import { useColorScheme } from "react-native";
-import handleErrors from "./error";
+
 import { useAppInit } from "@/lib/hooks/useAppInit";
 import { AuthProvider } from "@/lib/components/AuthProvider";
 import { AuthAwareLayout } from "@/lib/components/AuthAwareLayout";
-import { initializeErrorHandling } from "@/lib/utils/logging/LoggingServiceFactory";
-import { initializeRecoverySystem } from "@/lib/utils/logging/RecoveryConfig";
 
 // Catch any errors thrown by the Layout component.
 export { ErrorBoundary } from "expo-router";
@@ -22,20 +20,21 @@ SplashScreen.preventAutoHideAsync();
 // Debug: Basic console log to verify app is running
 console.log("🚀 App starting - RootLayout loading");
 
-// Initialize global error handling system
-initializeErrorHandling();
-
-// Initialize recovery actions for all error types
-initializeRecoverySystem();
-
-// Catch any errors in test mode so maestro properly crashes
-handleErrors();
-
 const RootLayout = () => {
-  const isReady = useAppInit();
+  const { loaded, fontsLoaded, error } = useAppInit();
   const colorScheme = useColorScheme();
 
-  if (!isReady) {
+  useEffect(() => {
+    if (error) throw error;
+  }, [error]);
+
+  useEffect(() => {
+    if (loaded && fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [loaded, fontsLoaded]);
+
+  if (!loaded || !fontsLoaded) {
     return null;
   }
 

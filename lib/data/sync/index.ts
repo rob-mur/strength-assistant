@@ -1,5 +1,6 @@
 import { configureSyncEngine } from "./syncConfig";
 import { initSupabase } from "../supabase/supabase";
+import { storageManager } from "../StorageManager";
 
 /**
  * Initialize the offline-first data layer
@@ -8,9 +9,13 @@ import { initSupabase } from "../supabase/supabase";
 export async function initializeDataLayer(): Promise<void> {
   console.log("🔄 initializeDataLayer - Starting data layer initialization");
   try {
-    // Initialize Supabase
-    console.log("🔗 initializeDataLayer - Initializing Supabase");
+    // Initialize Supabase client
+    console.log("🔗 initializeDataLayer - Initializing Supabase client");
     initSupabase();
+
+    // Initialize StorageManager (includes SupabaseStorage session initialization)
+    console.log("💾 initializeDataLayer - Initializing StorageManager");
+    await storageManager.init();
 
     // Configure Legend State sync engine
     console.log("⚙️ initializeDataLayer - Configuring sync engine");

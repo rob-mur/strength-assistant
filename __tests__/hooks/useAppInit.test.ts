@@ -74,7 +74,7 @@ describe("useAppInit", () => {
 
       const { result } = renderHook(() => useAppInit());
 
-      expect(result.current).toBe(false);
+      expect(result.current.loaded).toBe(false);
     });
 
     it("should return true when fonts loaded and app is ready", async () => {
@@ -84,7 +84,7 @@ describe("useAppInit", () => {
       const { result } = renderHook(() => useAppInit());
 
       await waitFor(() => {
-        expect(result.current).toBe(true);
+        expect(result.current.loaded).toBe(true);
       });
 
       expect(mockInitializeDataLayer).toHaveBeenCalled();
@@ -119,14 +119,14 @@ describe("useAppInit", () => {
 
       const { result, rerender } = renderHook(() => useAppInit());
 
-      expect(result.current).toBe(false);
+      expect(result.current.loaded).toBe(false);
 
       // Simulate fonts loading
       mockUseFonts.mockReturnValue([true, null]);
       rerender();
 
       await waitFor(() => {
-        expect(result.current).toBe(true);
+        expect(result.current.loaded).toBe(true);
       });
     });
 
@@ -157,7 +157,7 @@ describe("useAppInit", () => {
       const { result } = renderHook(() => useAppInit());
 
       await waitFor(() => {
-        expect(result.current).toBe(true);
+        expect(result.current.loaded).toBe(true);
       });
 
       expect(mockInitializeDataLayer).toHaveBeenCalled();
@@ -175,7 +175,7 @@ describe("useAppInit", () => {
 
       // Should still return true and continue, even if data layer fails
       await waitFor(() => {
-        expect(result.current).toBe(true);
+        expect(result.current.loaded).toBe(true);
       });
 
       expect(mockInitializeDataLayer).toHaveBeenCalled();
@@ -196,7 +196,7 @@ describe("useAppInit", () => {
 
       // App should still be ready even if data layer fails
       await waitFor(() => {
-        expect(result.current).toBe(true);
+        expect(result.current.loaded).toBe(true);
       });
 
       // Restore window object
@@ -289,7 +289,7 @@ describe("useAppInit", () => {
 
       // Should still complete initialization
       await waitFor(() => {
-        expect(result.current).toBe(true);
+        expect(result.current.loaded).toBe(true);
       });
     });
   });
@@ -301,7 +301,7 @@ describe("useAppInit", () => {
       const { result } = renderHook(() => useAppInit());
 
       await waitFor(() => {
-        expect(result.current).toBe(true);
+        expect(result.current.loaded).toBe(true);
       });
     });
 
@@ -312,7 +312,7 @@ describe("useAppInit", () => {
       const { result } = renderHook(() => useAppInit());
 
       await waitFor(() => {
-        expect(result.current).toBe(true);
+        expect(result.current.loaded).toBe(true);
       });
     });
 
@@ -323,7 +323,7 @@ describe("useAppInit", () => {
       const { result } = renderHook(() => useAppInit());
 
       await waitFor(() => {
-        expect(result.current).toBe(true);
+        expect(result.current.loaded).toBe(true);
       });
     });
   });
