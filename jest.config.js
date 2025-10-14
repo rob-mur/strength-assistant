@@ -63,7 +63,9 @@ module.exports = {
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
   testMatch: [
     "**/__tests__/**/*.(test|spec).(ts|tsx|js)", // Only test files in __tests__
+    "**/__tests__/**/*-test.(ts|tsx|js)", // Include -test pattern files in __tests__
     "**/*.(test|spec).(ts|tsx|js)", // Test files anywhere
+    "**/*-test.(ts|tsx|js)", // Include -test pattern files anywhere
     "**/__tests__/contracts/**/*.test.ts", // Include contract tests
   ],
 

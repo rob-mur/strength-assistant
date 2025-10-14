@@ -50,7 +50,7 @@ export default function AddExerciseForm() {
             );
 
             // CRITICAL FIX: Double-check authentication state at submission time
-            if (!user || !user.uid) {
+            if (!user?.uid) {
               console.error(
                 "💪 AddExerciseForm - User not authenticated at submit time, aborting",
               );

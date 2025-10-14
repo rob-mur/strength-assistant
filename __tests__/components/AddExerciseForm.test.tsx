@@ -283,4 +283,158 @@ describe("<AddExerciseForm/>", () => {
     const nameElements = screen.getAllByText("Name");
     expect(nameElements.length).toBeGreaterThanOrEqual(1);
   });
+
+  // Authentication Edge Cases
+  describe("Authentication Edge Cases", () => {
+    test("Prevents submission when user is null", async () => {
+      // Given
+      mockUseAuth.mockReturnValue({
+        user: null,
+        loading: false,
+        error: null,
+        signInAnonymously: jest.fn(),
+        createAccount: jest.fn(),
+        signIn: jest.fn(),
+        signOut: jest.fn(),
+        clearError: jest.fn(),
+      });
+
+      const mockAddExercise = jest.fn().mockResolvedValue(undefined);
+      mockUseAddExercise.mockReturnValue(mockAddExercise);
+
+      render(<AddExerciseForm />);
+      const nameInput = screen.getByTestId("name");
+      const submitButton = screen.getByTestId("submit");
+
+      // When
+      fireEvent.changeText(nameInput, "Test Exercise");
+      fireEvent.press(submitButton);
+
+      // Then - addExercise should not be called due to auth check
+      await waitFor(() => {
+        expect(mockAddExercise).not.toHaveBeenCalled();
+      });
+    });
+
+    test("Prevents submission when user exists but uid is null", async () => {
+      // Given
+      mockUseAuth.mockReturnValue({
+        user: {
+          uid: null as any, // Simulate user object with null uid
+          email: "test@example.com",
+          isAnonymous: false,
+        },
+        loading: false,
+        error: null,
+        signInAnonymously: jest.fn(),
+        createAccount: jest.fn(),
+        signIn: jest.fn(),
+        signOut: jest.fn(),
+        clearError: jest.fn(),
+      });
+
+      const mockAddExercise = jest.fn().mockResolvedValue(undefined);
+      mockUseAddExercise.mockReturnValue(mockAddExercise);
+
+      render(<AddExerciseForm />);
+      const nameInput = screen.getByTestId("name");
+      const submitButton = screen.getByTestId("submit");
+
+      // When
+      fireEvent.changeText(nameInput, "Test Exercise");
+      fireEvent.press(submitButton);
+
+      // Then - addExercise should not be called due to optional chaining check
+      await waitFor(() => {
+        expect(mockAddExercise).not.toHaveBeenCalled();
+      });
+    });
+
+    test("Prevents submission when user exists but uid is undefined", async () => {
+      // Given
+      mockUseAuth.mockReturnValue({
+        user: {
+          uid: undefined as any, // Simulate user object with undefined uid
+          email: "test@example.com",
+          isAnonymous: false,
+        },
+        loading: false,
+        error: null,
+        signInAnonymously: jest.fn(),
+        createAccount: jest.fn(),
+        signIn: jest.fn(),
+        signOut: jest.fn(),
+        clearError: jest.fn(),
+      });
+
+      const mockAddExercise = jest.fn().mockResolvedValue(undefined);
+      mockUseAddExercise.mockReturnValue(mockAddExercise);
+
+      render(<AddExerciseForm />);
+      const nameInput = screen.getByTestId("name");
+      const submitButton = screen.getByTestId("submit");
+
+      // When
+      fireEvent.changeText(nameInput, "Test Exercise");
+      fireEvent.press(submitButton);
+
+      // Then - addExercise should not be called due to optional chaining check
+      await waitFor(() => {
+        expect(mockAddExercise).not.toHaveBeenCalled();
+      });
+    });
+
+    test("Prevents submission when user exists but uid is empty string", async () => {
+      // Given
+      mockUseAuth.mockReturnValue({
+        user: {
+          uid: "", // Simulate user object with empty string uid
+          email: "test@example.com",
+          isAnonymous: false,
+        },
+        loading: false,
+        error: null,
+        signInAnonymously: jest.fn(),
+        createAccount: jest.fn(),
+        signIn: jest.fn(),
+        signOut: jest.fn(),
+        clearError: jest.fn(),
+      });
+
+      const mockAddExercise = jest.fn().mockResolvedValue(undefined);
+      mockUseAddExercise.mockReturnValue(mockAddExercise);
+
+      render(<AddExerciseForm />);
+      const nameInput = screen.getByTestId("name");
+      const submitButton = screen.getByTestId("submit");
+
+      // When
+      fireEvent.changeText(nameInput, "Test Exercise");
+      fireEvent.press(submitButton);
+
+      // Then - addExercise should not be called due to falsy uid check
+      await waitFor(() => {
+        expect(mockAddExercise).not.toHaveBeenCalled();
+      });
+    });
+
+    test("Allows submission when user and uid are valid", async () => {
+      // Given - using the default valid user from beforeEach
+      const mockAddExercise = jest.fn().mockResolvedValue(undefined);
+      mockUseAddExercise.mockReturnValue(mockAddExercise);
+
+      render(<AddExerciseForm />);
+      const nameInput = screen.getByTestId("name");
+      const submitButton = screen.getByTestId("submit");
+
+      // When
+      fireEvent.changeText(nameInput, "Valid Exercise");
+      fireEvent.press(submitButton);
+
+      // Then - addExercise should be called
+      await waitFor(() => {
+        expect(mockAddExercise).toHaveBeenCalledWith("Valid Exercise");
+      });
+    });
+  });
 });

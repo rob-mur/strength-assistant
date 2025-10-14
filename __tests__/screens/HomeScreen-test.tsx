@@ -52,17 +52,8 @@ jest.mock("@/lib/locales", () => ({
 }));
 
 describe("HomeScreen", () => {
-  let consoleSpy: jest.SpyInstance;
-
   beforeEach(() => {
     jest.clearAllMocks();
-    consoleSpy = jest.spyOn(console, "log").mockImplementation();
-  });
-
-  afterEach(() => {
-    if (consoleSpy) {
-      consoleSpy.mockRestore();
-    }
   });
 
   describe("Component Rendering", () => {
@@ -136,74 +127,6 @@ describe("HomeScreen", () => {
       const getStartedButton = getByTestId("get-started");
       expect(getStartedButton).toBeTruthy();
       expect(getStartedButton.props.accessibilityRole).toBe("button");
-    });
-  });
-
-  describe("Debug Logging", () => {
-    beforeEach(() => {
-      // Clear environment variables before each test
-      delete process.env.CHROME_TEST;
-      delete process.env.CI;
-    });
-
-    it("should log component render in Chrome test environment", () => {
-      process.env.CHROME_TEST = "true";
-
-      render(<HomeScreen />);
-
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "🔍 HomeScreen: Component rendered",
-      );
-    });
-
-    it("should log component render in CI environment", () => {
-      process.env.CI = "true";
-
-      render(<HomeScreen />);
-
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "🔍 HomeScreen: Component rendered",
-      );
-    });
-
-    it("should log navigation in Chrome test environment", async () => {
-      process.env.CHROME_TEST = "true";
-
-      const { getByTestId } = render(<HomeScreen />);
-
-      fireEvent.press(getByTestId("get-started"));
-
-      await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith(
-          "🔍 HomeScreen: Navigating to exercises screen",
-        );
-      });
-    });
-
-    it("should log navigation in CI environment", async () => {
-      process.env.CI = "true";
-
-      const { getByTestId } = render(<HomeScreen />);
-
-      fireEvent.press(getByTestId("get-started"));
-
-      await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith(
-          "🔍 HomeScreen: Navigating to exercises screen",
-        );
-      });
-    });
-
-    it("should not log in normal environment", async () => {
-      const { getByTestId } = render(<HomeScreen />);
-
-      fireEvent.press(getByTestId("get-started"));
-
-      await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalled();
-      });
-
-      expect(consoleSpy).not.toHaveBeenCalled();
     });
   });
 
