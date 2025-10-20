@@ -7,6 +7,8 @@ import { useColorScheme } from "react-native";
 import { useAppInit } from "@/lib/hooks/useAppInit";
 import { AuthProvider } from "@/lib/components/AuthProvider";
 import { AuthAwareLayout } from "@/lib/components/AuthAwareLayout";
+import { ErrorBlocker } from "@/lib/components/ErrorBlocker";
+import { initializeErrorBlocking } from "@/lib/utils/logging/ErrorBlockingFactory";
 
 // Catch any errors thrown by the Layout component.
 export { ErrorBoundary } from "expo-router";
@@ -24,6 +26,26 @@ const RootLayout = () => {
   const { loaded, fontsLoaded, error } = useAppInit();
   const colorScheme = useColorScheme();
 
+  // Initialize simple error blocking system
+  useEffect(() => {
+    const errorSystem = initializeErrorBlocking({
+      enabled: true,
+      showErrorDetails: false, // Keep false for production
+      enableConsoleLogging: true,
+    });
+
+    console.log("✅ Simple error blocking system initialized");
+
+    return () => {
+      // Cleanup on unmount (for testing)
+      try {
+        errorSystem.reactNativeHandler.cleanup();
+      } catch (cleanupError) {
+        console.warn("Error during error system cleanup:", cleanupError);
+      }
+    };
+  }, []);
+
   useEffect(() => {
     if (error) throw error;
   }, [error]);
@@ -39,15 +61,17 @@ const RootLayout = () => {
   }
 
   return (
-    <PaperProvider
-      theme={colorScheme === "light" ? MD3LightTheme : MD3DarkTheme}
-    >
-      <AuthProvider>
-        <AuthAwareLayout>
-          <RootLayoutNav />
-        </AuthAwareLayout>
-      </AuthProvider>
-    </PaperProvider>
+    <ErrorBlocker>
+      <PaperProvider
+        theme={colorScheme === "light" ? MD3LightTheme : MD3DarkTheme}
+      >
+        <AuthProvider>
+          <AuthAwareLayout>
+            <RootLayoutNav />
+          </AuthAwareLayout>
+        </AuthProvider>
+      </PaperProvider>
+    </ErrorBlocker>
   );
 };
 

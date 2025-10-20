@@ -35,3 +35,7 @@ timeout: 60000
 - assertVisible:
     text: "ExerciseName"
 - takeScreenshot: "final-exercise-list.png"
+
+# Check for uncaught errors at end of test
+- runFlow:
+    file: error-check.yml
