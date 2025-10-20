@@ -83,20 +83,35 @@ CHROME_WRAPPER_SCRIPT="/tmp/chrome-wrapper-$$"
 cat > "$CHROME_WRAPPER_SCRIPT" << 'EOF'
 #!/bin/bash
 echo "🚀 Starting Chrome for Maestro testing..."
+echo "PATH: $PATH"
+echo "PWD: $PWD"
+
 # Force use of devbox-provided chromium to match chromedriver version
 if command -v chromium >/dev/null 2>&1; then
-    echo "📱 Using devbox Chromium browser ($(chromium --version 2>/dev/null || echo 'version unknown'))"
+    CHROMIUM_PATH=$(command -v chromium)
+    echo "📱 Using devbox Chromium browser: $CHROMIUM_PATH"
+    echo "📱 Version: $(chromium --version 2>/dev/null || echo 'version unknown')"
     exec chromium --no-sandbox --headless --disable-dev-shm-usage --disable-gpu --user-data-dir=/tmp/chrome-test-$$ "$@"
 else
     echo "❌ Chromium not found in devbox environment"
     echo "Available browsers:"
     command -v google-chrome >/dev/null 2>&1 && echo "  - google-chrome: $(google-chrome --version 2>/dev/null || echo 'version unknown')"
     command -v chrome >/dev/null 2>&1 && echo "  - chrome: $(chrome --version 2>/dev/null || echo 'version unknown')"
+    echo "PATH contents:"
+    echo "$PATH" | tr ':' '\n' | head -10
     exit 1
 fi
 EOF
 chmod +x "$CHROME_WRAPPER_SCRIPT"
 export MAESTRO_CHROME_PATH="$CHROME_WRAPPER_SCRIPT"
+
+# Debug: Show what's available in PATH
+echo "🔍 Environment Debug Information:"
+echo "PATH: $PATH"
+echo "Available chrome/chromium binaries:"
+command -v chromium >/dev/null 2>&1 && echo "  ✅ chromium: $(command -v chromium) ($(chromium --version 2>/dev/null || echo 'version unknown'))"
+command -v google-chrome >/dev/null 2>&1 && echo "  📍 google-chrome: $(command -v google-chrome) ($(google-chrome --version 2>/dev/null || echo 'version unknown'))"
+command -v chrome >/dev/null 2>&1 && echo "  📍 chrome: $(command -v chrome) ($(chrome --version 2>/dev/null || echo 'version unknown'))"
 
 # Set ChromeDriver path to use devbox-provided version
 if command -v chromedriver >/dev/null 2>&1; then
@@ -106,6 +121,11 @@ if command -v chromedriver >/dev/null 2>&1; then
 else
     echo "⚠️ ChromeDriver not found in PATH"
 fi
+
+# Verify Maestro environment variables
+echo "🎭 Maestro Configuration:"
+echo "  MAESTRO_CHROME_PATH: ${MAESTRO_CHROME_PATH:-not set}"
+echo "  MAESTRO_CHROMEDRIVER_PATH: ${MAESTRO_CHROMEDRIVER_PATH:-not set}"
 
 # Note: Chrome DevTools connection removed as it's not compatible with Maestro test execution
 echo "📄 Console output will be captured through Expo web server logs"
