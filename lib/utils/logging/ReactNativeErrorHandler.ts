@@ -70,24 +70,58 @@ export class ReactNativeErrorHandlerImpl implements ReactNativeErrorHandler {
         const ErrorUtils = (global as GlobalWithErrorUtils)
           .ErrorUtils as ErrorUtilsType;
 
-        // Store original handler
-        if (typeof ErrorUtils.getGlobalHandler === "function") {
-          this.originalHandler = ErrorUtils.getGlobalHandler();
+        // Defensive check for ErrorUtils validity
+        if (!ErrorUtils || typeof ErrorUtils !== "object") {
+          console.warn(
+            "[ReactNativeErrorHandler] ErrorUtils is not a valid object",
+          );
+          return;
         }
 
-        // Set our handler
-        if (typeof ErrorUtils.setGlobalHandler === "function") {
-          ErrorUtils.setGlobalHandler((error: Error, isFatal: boolean) => {
-            this.handleUncaughtError(error, isFatal);
-          });
+        // Store original handler with defensive checks
+        if (
+          ErrorUtils.getGlobalHandler &&
+          typeof ErrorUtils.getGlobalHandler === "function"
+        ) {
+          try {
+            this.originalHandler = ErrorUtils.getGlobalHandler();
+          } catch (getHandlerError) {
+            console.warn(
+              "[ReactNativeErrorHandler] Failed to get original handler:",
+              getHandlerError,
+            );
+          }
         }
+
+        // Set our handler with defensive checks
+        if (
+          ErrorUtils.setGlobalHandler &&
+          typeof ErrorUtils.setGlobalHandler === "function"
+        ) {
+          try {
+            ErrorUtils.setGlobalHandler((error: Error, isFatal: boolean) => {
+              this.handleUncaughtError(error, isFatal);
+            });
+            console.log("✅ React Native error handlers setup complete");
+          } catch (setHandlerError) {
+            console.error(
+              "❌ Node error handler setup failed:",
+              setHandlerError,
+            );
+          }
+        } else {
+          console.warn(
+            "[ReactNativeErrorHandler] setGlobalHandler is not available",
+          );
+        }
+      } else {
+        console.log(
+          "[ReactNativeErrorHandler] ErrorUtils not available (likely web environment)",
+        );
       }
     } catch (setupError) {
       // Don't throw if setup fails - just log and continue
-      console.error(
-        "[ReactNativeErrorHandler] Failed to setup global error handling:",
-        setupError,
-      );
+      console.error("❌ Global error handler setup failed:", setupError);
     }
   }
 
@@ -103,13 +137,31 @@ export class ReactNativeErrorHandlerImpl implements ReactNativeErrorHandler {
         const ErrorUtils = (global as GlobalWithErrorUtils)
           .ErrorUtils as ErrorUtilsType;
 
-        // Restore original handler
-        if (typeof ErrorUtils.setGlobalHandler === "function") {
-          if (this.originalHandler) {
-            ErrorUtils.setGlobalHandler(this.originalHandler);
-          } else {
-            // If no original handler, set to null/undefined
-            ErrorUtils.setGlobalHandler(null);
+        // Defensive check for ErrorUtils validity
+        if (!ErrorUtils || typeof ErrorUtils !== "object") {
+          console.warn(
+            "[ReactNativeErrorHandler] ErrorUtils not available for cleanup",
+          );
+          return;
+        }
+
+        // Restore original handler with defensive checks
+        if (
+          ErrorUtils.setGlobalHandler &&
+          typeof ErrorUtils.setGlobalHandler === "function"
+        ) {
+          try {
+            if (this.originalHandler) {
+              ErrorUtils.setGlobalHandler(this.originalHandler);
+            } else {
+              // If no original handler, set to null/undefined
+              ErrorUtils.setGlobalHandler(null);
+            }
+          } catch (setHandlerError) {
+            console.warn(
+              "[ReactNativeErrorHandler] Failed to restore handler:",
+              setHandlerError,
+            );
           }
         }
 
