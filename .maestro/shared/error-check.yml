@@ -8,7 +8,6 @@ appId: ${APP_ID}
 # Wait for app to load completely
 - assertVisible:
     id: "main-app"
-    timeout: 10000
 
 # Check that error blocker is NOT visible (test fails if errors occurred)
 - assertNotVisible:
