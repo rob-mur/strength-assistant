@@ -4,6 +4,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Tabs } from "expo-router";
 import React from "react";
+import { View } from "react-native";
 
 // Tab icon components
 interface TabIconProps {
@@ -48,41 +49,43 @@ const CustomTabBar = (props: any) => <TabBar {...props} />;
 
 const TabLayout = () => {
   return (
-    <Tabs
-      tabBar={CustomTabBar}
-      screenOptions={{
-        tabBarHideOnKeyboard: true,
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: Locales.t("titleHome"),
-          tabBarIcon: HomeTabIcon,
+    <View testID="main-app" style={{ flex: 1 }}>
+      <Tabs
+        tabBar={CustomTabBar}
+        screenOptions={{
+          tabBarHideOnKeyboard: true,
         }}
-      />
-      <Tabs.Screen
-        name="exercises"
-        options={{
-          title: Locales.t("titleExercises"),
-          tabBarIcon: ExercisesTabIcon,
-        }}
-      />
-      <Tabs.Screen
-        name="workout"
-        options={{
-          title: Locales.t("titleWorkout"),
-          tabBarIcon: WorkoutTabIcon,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: "Profile",
-          tabBarIcon: ProfileTabIcon,
-        }}
-      />
-    </Tabs>
+      >
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: Locales.t("titleHome"),
+            tabBarIcon: HomeTabIcon,
+          }}
+        />
+        <Tabs.Screen
+          name="exercises"
+          options={{
+            title: Locales.t("titleExercises"),
+            tabBarIcon: ExercisesTabIcon,
+          }}
+        />
+        <Tabs.Screen
+          name="workout"
+          options={{
+            title: Locales.t("titleWorkout"),
+            tabBarIcon: WorkoutTabIcon,
+          }}
+        />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: "Profile",
+            tabBarIcon: ProfileTabIcon,
+          }}
+        />
+      </Tabs>
+    </View>
   );
 };
 
