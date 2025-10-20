@@ -1,0 +1,21 @@
+# Maestro Error Detection Test
+# 
+# This flow checks that no uncaught errors have occurred during app usage.
+# The test will fail if the error blocker overlay is visible.
+
+appId: ${APP_ID}
+---
+
+# Wait for app to load completely
+- assertVisible:
+    id: "main-app"
+    timeout: 10000
+
+# Check that error blocker is NOT visible (test fails if errors occurred)
+- assertNotVisible:
+    id: "maestro-error-blocker"
+    optional: false
+
+# If we reach here, no uncaught errors were detected
+- evalScript: |
+    console.log("✅ No uncaught errors detected - app is functioning correctly");
