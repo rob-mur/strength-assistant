@@ -28,22 +28,29 @@ const RootLayout = () => {
 
   // Initialize simple error blocking system
   useEffect(() => {
-    const errorSystem = initializeErrorBlocking({
-      enabled: true,
-      showErrorDetails: false, // Keep false for production
-      enableConsoleLogging: true,
-    });
+    try {
+      const errorSystem = initializeErrorBlocking({
+        enabled: true,
+        showErrorDetails: false, // Keep false for production
+        enableConsoleLogging: true,
+      });
 
-    console.log("✅ Simple error blocking system initialized");
+      console.log("✅ Simple error blocking system initialized");
 
-    return () => {
-      // Cleanup on unmount (for testing)
-      try {
-        errorSystem.reactNativeHandler.cleanup();
-      } catch (cleanupError) {
-        console.warn("Error during error system cleanup:", cleanupError);
-      }
-    };
+      return () => {
+        // Cleanup on unmount (for testing)
+        try {
+          if (errorSystem?.reactNativeHandler?.cleanup) {
+            errorSystem.reactNativeHandler.cleanup();
+          }
+        } catch (cleanupError) {
+          console.warn("Error during error system cleanup:", cleanupError);
+        }
+      };
+    } catch (initError) {
+      console.warn("Failed to initialize error blocking system:", initError);
+      return () => {}; // Return empty cleanup function on error
+    }
   }, []);
 
   useEffect(() => {

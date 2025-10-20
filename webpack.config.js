@@ -24,5 +24,7 @@ module.exports = {
   define: {
     "process.stdout": JSON.stringify({}),
     "process.stdout.isTTY": JSON.stringify(false),
+    __DEV__: JSON.stringify(process.env.NODE_ENV !== "production"),
+    global: "globalThis",
   },
 };
