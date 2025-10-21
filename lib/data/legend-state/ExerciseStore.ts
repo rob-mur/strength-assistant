@@ -133,12 +133,5 @@ export function disposeSync() {
   // Cleanup any resources
 }
 
-// Auto-initialize on module load (disabled in tests to prevent hanging, unless explicitly testing)
-if (
-  typeof process === "undefined" ||
-  process.env.NODE_ENV !== "test" ||
-  (process.env.NODE_ENV === "test" &&
-    process.env.JEST_TEST_AUTO_INIT === "true")
-) {
-  initializeSync();
-}
+// Auto-initialize on module load
+initializeSync();

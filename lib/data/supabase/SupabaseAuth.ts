@@ -52,12 +52,7 @@ export class SupabaseAuth {
           : supabaseClient;
       this.client = maybeClient as unknown as SupabaseClient;
     } catch (error) {
-      // In test environment, create a mock client
-      if (process.env.NODE_ENV === "test") {
-        this.client = this.createMockClient();
-      } else {
-        throw error;
-      }
+      throw error;
     }
 
     if (this.client?.auth?.onAuthStateChange) {
@@ -80,82 +75,6 @@ export class SupabaseAuth {
         }
       });
     }
-  }
-
-  private createMockClient(): SupabaseClient {
-    return {
-      auth: {
-        signUp: jest.fn(() =>
-          Promise.resolve({
-            data: {
-              user: {
-                id: "test-id",
-                email: "test@example.com",
-                created_at: new Date().toISOString(),
-              },
-            },
-            error: null,
-          }),
-        ),
-        signInWithPassword: jest.fn(() =>
-          Promise.resolve({
-            data: {
-              user: {
-                id: "test-id",
-                email: "test@example.com",
-                created_at: new Date().toISOString(),
-              },
-            },
-            error: null,
-          }),
-        ),
-        signInAnonymously: jest.fn(() =>
-          Promise.resolve({
-            data: {
-              user: {
-                id: "test-anon-id",
-                created_at: new Date().toISOString(),
-              },
-            },
-            error: null,
-          }),
-        ),
-        signOut: jest.fn(() => Promise.resolve({ error: null })),
-        getUser: jest.fn(() =>
-          Promise.resolve({
-            data: {
-              user: {
-                id: "test-id",
-                email: "test@example.com",
-                created_at: new Date().toISOString(),
-              },
-            },
-            error: null,
-          }),
-        ),
-        onAuthStateChange: jest.fn(() => ({
-          data: {
-            subscription: {
-              unsubscribe: jest.fn(),
-            },
-          },
-          unsubscribe: jest.fn(),
-        })),
-        linkEmailPassword: jest.fn(() =>
-          Promise.resolve({
-            data: {
-              user: {
-                id: "test-id",
-                email: "test@example.com",
-                created_at: new Date().toISOString(),
-              },
-            },
-            error: null,
-          }),
-        ),
-        forceSessionExpiry: jest.fn(() => Promise.resolve()),
-      },
-    } as unknown as SupabaseClient;
   }
 
   /**

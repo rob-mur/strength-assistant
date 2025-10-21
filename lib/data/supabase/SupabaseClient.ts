@@ -21,11 +21,6 @@ export class SupabaseClient {
   }
 
   private initializeClient(): BaseSupabaseClient<Database> {
-    // In test environment, avoid actual client initialization as tests use mocks
-    if (process.env.NODE_ENV === "test") {
-      return this.createMockClient();
-    }
-
     return this.createValidatedClient();
   }
 
@@ -39,20 +34,6 @@ export class SupabaseClient {
     if (!client || typeof client.from !== "function") {
       throw new Error("Invalid Supabase client: missing required methods");
     }
-  }
-
-  private createMockClient(): BaseSupabaseClient<Database> {
-    // Return a minimal mock client for test environment
-    // Tests will override this with jest.mock() anyway
-    return {
-      from: () => ({}),
-      auth: {
-        getUser: () => Promise.resolve({ data: { user: null }, error: null }),
-        onAuthStateChange: () => ({ data: { subscription: null } }),
-        signInAnonymously: () =>
-          Promise.resolve({ data: { user: null }, error: null }),
-      },
-    } as unknown as BaseSupabaseClient<Database>;
   }
 
   /**
