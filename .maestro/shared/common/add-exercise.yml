@@ -1,6 +1,7 @@
 # Add an exercise with the given name
 # Expects EXERCISE_NAME environment variable
-url: ${APP_URL}
+---
+appId: http://localhost:8081
 timeout: 60000
 ---
 # Ensure we're on the exercises screen before trying to add an exercise

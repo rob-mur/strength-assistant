@@ -1,5 +1,6 @@
 # Navigate to workout tab and wait for it to load
-url: ${APP_URL}
+---
+appId: http://localhost:8081
 timeout: 60000
 ---
 - tapOn:

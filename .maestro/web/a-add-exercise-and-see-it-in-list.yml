@@ -1,4 +1,5 @@
-url: http://localhost:8081
+---
+appId: http://localhost:8081
 ---
 - runFlow:
     file: ../shared/add-exercise-and-see-it-in-list.yml
