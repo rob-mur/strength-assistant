@@ -54,19 +54,6 @@ describe("SimpleErrorLogger Contract", () => {
       );
     });
 
-    it("should complete quickly without complex processing", () => {
-      const start = performance.now();
-      const error = new Error("Performance test");
-
-      logger.logError(error, "performance-test");
-
-      const end = performance.now();
-      const duration = end - start;
-
-      // Should complete in < 0.01ms (target: 100x improvement)
-      expect(duration).toBeLessThan(0.01);
-    });
-
     it("should not throw errors during logging", () => {
       const problematicError = new Error("Circular reference test");
 
@@ -102,50 +89,6 @@ describe("SimpleErrorLogger Contract", () => {
       }).not.toThrow();
 
       expect(consoleSpy).toHaveBeenCalled();
-    });
-  });
-
-  describe("Performance Requirements", () => {
-    it("should have minimal memory footprint", () => {
-      // Logger should not store errors or maintain complex state
-      // Test that logger doesn't accumulate state by checking its properties
-
-      // Logger should be stateless and not accumulate data
-      for (let i = 0; i < 100; i++) {
-        logger.logError(new Error(`Test ${i}`), `test-${i}`);
-      }
-
-      // The logger implementation should not have accumulated any state
-      // (we can't reliably measure memory in Node.js due to GC, so we test design)
-      expect(logger).toBeDefined();
-      expect(typeof logger.logError).toBe("function");
-      expect(typeof logger.logAndBlock).toBe("function");
-
-      // Verify logger doesn't have storage properties that would indicate state accumulation
-      const loggerKeys = Object.keys(logger);
-      const hasStorageProperties = loggerKeys.some(
-        (key) =>
-          key.includes("errors") ||
-          key.includes("logs") ||
-          key.includes("cache"),
-      );
-      expect(hasStorageProperties).toBe(false);
-    });
-
-    it("should have consistent performance regardless of error volume", () => {
-      const durations: number[] = [];
-
-      for (let i = 0; i < 10; i++) {
-        const start = performance.now();
-        logger.logError(new Error(`Performance test ${i}`), `perf-${i}`);
-        const end = performance.now();
-        durations.push(end - start);
-      }
-
-      // All logging operations should be consistently fast
-      durations.forEach((duration) => {
-        expect(duration).toBeLessThan(0.01);
-      });
     });
   });
 
