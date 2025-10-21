@@ -40,7 +40,7 @@ export class MaestroErrorDetectionImpl implements MaestroErrorDetection {
    */
   isErrorBlockerVisible(): boolean {
     const state = getGlobalErrorState();
-    return state.hasError;
+    return state.hasUncaughtError;
   }
 
   /**

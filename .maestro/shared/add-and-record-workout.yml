@@ -1,5 +1,4 @@
----
-appId: http://localhost:8081
+url: ${APP_URL}
 timeout: 60000
 ---
 - launchApp

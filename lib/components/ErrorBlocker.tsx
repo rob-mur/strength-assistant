@@ -7,7 +7,6 @@
 
 import React, { ReactNode, useState, useEffect } from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { ErrorBlockerComponent } from "../../specs/012-production-bug-android/contracts/simple-error-blocking";
 import { MAESTRO_TEST_IDS } from "../models/MaestroErrorIndicator";
 import { getGlobalErrorState } from "../utils/logging/SimpleErrorLogger";
 
@@ -19,7 +18,20 @@ interface ErrorBlockerProps {
  * ErrorBlocker component implementation
  */
 const ErrorBlockerImpl: React.FC<ErrorBlockerProps> = ({ children }) => {
-  const [errorState, setErrorState] = useState(() => getGlobalErrorState());
+  const [errorState, setErrorState] = useState(() => {
+    try {
+      return getGlobalErrorState();
+    } catch (error) {
+      console.error("ErrorBlocker: Failed to get initial error state", error);
+      return {
+        hasUncaughtError: false,
+        errorCount: 0,
+        lastError: "",
+        lastErrorTimestamp: "",
+        isBlocking: false,
+      };
+    }
+  });
 
   useEffect(() => {
     // Listen for uncaught error events
@@ -41,20 +53,24 @@ const ErrorBlockerImpl: React.FC<ErrorBlockerProps> = ({ children }) => {
 
     // React Native doesn't have window, so we'll poll for changes
     const interval = setInterval(() => {
-      const currentState = getGlobalErrorState();
-      if (
-        currentState.hasError !== errorState.hasError ||
-        currentState.errorCount !== errorState.errorCount
-      ) {
-        setErrorState(currentState);
+      try {
+        const currentState = getGlobalErrorState();
+        if (
+          currentState.hasUncaughtError !== errorState.hasUncaughtError ||
+          currentState.errorCount !== errorState.errorCount
+        ) {
+          setErrorState(currentState);
+        }
+      } catch (error) {
+        console.error("ErrorBlocker: Failed to poll error state", error);
       }
     }, 100); // Check every 100ms
 
     return () => clearInterval(interval);
-  }, [errorState.hasError, errorState.errorCount]);
+  }, [errorState.hasUncaughtError, errorState.errorCount]);
 
   // If no error, render children normally
-  if (!errorState.hasError) {
+  if (!errorState.hasUncaughtError) {
     return <>{children}</>;
   }
 
@@ -158,6 +174,6 @@ const styles = StyleSheet.create({
 });
 
 /**
- * Typed ErrorBlocker component that implements ErrorBlockerComponent interface
+ * Export ErrorBlocker component directly without type casting to avoid runtime errors
  */
-export const ErrorBlocker = ErrorBlockerImpl as ErrorBlockerComponent;
+export const ErrorBlocker = ErrorBlockerImpl;

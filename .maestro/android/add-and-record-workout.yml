@@ -1,5 +1,7 @@
 appId: com.jimmysolutions.strengthassistant.test
+timeout: 60000
 ---
+- launchApp
 - runFlow:
     file: ../shared/add-and-record-workout.yml
     env:

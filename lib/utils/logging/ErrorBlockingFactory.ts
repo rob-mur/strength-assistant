@@ -52,7 +52,7 @@ export class ErrorBlockingFactoryImpl implements ErrorBlockingFactory {
   /**
    * Create the main ErrorBlocker component
    */
-  createErrorBlocker(): ErrorBlockerComponent {
+  createErrorBlocker(): any {
     if (!this.config.enabled) {
       // Return a pass-through component if disabled
       return ({ children }) => children as React.ReactElement;
@@ -126,7 +126,7 @@ export function createErrorBlockingFactory(
  */
 export function initializeErrorBlocking(config?: ErrorBlockingConfig): {
   factory: ErrorBlockingFactory;
-  errorBlocker: ErrorBlockerComponent;
+  errorBlocker: any;
   logger: SimpleErrorLogger;
   maestroDetection: MaestroErrorDetection;
   reactNativeHandler: ReactNativeErrorHandler;

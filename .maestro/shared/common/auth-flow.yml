@@ -1,6 +1,5 @@
 # Handle authentication and onboarding flows
----
-appId: http://localhost:8081
+url: ${APP_URL}
 timeout: 60000
 ---
 # Wait for auth screen to appear

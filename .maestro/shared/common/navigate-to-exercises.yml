@@ -1,6 +1,5 @@
 # Navigate to exercises tab and wait for it to load
----
-appId: http://localhost:8081
+url: ${APP_URL}
 timeout: 60000
 ---
 # Try multiple approaches to navigate to exercises screen

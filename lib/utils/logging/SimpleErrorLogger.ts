@@ -11,10 +11,11 @@ import { SimpleErrorLogger } from "../../../specs/012-production-bug-android/con
  * Global error state for app blocking
  */
 let globalErrorState = {
-  hasError: false,
+  hasUncaughtError: false,
   errorCount: 0,
   lastError: "",
   lastErrorTimestamp: "",
+  isBlocking: false,
 };
 
 /**
@@ -38,10 +39,11 @@ export class SimpleErrorLoggerImpl implements SimpleErrorLogger {
 
     // Update global error state for blocking
     globalErrorState = {
-      hasError: true,
+      hasUncaughtError: true,
       errorCount: globalErrorState.errorCount + 1,
       lastError: error.message || "Unknown error",
       lastErrorTimestamp: new Date().toISOString(),
+      isBlocking: true,
     };
 
     // Notify error blocker component about state change
@@ -67,10 +69,11 @@ export function getGlobalErrorState() {
  */
 export function resetGlobalErrorState(): void {
   globalErrorState = {
-    hasError: false,
+    hasUncaughtError: false,
     errorCount: 0,
     lastError: "",
     lastErrorTimestamp: "",
+    isBlocking: false,
   };
 }
 
