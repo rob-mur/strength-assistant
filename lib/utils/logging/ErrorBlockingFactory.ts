@@ -59,10 +59,7 @@ export class ErrorBlockingFactoryImpl implements ErrorBlockingFactory {
         children as React.ReactElement;
     }
 
-    const WrappedErrorBlocker = (props: { children: React.ReactNode }) =>
-      React.createElement(ErrorBlocker, props);
-    WrappedErrorBlocker.displayName = "WrappedErrorBlocker";
-    return WrappedErrorBlocker;
+    return ErrorBlocker as ErrorBlockerComponent;
   }
 
   /**
