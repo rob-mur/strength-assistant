@@ -9,7 +9,7 @@ describe("RepositoryLogger", () => {
   beforeEach(() => {
     // Reset modules to ensure fresh imports
     jest.resetModules();
-    
+
     // Create fresh mock logger
     mockLogger = {
       info: jest.fn(),
@@ -40,17 +40,17 @@ describe("RepositoryLogger", () => {
           service: "ExerciseService",
           platform: "mobile",
           operation: "createExercise",
-        }
+        },
       );
     });
 
     it("should log successful operation with additional context", () => {
       const additionalContext = { exerciseId: "123", userId: "456" };
-      
+
       RepositoryLogger.logSuccess(
-        "ExerciseService", 
+        "ExerciseService",
         "updateExercise",
-        additionalContext
+        additionalContext,
       );
 
       expect(mockLogger.info).toHaveBeenCalledWith(
@@ -61,7 +61,7 @@ describe("RepositoryLogger", () => {
           operation: "updateExercise",
           exerciseId: "123",
           userId: "456",
-        }
+        },
       );
     });
   });
@@ -83,7 +83,7 @@ describe("RepositoryLogger", () => {
             message: "Test error message",
             stack: "Test stack trace",
           },
-        }
+        },
       );
     });
 
@@ -95,7 +95,7 @@ describe("RepositoryLogger", () => {
         "ExerciseService",
         "fetchExercises",
         error,
-        additionalContext
+        additionalContext,
       );
 
       expect(mockLogger.error).toHaveBeenCalledWith(
@@ -110,7 +110,7 @@ describe("RepositoryLogger", () => {
           },
           exerciseId: "789",
           retryCount: 3,
-        }
+        },
       );
     });
 
@@ -120,18 +120,15 @@ describe("RepositoryLogger", () => {
 
       RepositoryLogger.logError("TestService", "testOperation", error);
 
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        "Failed to testOperation",
-        {
-          service: "TestService",
-          platform: "mobile",
-          operation: "testOperation",
-          error: {
-            message: "Simple error",
-            stack: undefined,
-          },
-        }
-      );
+      expect(mockLogger.error).toHaveBeenCalledWith("Failed to testOperation", {
+        service: "TestService",
+        platform: "mobile",
+        operation: "testOperation",
+        error: {
+          message: "Simple error",
+          stack: undefined,
+        },
+      });
     });
   });
 });

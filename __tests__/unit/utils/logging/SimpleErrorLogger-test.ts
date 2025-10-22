@@ -119,15 +119,15 @@ describe("SimpleErrorLogger", () => {
   it("dispatches custom event when window is available", () => {
     // Mock globalThis.window and dispatchEvent
     const mockDispatchEvent = jest.fn();
-    Object.defineProperty(globalThis, 'window', {
+    Object.defineProperty(globalThis, "window", {
       value: {},
       writable: true,
-      configurable: true
+      configurable: true,
     });
-    Object.defineProperty(globalThis, 'dispatchEvent', {
+    Object.defineProperty(globalThis, "dispatchEvent", {
       value: mockDispatchEvent,
       writable: true,
-      configurable: true
+      configurable: true,
     });
 
     const logger = createSimpleErrorLogger();
@@ -142,9 +142,9 @@ describe("SimpleErrorLogger", () => {
           hasUncaughtError: true,
           errorCount: 1,
           lastError: "Event dispatch test",
-          isBlocking: true
-        })
-      })
+          isBlocking: true,
+        }),
+      }),
     );
 
     // Clean up

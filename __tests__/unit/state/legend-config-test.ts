@@ -43,7 +43,9 @@ describe("Legend State Configuration", () => {
     });
 
     it("should create exercise store config with sync disabled when Supabase is disabled", () => {
-      const { isSupabaseDataEnabled } = require("../../../lib/config/supabase-env");
+      const {
+        isSupabaseDataEnabled,
+      } = require("../../../lib/config/supabase-env");
       isSupabaseDataEnabled.mockReturnValueOnce(false);
 
       const config = createExerciseStoreConfig();
@@ -69,7 +71,9 @@ describe("Legend State Configuration", () => {
     });
 
     it("should create user store config with sync disabled when Supabase is disabled", () => {
-      const { isSupabaseDataEnabled } = require("../../../lib/config/supabase-env");
+      const {
+        isSupabaseDataEnabled,
+      } = require("../../../lib/config/supabase-env");
       isSupabaseDataEnabled.mockReturnValueOnce(false);
 
       const config = createUserStoreConfig();
@@ -94,7 +98,9 @@ describe("Legend State Configuration", () => {
       expect(typeof legendStateGlobalConfig.enableLogging).toBe("boolean");
       expect(legendStateGlobalConfig.optimizeUpdates).toBe(true);
       expect(typeof legendStateGlobalConfig.onSyncError).toBe("function");
-      expect(typeof legendStateGlobalConfig.onConnectionChange).toBe("function");
+      expect(typeof legendStateGlobalConfig.onConnectionChange).toBe(
+        "function",
+      );
     });
 
     it("should handle sync errors silently", () => {
