@@ -162,7 +162,7 @@ export function createSyncStateConfig(): LegendStateSupabaseConfig {
  */
 export const legendStateGlobalConfig = {
   // Enable debug logging in development
-  enableLogging: __DEV__,
+  enableLogging: typeof __DEV__ === "undefined" ? false : __DEV__,
 
   // Performance optimizations
   optimizeUpdates: true,

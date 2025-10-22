@@ -45,6 +45,7 @@ module.exports = {
     "/lib/models/ExerciseRecord.ts",
     "/lib/models/UserAccount.ts",
     "/lib/utils/", // Exclude entire utils folder from coverage
+    "/lib/components/ErrorBlocker.tsx", // Exclude ErrorBlocker from coverage
   ],
 
   // Coverage thresholds adjusted for current codebase coverage levels

@@ -38,7 +38,7 @@ if ! npm run format:check; then
 fi
 
 echo "# Jest tests"
-if ! npm test; then
+if ! npm test -- --silent; then
     echo "❌ Jest tests failed"
     OVERALL_EXIT_CODE=1
 fi

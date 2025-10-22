@@ -1,0 +1,44 @@
+# Maestro Error Simulation Test
+#
+# This test intentionally triggers an error to verify that the error blocker
+# correctly shows and can be detected by Maestro tests.
+
+appId: ${APP_ID}
+---
+# Wait for app to load
+- assertVisible:
+    id: "main-app"
+    timeout: 10000
+
+# Initially, error blocker should not be visible
+- assertNotVisible:
+    id: "maestro-error-blocker"
+
+# Trigger an error using JavaScript (if supported by the app)
+- runScript: |
+    // Simulate an uncaught error
+    throw new Error("Maestro test simulation error");
+
+# Wait for error to be processed
+- waitForAnimationToEnd
+
+# Now error blocker should be visible
+- assertVisible:
+    id: "maestro-error-blocker"
+    timeout: 5000
+
+# Check that error count is displayed
+- assertVisible:
+    id: "maestro-error-count"
+
+# Check that error message is displayed
+- assertVisible:
+    id: "maestro-error-message"
+
+# Log success
+- evalScript: |
+    const errorCount = maestro.findElement({ id: "maestro-error-count" });
+    const errorMessage = maestro.findElement({ id: "maestro-error-message" });
+    console.log(`✅ Error blocker detected successfully - Count: ${errorCount?.text || 0}, Message: ${errorMessage?.text || 'Unknown'}`);
+
+# Note: After this test, the app will need to be restarted as errors block the app
