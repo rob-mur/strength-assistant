@@ -115,4 +115,68 @@ describe("SimpleErrorLogger", () => {
     const state = getGlobalErrorState();
     expect(state.lastError).toBe("Unknown error");
   });
+
+  it("dispatches custom event when window is available", () => {
+    // Mock globalThis.window and dispatchEvent
+    const mockDispatchEvent = jest.fn();
+    Object.defineProperty(globalThis, 'window', {
+      value: {},
+      writable: true,
+      configurable: true
+    });
+    Object.defineProperty(globalThis, 'dispatchEvent', {
+      value: mockDispatchEvent,
+      writable: true,
+      configurable: true
+    });
+
+    const logger = createSimpleErrorLogger();
+    const error = new Error("Event dispatch test");
+
+    logger.logAndBlock(error, "event-context");
+
+    expect(mockDispatchEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "uncaughtError",
+        detail: expect.objectContaining({
+          hasUncaughtError: true,
+          errorCount: 1,
+          lastError: "Event dispatch test",
+          isBlocking: true
+        })
+      })
+    );
+
+    // Clean up
+    delete (globalThis as any).window;
+    delete (globalThis as any).dispatchEvent;
+  });
+
+  it("handles missing window gracefully", () => {
+    // Ensure window is undefined
+    const originalWindow = (globalThis as any).window;
+    const originalDispatchEvent = (globalThis as any).dispatchEvent;
+    delete (globalThis as any).window;
+    delete (globalThis as any).dispatchEvent;
+
+    const logger = createSimpleErrorLogger();
+    const error = new Error("No window test");
+
+    // Should not throw
+    expect(() => {
+      logger.logAndBlock(error, "no-window-context");
+    }).not.toThrow();
+
+    const state = getGlobalErrorState();
+    expect(state.hasUncaughtError).toBe(true);
+    expect(state.lastError).toBe("No window test");
+
+    // Restore original values
+    if (originalWindow !== undefined) {
+      (globalThis as any).window = originalWindow;
+    }
+    if (originalDispatchEvent !== undefined) {
+      (globalThis as any).dispatchEvent = originalDispatchEvent;
+    }
+  });
 });

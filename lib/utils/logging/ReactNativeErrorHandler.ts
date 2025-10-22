@@ -82,7 +82,7 @@ export class ReactNativeErrorHandlerImpl implements ReactNativeErrorHandler {
    */
   private getErrorUtils(): ErrorUtilsType | null {
     if (
-      typeof globalThis.global !== "undefined" &&
+      globalThis.global !== undefined &&
       (globalThis.global as GlobalWithErrorUtils).ErrorUtils
     ) {
       const ErrorUtils = (globalThis.global as GlobalWithErrorUtils)
@@ -148,7 +148,7 @@ export class ReactNativeErrorHandlerImpl implements ReactNativeErrorHandler {
   cleanup(): void {
     try {
       if (
-        typeof globalThis.global !== "undefined" &&
+        globalThis.global !== undefined &&
         (globalThis.global as GlobalWithErrorUtils).ErrorUtils
       ) {
         const ErrorUtils = (globalThis.global as GlobalWithErrorUtils)

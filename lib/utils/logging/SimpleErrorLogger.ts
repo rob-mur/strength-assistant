@@ -47,7 +47,7 @@ export class SimpleErrorLoggerImpl implements SimpleErrorLogger {
     };
 
     // Notify error blocker component about state change
-    if (typeof globalThis.window !== "undefined" && globalThis.dispatchEvent) {
+    if (globalThis.window !== undefined && globalThis.dispatchEvent) {
       globalThis.dispatchEvent(
         new CustomEvent("uncaughtError", {
           detail: globalErrorState,
