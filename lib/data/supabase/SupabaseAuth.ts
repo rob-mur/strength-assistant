@@ -45,15 +45,11 @@ export class SupabaseAuth {
 
   constructor() {
     // Get the client - handle both real and mocked cases
-    try {
-      const maybeClient =
-        typeof supabaseClient?.getSupabaseClient === "function"
-          ? supabaseClient.getSupabaseClient()
-          : supabaseClient;
-      this.client = maybeClient as unknown as SupabaseClient;
-    } catch (error) {
-      throw error;
-    }
+    const maybeClient =
+      typeof supabaseClient?.getSupabaseClient === "function"
+        ? supabaseClient.getSupabaseClient()
+        : supabaseClient;
+    this.client = maybeClient as unknown as SupabaseClient;
 
     if (this.client?.auth?.onAuthStateChange) {
       // Set up auth state listener with Supabase

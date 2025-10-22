@@ -123,9 +123,7 @@ let globalFactory: ErrorBlockingFactoryImpl | null = null;
 export function createErrorBlockingFactory(
   config?: ErrorBlockingConfig,
 ): ErrorBlockingFactory {
-  if (!globalFactory) {
-    globalFactory = new ErrorBlockingFactoryImpl(config);
-  }
+  globalFactory ??= new ErrorBlockingFactoryImpl(config);
   return globalFactory;
 }
 
