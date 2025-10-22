@@ -28,7 +28,7 @@ const ErrorBlockerImpl: React.FC<ErrorBlockerProps> = ({ children }) => {
   };
 
   const [errorState, setErrorState] = useState(defaultErrorState);
-  
+
   // Add error boundary protection to prevent recursion if ErrorBlocker itself fails
   const [hasInternalError, setHasInternalError] = useState(false);
 
@@ -38,7 +38,10 @@ const ErrorBlockerImpl: React.FC<ErrorBlockerProps> = ({ children }) => {
       const initialState = getGlobalErrorState();
       setErrorState(initialState);
     } catch (error) {
-      console.error("ErrorBlocker: Failed to get initial error state on mount", error);
+      console.error(
+        "ErrorBlocker: Failed to get initial error state on mount",
+        error,
+      );
     }
   }, []);
 
@@ -57,7 +60,11 @@ const ErrorBlockerImpl: React.FC<ErrorBlockerProps> = ({ children }) => {
     } catch (error) {
       console.error("ErrorBlocker: Failed to poll error state", error);
     }
-  }, [errorState.hasUncaughtError, errorState.errorCount, errorState.lastError]);
+  }, [
+    errorState.hasUncaughtError,
+    errorState.errorCount,
+    errorState.lastError,
+  ]);
 
   useEffect(() => {
     // Start polling every 500ms (less frequent to reduce overhead)
@@ -70,7 +77,9 @@ const ErrorBlockerImpl: React.FC<ErrorBlockerProps> = ({ children }) => {
 
   // If ErrorBlocker itself has an internal error, render children safely without blocking
   if (hasInternalError) {
-    console.error("ErrorBlocker: Internal error detected, rendering children without error blocking");
+    console.error(
+      "ErrorBlocker: Internal error detected, rendering children without error blocking",
+    );
     return <>{children}</>;
   }
 
@@ -87,11 +96,17 @@ const ErrorBlockerImpl: React.FC<ErrorBlockerProps> = ({ children }) => {
         <View style={styles.backgroundContent}>{children}</View>
 
         {/* Error blocking overlay */}
-        <View style={styles.errorOverlay} testID={MAESTRO_TEST_IDS.ERROR_BLOCKER}>
+        <View
+          style={styles.errorOverlay}
+          testID={MAESTRO_TEST_IDS.ERROR_BLOCKER}
+        >
           <View style={styles.errorContent}>
             <Text style={styles.errorTitle}>Application Error</Text>
 
-            <Text style={styles.errorCount} testID={MAESTRO_TEST_IDS.ERROR_COUNT}>
+            <Text
+              style={styles.errorCount}
+              testID={MAESTRO_TEST_IDS.ERROR_COUNT}
+            >
               {errorState.errorCount}
             </Text>
 
@@ -103,7 +118,8 @@ const ErrorBlockerImpl: React.FC<ErrorBlockerProps> = ({ children }) => {
             </Text>
 
             <Text style={styles.errorInstructions}>
-              The application has encountered an error and needs to be restarted.
+              The application has encountered an error and needs to be
+              restarted.
             </Text>
 
             <Text style={styles.errorTimestamp}>
@@ -118,7 +134,10 @@ const ErrorBlockerImpl: React.FC<ErrorBlockerProps> = ({ children }) => {
     );
   } catch (internalError) {
     // Prevent recursion - if ErrorBlocker itself fails, mark as having internal error and render children
-    console.error("ErrorBlocker: Internal error in render, falling back to children only:", internalError);
+    console.error(
+      "ErrorBlocker: Internal error in render, falling back to children only:",
+      internalError,
+    );
     setHasInternalError(true);
     return <>{children}</>;
   }

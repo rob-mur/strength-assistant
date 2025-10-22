@@ -55,10 +55,14 @@ export class ErrorBlockingFactoryImpl implements ErrorBlockingFactory {
   createErrorBlocker(): ErrorBlockerComponent {
     if (!this.config.enabled) {
       // Return a pass-through component if disabled
-      const PassThroughComponent = ({ children }: { children: React.ReactNode }) => {
+      const PassThroughComponent = ({
+        children,
+      }: {
+        children: React.ReactNode;
+      }) => {
         return React.createElement(React.Fragment, null, children);
       };
-      PassThroughComponent.displayName = 'ErrorBlockerPassThrough';
+      PassThroughComponent.displayName = "ErrorBlockerPassThrough";
       return PassThroughComponent as ErrorBlockerComponent;
     }
 
