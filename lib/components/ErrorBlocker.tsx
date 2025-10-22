@@ -5,7 +5,7 @@
  * Provides testID attributes for Maestro integration test detection.
  */
 
-import React, { ReactNode, useState, useEffect } from "react";
+import React, { ReactNode, useState, useEffect, useCallback } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { MAESTRO_TEST_IDS } from "../models/MaestroErrorIndicator";
 import { getGlobalErrorState } from "../utils/logging/SimpleErrorLogger";
@@ -28,6 +28,9 @@ const ErrorBlockerImpl: React.FC<ErrorBlockerProps> = ({ children }) => {
   };
 
   const [errorState, setErrorState] = useState(defaultErrorState);
+  
+  // Add error boundary protection to prevent recursion if ErrorBlocker itself fails
+  const [hasInternalError, setHasInternalError] = useState(false);
 
   // Get initial error state after mount
   useEffect(() => {
@@ -39,83 +42,86 @@ const ErrorBlockerImpl: React.FC<ErrorBlockerProps> = ({ children }) => {
     }
   }, []);
 
-  useEffect(() => {
-    // Listen for uncaught error events
-    const handleUncaughtError = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      if (customEvent.detail) {
-        setErrorState(customEvent.detail);
+  // Use useCallback to memoize the comparison function
+  const pollErrorState = useCallback(() => {
+    try {
+      const currentState = getGlobalErrorState();
+      // Only update if there's actually a change to avoid unnecessary re-renders
+      if (
+        currentState.hasUncaughtError !== errorState.hasUncaughtError ||
+        currentState.errorCount !== errorState.errorCount ||
+        currentState.lastError !== errorState.lastError
+      ) {
+        setErrorState(currentState);
       }
-    };
-
-    // Add event listener for uncaught errors
-    if (typeof window !== "undefined") {
-      window.addEventListener("uncaughtError", handleUncaughtError);
-
-      return () => {
-        window.removeEventListener("uncaughtError", handleUncaughtError);
-      };
+    } catch (error) {
+      console.error("ErrorBlocker: Failed to poll error state", error);
     }
+  }, [errorState.hasUncaughtError, errorState.errorCount, errorState.lastError]);
 
-    // React Native doesn't have window, so we'll poll for changes
-    const interval = setInterval(() => {
-      try {
-        const currentState = getGlobalErrorState();
-        if (
-          currentState.hasUncaughtError !== errorState.hasUncaughtError ||
-          currentState.errorCount !== errorState.errorCount
-        ) {
-          setErrorState(currentState);
-        }
-      } catch (error) {
-        console.error("ErrorBlocker: Failed to poll error state", error);
-      }
-    }, 100); // Check every 100ms
+  useEffect(() => {
+    // Start polling every 500ms (less frequent to reduce overhead)
+    const interval = setInterval(pollErrorState, 500);
 
-    return () => clearInterval(interval);
-  }, [errorState.hasUncaughtError, errorState.errorCount]);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [pollErrorState]);
 
-  // If no error, render children normally
-  if (!errorState.hasUncaughtError) {
+  // If ErrorBlocker itself has an internal error, render children safely without blocking
+  if (hasInternalError) {
+    console.error("ErrorBlocker: Internal error detected, rendering children without error blocking");
     return <>{children}</>;
   }
 
-  // If error occurred, show blocking overlay
-  return (
-    <View style={styles.container}>
-      {/* Render children in background (blocked) */}
-      <View style={styles.backgroundContent}>{children}</View>
+  try {
+    // If no error, render children normally
+    if (!errorState.hasUncaughtError) {
+      return <>{children}</>;
+    }
 
-      {/* Error blocking overlay */}
-      <View style={styles.errorOverlay} testID={MAESTRO_TEST_IDS.ERROR_BLOCKER}>
-        <View style={styles.errorContent}>
-          <Text style={styles.errorTitle}>Application Error</Text>
+    // If error occurred, show blocking overlay
+    return (
+      <View style={styles.container}>
+        {/* Render children in background (blocked) */}
+        <View style={styles.backgroundContent}>{children}</View>
 
-          <Text style={styles.errorCount} testID={MAESTRO_TEST_IDS.ERROR_COUNT}>
-            {errorState.errorCount}
-          </Text>
+        {/* Error blocking overlay */}
+        <View style={styles.errorOverlay} testID={MAESTRO_TEST_IDS.ERROR_BLOCKER}>
+          <View style={styles.errorContent}>
+            <Text style={styles.errorTitle}>Application Error</Text>
 
-          <Text
-            style={styles.errorMessage}
-            testID={MAESTRO_TEST_IDS.ERROR_MESSAGE}
-          >
-            {errorState.lastError}
-          </Text>
+            <Text style={styles.errorCount} testID={MAESTRO_TEST_IDS.ERROR_COUNT}>
+              {errorState.errorCount}
+            </Text>
 
-          <Text style={styles.errorInstructions}>
-            The application has encountered an error and needs to be restarted.
-          </Text>
+            <Text
+              style={styles.errorMessage}
+              testID={MAESTRO_TEST_IDS.ERROR_MESSAGE}
+            >
+              {errorState.lastError}
+            </Text>
 
-          <Text style={styles.errorTimestamp}>
-            Last error:{" "}
-            {errorState.lastErrorTimestamp
-              ? new Date(errorState.lastErrorTimestamp).toLocaleString()
-              : "Unknown"}
-          </Text>
+            <Text style={styles.errorInstructions}>
+              The application has encountered an error and needs to be restarted.
+            </Text>
+
+            <Text style={styles.errorTimestamp}>
+              Last error:{" "}
+              {errorState.lastErrorTimestamp
+                ? new Date(errorState.lastErrorTimestamp).toLocaleString()
+                : "Unknown"}
+            </Text>
+          </View>
         </View>
       </View>
-    </View>
-  );
+    );
+  } catch (internalError) {
+    // Prevent recursion - if ErrorBlocker itself fails, mark as having internal error and render children
+    console.error("ErrorBlocker: Internal error in render, falling back to children only:", internalError);
+    setHasInternalError(true);
+    return <>{children}</>;
+  }
 };
 
 const styles = StyleSheet.create({
