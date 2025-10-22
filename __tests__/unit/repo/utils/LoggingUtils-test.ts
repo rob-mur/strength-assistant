@@ -2,28 +2,32 @@
  * Repository Logging Utils Tests
  */
 
-import { RepositoryLogger } from "../../../../lib/repo/utils/LoggingUtils";
-
-// Mock the Logger
-jest.mock("../../../../lib/data/supabase/supabase/logger", () => ({
-  Logger: jest.fn().mockImplementation(() => ({
-    info: jest.fn(),
-    error: jest.fn(),
-  })),
-}));
-
 describe("RepositoryLogger", () => {
+  let RepositoryLogger: any;
   let mockLogger: { info: jest.Mock; error: jest.Mock };
 
   beforeEach(() => {
+    // Reset modules to ensure fresh imports
+    jest.resetModules();
+    
+    // Create fresh mock logger
     mockLogger = {
       info: jest.fn(),
       error: jest.fn(),
     };
-    
-    const { Logger } = require("../../../../lib/data/supabase/supabase/logger");
-    Logger.mockImplementation(() => mockLogger);
-    jest.clearAllMocks();
+
+    // Mock the Logger before requiring the module
+    jest.doMock("../../../../lib/data/supabase/supabase/logger", () => ({
+      Logger: jest.fn().mockImplementation(() => mockLogger),
+    }));
+
+    // Import the module after mocking
+    const module = require("../../../../lib/repo/utils/LoggingUtils");
+    RepositoryLogger = module.RepositoryLogger;
+  });
+
+  afterEach(() => {
+    jest.resetModules();
   });
 
   describe("logSuccess", () => {
