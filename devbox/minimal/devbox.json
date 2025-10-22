@@ -13,7 +13,6 @@
       "test": ["../../scripts/test.sh"],
       "collect_coverage": ["../../scripts/collect-coverage.sh"],
       "integration_test_chrome": ["../../scripts/integration_test_chrome.sh"],
-      "debug_chrome_ui": ["../../scripts/debug_chrome_ui.sh"],
       "build_web": ["cd ../.. && npm run build_web"]
     }
   }

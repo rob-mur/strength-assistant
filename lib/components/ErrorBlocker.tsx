@@ -30,7 +30,7 @@ const ErrorBlockerImpl: React.FC<ErrorBlockerProps> = ({ children }) => {
   const [errorState, setErrorState] = useState(defaultErrorState);
 
   // Add error boundary protection to prevent recursion if ErrorBlocker itself fails
-  const [hasInternalError, setHasInternalError] = useState(false);
+  const [hasInternalError] = useState(false);
 
   // Get initial error state after mount
   useEffect(() => {
@@ -133,12 +133,12 @@ const ErrorBlockerImpl: React.FC<ErrorBlockerProps> = ({ children }) => {
       </View>
     );
   } catch (internalError) {
-    // Prevent recursion - if ErrorBlocker itself fails, mark as having internal error and render children
+    // Prevent recursion - if ErrorBlocker itself fails, log error and render children safely
     console.error(
       "ErrorBlocker: Internal error in render, falling back to children only:",
       internalError,
     );
-    setHasInternalError(true);
+    // Return children directly without state update to avoid infinite loops
     return <>{children}</>;
   }
 };
