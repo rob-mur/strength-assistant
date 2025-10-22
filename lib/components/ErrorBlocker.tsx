@@ -18,20 +18,26 @@ interface ErrorBlockerProps {
  * ErrorBlocker component implementation
  */
 const ErrorBlockerImpl: React.FC<ErrorBlockerProps> = ({ children }) => {
-  const [errorState, setErrorState] = useState(() => {
+  // Initialize with safe default state
+  const defaultErrorState = {
+    hasUncaughtError: false,
+    errorCount: 0,
+    lastError: "",
+    lastErrorTimestamp: "",
+    isBlocking: false,
+  };
+
+  const [errorState, setErrorState] = useState(defaultErrorState);
+
+  // Get initial error state after mount
+  useEffect(() => {
     try {
-      return getGlobalErrorState();
+      const initialState = getGlobalErrorState();
+      setErrorState(initialState);
     } catch (error) {
-      console.error("ErrorBlocker: Failed to get initial error state", error);
-      return {
-        hasUncaughtError: false,
-        errorCount: 0,
-        lastError: "",
-        lastErrorTimestamp: "",
-        isBlocking: false,
-      };
+      console.error("ErrorBlocker: Failed to get initial error state on mount", error);
     }
-  });
+  }, []);
 
   useEffect(() => {
     // Listen for uncaught error events
