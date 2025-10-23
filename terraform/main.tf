@@ -44,3 +44,6 @@ output "project_ref" {
   description = "Supabase project reference"
   value       = var.supabase_project_ref
 }
+
+
+
