@@ -33,7 +33,7 @@ import {
   fromDbFormat as syncFromDb,
 } from "../../models/SyncStateRecord";
 
-const deepLink = "strengthassistant://auth/callback";
+const deepLink = "strengthassistant://auth-callback";
 // StorageBackend interface definition (matches contract)
 export interface StorageBackend {
   // Exercise CRUD operations

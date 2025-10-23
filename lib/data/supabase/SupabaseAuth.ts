@@ -114,7 +114,7 @@ export class SupabaseAuth {
       email,
       password,
       options: {
-        emailRedirectTo: "strengthassistant://auth/callback",
+        emailRedirectTo: "strengthassistant://auth-callback",
       },
     });
 

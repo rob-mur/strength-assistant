@@ -26,7 +26,7 @@ resource "supabase_settings" "main" {
   
   auth = jsonencode({
     site_url = "https://${var.environment == "production" ? "app" : var.environment}.strengthassistant.com"
-    uri_allow_list = "https://${var.environment == "production" ? "app" : var.environment}.strengthassistant.com,http://localhost:3000,exp://localhost:19000,strengthassistant://auth/callback"
+    uri_allow_list = "https://${var.environment == "production" ? "app" : var.environment}.strengthassistant.com,http://localhost:3000,exp://localhost:19000,strengthassistant://auth-callback"
     jwt_exp = 3600
     disable_signup = false
     mailer_autoconfirm = false
