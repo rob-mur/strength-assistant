@@ -26,14 +26,10 @@ resource "supabase_settings" "main" {
   
   auth = jsonencode({
     site_url = "https://${var.environment == "production" ? "app" : var.environment}.strengthassistant.com"
-    additional_redirect_urls = [
-      "https://${var.environment == "production" ? "app" : var.environment}.strengthassistant.com",
-      "http://localhost:3000",
-      "exp://localhost:19000"
-    ]
-    jwt_expiry = 3600
-    enable_signup = true
-    enable_email_confirmations = false
+    uri_allow_list = "https://${var.environment == "production" ? "app" : var.environment}.strengthassistant.com,http://localhost:3000,exp://localhost:19000,strengthassistant://auth/callback"
+    jwt_exp = 3600
+    disable_signup = false
+    mailer_autoconfirm = false
     external_anonymous_users_enabled = true
   })
 }

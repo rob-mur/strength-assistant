@@ -19,6 +19,9 @@ interface SupabaseClient {
     signUp: (credentials: {
       email: string;
       password: string;
+      options?: {
+        emailRedirectTo?: string;
+      };
     }) => Promise<{ data: unknown; error: unknown }>;
     signInWithPassword: (credentials: {
       email: string;
@@ -110,6 +113,9 @@ export class SupabaseAuth {
     const { data, error } = await this.client.auth.signUp({
       email,
       password,
+      options: {
+        emailRedirectTo: "strengthassistant://auth/callback",
+      },
     });
 
     return this.handleAuthResponse(data, error, "Sign up");

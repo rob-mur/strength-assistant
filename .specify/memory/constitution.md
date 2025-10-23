@@ -1,76 +1,50 @@
-<!--
-Sync Impact Report:
-- Version change: [TEMPLATE] → 1.0.0 (Initial constitution)
-- Added sections: All core principles and governance
-- Modified principles: N/A (initial creation)
-- Templates requiring updates:
-  ✅ .specify/templates/plan-template.md (Constitution Check references established)
-  ✅ .specify/templates/spec-template.md (References constitution principles)
-  ✅ .specify/templates/tasks-template.md (Local testing principle integrated)
-- Follow-up TODOs: None
--->
-
-# Strength Assistant Constitution
+# [PROJECT_NAME] Constitution
+<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
 
 ## Core Principles
 
-### I. Local Testing First
+### [PRINCIPLE_1_NAME]
+<!-- Example: I. Library-First -->
+[PRINCIPLE_1_DESCRIPTION]
+<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
 
-All changes MUST be tested locally using devbox before CI/CD execution. The development environment MUST be reproducible across team members using devbox configuration. Any functionality that can be validated locally (builds, tests, linting, type checking) MUST be validated locally before pushing to CI.
+### [PRINCIPLE_2_NAME]
+<!-- Example: II. CLI Interface -->
+[PRINCIPLE_2_DESCRIPTION]
+<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
 
-**Rationale**: Devbox provides controlled, reproducible development environments. Local validation reduces CI pipeline load, catches issues earlier, and enables faster development iteration.
+### [PRINCIPLE_3_NAME]
+<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
+[PRINCIPLE_3_DESCRIPTION]
+<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
 
-### II. Test-Driven Development
+### [PRINCIPLE_4_NAME]
+<!-- Example: IV. Integration Testing -->
+[PRINCIPLE_4_DESCRIPTION]
+<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
 
-Tests MUST be written before implementation. All business logic MUST have corresponding unit tests. Integration tests MUST cover critical user flows. The Red-Green-Refactor cycle is mandatory for all feature development.
+### [PRINCIPLE_5_NAME]
+<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
+[PRINCIPLE_5_DESCRIPTION]
+<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
 
-**Rationale**: TDD ensures code quality, documentation through tests, and prevents regressions while maintaining development velocity.
+## [SECTION_2_NAME]
+<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
 
-### III. CI/CD Infrastructure as Code
+[SECTION_2_CONTENT]
+<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
 
-All CI/CD workflows MUST be version controlled and declarative. GitHub Actions MUST be parameterized and reusable to eliminate code duplication. Build processes MUST use devbox to ensure consistency between local and CI environments.
+## [SECTION_3_NAME]
+<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
 
-**Rationale**: Infrastructure as code ensures reproducible deployments, enables rollbacks, and maintains consistency across environments.
-
-### IV. Anonymous User Testing
-
-Production testing MUST use fresh anonymous users created through standard application flows. No persistent test data or complex cleanup procedures are permitted. Test isolation MUST be achieved through user session design, not external cleanup processes.
-
-**Rationale**: Anonymous users eliminate data contamination risks, reduce operational complexity, and ensure tests don't affect real user data.
-
-### V. Progressive Validation
-
-Development follows the pattern: unit tests → integration tests → production validation → deployment. Each stage MUST pass before proceeding to the next. Production validation MUST test against actual production infrastructure post-deployment.
-
-**Rationale**: Progressive validation catches issues at the appropriate level, reduces production incidents, and builds confidence in deployments.
-
-## Development Workflow
-
-All development MUST follow the established project structure:
-
-- Business logic in `lib/` directory
-- Routes and screens in `app/` directory
-- Supabase-only backend (no Firebase)
-- Direct framework usage without unnecessary abstraction layers
-
-Code changes MUST be validated locally using devbox shell scripts before creating pull requests. The CI/CD pipeline serves as final validation, not primary testing.
-
-## Quality Standards
-
-**Testing**: Jest for unit tests, Maestro for integration tests, production validation against live infrastructure
-**Code Quality**: TypeScript strict mode, ESLint enforcement, automated formatting
-**Performance**: Mobile-first performance considerations, offline capability where applicable
-**Security**: Anonymous user isolation, no secrets in code, secure API practices
+[SECTION_3_CONTENT]
+<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
 
 ## Governance
+<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-This constitution supersedes all other development practices. Amendments require:
+[GOVERNANCE_RULES]
+<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
 
-1. Documentation of rationale and impact
-2. Update of dependent templates and tooling
-3. Team consensus on principle changes
-4. Version increment following semantic versioning
-
-All pull requests and code reviews MUST verify constitutional compliance. Violations require justification or design changes. Complex architectural decisions MUST reference constitutional principles for guidance.
-
-**Version**: 1.0.0 | **Ratified**: 2025-09-24 | **Last Amended**: 2025-09-24
+**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
+<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->

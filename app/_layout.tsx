@@ -3,6 +3,7 @@ import { SplashScreen, Stack } from "expo-router";
 import React, { useEffect } from "react";
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from "react-native-paper";
 import { useColorScheme } from "react-native";
+import * as Linking from "expo-linking";
 
 import { useAppInit } from "@/lib/hooks/useAppInit";
 import { AuthProvider } from "@/lib/components/AuthProvider";
@@ -51,6 +52,28 @@ const RootLayout = () => {
       console.warn("Failed to initialize error blocking system:", initError);
       return () => {}; // Return empty cleanup function on error
     }
+  }, []);
+
+  // Handle deep links for auth verification
+  useEffect(() => {
+    const handleURL = (url: string) => {
+      console.log("🔗 Received deep link:", url);
+      // Supabase automatically handles auth tokens from email verification links
+      // The AuthProvider will detect the auth state change and update accordingly
+    };
+
+    const subscription = Linking.addEventListener("url", ({ url }) =>
+      handleURL(url),
+    );
+
+    // Handle app launch from deep link
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        handleURL(url);
+      }
+    });
+
+    return () => subscription?.remove();
   }, []);
 
   useEffect(() => {
