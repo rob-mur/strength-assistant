@@ -10,6 +10,12 @@ import { AuthProvider } from "@/lib/components/AuthProvider";
 import { AuthAwareLayout } from "@/lib/components/AuthAwareLayout";
 import { ErrorBlocker } from "@/lib/components/ErrorBlocker";
 import { initializeErrorBlocking } from "@/lib/utils/logging/ErrorBlockingFactory";
+import {
+  extractTokensFromUrl,
+  isAuthCallbackUrl,
+  processAuthTokens,
+  type SupabaseClient,
+} from "@/lib/utils/auth/AuthUrlHandler";
 
 // Catch any errors thrown by the Layout component.
 export { ErrorBoundary } from "expo-router";
@@ -59,70 +65,29 @@ const RootLayout = () => {
     const handleURL = async (url: string) => {
       console.log("🔗 Received deep link:", url);
 
-      // Check if this is an auth callback URL
-      if (
-        url.includes("strengthassistant://auth-callback") ||
-        (url.includes("strengthassistant://") &&
-          (url.includes("access_token") || url.includes("refresh_token")))
-      ) {
-        console.log("🔗 Processing auth callback from email verification");
+      if (!isAuthCallbackUrl(url)) {
+        return;
+      }
 
-        try {
-          // Import supabase client dynamically to avoid circular dependencies
-          const { getSupabaseClient } = await import(
-            "@/lib/data/supabase/supabase"
+      console.log("🔗 Processing auth callback from email verification");
+
+      try {
+        const { getSupabaseClient } = await import(
+          "@/lib/data/supabase/supabase"
+        );
+        const supabase = getSupabaseClient() as SupabaseClient;
+        const { accessToken, refreshToken } = extractTokensFromUrl(url);
+
+        if (accessToken && refreshToken) {
+          await processAuthTokens(supabase, accessToken, refreshToken);
+        } else {
+          console.log(
+            "🔗 No auth tokens found in callback URL, checking current session",
           );
-          const supabase = getSupabaseClient();
-
-          // Supabase uses URL fragments (#) instead of query parameters (?)
-          // Extract tokens from either the hash fragment or query parameters
-          let accessToken: string | null = null;
-          let refreshToken: string | null = null;
-
-          // Check for tokens in URL fragment (after #)
-          if (url.includes("#")) {
-            const fragmentPart = url.split("#")[1];
-            const fragmentParams = new URLSearchParams(fragmentPart);
-            accessToken = fragmentParams.get("access_token");
-            refreshToken = fragmentParams.get("refresh_token");
-          }
-
-          // Fallback: check for tokens in query parameters (after ?)
-          if (!accessToken && url.includes("?")) {
-            const urlObj = new URL(url);
-            accessToken = urlObj.searchParams.get("access_token");
-            refreshToken = urlObj.searchParams.get("refresh_token");
-          }
-
-          if (accessToken && refreshToken) {
-            console.log("🔗 Found auth tokens in URL, setting session");
-
-            // Set the session using the tokens from the URL
-            const { data, error } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken,
-            });
-
-            if (error) {
-              console.error(
-                "🔗 Error setting session from auth callback:",
-                error,
-              );
-            } else {
-              console.log(
-                "🔗 Auth callback processed successfully - user should be signed in",
-              );
-            }
-          } else {
-            console.log(
-              "🔗 No auth tokens found in callback URL, checking current session",
-            );
-            // Fallback: refresh current session to see if auth state changed
-            await supabase.auth.getSession();
-          }
-        } catch (error) {
-          console.error("🔗 Failed to process auth callback:", error);
+          await supabase.auth.getSession();
         }
+      } catch (error) {
+        console.error("🔗 Failed to process auth callback:", error);
       }
     };
 
