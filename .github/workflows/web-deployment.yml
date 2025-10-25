@@ -102,15 +102,40 @@ jobs:
 
       - name: 🌐 Build Expo Web
         run: |
-          echo "Building web application..."
+          echo "Building web application for production deployment..."
+          
+          # Backup existing .env file if it exists
+          if [ -f .env ]; then
+            echo "Backing up local .env file..."
+            mv .env .env.local.backup
+          fi
+          
+          # Create production .env file with deployment credentials  
+          echo "Creating production environment configuration..."
+          cat > .env << EOF
+          EXPO_PUBLIC_SUPABASE_URL=$EXPO_PUBLIC_SUPABASE_URL
+          EXPO_PUBLIC_SUPABASE_ANON_KEY=$EXPO_PUBLIC_SUPABASE_ANON_KEY
+          EXPO_PUBLIC_ENVIRONMENT=$EXPO_PUBLIC_ENVIRONMENT
+          EXPO_PUBLIC_PR_NUMBER=$EXPO_PUBLIC_PR_NUMBER
+          EOF
+          
           echo "Environment check:"
           echo "SUPABASE_URL: ${EXPO_PUBLIC_SUPABASE_URL:0:50}..."
           echo "SUPABASE_KEY: ${EXPO_PUBLIC_SUPABASE_ANON_KEY:0:20}..."
           echo "ENVIRONMENT: $EXPO_PUBLIC_ENVIRONMENT"
+          
+          # Build with production environment
           npx expo export -p web
+          
           echo "Build completed. Checking output..."
           ls -la dist/
           test -f dist/index.html || (echo "ERROR: index.html not found in dist/" && exit 1)
+          
+          # Restore original .env file if it was backed up
+          if [ -f .env.local.backup ]; then
+            echo "Restoring local .env file..."
+            mv .env.local.backup .env
+          fi
         env:
           # Environment variables for Expo build - using retrieved config
           EXPO_PUBLIC_SUPABASE_URL: ${{ steps.supabase-config.outputs.SUPABASE_URL }}
