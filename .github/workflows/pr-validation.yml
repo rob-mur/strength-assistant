@@ -100,19 +100,12 @@ jobs:
 
   web-preview-deployment:
     name: Deploy Web Preview
-    runs-on: ubuntu-latest
     # Deploy preview parallel with other builds for faster feedback
-    outputs:
-      preview_url: ${{ steps.deploy.outputs.deployment_url }}
-      deployment_status: ${{ steps.deploy.outputs.deployment_status }}
-    steps:
-      - name: 🚀 Deploy Web Preview
-        uses: ./.github/workflows/web-deployment.yml
-        id: deploy
-        with:
-          environment: preview
-          pr_number: ${{ github.event.number }}
-        secrets: inherit
+    uses: ./.github/workflows/web-deployment.yml
+    with:
+      environment: preview
+      pr_number: ${{ github.event.number }}
+    secrets: inherit
 
   comment-preview-url:
     name: Comment Preview URL
@@ -141,7 +134,7 @@ jobs:
 
             ✅ Your changes are now available for preview:
 
-            🔗 **Preview URL**: ${{ needs.web-preview-deployment.outputs.preview_url }}
+            🔗 **Preview URL**: ${{ needs.web-preview-deployment.outputs.deployment_url }}
 
             📱 **Test your changes**:
             - Open the preview URL in your browser
