@@ -1,0 +1,6 @@
+appId: com.jimmysolutions.strengthassistant.test
+---
+- runFlow:
+    file: ../shared/workout-empty-state.yml
+    env:
+      APP_URL: "com.jimmysolutions.strengthassistant.test"

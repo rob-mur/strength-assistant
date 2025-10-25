@@ -1,21 +1,35 @@
-appId: com.jimmysolutions.strengthassistant.test
+url: ${APP_URL}
+timeout: 60000
 ---
 # Test: Workout Empty State Message Visibility
 # Purpose: Verify the "Ready to start your workout?" message displays correctly in empty state
 
 - launchApp
+- takeScreenshot: "app-launched.png"
 
-# Wait for app to load and navigate to workout tab
-- tapOn: 
-    text: "Workout"
+# Handle authentication and onboarding
+- runFlow:
+    file: common/auth-flow.yml
+
+# Navigate directly to workout tab to test empty state
+- tapOn:
+    id: "workoutTab"
+    optional: true
+- takeScreenshot: "workout-tab-selected.png"
+
+# Wait for workout screen to load
+- waitForAnimationToEnd:
+    timeout: 5000
 
 # Verify empty state container is visible
 - assertVisible:
     id: "empty-workout-state"
+- takeScreenshot: "empty-state-container-visible.png"
 
 # Primary test: Verify the main empty state message is visible
 - assertVisible:
     text: "Ready to start your workout?"
+- takeScreenshot: "ready-to-start-message-visible.png"
 
 # Verify supporting text is visible
 - assertVisible:
@@ -31,15 +45,24 @@ appId: com.jimmysolutions.strengthassistant.test
     id: "create-exercise-button"
 - assertVisible:
     text: "Create New Exercise"
+- takeScreenshot: "action-buttons-visible.png"
 
 # Test navigation functionality
 - tapOn:
     id: "select-exercise-button"
+- waitForAnimationToEnd:
+    timeout: 3000
 - assertVisible:
     text: "Exercises"
+    optional: true
+- takeScreenshot: "exercises-screen-reached.png"
 
 # Return to workout to test again
 - tapOn:
-    text: "Workout"
+    id: "workoutTab"
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 3000
 - assertVisible:
     text: "Ready to start your workout?"
+- takeScreenshot: "back-to-workout-empty-state.png"

@@ -82,10 +82,10 @@ const EmptyWorkoutState: React.FC<EmptyWorkoutStateProps> = React.memo(
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    justifyContent: "center",
+    // Removed flex: 1 and justifyContent: "center" for Android debugging
     alignItems: "center",
-    padding: 24,
+    padding: 16,
+    minHeight: 200,
   },
   card: {
     maxWidth: 400, // Prevent overstretching on tablets
