@@ -2,6 +2,9 @@
 
 ## Active Technologies
 
+- TypeScript with React Native 0.79.5 / Expo SDK 53 + React Native Paper, Expo Router, React 19.0.0 (013-workout-empty-state)
+- Supabase (PostgreSQL) for persistence, Legend State for local state management (013-workout-empty-state)
+
 - TypeScript/JavaScript with React Native/Expo SDK + React Native, Expo, Supabase, Legend State (012-production-bug-android)
 - Supabase (PostgreSQL), local Legend State (012-production-bug-android)
 
@@ -160,11 +163,11 @@ Tests can detect uncaught errors using:
 
 ## Recent Changes
 
+- 013-workout-empty-state: Added TypeScript with React Native 0.79.5 / Expo SDK 53 + React Native Paper, Expo Router, React 19.0.0
+
 - 012-production-bug-android: Implemented simple error blocking system to replace complex 750+ line error handler, preventing production Android stack overflow issues. Added ErrorBlocker React component, SimpleErrorLogger with <0.01ms performance, MaestroErrorDetection for integration tests, and ReactNativeErrorHandler for global error handling. Integrated system into app root layout and created Maestro tests for error detection.
 
 - 011-improve-error-logging: Added comprehensive error logging system with 47 empty catch block migrations, recovery actions, and React Native context collection
-
-- 010-fix-android-integration: Added TypeScript/JavaScript with React Native/Expo + Expo SDK, Maestro (integration testing), EAS Build, Supabase
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

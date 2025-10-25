@@ -1,0 +1,37 @@
+appId: com.jimmysolutions.strengthassistant.test
+---
+# Test: Workout Empty State Behavior
+# Purpose: Verify empty state displays when no exercise selected and navigation works correctly
+
+- launchApp
+- tapOn: 
+    text: "Workout"
+- assertVisible:
+    id: "empty-workout-state"
+- assertVisible:
+    text: "Ready to start your workout?"
+- assertVisible:
+    text: "Select an exercise to begin tracking your workout, or create a new exercise routine."
+- assertVisible:
+    id: "select-exercise-button"
+- assertVisible:
+    id: "create-exercise-button"
+
+# Test navigation to exercises screen
+- tapOn:
+    id: "select-exercise-button"
+- assertVisible:
+    text: "Exercises"
+
+# Go back to workout screen
+- tapOn:
+    text: "Workout"
+- assertVisible:
+    id: "empty-workout-state"
+
+# Test navigation to add exercise screen
+- tapOn:
+    id: "create-exercise-button"
+# Should navigate to add exercise screen (URL path will be workout/add)
+- assertVisible:
+    text: "Add Exercise"
