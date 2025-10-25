@@ -44,54 +44,59 @@ jobs:
       - name: 📦 Install dependencies
         run: npm ci
 
-      - name: 🔑 Get Supabase Anon Key
-        id: supabase-config
+      - name: 🔑 Setup EAS Environment Variables
+        id: eas-env
         run: |
-          echo "Fetching Supabase project configuration..."
+          echo "Setting up EAS environment variables for web deployment..."
           
-          # Get project settings from Supabase Management API
-          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF }}"
-          ACCESS_TOKEN="${{ secrets.SUPABASE_ACCESS_TOKEN }}"
+          # Determine environment based on input
+          if [ "${{ inputs.environment }}" = "production" ]; then
+            EAS_ENVIRONMENT="production"
+          else
+            EAS_ENVIRONMENT="preview"
+          fi
           
-          if [ -z "$PROJECT_REF" ] || [ -z "$ACCESS_TOKEN" ]; then
-            echo "❌ Missing Supabase credentials"
-            echo "PROJECT_REF available: $([[ -n "$PROJECT_REF" ]] && echo 'yes' || echo 'no')"
-            echo "ACCESS_TOKEN available: $([[ -n "$ACCESS_TOKEN" ]] && echo 'yes' || echo 'no')"
+          echo "Using EAS environment: $EAS_ENVIRONMENT"
+          
+          # Pull environment variables from EAS (this creates a .env file)
+          echo "Pulling environment variables from EAS..."
+          npx eas-cli env:pull --environment=$EAS_ENVIRONMENT
+          
+          # Verify .env file was created and contains required variables
+          if [ ! -f .env ]; then
+            echo "❌ EAS env:pull did not create .env file"
+            echo "Available files:"
+            ls -la
             exit 1
           fi
           
-          # Fetch project configuration to get anon key
-          echo "📡 Fetching project configuration from Supabase API..."
-          RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" \
-            -H "Authorization: Bearer $ACCESS_TOKEN" \
-            -H "Content-Type: application/json" \
-            "https://api.supabase.com/v1/projects/$PROJECT_REF/config")
+          echo "Environment variables pulled from EAS:"
+          grep "EXPO_PUBLIC_" .env || echo "No EXPO_PUBLIC_ variables found"
           
-          HTTP_STATUS=$(echo $RESPONSE | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
-          BODY=$(echo $RESPONSE | sed -e 's/HTTPSTATUS:.*//g')
+          # Source the environment file to make variables available
+          source .env
           
-          if [ "$HTTP_STATUS" != "200" ]; then
-            echo "❌ Failed to fetch Supabase config. HTTP Status: $HTTP_STATUS"
-            echo "Response: $BODY"
+          # Verify required variables are set
+          if [ -z "$EXPO_PUBLIC_SUPABASE_URL" ] || [ -z "$EXPO_PUBLIC_SUPABASE_ANON_KEY" ]; then
+            echo "❌ Missing required Supabase environment variables"
+            echo "EXPO_PUBLIC_SUPABASE_URL: ${EXPO_PUBLIC_SUPABASE_URL:-'not set'}"
+            echo "EXPO_PUBLIC_SUPABASE_ANON_KEY: ${EXPO_PUBLIC_SUPABASE_ANON_KEY:0:20}..."
+            echo "All EXPO_PUBLIC_ variables:"
+            env | grep EXPO_PUBLIC_ || echo "None found"
             exit 1
           fi
           
-          # Extract anon key from response
-          ANON_KEY=$(echo "$BODY" | jq -r '.jwt_secret // .anon_key // empty')
+          echo "✅ Successfully configured EAS environment variables"
+          echo "SUPABASE_URL=${EXPO_PUBLIC_SUPABASE_URL}" >> $GITHUB_OUTPUT
+          echo "SUPABASE_ANON_KEY=${EXPO_PUBLIC_SUPABASE_ANON_KEY}" >> $GITHUB_OUTPUT
           
-          if [ -z "$ANON_KEY" ] || [ "$ANON_KEY" = "null" ]; then
-            echo "❌ Could not extract anon key from Supabase config"
-            echo "Available keys in response:"
-            echo "$BODY" | jq -r 'keys[]' || echo "Failed to parse JSON"
-            exit 1
-          fi
-          
-          echo "✅ Successfully retrieved Supabase configuration"
-          echo "SUPABASE_URL=https://$PROJECT_REF.supabase.co" >> $GITHUB_OUTPUT
-          echo "SUPABASE_ANON_KEY=$ANON_KEY" >> $GITHUB_OUTPUT
-          
-          # Mask the anon key in logs
-          echo "::add-mask::$ANON_KEY"
+          # Add environment variables to GitHub environment for subsequent steps
+          echo "EXPO_PUBLIC_SUPABASE_URL=${EXPO_PUBLIC_SUPABASE_URL}" >> $GITHUB_ENV
+          echo "EXPO_PUBLIC_SUPABASE_ANON_KEY=${EXPO_PUBLIC_SUPABASE_ANON_KEY}" >> $GITHUB_ENV
+          echo "EXPO_PUBLIC_ENVIRONMENT=${{ inputs.environment }}" >> $GITHUB_ENV
+          echo "EXPO_PUBLIC_PR_NUMBER=${{ inputs.pr_number || '' }}" >> $GITHUB_ENV
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
       - name: 🔍 Verify Expo web build capability
         run: |
@@ -102,46 +107,34 @@ jobs:
 
       - name: 🌐 Build Expo Web
         run: |
-          echo "Building web application for production deployment..."
-          
-          # Backup existing .env file if it exists
-          if [ -f .env ]; then
-            echo "Backing up local .env file..."
-            mv .env .env.local.backup
-          fi
-          
-          # Create production .env file with deployment credentials  
-          echo "Creating production environment configuration..."
-          cat > .env << EOF
-          EXPO_PUBLIC_SUPABASE_URL=$EXPO_PUBLIC_SUPABASE_URL
-          EXPO_PUBLIC_SUPABASE_ANON_KEY=$EXPO_PUBLIC_SUPABASE_ANON_KEY
-          EXPO_PUBLIC_ENVIRONMENT=$EXPO_PUBLIC_ENVIRONMENT
-          EXPO_PUBLIC_PR_NUMBER=$EXPO_PUBLIC_PR_NUMBER
-          EOF
+          echo "Building web application using EAS-managed environment variables..."
           
           echo "Environment check:"
           echo "SUPABASE_URL: ${EXPO_PUBLIC_SUPABASE_URL:0:50}..."
           echo "SUPABASE_KEY: ${EXPO_PUBLIC_SUPABASE_ANON_KEY:0:20}..."
-          echo "ENVIRONMENT: $EXPO_PUBLIC_ENVIRONMENT"
+          echo "ENVIRONMENT: ${EXPO_PUBLIC_ENVIRONMENT}"
+          echo "PR_NUMBER: ${EXPO_PUBLIC_PR_NUMBER}"
           
-          # Build with production environment
+          # Verify .env file exists (created by EAS env:pull)
+          if [ -f .env ]; then
+            echo "Using .env file from EAS:"
+            cat .env | grep -v "ANON_KEY" || true  # Show env vars but hide anon key
+          fi
+          
+          # Build with EAS environment variables
+          echo "Building with: npx expo export -p web"
           npx expo export -p web
           
           echo "Build completed. Checking output..."
           ls -la dist/
           test -f dist/index.html || (echo "ERROR: index.html not found in dist/" && exit 1)
           
-          # Restore original .env file if it was backed up
-          if [ -f .env.local.backup ]; then
-            echo "Restoring local .env file..."
-            mv .env.local.backup .env
+          # Verify environment variables are embedded in the build
+          if grep -q "$EXPO_PUBLIC_SUPABASE_URL" dist/_expo/static/js/web/*.js; then
+            echo "✅ Supabase URL successfully embedded in build"
+          else
+            echo "⚠️ Warning: Supabase URL might not be embedded in build"
           fi
-        env:
-          # Environment variables for Expo build - using retrieved config
-          EXPO_PUBLIC_SUPABASE_URL: ${{ steps.supabase-config.outputs.SUPABASE_URL }}
-          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ steps.supabase-config.outputs.SUPABASE_ANON_KEY }}
-          EXPO_PUBLIC_ENVIRONMENT: ${{ inputs.environment }}
-          EXPO_PUBLIC_PR_NUMBER: ${{ inputs.pr_number || '' }}
 
       - name: 🚀 Deploy to Vercel
         id: deploy
@@ -158,6 +151,7 @@ jobs:
         run: |
           echo "deployment_url=${{ steps.deploy.outputs.preview-url }}" >> $GITHUB_OUTPUT
           echo "deployment_status=success" >> $GITHUB_OUTPUT
+          echo "supabase_url=${{ steps.eas-env.outputs.SUPABASE_URL }}" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: ✅ Deployment Success
