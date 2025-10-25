@@ -3,12 +3,19 @@ import { SplashScreen, Stack } from "expo-router";
 import React, { useEffect } from "react";
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from "react-native-paper";
 import { useColorScheme } from "react-native";
+import * as Linking from "expo-linking";
 
 import { useAppInit } from "@/lib/hooks/useAppInit";
 import { AuthProvider } from "@/lib/components/AuthProvider";
 import { AuthAwareLayout } from "@/lib/components/AuthAwareLayout";
 import { ErrorBlocker } from "@/lib/components/ErrorBlocker";
 import { initializeErrorBlocking } from "@/lib/utils/logging/ErrorBlockingFactory";
+import {
+  extractTokensFromUrl,
+  isAuthCallbackUrl,
+  processAuthTokens,
+  type SupabaseClient,
+} from "@/lib/utils/auth/AuthUrlHandler";
 
 // Catch any errors thrown by the Layout component.
 export { ErrorBoundary } from "expo-router";
@@ -51,6 +58,51 @@ const RootLayout = () => {
       console.warn("Failed to initialize error blocking system:", initError);
       return () => {}; // Return empty cleanup function on error
     }
+  }, []);
+
+  // Handle deep links for auth verification
+  useEffect(() => {
+    const handleURL = async (url: string) => {
+      console.log("🔗 Received deep link:", url);
+
+      if (!isAuthCallbackUrl(url)) {
+        return;
+      }
+
+      console.log("🔗 Processing auth callback from email verification");
+
+      try {
+        const { getSupabaseClient } = await import(
+          "@/lib/data/supabase/supabase"
+        );
+        const supabase = getSupabaseClient() as SupabaseClient;
+        const { accessToken, refreshToken } = extractTokensFromUrl(url);
+
+        if (accessToken && refreshToken) {
+          await processAuthTokens(supabase, accessToken, refreshToken);
+        } else {
+          console.log(
+            "🔗 No auth tokens found in callback URL, checking current session",
+          );
+          await supabase.auth.getSession();
+        }
+      } catch (error) {
+        console.error("🔗 Failed to process auth callback:", error);
+      }
+    };
+
+    const subscription = Linking.addEventListener("url", ({ url }) =>
+      handleURL(url),
+    );
+
+    // Handle app launch from deep link
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        handleURL(url);
+      }
+    });
+
+    return () => subscription?.remove();
   }, []);
 
   useEffect(() => {

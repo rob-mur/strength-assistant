@@ -2,6 +2,8 @@
 
 ## Active Technologies
 
+- TypeScript/JavaScript with React Native/Expo SDK + React Native, Expo SDK, Supabase Auth, Next.js/Express.js for web service (013-fix-signin-redirect)
+- Supabase (PostgreSQL) for user accounts and verification tokens (013-fix-signin-redirect)
 - TypeScript with React Native 0.79.5 / Expo SDK 53 + React Native Paper, Expo Router, React 19.0.0 (013-workout-empty-state)
 - Supabase (PostgreSQL) for persistence, Legend State for local state management (013-workout-empty-state)
 
@@ -163,6 +165,7 @@ Tests can detect uncaught errors using:
 
 ## Recent Changes
 
+- 013-fix-signin-redirect: Added TypeScript/JavaScript with React Native/Expo SDK + React Native, Expo SDK, Supabase Auth, Next.js/Express.js for web service
 - 013-workout-empty-state: Added TypeScript with React Native 0.79.5 / Expo SDK 53 + React Native Paper, Expo Router, React 19.0.0
 
 - 012-production-bug-android: Implemented simple error blocking system to replace complex 750+ line error handler, preventing production Android stack overflow issues. Added ErrorBlocker React component, SimpleErrorLogger with <0.01ms performance, MaestroErrorDetection for integration tests, and ReactNativeErrorHandler for global error handling. Integrated system into app root layout and created Maestro tests for error detection.

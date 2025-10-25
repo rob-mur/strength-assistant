@@ -1,0 +1,254 @@
+openapi: 3.0.3
+info:
+  title: Email Verification Redirect API
+  description: Supabase Edge Functions for handling email verification redirects with platform detection
+  version: 1.0.0
+  contact:
+    name: Strength Assistant Team
+servers:
+  - url: https://verify.yourdomain.com
+    description: Production server (Supabase custom domain)
+  - url: https://your-project-ref.supabase.co/functions/v1
+    description: Staging server (default Supabase domain)
+  - url: http://localhost:54321/functions/v1
+    description: Local development server (Supabase CLI)
+
+paths:
+  /verify-email:
+    get:
+      summary: Handle email verification redirect
+      description: |
+        Supabase Edge Function for email verification links. Detects platform and redirects
+        to appropriate target (Android app or web fallback page). Runs on Deno runtime.
+      parameters:
+        - name: token
+          in: query
+          required: true
+          description: Email verification token from Supabase
+          schema:
+            type: string
+            pattern: '^[a-zA-Z0-9_-]+$'
+            minLength: 20
+            maxLength: 200
+        - name: type
+          in: query
+          required: true
+          description: Type of verification
+          schema:
+            type: string
+            enum: [email_verification, signup, recovery]
+        - name: redirect_to
+          in: query
+          required: false
+          description: Optional custom redirect URL
+          schema:
+            type: string
+            format: uri
+      responses:
+        '302':
+          description: Successful redirect to app or web fallback
+          headers:
+            Location:
+              description: Redirect target URL
+              schema:
+                type: string
+                format: uri
+                examples:
+                  android_app:
+                    value: 'strengthassistant://auth/verify?token=abc123&verified=true'
+                  web_fallback:
+                    value: 'https://auth.yourdomain.com/fallback/success?verified=true'
+        '400':
+          description: Invalid or missing parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing_token:
+                  value:
+                    error: 'Missing required parameter: token'
+                    code: 'MISSING_TOKEN'
+                invalid_token_format:
+                  value:
+                    error: 'Invalid token format'
+                    code: 'INVALID_TOKEN_FORMAT'
+        '401':
+          description: Invalid or expired verification token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                expired_token:
+                  value:
+                    error: 'Verification token has expired'
+                    code: 'TOKEN_EXPIRED'
+                invalid_token:
+                  value:
+                    error: 'Invalid verification token'
+                    code: 'TOKEN_INVALID'
+        '429':
+          description: Too many verification attempts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: 'Too many verification attempts. Please try again later.'
+                code: 'RATE_LIMITED'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: 'Internal server error'
+                code: 'INTERNAL_ERROR'
+
+  /fallback/success:
+    get:
+      summary: Web fallback success page
+      description: |
+        Fallback web page for successful email verification when Android app
+        is not installed or when accessed from web browser.
+      parameters:
+        - name: verified
+          in: query
+          required: false
+          description: Verification status
+          schema:
+            type: boolean
+        - name: email
+          in: query
+          required: false
+          description: Verified email address
+          schema:
+            type: string
+            format: email
+      responses:
+        '200':
+          description: Success page HTML
+          content:
+            text/html:
+              schema:
+                type: string
+              example: |
+                <!DOCTYPE html>
+                <html>
+                <head><title>Email Verified</title></head>
+                <body>
+                  <h1>Email Successfully Verified</h1>
+                  <p>Your email has been verified. You can now return to the app.</p>
+                </body>
+                </html>
+
+  /fallback/error:
+    get:
+      summary: Web fallback error page
+      description: |
+        Fallback web page for failed email verification attempts.
+      parameters:
+        - name: error_code
+          in: query
+          required: false
+          description: Error code for debugging
+          schema:
+            type: string
+        - name: message
+          in: query
+          required: false
+          description: User-friendly error message
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Error page HTML
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /health:
+    get:
+      summary: Health check endpoint
+      description: Simple health check for monitoring and load balancer probes
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: 'healthy'
+                  timestamp:
+                    type: string
+                    format: date-time
+                  version:
+                    type: string
+                    example: '1.0.0'
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - code
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+        code:
+          type: string
+          description: Machine-readable error code
+        details:
+          type: object
+          description: Additional error details
+          additionalProperties: true
+        timestamp:
+          type: string
+          format: date-time
+          description: Error occurrence timestamp
+
+    VerificationRequest:
+      type: object
+      required:
+        - token
+        - type
+      properties:
+        token:
+          type: string
+          description: Verification token from email link
+        type:
+          type: string
+          enum: [email_verification, signup, recovery]
+          description: Type of verification being performed
+        redirect_to:
+          type: string
+          format: uri
+          description: Optional custom redirect URL
+        platform:
+          type: string
+          enum: [android, web, unknown]
+          description: Detected or specified platform
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: Optional bearer token for authenticated requests
+
+security: []
+
+tags:
+  - name: verification
+    description: Email verification endpoints
+  - name: fallback
+    description: Web fallback pages
+  - name: monitoring
+    description: Health and monitoring endpoints

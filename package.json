@@ -19,7 +19,8 @@
     "setup-hooks": "./scripts/setup-hooks.sh",
     "eas-build-pre-install": "./scripts/write_env.sh",
     "build_web": "npx patch-package && npx expo export -p web",
-    "ios": "expo run:ios"
+    "ios": "expo run:ios",
+    "typecheck": "npx tsc --noEmit"
   },
   "dependencies": {
     "@babel/plugin-transform-class-static-block": "^7.28.3",

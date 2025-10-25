@@ -33,6 +33,7 @@ import {
   fromDbFormat as syncFromDb,
 } from "../../models/SyncStateRecord";
 
+const deepLink = "strengthassistant://auth-callback";
 // StorageBackend interface definition (matches contract)
 export interface StorageBackend {
   // Exercise CRUD operations
@@ -281,6 +282,9 @@ export class SupabaseStorage implements StorageBackend {
     const { data, error } = await this.getClient().auth.signUp({
       email: email.toLowerCase().trim(),
       password,
+      options: {
+        emailRedirectTo: deepLink,
+      },
     });
 
     if (error) {
