@@ -1,6 +1,8 @@
 # strength-assistant Development Guidelines
 
 ## Active Technologies
+- TypeScript/JavaScript with React Native 0.79.5, Expo SDK 53, React 19.0.0 + Expo Router, React Native Paper, @supabase/supabase-js, @legendapp/state (001-web-deployment)
+- Supabase PostgreSQL (existing production database), Supabase hosting for static web assets (001-web-deployment)
 
 - TypeScript/JavaScript with React Native/Expo SDK + React Native, Expo SDK, Supabase Auth, Next.js/Express.js for web service (013-fix-signin-redirect)
 - Supabase (PostgreSQL) for user accounts and verification tokens (013-fix-signin-redirect)
@@ -164,13 +166,12 @@ Tests can detect uncaught errors using:
 - `maestro-error-message`: Shows last error message
 
 ## Recent Changes
+- 001-web-deployment: Added TypeScript/JavaScript with React Native 0.79.5, Expo SDK 53, React 19.0.0 + Expo Router, React Native Paper, @supabase/supabase-js, @legendapp/state
 
 - 013-fix-signin-redirect: Added TypeScript/JavaScript with React Native/Expo SDK + React Native, Expo SDK, Supabase Auth, Next.js/Express.js for web service
 - 013-workout-empty-state: Added TypeScript with React Native 0.79.5 / Expo SDK 53 + React Native Paper, Expo Router, React 19.0.0
 
-- 012-production-bug-android: Implemented simple error blocking system to replace complex 750+ line error handler, preventing production Android stack overflow issues. Added ErrorBlocker React component, SimpleErrorLogger with <0.01ms performance, MaestroErrorDetection for integration tests, and ReactNativeErrorHandler for global error handling. Integrated system into app root layout and created Maestro tests for error detection.
 
-- 011-improve-error-logging: Added comprehensive error logging system with 47 empty catch block migrations, recovery actions, and React Native context collection
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

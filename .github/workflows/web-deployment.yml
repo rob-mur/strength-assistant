@@ -1,0 +1,99 @@
+name: Deploy Web Application
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Deployment environment (production or preview)'
+        required: true
+        type: string
+      pr_number:
+        description: 'Pull request number for preview deployments'
+        required: false
+        type: string
+    outputs:
+      deployment_url:
+        description: 'URL of the deployed web application'
+        value: ${{ jobs.deploy.outputs.deployment_url }}
+      deployment_status:
+        description: 'Status of the deployment'
+        value: ${{ jobs.deploy.outputs.deployment_status }}
+
+env:
+  NODE_ENV: production
+
+jobs:
+  deploy:
+    name: Deploy to Vercel
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment == 'production' && 'Dev' || 'preview' }}
+    outputs:
+      deployment_url: ${{ steps.deploy.outputs.deployment_url }}
+      deployment_status: ${{ steps.deploy.outputs.deployment_status }}
+      
+    steps:
+      - name: 🏗 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔍 Verify Expo web build capability
+        run: |
+          echo "Checking if expo export command is available..."
+          npx expo --version
+          echo "Checking package.json for web build script..."
+          npm run build_web --dry-run || echo "Using direct expo export command"
+
+      - name: 🌐 Build Expo Web
+        run: |
+          echo "Building web application..."
+          npx expo export -p web
+          echo "Build completed. Checking output..."
+          ls -la dist/
+          test -f dist/index.html || (echo "ERROR: index.html not found in dist/" && exit 1)
+
+      - name: 🚀 Deploy to Vercel
+        id: deploy
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./
+          vercel-args: ${{ inputs.environment == 'production' && '--prod' || '' }}
+        env:
+          # Environment variables for the deployed application
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_PROJECT_REF && format('https://{0}.supabase.co', secrets.SUPABASE_PROJECT_REF) || 'https://placeholder.supabase.co' }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
+          EXPO_PUBLIC_ENVIRONMENT: ${{ inputs.environment }}
+          EXPO_PUBLIC_PR_NUMBER: ${{ inputs.pr_number || '' }}
+
+      - name: 📝 Set deployment outputs
+        run: |
+          echo "deployment_url=${{ steps.deploy.outputs.preview-url }}" >> $GITHUB_OUTPUT
+          echo "deployment_status=success" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: ✅ Deployment Success
+        run: |
+          echo "🎉 Web deployment completed successfully!"
+          echo "📱 Deployment URL: ${{ steps.deploy.outputs.preview-url }}"
+          echo "🌍 Environment: ${{ inputs.environment }}"
+          
+      - name: ❌ Deployment Failure
+        if: failure()
+        run: |
+          echo "💥 Web deployment failed!"
+          echo "📋 Check the logs above for detailed error information"
+          echo "🔧 Common issues:"
+          echo "  - Missing environment variables"
+          echo "  - Build command failure"
+          echo "  - Vercel authentication issues"
+          exit 1

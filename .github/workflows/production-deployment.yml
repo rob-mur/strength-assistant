@@ -77,6 +77,9 @@ jobs:
           cat << EOF > terraform.tfvars
           supabase_project_ref = "${{ secrets.SUPABASE_PROJECT_REF }}"
           supabase_access_token = "${{ secrets.SUPABASE_ACCESS_TOKEN }}"
+          vercel_token = "${{ secrets.VERCEL_TOKEN }}"
+          vercel_org_id = "${{ secrets.VERCEL_ORG_ID }}"
+          vercel_project_id = "${{ secrets.VERCEL_PROJECT_ID }}"
           environment = "dev"
           EOF
 
@@ -106,3 +109,32 @@ jobs:
           name: terraform-plan-dev
           path: terraform/tfplan
           retention-days: 30
+
+  web-deployment-production:
+    name: Deploy Web Application (Production)
+    needs: [terraform-deploy]
+    if: needs.terraform-deploy.result == 'success'
+    uses: ./.github/workflows/web-deployment.yml
+    with:
+      environment: production
+    secrets: inherit
+    
+  # Summary job to track both Android and Web deployments
+  deployment-summary:
+    name: Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [build-production-apk, terraform-deploy, web-deployment-production]
+    if: always()
+    steps:
+      - name: 📊 Deployment Results
+        run: |
+          echo "🚀 Production Deployment Summary"
+          echo "=================================="
+          echo "📱 Android APK: ${{ needs.build-production-apk.result }}"
+          echo "🏗️  Infrastructure: ${{ needs.terraform-deploy.result }}"
+          echo "🌐 Web Application: ${{ needs.web-deployment-production.result }}"
+          echo ""
+          if [[ "${{ needs.web-deployment-production.outputs.deployment_url }}" != "" ]]; then
+            echo "🔗 Web URL: ${{ needs.web-deployment-production.outputs.deployment_url }}"
+          fi
+          echo "📋 Release: v${{ github.run_number }}"

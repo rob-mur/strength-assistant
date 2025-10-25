@@ -6,11 +6,19 @@ terraform {
       source  = "supabase/supabase"
       version = "~> 1.0"
     }
+    vercel = {
+      source  = "vercel/vercel"
+      version = "~> 0.15"
+    }
   }
 }
 
 provider "supabase" {
   access_token = var.supabase_access_token
+}
+
+provider "vercel" {
+  api_token = var.vercel_token
 }
 
 

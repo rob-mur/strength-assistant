@@ -11,6 +11,7 @@
     "gh@latest",
     "git@latest",
     "supabase-cli@latest",
+    "terraform@latest",
     "uv@latest"
   ],
   "shell": {

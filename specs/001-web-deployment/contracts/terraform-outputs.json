@@ -1,0 +1,61 @@
+{
+  "title": "Terraform Outputs Contract",
+  "description": "Terraform outputs required for web deployment configuration",
+  "type": "object",
+  "required": [
+    "supabase_url",
+    "supabase_anon_key",
+    "environment_type",
+    "project_ref"
+  ],
+  "properties": {
+    "supabase_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Supabase project API URL",
+      "example": "https://abcdefghijklmnop.supabase.co"
+    },
+    "supabase_anon_key": {
+      "type": "string",
+      "description": "Supabase anonymous (public) API key",
+      "pattern": "^eyJ[A-Za-z0-9_-]+$",
+      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    },
+    "environment_type": {
+      "type": "string",
+      "enum": ["production", "preview"],
+      "description": "Type of deployment environment"
+    },
+    "project_ref": {
+      "type": "string",
+      "pattern": "^[a-z0-9]{20}$",
+      "description": "Supabase project reference identifier",
+      "example": "abcdefghijklmnopqrst"
+    },
+    "custom_domain": {
+      "type": "string",
+      "format": "hostname",
+      "description": "Custom domain for production environment (optional)",
+      "example": "app.strengthassistant.com"
+    },
+    "auth_settings": {
+      "type": "object",
+      "description": "Authentication configuration",
+      "properties": {
+        "site_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Primary site URL for auth redirects"
+        },
+        "additional_redirect_urls": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          },
+          "description": "Additional allowed redirect URLs"
+        }
+      }
+    }
+  }
+}
