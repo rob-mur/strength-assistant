@@ -116,11 +116,11 @@ describe("EmptyWorkoutState", () => {
     );
 
     const container = getByTestId("empty-workout-state");
-    // Check that the custom style is included in the nested style array structure
+    // Check that the custom style is included in the style array structure
     const styleArray = container.props.style;
     // The custom style should be in the last element of the style array
     const lastStyleElement = styleArray[styleArray.length - 1];
-    expect(lastStyleElement).toContainEqual(customStyle);
+    expect(lastStyleElement).toEqual(customStyle);
   });
 
   describe("Responsive Design", () => {

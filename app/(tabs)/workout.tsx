@@ -3,6 +3,12 @@ import { Card, FAB, Surface } from "react-native-paper";
 import { View } from "react-native";
 import EmptyWorkoutState from "../../lib/components/EmptyWorkoutState";
 
+// Route constants for better navigation management
+const ROUTES = {
+  EXERCISES: "/(tabs)/exercises",
+  ADD_EXERCISE: "/(tabs)/exercises/add",
+} as const;
+
 interface WorkoutScreenProps {
   selectedExercise?: string | null;
 }
@@ -16,13 +22,25 @@ export default function WorkoutScreen({
   const exercise = selectedExercise ?? exerciseSearchParam;
   const showEmptyState = !exercise;
 
-  // Navigation handlers for empty state
+  // Navigation handlers for empty state with error handling
   const handleSelectExercise = () => {
-    router.navigate("../exercises");
+    try {
+      router.navigate(ROUTES.EXERCISES);
+    } catch (error) {
+      console.error("Failed to navigate to exercises screen:", error);
+      // Fallback navigation attempt
+      router.navigate("../exercises");
+    }
   };
 
   const handleCreateExercise = () => {
-    router.navigate("./add");
+    try {
+      router.navigate(ROUTES.ADD_EXERCISE);
+    } catch (error) {
+      console.error("Failed to navigate to add exercise screen:", error);
+      // Fallback navigation attempt
+      router.navigate("./add");
+    }
   };
 
   return (
@@ -44,7 +62,14 @@ export default function WorkoutScreen({
         style={{ position: "absolute", margin: 16, right: 0, bottom: 0 }}
         icon="plus"
         testID="add-workout"
-        onPress={(_) => router.navigate("./add")}
+        onPress={() => {
+          try {
+            router.navigate(ROUTES.ADD_EXERCISE);
+          } catch (error) {
+            console.error("Failed to navigate to add exercise screen:", error);
+            router.navigate("./add");
+          }
+        }}
       />
     </View>
   );

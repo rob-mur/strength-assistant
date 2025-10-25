@@ -71,14 +71,14 @@ describe("WorkoutScreen", () => {
       const { getByTestId } = renderWithTheme(<WorkoutScreen />);
 
       fireEvent.press(getByTestId("select-exercise-button"));
-      expect(mockNavigate).toHaveBeenCalledWith("../exercises");
+      expect(mockNavigate).toHaveBeenCalledWith("/(tabs)/exercises");
     });
 
     it("navigates to add exercise screen when Create New Exercise is tapped", () => {
       const { getByTestId } = renderWithTheme(<WorkoutScreen />);
 
       fireEvent.press(getByTestId("create-exercise-button"));
-      expect(mockNavigate).toHaveBeenCalledWith("./add");
+      expect(mockNavigate).toHaveBeenCalledWith("/(tabs)/exercises/add");
     });
   });
 
@@ -119,7 +119,7 @@ describe("WorkoutScreen", () => {
 
       expect(getByTestId("add-workout")).toBeTruthy();
       fireEvent.press(getByTestId("add-workout"));
-      expect(mockNavigate).toHaveBeenCalledWith("./add");
+      expect(mockNavigate).toHaveBeenCalledWith("/(tabs)/exercises/add");
     });
 
     it("preserves FAB functionality with exercise selected", () => {
@@ -129,7 +129,7 @@ describe("WorkoutScreen", () => {
 
       expect(getByTestId("add-workout")).toBeTruthy();
       fireEvent.press(getByTestId("add-workout"));
-      expect(mockNavigate).toHaveBeenCalledWith("./add");
+      expect(mockNavigate).toHaveBeenCalledWith("/(tabs)/exercises/add");
     });
   });
 });

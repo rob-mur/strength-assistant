@@ -1,6 +1,6 @@
 import React from "react";
 import { View, StyleSheet, useWindowDimensions } from "react-native";
-import { Card, Text, Button, Surface, useTheme } from "react-native-paper";
+import { Card, Text, Button, useTheme } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
 import { EmptyWorkoutStateProps } from "../types/EmptyWorkoutState";
 
@@ -16,7 +16,7 @@ const EmptyWorkoutState: React.FC<EmptyWorkoutStateProps> = React.memo(
     const isTablet = width >= 768;
 
     return (
-      <Surface style={[styles.container, style]} elevation={0} testID={testID}>
+      <View style={[styles.container, style]} testID={testID}>
         <Card style={styles.card}>
           <Card.Content style={styles.content}>
             {/* Icon - responsive size */}
@@ -75,7 +75,7 @@ const EmptyWorkoutState: React.FC<EmptyWorkoutStateProps> = React.memo(
             </View>
           </Card.Content>
         </Card>
-      </Surface>
+      </View>
     );
   },
 );
@@ -115,7 +115,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   secondaryButton: {
-    // Optional styling
+    // Add margin for proper spacing
+    marginTop: 4,
   },
 });
 
