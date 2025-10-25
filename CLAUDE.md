@@ -1,6 +1,7 @@
 # strength-assistant Development Guidelines
 
 ## Active Technologies
+
 - TypeScript/JavaScript with React Native 0.79.5, Expo SDK 53, React 19.0.0 + Expo Router, React Native Paper, @supabase/supabase-js, @legendapp/state (001-web-deployment)
 - Supabase PostgreSQL (existing production database), Supabase hosting for static web assets (001-web-deployment)
 
@@ -166,12 +167,11 @@ Tests can detect uncaught errors using:
 - `maestro-error-message`: Shows last error message
 
 ## Recent Changes
+
 - 001-web-deployment: Added TypeScript/JavaScript with React Native 0.79.5, Expo SDK 53, React 19.0.0 + Expo Router, React Native Paper, @supabase/supabase-js, @legendapp/state
 
 - 013-fix-signin-redirect: Added TypeScript/JavaScript with React Native/Expo SDK + React Native, Expo SDK, Supabase Auth, Next.js/Express.js for web service
 - 013-workout-empty-state: Added TypeScript with React Native 0.79.5 / Expo SDK 53 + React Native Paper, Expo Router, React 19.0.0
-
-
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->
