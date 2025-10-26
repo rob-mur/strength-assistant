@@ -25,6 +25,10 @@ jobs:
     env:
       TF_VAR_supabase_access_token: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       TF_VAR_supabase_project_ref: ${{ secrets.SUPABASE_PROJECT_REF }}
+      TF_VAR_vercel_token: ${{ secrets.VERCEL_TOKEN }}
+      TF_VAR_vercel_org_id: ${{ secrets.VERCEL_ORG_ID }}
+      TF_VAR_vercel_project_id: ${{ secrets.VERCEL_PROJECT_ID }}
+      TF_VAR_environment: ${{ github.event.inputs.environment || 'dev' }}
 
     steps:
       - name: 🏗 Checkout repository
