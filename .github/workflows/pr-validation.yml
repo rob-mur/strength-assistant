@@ -233,7 +233,6 @@ jobs:
         integration-tests-android,
         integration-tests-chrome,
         web-preview-deployment,
-        comment-preview-url,
         production-validation,
         sonarqube,
       ]
