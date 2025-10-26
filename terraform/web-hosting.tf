@@ -12,6 +12,12 @@ resource "vercel_project_environment_variable" "supabase_url" {
   key        = "EXPO_PUBLIC_SUPABASE_URL"
   value      = "https://${var.supabase_project_ref}.supabase.co"
   target     = ["production", "preview"]
+  lifecycle {
+    ignore_changes = [
+      key,
+      value,
+    ]
+  }
 }
 
 # Note: Supabase anon key will be added via GitHub Actions for security
@@ -20,6 +26,12 @@ resource "vercel_project_environment_variable" "supabase_anon_key" {
   key        = "EXPO_PUBLIC_SUPABASE_ANON_KEY"
   value      = var.supabase_anon_key
   target     = ["production", "preview"]
+  lifecycle {
+    ignore_changes = [
+      key,
+      value,
+    ]
+  }
 }
 
 
