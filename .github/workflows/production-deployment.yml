@@ -22,7 +22,6 @@ jobs:
   terraform-deploy:
     name: Deploy Infrastructure
     runs-on: ubuntu-latest
-    needs: build-production-apk
     environment: dev
     outputs:
       deployment-id: ${{ steps.deploy.outputs.deployment-id }}
