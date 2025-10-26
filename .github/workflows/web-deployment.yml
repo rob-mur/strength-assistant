@@ -44,53 +44,30 @@ jobs:
       - name: 📦 Install dependencies
         run: npm ci
 
-      - name: 🔑 Setup EAS Environment Variables
-        id: eas-env
+      - name: 🔑 Setup Environment Variables
+        id: env-setup
         run: |
-          echo "Setting up EAS environment variables for web deployment..."
+          echo "Setting up environment variables for web deployment..."
           
-          # Install EAS CLI and ensure it's in PATH
-          echo "Installing EAS CLI..."
-          npm install -g eas-cli
+          # Create .env.local file with production Supabase credentials
+          echo "Creating .env.local with production credentials..."
+          cat > .env.local << EOF
+          EXPO_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL || secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY || secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          EXPO_PUBLIC_ENVIRONMENT=${{ inputs.environment }}
+          EXPO_PUBLIC_PR_NUMBER=${{ inputs.pr_number || '' }}
+          EOF
           
-          # Add npm global bin to PATH if not already there
-          export PATH="$(npm config get prefix)/bin:$PATH"
-          
-          # Verify installation
-          echo "EAS CLI version:"
-          eas --version
-          
-          # Verify EAS CLI authentication
-          echo "Verifying EAS CLI authentication..."
-          echo "EXPO_TOKEN present: ${EXPO_TOKEN:+yes}"
-          
-          # Try authentication
-          if ! eas whoami; then
-            echo "EAS authentication failed, attempting login with token..."
-            echo "$EXPO_TOKEN" | eas login --non-interactive
-          fi
-          
-          # Always use production environment variables for both preview and production
-          # This ensures both environments connect to the production database as requested
-          EAS_ENVIRONMENT="production"
-          
-          echo "Using EAS environment: $EAS_ENVIRONMENT (production DB for both preview and production)"
-          
-          # Pull environment variables from EAS (this creates a .env.local file)
-          echo "Pulling environment variables from EAS..."
-          eas env:pull --environment=$EAS_ENVIRONMENT
-          
-          # Verify .env.local file was created and contains required variables
+          # Verify .env.local file was created
           if [ ! -f .env.local ]; then
-            echo "❌ EAS env:pull did not create .env.local file"
-            echo "Available files:"
-            ls -la *.env* || echo "No .env* files found"
-            ls -la
+            echo "❌ Failed to create .env.local file"
             exit 1
           fi
           
-          echo "Environment variables pulled from EAS to .env.local:"
-          grep "EXPO_PUBLIC_" .env.local || echo "No EXPO_PUBLIC_ variables found"
+          echo "✅ Environment variables configured:"
+          echo "- SUPABASE_URL: ${EXPO_PUBLIC_SUPABASE_URL:0:50}..."
+          echo "- ENVIRONMENT: ${{ inputs.environment }}"
+          echo "- PR_NUMBER: ${{ inputs.pr_number || 'none' }}"
           
           # Source the environment file to make variables available
           source .env.local
@@ -98,24 +75,15 @@ jobs:
           # Verify required variables are set
           if [ -z "$EXPO_PUBLIC_SUPABASE_URL" ] || [ -z "$EXPO_PUBLIC_SUPABASE_ANON_KEY" ]; then
             echo "❌ Missing required Supabase environment variables"
-            echo "EXPO_PUBLIC_SUPABASE_URL: ${EXPO_PUBLIC_SUPABASE_URL:-'not set'}"
-            echo "EXPO_PUBLIC_SUPABASE_ANON_KEY: ${EXPO_PUBLIC_SUPABASE_ANON_KEY:0:20}..."
-            echo "All EXPO_PUBLIC_ variables:"
-            env | grep EXPO_PUBLIC_ || echo "None found"
+            echo "Please ensure SUPABASE_URL and SUPABASE_ANON_KEY are set in GitHub secrets"
             exit 1
           fi
-          
-          echo "✅ Successfully configured EAS environment variables"
-          echo "SUPABASE_URL=${EXPO_PUBLIC_SUPABASE_URL}" >> $GITHUB_OUTPUT
-          echo "SUPABASE_ANON_KEY=${EXPO_PUBLIC_SUPABASE_ANON_KEY}" >> $GITHUB_OUTPUT
           
           # Add environment variables to GitHub environment for subsequent steps
           echo "EXPO_PUBLIC_SUPABASE_URL=${EXPO_PUBLIC_SUPABASE_URL}" >> $GITHUB_ENV
           echo "EXPO_PUBLIC_SUPABASE_ANON_KEY=${EXPO_PUBLIC_SUPABASE_ANON_KEY}" >> $GITHUB_ENV
           echo "EXPO_PUBLIC_ENVIRONMENT=${{ inputs.environment }}" >> $GITHUB_ENV
           echo "EXPO_PUBLIC_PR_NUMBER=${{ inputs.pr_number || '' }}" >> $GITHUB_ENV
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
       - name: 🔍 Verify Expo web build capability
         run: |
@@ -125,10 +93,8 @@ jobs:
           npm run build_web --dry-run || echo "Using direct expo export command"
 
       - name: 🌐 Build Expo Web
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
-          echo "Building web application using EAS-managed environment variables..."
+          echo "Building web application with environment variables..."
           
           echo "Environment check:"
           echo "SUPABASE_URL: ${EXPO_PUBLIC_SUPABASE_URL:0:50}..."
@@ -136,13 +102,13 @@ jobs:
           echo "ENVIRONMENT: ${EXPO_PUBLIC_ENVIRONMENT}"
           echo "PR_NUMBER: ${EXPO_PUBLIC_PR_NUMBER}"
           
-          # Verify .env.local file exists (created by EAS env:pull)
+          # Verify .env.local file exists 
           if [ -f .env.local ]; then
-            echo "Using .env.local file from EAS:"
+            echo "Using .env.local file:"
             cat .env.local | grep -v "ANON_KEY" || true  # Show env vars but hide anon key
           fi
           
-          # Build with EAS environment variables
+          # Build with environment variables
           echo "Building with: npx expo export -p web"
           npx expo export -p web
           
