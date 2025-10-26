@@ -17,8 +17,10 @@ resource "google_storage_bucket" "terraform_state_bucket" {
   uniform_bucket_level_access = true
 
   force_destroy = false 
-  
+
   public_access_prevention = "enforced"
+
+  storage_class = "REGIONAL"
 }
 
 output "gcs_state_bucket_name" {

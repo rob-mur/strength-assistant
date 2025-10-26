@@ -32,7 +32,6 @@ jobs:
       TF_VAR_environment: ${{ github.event.inputs.environment || 'dev' }}
       GOOGLE_CREDENTIALS: ${{ secrets.GCP_TERRAFORM_SA }}
 
-
     steps:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
