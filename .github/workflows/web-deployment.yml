@@ -48,7 +48,7 @@ jobs:
         id: env-setup
         run: |
           echo "Setting up environment variables for web deployment..."
-          
+
           # Create .env.local file with production Supabase credentials
           echo "Creating .env.local with production credentials..."
           cat > .env.local << EOF
@@ -57,28 +57,28 @@ jobs:
           EXPO_PUBLIC_ENVIRONMENT=${{ inputs.environment }}
           EXPO_PUBLIC_PR_NUMBER=${{ inputs.pr_number || '' }}
           EOF
-          
+
           # Verify .env.local file was created
           if [ ! -f .env.local ]; then
             echo "❌ Failed to create .env.local file"
             exit 1
           fi
-          
+
           echo "✅ Environment variables configured:"
           echo "- SUPABASE_URL: ${EXPO_PUBLIC_SUPABASE_URL:0:50}..."
           echo "- ENVIRONMENT: ${{ inputs.environment }}"
           echo "- PR_NUMBER: ${{ inputs.pr_number || 'none' }}"
-          
+
           # Source the environment file to make variables available
           source .env.local
-          
+
           # Verify required variables are set
           if [ -z "$EXPO_PUBLIC_SUPABASE_URL" ] || [ -z "$EXPO_PUBLIC_SUPABASE_ANON_KEY" ]; then
             echo "❌ Missing required Supabase environment variables"
             echo "Please ensure SUPABASE_URL and SUPABASE_ANON_KEY are set in GitHub secrets"
             exit 1
           fi
-          
+
           # Add environment variables to GitHub environment for subsequent steps
           echo "EXPO_PUBLIC_SUPABASE_URL=${EXPO_PUBLIC_SUPABASE_URL}" >> $GITHUB_ENV
           echo "EXPO_PUBLIC_SUPABASE_ANON_KEY=${EXPO_PUBLIC_SUPABASE_ANON_KEY}" >> $GITHUB_ENV
@@ -95,27 +95,27 @@ jobs:
       - name: 🌐 Build Expo Web
         run: |
           echo "Building web application with environment variables..."
-          
+
           echo "Environment check:"
           echo "SUPABASE_URL: ${EXPO_PUBLIC_SUPABASE_URL:0:50}..."
           echo "SUPABASE_KEY: ${EXPO_PUBLIC_SUPABASE_ANON_KEY:0:20}..."
           echo "ENVIRONMENT: ${EXPO_PUBLIC_ENVIRONMENT}"
           echo "PR_NUMBER: ${EXPO_PUBLIC_PR_NUMBER}"
-          
+
           # Verify .env.local file exists 
           if [ -f .env.local ]; then
             echo "Using .env.local file:"
             cat .env.local | grep -v "ANON_KEY" || true  # Show env vars but hide anon key
           fi
-          
+
           # Build with environment variables
           echo "Building with: npx expo export -p web"
           npx expo export -p web
-          
+
           echo "Build completed. Checking output..."
           ls -la dist/
           test -f dist/index.html || (echo "ERROR: index.html not found in dist/" && exit 1)
-          
+
           # Verify environment variables are embedded in the build
           if grep -q "$EXPO_PUBLIC_SUPABASE_URL" dist/_expo/static/js/web/*.js; then
             echo "✅ Supabase URL successfully embedded in build"
