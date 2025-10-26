@@ -3,34 +3,16 @@ name: Deploy Web Application
 on:
   workflow_call:
     inputs:
-      environment:
-        description: "Deployment environment (production or preview)"
-        required: true
-        type: string
-    outputs:
-      deployment_url:
-        description: "URL of the deployed web application"
-        value: ${{ jobs.deploy.outputs.deployment_url }}
-      deployment_status:
-        description: "Status of the deployment"
-        value: ${{ jobs.deploy.outputs.deployment_status }}
-
-env:
-  NODE_ENV: production
 
 jobs:
   deploy:
     name: Deploy to Vercel
     runs-on: ubuntu-latest
     environment: Dev
-    outputs:
-      deployment_url: ${{ steps.deploy.outputs.deployment_url }}
-      deployment_status: ${{ steps.deploy.outputs.deployment_status }}
 
     steps:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
-
 
       - name: 🛠 Setup development environment
         uses: ./.github/actions/setup-dev-environment
@@ -47,4 +29,3 @@ jobs:
         env:
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
-

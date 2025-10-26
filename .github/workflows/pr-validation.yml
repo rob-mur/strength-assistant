@@ -100,68 +100,8 @@ jobs:
 
   web-preview-deployment:
     name: Deploy Web Preview
-    # Deploy preview parallel with other builds for faster feedback
     uses: ./.github/workflows/web-deployment.yml
-    with:
-      environment: preview
-      pr_number: ${{ github.event.number }}
     secrets: inherit
-
-  comment-preview-url:
-    name: Comment Preview URL
-    runs-on: ubuntu-latest
-    needs: [web-preview-deployment]
-    if: needs.web-preview-deployment.result == 'success'
-    permissions:
-      pull-requests: write
-    steps:
-      - name: 💬 Comment Preview URL on PR
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-
-            const botComment = comments.find(comment => 
-              comment.user.type === 'Bot' && 
-              comment.body.includes('🌐 Web Preview Deployment')
-            );
-
-            const commentBody = `🌐 **Web Preview Deployment**
-
-            ✅ Your changes are now available for preview:
-
-            🔗 **Preview URL**: ${{ needs.web-preview-deployment.outputs.deployment_url }}
-
-            📱 **Test your changes**:
-            - Open the preview URL in your browser
-            - Test the UI changes you made
-            - Verify authentication and core functionality
-
-            🔄 This preview will be automatically updated when you push new commits.
-            🗑️ Preview will be cleaned up when this PR is closed or merged.
-
-            ---
-            *Preview generated from commit ${context.sha.substring(0, 7)}*`;
-
-            if (botComment) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id,
-                body: commentBody
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: commentBody
-              });
-            }
 
   integration-tests-chrome:
     runs-on: ubuntu-latest
@@ -169,10 +109,12 @@ jobs:
     steps:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
+
       - name: 🛠 Setup development environment
         uses: ./.github/actions/setup-dev-environment
         with:
           devbox-config: minimal
+
       - name: 🧪 Run Chrome integration tests
         working-directory: devbox/minimal
         run: devbox run integration_test_chrome
