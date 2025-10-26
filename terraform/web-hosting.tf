@@ -12,7 +12,6 @@ resource "vercel_project_environment_variable" "supabase_url" {
   key        = "EXPO_PUBLIC_SUPABASE_URL"
   value      = "https://${var.supabase_project_ref}.supabase.co"
   target     = ["production", "preview"]
-  type       = "encrypted"
 }
 
 # Note: Supabase anon key will be added via GitHub Actions for security
@@ -21,7 +20,6 @@ resource "vercel_project_environment_variable" "supabase_anon_key" {
   key        = "EXPO_PUBLIC_SUPABASE_ANON_KEY"
   value      = "will-be-set-by-github-actions"  # Placeholder - actual key set via CI/CD
   target     = ["production", "preview"]
-  type       = "encrypted"
 }
 
 resource "vercel_project_environment_variable" "environment" {
@@ -29,7 +27,6 @@ resource "vercel_project_environment_variable" "environment" {
   key        = "EXPO_PUBLIC_ENVIRONMENT"
   value      = var.environment == "dev" ? "preview" : var.environment
   target     = ["production", "preview"]
-  type       = "encrypted"
 }
 
 # Custom domain configuration (optional - uncomment if you have a domain)
