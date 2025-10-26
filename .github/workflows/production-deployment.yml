@@ -80,5 +80,4 @@ jobs:
     name: Deploy Web Application (Production)
     needs: [terraform-deploy]
     uses: ./.github/workflows/web-deployment.yml
-    environment: Dev
     secrets: inherit
