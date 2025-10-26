@@ -9,7 +9,7 @@ resource "random_id" "bucket_suffix" {
 
 resource "google_storage_bucket" "terraform_state_bucket" {
   name      = "vercel-tf-state-${random_id.bucket_suffix.hex}"
-  location  = "EU-WEST-3"
+  location  = "EUROPE-WEST3"
   versioning {
     enabled = true
   }
