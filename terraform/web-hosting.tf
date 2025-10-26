@@ -18,7 +18,6 @@ resource "vercel_project_environment_variable" "supabase_url" {
 resource "vercel_project_environment_variable" "supabase_anon_key" {
   project_id = data.vercel_project.web_app.id
   key        = "EXPO_PUBLIC_SUPABASE_ANON_KEY"
-  value      = "will-be-set-by-github-actions"
   target     = ["production", "preview"]
 }
 
