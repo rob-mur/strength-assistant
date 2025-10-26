@@ -52,8 +52,8 @@ jobs:
           # Create .env.local file with production Supabase credentials
           echo "Creating .env.local with production credentials..."
           cat > .env.local << EOF
-          EXPO_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL || secrets.EXPO_PUBLIC_SUPABASE_URL }}
-          EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY || secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          EXPO_PUBLIC_SUPABASE_URL=${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
           EXPO_PUBLIC_ENVIRONMENT=${{ inputs.environment }}
           EXPO_PUBLIC_PR_NUMBER=${{ inputs.pr_number || '' }}
           EOF
@@ -75,7 +75,7 @@ jobs:
           # Verify required variables are set
           if [ -z "$EXPO_PUBLIC_SUPABASE_URL" ] || [ -z "$EXPO_PUBLIC_SUPABASE_ANON_KEY" ]; then
             echo "❌ Missing required Supabase environment variables"
-            echo "Please ensure SUPABASE_URL and SUPABASE_ANON_KEY are set in GitHub secrets"
+            echo "Please ensure EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY are set in GitHub secrets"
             exit 1
           fi
 
