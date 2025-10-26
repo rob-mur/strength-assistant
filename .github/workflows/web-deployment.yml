@@ -49,18 +49,26 @@ jobs:
         run: |
           echo "Setting up EAS environment variables for web deployment..."
           
-          # Install EAS CLI
+          # Install EAS CLI and ensure it's in PATH
           echo "Installing EAS CLI..."
           npm install -g eas-cli
+          
+          # Add npm global bin to PATH if not already there
+          export PATH="$(npm config get prefix)/bin:$PATH"
+          
+          # Verify installation
+          echo "EAS CLI version:"
+          eas --version
           
           # Verify EAS CLI authentication
           echo "Verifying EAS CLI authentication..."
           echo "EXPO_TOKEN present: ${EXPO_TOKEN:+yes}"
-          eas whoami || echo "EAS authentication failed"
           
-          # Debug: Check EAS project configuration
-          echo "Checking EAS project configuration..."
-          eas project:info || echo "EAS project info failed"
+          # Try authentication
+          if ! eas whoami; then
+            echo "EAS authentication failed, attempting login with token..."
+            echo "$EXPO_TOKEN" | eas login --non-interactive
+          fi
           
           # Always use production environment variables for both preview and production
           # This ensures both environments connect to the production database as requested
