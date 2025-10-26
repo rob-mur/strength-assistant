@@ -1,0 +1,571 @@
+openapi: 3.0.3
+info:
+  title: CI/CD Pipeline Internal API
+  description: Internal API contracts for build pipeline state and operations
+  version: 1.0.0
+  contact:
+    name: CI/CD Pipeline Team
+
+servers:
+  - url: https://api.internal/v1
+    description: Internal CI/CD API
+
+paths:
+  /pipelines:
+    post:
+      summary: Initialize Pipeline
+      description: Start a new build pipeline execution
+      operationId: initializePipeline
+      tags:
+        - pipelines
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitializePipelineRequest'
+      responses:
+        '201':
+          description: Pipeline initialized successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PipelineExecution'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - pipeline_token: []
+
+  /pipelines/{pipeline_id}:
+    get:
+      summary: Get Pipeline Status
+      description: Retrieve current pipeline execution status
+      operationId: getPipelineStatus
+      tags:
+        - pipelines
+      parameters:
+        - name: pipeline_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Pipeline status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PipelineExecution'
+        '404':
+          description: Pipeline not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - pipeline_token: []
+
+    patch:
+      summary: Update Pipeline Status
+      description: Update pipeline execution phase and status
+      operationId: updatePipelineStatus
+      tags:
+        - pipelines
+      parameters:
+        - name: pipeline_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePipelineRequest'
+      responses:
+        '200':
+          description: Pipeline updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PipelineExecution'
+        '404':
+          description: Pipeline not found
+        '422':
+          description: Invalid status transition
+      security:
+        - pipeline_token: []
+
+  /pipelines/{pipeline_id}/artifacts:
+    post:
+      summary: Register Build Artifact
+      description: Register a new build artifact with the pipeline
+      operationId: registerArtifact
+      tags:
+        - artifacts
+      parameters:
+        - name: pipeline_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterArtifactRequest'
+      responses:
+        '201':
+          description: Artifact registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildArtifact'
+        '404':
+          description: Pipeline not found
+        '422':
+          description: Artifact validation failed
+      security:
+        - pipeline_token: []
+
+  /releases/draft:
+    post:
+      summary: Create Draft Release
+      description: Create a draft release with associated artifacts
+      operationId: createDraftRelease
+      tags:
+        - releases
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDraftReleaseRequest'
+      responses:
+        '201':
+          description: Draft release created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DraftRelease'
+        '400':
+          description: Invalid request
+        '409':
+          description: Release already exists
+      security:
+        - pipeline_token: []
+
+  /releases/{release_id}/promote:
+    post:
+      summary: Promote Release
+      description: Promote draft release to production
+      operationId: promoteRelease
+      tags:
+        - releases
+      parameters:
+        - name: release_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromoteReleaseRequest'
+      responses:
+        '200':
+          description: Release promotion initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleasePromotion'
+        '404':
+          description: Release not found
+        '422':
+          description: Release not ready for promotion
+      security:
+        - pipeline_token: []
+
+  /releases/{release_id}/validation:
+    post:
+      summary: Validate Release
+      description: Run validation checks on release artifacts
+      operationId: validateRelease
+      tags:
+        - validation
+      parameters:
+        - name: release_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidationRequest'
+      responses:
+        '200':
+          description: Validation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+        '404':
+          description: Release not found
+      security:
+        - pipeline_token: []
+
+components:
+  schemas:
+    InitializePipelineRequest:
+      type: object
+      required:
+        - trigger_type
+        - branch
+        - commit_hash
+      properties:
+        trigger_type:
+          type: string
+          enum: [merge_request, main_merge, manual]
+          description: What triggered this pipeline
+        branch:
+          type: string
+          description: Source branch
+          example: "feature/optimize-builds"
+        commit_hash:
+          type: string
+          pattern: '^[a-f0-9]{40}$'
+          description: Git commit SHA
+          example: "a1b2c3d4e5f6789012345678901234567890abcd"
+        triggered_by:
+          type: string
+          description: User or system that triggered pipeline
+          example: "john.doe@company.com"
+
+    UpdatePipelineRequest:
+      type: object
+      required:
+        - status
+        - phase
+      properties:
+        status:
+          type: string
+          enum: [running, success, failed, cancelled]
+          description: Current pipeline status
+        phase:
+          type: string
+          enum: [build, test, release, promote]
+          description: Current execution phase
+        error_message:
+          type: string
+          nullable: true
+          description: Error description if failed
+        completed_timestamp:
+          type: string
+          format: date-time
+          nullable: true
+          description: Completion time if finished
+
+    RegisterArtifactRequest:
+      type: object
+      required:
+        - apk_path
+        - checksum_sha256
+        - size_bytes
+        - version_code
+        - version_name
+      properties:
+        apk_path:
+          type: string
+          description: Path to compiled APK
+          example: "build/outputs/apk/release/app-release.apk"
+        checksum_sha256:
+          type: string
+          pattern: '^[a-f0-9]{64}$'
+          description: SHA256 checksum
+        size_bytes:
+          type: integer
+          minimum: 1
+          description: File size in bytes
+        version_code:
+          type: integer
+          minimum: 1
+          description: Android version code
+        version_name:
+          type: string
+          description: Human-readable version
+          example: "1.2.3"
+        build_type:
+          type: string
+          enum: [debug, release, production]
+          description: Build configuration
+        build_metadata:
+          type: object
+          additionalProperties: true
+          description: Additional build information
+
+    CreateDraftReleaseRequest:
+      type: object
+      required:
+        - tag_name
+        - branch
+        - commit_hash
+        - artifact_ids
+      properties:
+        tag_name:
+          type: string
+          pattern: '^v\d+\.\d+\.\d+$'
+          description: Release tag
+          example: "v1.2.3"
+        release_name:
+          type: string
+          description: Release title
+          example: "Release v1.2.3"
+        branch:
+          type: string
+          description: Source branch
+        commit_hash:
+          type: string
+          pattern: '^[a-f0-9]{40}$'
+          description: Git commit SHA
+        artifact_ids:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          description: Associated build artifacts
+        release_notes:
+          type: string
+          description: Markdown release notes
+        is_prerelease:
+          type: boolean
+          default: false
+          description: Whether this is a prerelease
+
+    PromoteReleaseRequest:
+      type: object
+      required:
+        - terraform_deployment_id
+        - promoted_by
+      properties:
+        terraform_deployment_id:
+          type: string
+          description: Associated terraform deployment
+        promoted_by:
+          type: string
+          description: User or system promoting release
+        promotion_metadata:
+          type: object
+          additionalProperties: true
+          description: Additional promotion context
+
+    ValidationRequest:
+      type: object
+      required:
+        - validation_types
+      properties:
+        validation_types:
+          type: array
+          items:
+            type: string
+            enum: [checksum, signature, size, metadata]
+          description: Types of validation to perform
+        strict_mode:
+          type: boolean
+          default: true
+          description: Whether to fail on any validation error
+
+    PipelineExecution:
+      type: object
+      properties:
+        pipeline_id:
+          type: string
+          format: uuid
+        trigger_type:
+          type: string
+          enum: [merge_request, main_merge, manual]
+        branch:
+          type: string
+        commit_hash:
+          type: string
+        started_timestamp:
+          type: string
+          format: date-time
+        completed_timestamp:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          enum: [running, success, failed, cancelled]
+        phase:
+          type: string
+          enum: [build, test, release, promote]
+        artifact_id:
+          type: string
+          nullable: true
+        error_message:
+          type: string
+          nullable: true
+        triggered_by:
+          type: string
+
+    BuildArtifact:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        commit_hash:
+          type: string
+        apk_path:
+          type: string
+        build_timestamp:
+          type: string
+          format: date-time
+        checksum_sha256:
+          type: string
+        size_bytes:
+          type: integer
+        version_code:
+          type: integer
+        version_name:
+          type: string
+        build_type:
+          type: string
+          enum: [debug, release, production]
+        build_metadata:
+          type: object
+          additionalProperties: true
+
+    DraftRelease:
+      type: object
+      properties:
+        release_id:
+          type: string
+        tag_name:
+          type: string
+        release_name:
+          type: string
+        branch:
+          type: string
+        commit_hash:
+          type: string
+        created_timestamp:
+          type: string
+          format: date-time
+        updated_timestamp:
+          type: string
+          format: date-time
+        artifact_ids:
+          type: array
+          items:
+            type: string
+        release_notes:
+          type: string
+        is_prerelease:
+          type: boolean
+        github_release_id:
+          type: integer
+          description: Associated GitHub release ID
+
+    ReleasePromotion:
+      type: object
+      properties:
+        promotion_id:
+          type: string
+          format: uuid
+        draft_release_id:
+          type: string
+        production_release_id:
+          type: string
+          nullable: true
+        triggered_by:
+          type: string
+        started_timestamp:
+          type: string
+          format: date-time
+        completed_timestamp:
+          type: string
+          format: date-time
+          nullable: true
+        validation_checks:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [pending, validating, promoting, completed, failed]
+        error_details:
+          type: string
+          nullable: true
+
+    ValidationResult:
+      type: object
+      properties:
+        validation_id:
+          type: string
+          format: uuid
+        release_id:
+          type: string
+        validation_types:
+          type: array
+          items:
+            type: string
+        overall_status:
+          type: string
+          enum: [passed, failed, warning]
+        validation_details:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              status:
+                type: string
+                enum: [passed, failed, warning]
+              message:
+                type: string
+              details:
+                type: object
+                additionalProperties: true
+        validated_at:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error type
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          additionalProperties: true
+          description: Additional error context
+        timestamp:
+          type: string
+          format: date-time
+
+  securitySchemes:
+    pipeline_token:
+      type: http
+      scheme: bearer
+      description: Internal pipeline authentication token

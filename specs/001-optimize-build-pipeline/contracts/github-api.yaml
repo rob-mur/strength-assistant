@@ -1,0 +1,401 @@
+openapi: 3.0.3
+info:
+  title: GitHub Releases API Integration
+  description: API contracts for optimized Android build pipeline using GitHub Releases
+  version: 1.0.0
+  contact:
+    name: Android Build Pipeline
+    
+servers:
+  - url: https://api.github.com
+    description: GitHub API v3
+
+paths:
+  /repos/{owner}/{repo}/releases:
+    post:
+      summary: Create Draft Release
+      description: Create a new draft release with build artifacts
+      operationId: createDraftRelease
+      tags:
+        - releases
+      parameters:
+        - name: owner
+          in: path
+          required: true
+          schema:
+            type: string
+          example: myorg
+        - name: repo
+          in: path
+          required: true
+          schema:
+            type: string
+          example: mobile-app
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReleaseRequest'
+            example:
+              tag_name: "v1.2.3"
+              name: "Release v1.2.3"
+              body: "Automated release with Android APK"
+              draft: true
+              prerelease: false
+              generate_release_notes: true
+      responses:
+        '201':
+          description: Draft release created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Release'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Release with tag already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - github_token: []
+
+  /repos/{owner}/{repo}/releases/{release_id}:
+    patch:
+      summary: Promote Draft to Production
+      description: Promote draft release to published status
+      operationId: promoteRelease
+      tags:
+        - releases
+      parameters:
+        - name: owner
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: repo
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: release_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: GitHub release ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromoteReleaseRequest'
+            example:
+              draft: false
+              prerelease: false
+              name: "Production Release v1.2.3"
+              body: "Production release with validated Android APK"
+      responses:
+        '200':
+          description: Release promoted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Release'
+        '404':
+          description: Release not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Release cannot be promoted (validation failed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - github_token: []
+
+    get:
+      summary: Get Release Details
+      description: Retrieve release information and validation status
+      operationId: getRelease
+      tags:
+        - releases
+      parameters:
+        - name: owner
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: repo
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: release_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Release details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Release'
+        '404':
+          description: Release not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - github_token: []
+
+  /repos/{owner}/{repo}/releases/{release_id}/assets:
+    post:
+      summary: Upload Release Asset
+      description: Upload APK or other build artifacts to release
+      operationId: uploadReleaseAsset
+      tags:
+        - assets
+      parameters:
+        - name: owner
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: repo
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: release_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Asset filename
+          example: "app-release.apk"
+        - name: label
+          in: query
+          schema:
+            type: string
+          description: Asset label for display
+          example: "Android APK (Release)"
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '201':
+          description: Asset uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseAsset'
+        '422':
+          description: Asset validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - github_token: []
+
+components:
+  schemas:
+    CreateReleaseRequest:
+      type: object
+      required:
+        - tag_name
+        - name
+        - draft
+      properties:
+        tag_name:
+          type: string
+          pattern: '^v\d+\.\d+\.\d+$'
+          description: Git tag for the release
+          example: "v1.2.3"
+        name:
+          type: string
+          description: Release title
+          example: "Release v1.2.3"
+        body:
+          type: string
+          description: Release notes in markdown
+          example: "Automated release with Android APK"
+        draft:
+          type: boolean
+          description: Whether this is a draft release
+          example: true
+        prerelease:
+          type: boolean
+          description: Whether this is a prerelease
+          example: false
+        generate_release_notes:
+          type: boolean
+          description: Auto-generate release notes
+          example: true
+
+    PromoteReleaseRequest:
+      type: object
+      required:
+        - draft
+      properties:
+        draft:
+          type: boolean
+          description: Set to false to publish the release
+          example: false
+        prerelease:
+          type: boolean
+          description: Whether this is a prerelease
+          example: false
+        name:
+          type: string
+          description: Updated release title
+          example: "Production Release v1.2.3"
+        body:
+          type: string
+          description: Updated release notes
+          example: "Production release with validated Android APK"
+
+    Release:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: GitHub release ID
+          example: 123456789
+        tag_name:
+          type: string
+          description: Git tag name
+          example: "v1.2.3"
+        name:
+          type: string
+          description: Release title
+          example: "Release v1.2.3"
+        body:
+          type: string
+          description: Release notes
+        draft:
+          type: boolean
+          description: Whether this is a draft
+          example: true
+        prerelease:
+          type: boolean
+          description: Whether this is a prerelease
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Publication timestamp (null for drafts)
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReleaseAsset'
+        html_url:
+          type: string
+          format: uri
+          description: GitHub release page URL
+        upload_url:
+          type: string
+          format: uri-template
+          description: Asset upload URL template
+
+    ReleaseAsset:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Asset ID
+          example: 987654321
+        name:
+          type: string
+          description: Asset filename
+          example: "app-release.apk"
+        label:
+          type: string
+          nullable: true
+          description: Asset display label
+          example: "Android APK (Release)"
+        size:
+          type: integer
+          description: Asset size in bytes
+          example: 15728640
+        download_count:
+          type: integer
+          description: Number of downloads
+          example: 0
+        browser_download_url:
+          type: string
+          format: uri
+          description: Direct download URL
+        created_at:
+          type: string
+          format: date-time
+          description: Upload timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modified timestamp
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Error message
+          example: "Validation Failed"
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                description: Field with error
+              code:
+                type: string
+                description: Error code
+              message:
+                type: string
+                description: Detailed error message
+        documentation_url:
+          type: string
+          format: uri
+          description: Link to API documentation
+
+  securitySchemes:
+    github_token:
+      type: http
+      scheme: bearer
+      description: GitHub Personal Access Token or GITHUB_TOKEN
