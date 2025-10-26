@@ -18,7 +18,7 @@ resource "vercel_project_environment_variable" "supabase_url" {
 resource "vercel_project_environment_variable" "supabase_anon_key" {
   project_id = data.vercel_project.web_app.id
   key        = "EXPO_PUBLIC_SUPABASE_ANON_KEY"
-  value      = "will-be-set-by-github-actions"  # Placeholder - actual key set via CI/CD
+  value      = "will-be-set-by-github-actions"
   target     = ["production", "preview"]
 }
 
@@ -40,9 +40,3 @@ output "web_deployment_url" {
   value       = "https://${data.vercel_project.web_app.name}.vercel.app"
 }
 
-# Supabase outputs needed for web deployment environment variables
-output "supabase_anon_key" {
-  description = "Supabase anonymous key for web application"
-  value       = "placeholder-will-be-set-in-github-actions"
-  sensitive   = true
-}

@@ -22,7 +22,7 @@ jobs:
   terraform-deploy:
     name: Deploy Infrastructure
     runs-on: ubuntu-latest
-    environment: dev
+    environment: Dev
     outputs:
       deployment-id: ${{ steps.deploy.outputs.deployment-id }}
       infrastructure-url: ${{ steps.deploy.outputs.infrastructure-url }}
@@ -36,19 +36,6 @@ jobs:
         with:
           terraform_version: "~1.0"
 
-      - name: 📝 Create terraform.tfvars
-        working-directory: terraform
-        run: |
-          cat << EOF > terraform.tfvars
-          supabase_project_ref = "${{ secrets.SUPABASE_PROJECT_REF }}"
-          supabase_access_token = "${{ secrets.SUPABASE_ACCESS_TOKEN }}"
-          supabase_anon_key = "${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}"
-          vercel_token = "${{ secrets.VERCEL_TOKEN }}"
-          vercel_org_id = "${{ secrets.VERCEL_ORG_ID }}"
-          vercel_project_id = "${{ secrets.VERCEL_PROJECT_ID }}"
-          environment = "dev"
-          EOF
-
       - name: 🚀 Terraform Init
         working-directory: terraform
         run: terraform init
@@ -60,13 +47,16 @@ jobs:
       - name: ✅ Terraform Apply
         id: deploy
         working-directory: terraform
+        env:
+          TF_VAR_supabase_access_token: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          TF_VAR_supabase_project_ref: ${{ secrets.SUPABASE_PROJECT_REF }}
+          TF_VAR_supabase_anon_key: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          TF_VAR_vercel_token: ${{ secrets.VERCEL_TOKEN }}
+          TF_VAR_vercel_org_id: ${{ secrets.VERCEL_ORG_ID }}
+          TF_VAR_vercel_project_id: ${{ secrets.VERCEL_PROJECT_ID }}
+          TF_VAR_environment: ${{ github.event.inputs.environment || 'dev' }}
         run: |
           terraform apply -auto-approve tfplan
-          # Generate deployment ID for tracking
-          DEPLOYMENT_ID="deploy-$(date +%s)-${GITHUB_SHA:0:8}"
-          echo "deployment-id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
-          echo "infrastructure-url=https://api.example.com" >> $GITHUB_OUTPUT
-          echo "terraform-plan-artifact=terraform-plan-dev" >> $GITHUB_OUTPUT
 
       - name: 📤 Upload plan artifact
         if: always()
