@@ -11,6 +11,10 @@ terraform {
       version = "~> 0.15"
     }
   }
+
+  backend "gcs" {
+    bucket = "vercel-tf-state-07501a10" 
+  }
 }
 
 provider "supabase" {
