@@ -49,32 +49,30 @@ jobs:
         run: |
           echo "Setting up EAS environment variables for web deployment..."
           
-          # Determine environment based on input
-          if [ "${{ inputs.environment }}" = "production" ]; then
-            EAS_ENVIRONMENT="production"
-          else
-            EAS_ENVIRONMENT="preview"
-          fi
+          # Always use production environment variables for both preview and production
+          # This ensures both environments connect to the production database as requested
+          EAS_ENVIRONMENT="production"
           
-          echo "Using EAS environment: $EAS_ENVIRONMENT"
+          echo "Using EAS environment: $EAS_ENVIRONMENT (production DB for both preview and production)"
           
-          # Pull environment variables from EAS (this creates a .env file)
+          # Pull environment variables from EAS (this creates a .env.local file)
           echo "Pulling environment variables from EAS..."
           npx eas-cli env:pull --environment=$EAS_ENVIRONMENT
           
-          # Verify .env file was created and contains required variables
-          if [ ! -f .env ]; then
-            echo "❌ EAS env:pull did not create .env file"
+          # Verify .env.local file was created and contains required variables
+          if [ ! -f .env.local ]; then
+            echo "❌ EAS env:pull did not create .env.local file"
             echo "Available files:"
+            ls -la *.env* || echo "No .env* files found"
             ls -la
             exit 1
           fi
           
-          echo "Environment variables pulled from EAS:"
-          grep "EXPO_PUBLIC_" .env || echo "No EXPO_PUBLIC_ variables found"
+          echo "Environment variables pulled from EAS to .env.local:"
+          grep "EXPO_PUBLIC_" .env.local || echo "No EXPO_PUBLIC_ variables found"
           
           # Source the environment file to make variables available
-          source .env
+          source .env.local
           
           # Verify required variables are set
           if [ -z "$EXPO_PUBLIC_SUPABASE_URL" ] || [ -z "$EXPO_PUBLIC_SUPABASE_ANON_KEY" ]; then
@@ -115,10 +113,10 @@ jobs:
           echo "ENVIRONMENT: ${EXPO_PUBLIC_ENVIRONMENT}"
           echo "PR_NUMBER: ${EXPO_PUBLIC_PR_NUMBER}"
           
-          # Verify .env file exists (created by EAS env:pull)
-          if [ -f .env ]; then
-            echo "Using .env file from EAS:"
-            cat .env | grep -v "ANON_KEY" || true  # Show env vars but hide anon key
+          # Verify .env.local file exists (created by EAS env:pull)
+          if [ -f .env.local ]; then
+            echo "Using .env.local file from EAS:"
+            cat .env.local | grep -v "ANON_KEY" || true  # Show env vars but hide anon key
           fi
           
           # Build with EAS environment variables
