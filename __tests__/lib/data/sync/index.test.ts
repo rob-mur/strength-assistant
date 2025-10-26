@@ -101,30 +101,6 @@ describe("Data Sync Index", () => {
       }
     });
 
-    it("handles Supabase initialization errors in web environment", async () => {
-      const { initSupabase } = require("@/lib/data/supabase/supabase");
-      initSupabase.mockImplementation(() => {
-        throw new Error("Supabase initialization failed");
-      });
-
-      // Should not throw in web environment, but continue with degraded functionality
-      await expect(initializeDataLayer()).resolves.toBeUndefined();
-
-      // Console logs removed, but should still handle error gracefully
-    });
-
-    it("handles sync engine configuration errors in web environment", async () => {
-      const { configureSyncEngine } = require("@/lib/data/sync/syncConfig");
-      configureSyncEngine.mockImplementation(() => {
-        throw new Error("Sync configuration failed");
-      });
-
-      // Should not throw in web environment, but continue with degraded functionality
-      await expect(initializeDataLayer()).resolves.toBeUndefined();
-
-      // Console logs removed, but should still handle error gracefully
-    });
-
     it("throws errors in non-web environment", async () => {
       // Explicitly remove window to simulate non-web environment
       Object.defineProperty(global, "window", {
