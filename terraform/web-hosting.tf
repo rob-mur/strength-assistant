@@ -22,18 +22,7 @@ resource "vercel_project_environment_variable" "supabase_anon_key" {
   target     = ["production", "preview"]
 }
 
-resource "vercel_project_environment_variable" "environment" {
-  project_id = data.vercel_project.web_app.id
-  key        = "EXPO_PUBLIC_ENVIRONMENT"
-  value      = var.environment == "dev" ? "preview" : var.environment
-  target     = ["production", "preview"]
-}
 
-# Custom domain configuration (optional - uncomment if you have a domain)
-# resource "vercel_project_domain" "web_app_domain" {
-#   project_id = data.vercel_project.web_app.id
-#   domain     = "app.strengthassistant.com"
-# }
 
 # Outputs for use in GitHub Actions
 output "vercel_project_id" {

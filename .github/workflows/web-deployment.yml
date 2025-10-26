@@ -7,10 +7,6 @@ on:
         description: "Deployment environment (production or preview)"
         required: true
         type: string
-      pr_number:
-        description: "Pull request number for preview deployments"
-        required: false
-        type: string
     outputs:
       deployment_url:
         description: "URL of the deployed web application"
@@ -35,156 +31,20 @@ jobs:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🔧 Setup Node.js
-        uses: actions/setup-node@v4
+
+      - name: 🛠 Setup development environment
+        uses: ./.github/actions/setup-dev-environment
         with:
-          node-version: "18"
-          cache: "npm"
+          devbox-config: minimal
 
-      - name: 📦 Install dependencies
-        run: npm ci
-
-      - name: 🔑 Setup Environment Variables
-        id: env-setup
-        run: |
-          echo "Setting up environment variables for web deployment..."
-
-          # Create .env.local file with production Supabase credentials
-          echo "Creating .env.local with production credentials..."
-          cat > .env.local << EOF
-          EXPO_PUBLIC_SUPABASE_URL=${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
-          EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
-          EXPO_PUBLIC_ENVIRONMENT=${{ inputs.environment }}
-          EXPO_PUBLIC_PR_NUMBER=${{ inputs.pr_number || '' }}
-          EOF
-
-          # Verify .env.local file was created
-          if [ ! -f .env.local ]; then
-            echo "❌ Failed to create .env.local file"
-            exit 1
-          fi
-
-          echo "✅ Environment variables configured:"
-          echo "- SUPABASE_URL: ${EXPO_PUBLIC_SUPABASE_URL:0:50}..."
-          echo "- ENVIRONMENT: ${{ inputs.environment }}"
-          echo "- PR_NUMBER: ${{ inputs.pr_number || 'none' }}"
-
-          # Source the environment file to make variables available
-          source .env.local
-
-          # Verify required variables are set
-          if [ -z "$EXPO_PUBLIC_SUPABASE_URL" ] || [ -z "$EXPO_PUBLIC_SUPABASE_ANON_KEY" ]; then
-            echo "❌ Missing required Supabase environment variables"
-            echo "Please ensure EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY are set in GitHub secrets"
-            exit 1
-          fi
-
-          # Add environment variables to GitHub environment for subsequent steps
-          echo "EXPO_PUBLIC_SUPABASE_URL=${EXPO_PUBLIC_SUPABASE_URL}" >> $GITHUB_ENV
-          echo "EXPO_PUBLIC_SUPABASE_ANON_KEY=${EXPO_PUBLIC_SUPABASE_ANON_KEY}" >> $GITHUB_ENV
-          echo "EXPO_PUBLIC_ENVIRONMENT=${{ inputs.environment }}" >> $GITHUB_ENV
-          echo "EXPO_PUBLIC_PR_NUMBER=${{ inputs.pr_number || '' }}" >> $GITHUB_ENV
-
-      - name: 🔍 Verify Expo web build capability
-        run: |
-          echo "Checking if expo export command is available..."
-          npx expo --version
-          echo "Checking package.json for web build script..."
-          npm run build_web --dry-run || echo "Using direct expo export command"
-
-      - name: 🌐 Build Expo Web
-        run: |
-          echo "Building web application with environment variables..."
-
-          echo "Environment check:"
-          echo "SUPABASE_URL: ${EXPO_PUBLIC_SUPABASE_URL:0:50}..."
-          echo "SUPABASE_KEY: ${EXPO_PUBLIC_SUPABASE_ANON_KEY:0:20}..."
-          echo "ENVIRONMENT: ${EXPO_PUBLIC_ENVIRONMENT}"
-          echo "PR_NUMBER: ${EXPO_PUBLIC_PR_NUMBER}"
-
-          # Verify .env.local file exists 
-          if [ -f .env.local ]; then
-            echo "Using .env.local file:"
-            cat .env.local | grep -v "ANON_KEY" || true  # Show env vars but hide anon key
-          fi
-
-          # Build with environment variables
-          echo "Building with: npx expo export -p web"
-          npx expo export -p web
-
-          echo "Build completed. Checking output..."
-          ls -la dist/
-          test -f dist/index.html || (echo "ERROR: index.html not found in dist/" && exit 1)
-
-          # Verify environment variables are embedded in the build
-          if grep -q "$EXPO_PUBLIC_SUPABASE_URL" dist/_expo/static/js/web/*.js; then
-            echo "✅ Supabase URL successfully embedded in build"
-          else
-            echo "⚠️ Warning: Supabase URL might not be embedded in build"
-            echo "Debug: First few lines of built JS files:"
-            find dist/_expo/static/js/web/ -name "*.js" -exec head -5 {} \; | head -20
-          fi
-
-          # Check for potential console error patterns in the build
-          echo "🔍 Checking for initialization errors in build..."
-          if grep -q "EXPO_PUBLIC_SUPABASE_URL.*undefined\|environment variable is required" dist/_expo/static/js/web/*.js; then
-            echo "⚠️ Warning: Environment variable issues detected in build"
-          fi
-
-      - name: 🔧 Set Vercel Environment Variables
-        run: |
-          echo "Setting environment variables in Vercel project..."
-
-          # Install Vercel CLI
-          npm install -g vercel@latest
-
-          # Authenticate with Vercel
-          echo "${{ secrets.VERCEL_TOKEN }}" | npx vercel login --stdin
-
-          # Set environment variables for this deployment
-          npx vercel env add EXPO_PUBLIC_SUPABASE_URL "${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}" ${{ inputs.environment == 'production' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }} --scope=${{ secrets.VERCEL_ORG_ID }} || true
-          npx vercel env add EXPO_PUBLIC_SUPABASE_ANON_KEY "${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}" ${{ inputs.environment == 'production' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }} --scope=${{ secrets.VERCEL_ORG_ID }} || true
-          npx vercel env add EXPO_PUBLIC_ENVIRONMENT "${{ inputs.environment }}" ${{ inputs.environment == 'production' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }} --scope=${{ secrets.VERCEL_ORG_ID }} || true
-          npx vercel env add EXPO_PUBLIC_PR_NUMBER "${{ inputs.pr_number || '' }}" ${{ inputs.environment == 'production' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }} --scope=${{ secrets.VERCEL_ORG_ID }} || true
-
-          echo "✅ Environment variables set in Vercel"
-
-      - name: 🚀 Deploy to Vercel
-        id: deploy
+      - name: Deploy vercel
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           working-directory: ./
-          vercel-args: ${{ inputs.environment == 'production' && '--prod' || '' }}
         env:
-          # Pass environment variables to Vercel deployment
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
-          EXPO_PUBLIC_ENVIRONMENT: ${{ inputs.environment }}
-          EXPO_PUBLIC_PR_NUMBER: ${{ inputs.pr_number || '' }}
 
-      - name: 📝 Set deployment outputs
-        run: |
-          echo "deployment_url=${{ steps.deploy.outputs.preview-url }}" >> $GITHUB_OUTPUT
-          echo "deployment_status=success" >> $GITHUB_OUTPUT
-          echo "supabase_url=${{ steps.eas-env.outputs.SUPABASE_URL }}" >> $GITHUB_OUTPUT
-        shell: bash
-
-      - name: ✅ Deployment Success
-        run: |
-          echo "🎉 Web deployment completed successfully!"
-          echo "📱 Deployment URL: ${{ steps.deploy.outputs.preview-url }}"
-          echo "🌍 Environment: ${{ inputs.environment }}"
-
-      - name: ❌ Deployment Failure
-        if: failure()
-        run: |
-          echo "💥 Web deployment failed!"
-          echo "📋 Check the logs above for detailed error information"
-          echo "🔧 Common issues:"
-          echo "  - Missing environment variables"
-          echo "  - Build command failure"
-          echo "  - Vercel authentication issues"
-          exit 1
