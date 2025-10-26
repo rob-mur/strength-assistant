@@ -49,6 +49,10 @@ jobs:
         run: |
           echo "Setting up EAS environment variables for web deployment..."
           
+          # Install EAS CLI
+          echo "Installing EAS CLI..."
+          npm install -g eas-cli
+          
           # Always use production environment variables for both preview and production
           # This ensures both environments connect to the production database as requested
           EAS_ENVIRONMENT="production"
@@ -57,7 +61,7 @@ jobs:
           
           # Pull environment variables from EAS (this creates a .env.local file)
           echo "Pulling environment variables from EAS..."
-          npx eas-cli env:pull --environment=$EAS_ENVIRONMENT
+          eas env:pull --environment=$EAS_ENVIRONMENT
           
           # Verify .env.local file was created and contains required variables
           if [ ! -f .env.local ]; then
