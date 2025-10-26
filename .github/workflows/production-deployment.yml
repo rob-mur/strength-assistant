@@ -31,6 +31,7 @@ jobs:
       TF_VAR_vercel_org_id: ${{ secrets.VERCEL_ORG_ID }}
       TF_VAR_vercel_project_id: ${{ secrets.VERCEL_PROJECT_ID }}
       TF_VAR_environment: ${{ github.event.inputs.environment || 'dev' }}
+      GOOGLE_CREDENTIALS: ${{ secrets.GCP_TERRAFORM_SA }}
     outputs:
       deployment-id: ${{ steps.deploy.outputs.deployment-id }}
       infrastructure-url: ${{ steps.deploy.outputs.infrastructure-url }}
