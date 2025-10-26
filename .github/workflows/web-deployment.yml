@@ -2,7 +2,6 @@ name: Deploy Web Application
 
 on:
   workflow_call:
-    inputs:
 
 jobs:
   deploy:
