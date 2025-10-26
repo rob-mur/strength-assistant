@@ -124,12 +124,30 @@ jobs:
             echo "Debug: First few lines of built JS files:"
             find dist/_expo/static/js/web/ -name "*.js" -exec head -5 {} \; | head -20
           fi
-          
+
           # Check for potential console error patterns in the build
           echo "🔍 Checking for initialization errors in build..."
           if grep -q "EXPO_PUBLIC_SUPABASE_URL.*undefined\|environment variable is required" dist/_expo/static/js/web/*.js; then
             echo "⚠️ Warning: Environment variable issues detected in build"
           fi
+
+      - name: 🔧 Set Vercel Environment Variables
+        run: |
+          echo "Setting environment variables in Vercel project..."
+
+          # Install Vercel CLI
+          npm install -g vercel@latest
+
+          # Authenticate with Vercel
+          echo "${{ secrets.VERCEL_TOKEN }}" | npx vercel login --stdin
+
+          # Set environment variables for this deployment
+          npx vercel env add EXPO_PUBLIC_SUPABASE_URL "${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}" ${{ inputs.environment == 'production' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }} --scope=${{ secrets.VERCEL_ORG_ID }} || true
+          npx vercel env add EXPO_PUBLIC_SUPABASE_ANON_KEY "${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}" ${{ inputs.environment == 'production' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }} --scope=${{ secrets.VERCEL_ORG_ID }} || true
+          npx vercel env add EXPO_PUBLIC_ENVIRONMENT "${{ inputs.environment }}" ${{ inputs.environment == 'production' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }} --scope=${{ secrets.VERCEL_ORG_ID }} || true
+          npx vercel env add EXPO_PUBLIC_PR_NUMBER "${{ inputs.pr_number || '' }}" ${{ inputs.environment == 'production' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }} --scope=${{ secrets.VERCEL_ORG_ID }} || true
+
+          echo "✅ Environment variables set in Vercel"
 
       - name: 🚀 Deploy to Vercel
         id: deploy
@@ -140,7 +158,12 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           working-directory: ./
           vercel-args: ${{ inputs.environment == 'production' && '--prod' || '' }}
-        # No additional env needed here - already baked into build
+        env:
+          # Pass environment variables to Vercel deployment
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          EXPO_PUBLIC_ENVIRONMENT: ${{ inputs.environment }}
+          EXPO_PUBLIC_PR_NUMBER: ${{ inputs.pr_number || '' }}
 
       - name: 📝 Set deployment outputs
         run: |

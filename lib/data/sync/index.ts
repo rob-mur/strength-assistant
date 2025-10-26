@@ -22,14 +22,22 @@ export async function initializeDataLayer(): Promise<void> {
     configureSyncEngine();
     console.log("✅ initializeDataLayer - Data layer initialization complete");
   } catch (error) {
-    console.error("❌ initializeDataLayer - Error during initialization:", error);
-    
+    console.error(
+      "❌ initializeDataLayer - Error during initialization:",
+      error,
+    );
+
     // For Chrome/web testing, we'll continue with degraded functionality
     // rather than completely blocking the app, but we should still log the error
     if (typeof window !== "undefined") {
-      console.warn("🌐 initializeDataLayer - Web environment detected, continuing with degraded functionality");
-      console.error("🌐 initializeDataLayer - Original error that was suppressed:", error);
-      
+      console.warn(
+        "🌐 initializeDataLayer - Web environment detected, continuing with degraded functionality",
+      );
+      console.error(
+        "🌐 initializeDataLayer - Original error that was suppressed:",
+        error,
+      );
+
       // Create visible error indicator for debugging
       const errorDiv = document.createElement("div");
       errorDiv.id = "supabase-init-error";
@@ -38,9 +46,9 @@ export async function initializeDataLayer(): Promise<void> {
         background: #ff4444; color: white; padding: 10px;
         font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto;
       `;
-      errorDiv.innerHTML = `🚨 SUPABASE INIT ERROR: ${error instanceof Error ? error.message : String(error)}<br>Stack: ${error instanceof Error ? error.stack : 'No stack'}`;
+      errorDiv.innerHTML = `🚨 SUPABASE INIT ERROR: ${error instanceof Error ? error.message : String(error)}<br>Stack: ${error instanceof Error ? error.stack : "No stack"}`;
       document.body?.appendChild(errorDiv);
-      
+
       return;
     }
     throw error;
