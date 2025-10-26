@@ -121,6 +121,14 @@ jobs:
             echo "✅ Supabase URL successfully embedded in build"
           else
             echo "⚠️ Warning: Supabase URL might not be embedded in build"
+            echo "Debug: First few lines of built JS files:"
+            find dist/_expo/static/js/web/ -name "*.js" -exec head -5 {} \; | head -20
+          fi
+          
+          # Check for potential console error patterns in the build
+          echo "🔍 Checking for initialization errors in build..."
+          if grep -q "EXPO_PUBLIC_SUPABASE_URL.*undefined\|environment variable is required" dist/_expo/static/js/web/*.js; then
+            echo "⚠️ Warning: Environment variable issues detected in build"
           fi
 
       - name: 🚀 Deploy to Vercel

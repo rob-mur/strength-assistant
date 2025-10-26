@@ -22,9 +22,13 @@ export async function initializeDataLayer(): Promise<void> {
     configureSyncEngine();
     console.log("✅ initializeDataLayer - Data layer initialization complete");
   } catch (error) {
+    console.error("❌ initializeDataLayer - Error during initialization:", error);
+    
     // For Chrome/web testing, we'll continue with degraded functionality
-    // rather than completely blocking the app
+    // rather than completely blocking the app, but we should still log the error
     if (typeof window !== "undefined") {
+      console.warn("🌐 initializeDataLayer - Web environment detected, continuing with degraded functionality");
+      console.error("🌐 initializeDataLayer - Original error that was suppressed:", error);
       return;
     }
     throw error;
