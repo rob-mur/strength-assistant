@@ -13,6 +13,11 @@ variable "supabase_project_ref" {
   }
 }
 
+variable "supabase_anon_key" {
+  description = "The Supabase Anonymous Public Key from CI secrets."
+  type        = string
+}
+
 variable "environment" {
   description = "Environment name (dev, staging, production)"
   type        = string
