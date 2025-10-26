@@ -229,7 +229,6 @@ jobs:
       [
         unit-tests,
         build-preview,
-        build-production-apk,
         integration-tests-android,
         integration-tests-chrome,
         web-preview-deployment,
