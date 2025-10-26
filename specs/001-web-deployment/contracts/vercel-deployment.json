@@ -1,0 +1,268 @@
+{
+  "title": "Vercel Deployment API Contract",
+  "description": "Contract for Vercel deployment integration including required configuration and expected responses",
+  "version": "1.0.0",
+  
+  "deployment_request": {
+    "title": "Vercel Deployment Request",
+    "type": "object",
+    "required": ["name", "files", "target", "env"],
+    "properties": {
+      "name": {
+        "type": "string",
+        "pattern": "^strength-assistant-(production|preview-pr-[0-9]+)$",
+        "description": "Deployment name following naming convention",
+        "examples": [
+          "strength-assistant-production",
+          "strength-assistant-preview-pr-123"
+        ]
+      },
+      "files": {
+        "type": "array",
+        "description": "Build files from expo export -p web",
+        "items": {
+          "type": "object",
+          "required": ["file", "sha", "size"],
+          "properties": {
+            "file": {
+              "type": "string",
+              "description": "Relative file path from dist/ directory"
+            },
+            "sha": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{40}$",
+              "description": "SHA-1 hash of file content"
+            },
+            "size": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "File size in bytes"
+            }
+          }
+        }
+      },
+      "target": {
+        "type": "string",
+        "enum": ["production", "preview"],
+        "description": "Deployment target environment"
+      },
+      "env": {
+        "type": "object",
+        "required": [
+          "EXPO_PUBLIC_SUPABASE_URL",
+          "EXPO_PUBLIC_SUPABASE_ANON_KEY",
+          "EXPO_PUBLIC_ENVIRONMENT"
+        ],
+        "properties": {
+          "EXPO_PUBLIC_SUPABASE_URL": {
+            "type": "string",
+            "format": "uri",
+            "description": "Supabase project URL"
+          },
+          "EXPO_PUBLIC_SUPABASE_ANON_KEY": {
+            "type": "string",
+            "description": "Supabase anonymous key"
+          },
+          "EXPO_PUBLIC_ENVIRONMENT": {
+            "type": "string",
+            "enum": ["production", "preview"],
+            "description": "Application environment"
+          },
+          "EXPO_PUBLIC_WEB_URL": {
+            "type": "string",
+            "format": "uri",
+            "description": "Canonical web URL for the deployment"
+          },
+          "EXPO_PUBLIC_PR_NUMBER": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "PR number for preview deployments (preview only)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "meta": {
+        "type": "object",
+        "description": "Deployment metadata",
+        "properties": {
+          "githubCommitSha": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{40}$",
+            "description": "Git commit SHA"
+          },
+          "githubCommitRef": {
+            "type": "string",
+            "description": "Git branch or PR reference"
+          },
+          "buildCommand": {
+            "type": "string",
+            "const": "npx expo export -p web",
+            "description": "Build command used to generate files"
+          }
+        }
+      }
+    }
+  },
+  
+  "deployment_response": {
+    "title": "Vercel Deployment Response",
+    "type": "object",
+    "required": ["id", "url", "status", "createdAt"],
+    "properties": {
+      "id": {
+        "type": "string",
+        "pattern": "^dpl_[A-Za-z0-9]+$",
+        "description": "Unique deployment identifier",
+        "example": "dpl_BNFQXiG4QVuT6fh4Q1qF8eQK7o9J"
+      },
+      "url": {
+        "type": "string",
+        "format": "hostname",
+        "description": "Deployment URL (without protocol)",
+        "example": "strength-assistant-abc123.vercel.app"
+      },
+      "status": {
+        "type": "string",
+        "enum": ["BUILDING", "READY", "ERROR", "CANCELED"],
+        "description": "Current deployment status"
+      },
+      "createdAt": {
+        "type": "integer",
+        "description": "Creation timestamp (Unix milliseconds)",
+        "example": 1635724800000
+      },
+      "readyState": {
+        "type": "string",
+        "enum": ["BUILDING", "READY", "ERROR"],
+        "description": "Deployment ready state"
+      },
+      "meta": {
+        "type": "object",
+        "description": "Deployment metadata",
+        "properties": {
+          "githubCommitSha": {
+            "type": "string",
+            "description": "Associated Git commit"
+          },
+          "githubDeployment": {
+            "type": "string",
+            "description": "GitHub deployment ID"
+          }
+        }
+      }
+    }
+  },
+  
+  "project_configuration": {
+    "title": "Vercel Project Configuration",
+    "description": "Required project settings for React Native web deployment",
+    "type": "object",
+    "required": ["buildCommand", "outputDirectory", "framework"],
+    "properties": {
+      "buildCommand": {
+        "type": "string",
+        "const": "npx expo export -p web",
+        "description": "Command to build the application"
+      },
+      "outputDirectory": {
+        "type": "string",
+        "const": "dist",
+        "description": "Directory containing build output"
+      },
+      "framework": {
+        "type": "string",
+        "const": "create-react-app",
+        "description": "Framework preset for React applications"
+      },
+      "rewrites": {
+        "type": "array",
+        "description": "URL rewrite rules for client-side routing",
+        "items": {
+          "type": "object",
+          "required": ["source", "destination"],
+          "properties": {
+            "source": {
+              "type": "string",
+              "const": "/(.*)",
+              "description": "Source pattern to match"
+            },
+            "destination": {
+              "type": "string",
+              "const": "/index.html",
+              "description": "Destination for SPA routing"
+            }
+          }
+        },
+        "minItems": 1,
+        "maxItems": 1
+      }
+    }
+  },
+  
+  "api_endpoints": {
+    "title": "Required Vercel API Endpoints",
+    "type": "object",
+    "properties": {
+      "create_deployment": {
+        "method": "POST",
+        "url": "https://api.vercel.com/v13/deployments",
+        "description": "Create new deployment",
+        "headers": {
+          "Authorization": "Bearer [VERCEL_TOKEN]",
+          "Content-Type": "application/json"
+        }
+      },
+      "get_deployment": {
+        "method": "GET", 
+        "url": "https://api.vercel.com/v13/deployments/{deployment_id}",
+        "description": "Get deployment status"
+      },
+      "delete_deployment": {
+        "method": "DELETE",
+        "url": "https://api.vercel.com/v13/deployments/{deployment_id}",
+        "description": "Delete deployment (cleanup)"
+      },
+      "list_deployments": {
+        "method": "GET",
+        "url": "https://api.vercel.com/v6/deployments?projectId={project_id}",
+        "description": "List project deployments"
+      }
+    }
+  },
+  
+  "error_responses": {
+    "title": "Expected Error Response Format",
+    "type": "object",
+    "required": ["error"],
+    "properties": {
+      "error": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Error code identifier"
+          },
+          "message": {
+            "type": "string", 
+            "description": "Human-readable error message"
+          }
+        }
+      }
+    },
+    "examples": [
+      {
+        "error": {
+          "code": "DEPLOYMENT_FAILED",
+          "message": "Build command failed with exit code 1"
+        }
+      },
+      {
+        "error": {
+          "code": "INVALID_FILES",
+          "message": "Missing required file: index.html"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,125 @@
+name: PR Cleanup
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  cleanup-preview-deployment:
+    name: Cleanup Preview Deployment
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.state == 'closed'
+    permissions:
+      pull-requests: write
+    steps:
+      - name: 🏗 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🗑️ Delete Vercel Preview Deployment
+        uses: actions/github-script@v7
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        with:
+          script: |
+            const { Octokit } = require('@octokit/rest');
+
+            // Get deployments for this PR from Vercel API
+            const prNumber = context.payload.pull_request.number;
+            const projectId = process.env.VERCEL_PROJECT_ID;
+            const token = process.env.VERCEL_TOKEN;
+
+            console.log(`🔍 Looking for deployments for PR #${prNumber}`);
+
+            try {
+              // List deployments for the project
+              const response = await fetch(`https://api.vercel.com/v6/deployments?projectId=${projectId}&limit=50`, {
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                }
+              });
+              
+              if (!response.ok) {
+                throw new Error(`Vercel API error: ${response.status} ${response.statusText}`);
+              }
+              
+              const data = await response.json();
+              console.log(`📋 Found ${data.deployments.length} total deployments`);
+              
+              // Find deployments for this PR (by commit SHA or meta data)
+              const prDeployments = data.deployments.filter(deployment => {
+                // Check if deployment meta contains PR information
+                const meta = deployment.meta || {};
+                return meta.githubCommitRef && meta.githubCommitRef.includes(`refs/pull/${prNumber}/`);
+              });
+              
+              console.log(`🎯 Found ${prDeployments.length} deployments for PR #${prNumber}`);
+              
+              // Delete each deployment
+              for (const deployment of prDeployments) {
+                console.log(`🗑️ Deleting deployment: ${deployment.id} (${deployment.url})`);
+                
+                const deleteResponse = await fetch(`https://api.vercel.com/v13/deployments/${deployment.id}`, {
+                  method: 'DELETE',
+                  headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                  }
+                });
+                
+                if (deleteResponse.ok) {
+                  console.log(`✅ Successfully deleted deployment ${deployment.id}`);
+                } else {
+                  console.log(`⚠️ Failed to delete deployment ${deployment.id}: ${deleteResponse.status}`);
+                }
+              }
+              
+              return prDeployments.length;
+            } catch (error) {
+              console.error('❌ Error during cleanup:', error);
+              // Don't fail the workflow if cleanup fails
+              return 0;
+            }
+
+      - name: 💬 Update PR Comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+
+            // Find existing preview comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('🌐 Web Preview Deployment')
+            );
+
+            if (botComment) {
+              const updatedBody = `🌐 **Web Preview Deployment**
+              
+              🗑️ **Preview Cleaned Up**
+              
+              This preview deployment has been automatically cleaned up because the PR was ${{ github.event.pull_request.merged && 'merged' || 'closed' }}.
+              
+              ${{ github.event.pull_request.merged && '🎉 Changes have been merged and will be available in the next production deployment!' || '👋 Thanks for your contribution!' }}
+              
+              ---
+              *Cleanup completed automatically*`;
+              
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: updatedBody
+              });
+              
+              console.log('✅ Updated PR comment with cleanup status');
+            } else {
+              console.log('ℹ️ No preview comment found to update');
+            }

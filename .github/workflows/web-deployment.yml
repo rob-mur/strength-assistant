@@ -1,0 +1,27 @@
+name: Deploy Web Application
+
+on:
+  workflow_call:
+
+jobs:
+  deploy:
+    name: Deploy to Vercel
+    runs-on: ubuntu-latest
+    environment: Dev
+
+    steps:
+      - name: 🏗 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🛠 Setup development environment
+        uses: ./.github/actions/setup-dev-environment
+        with:
+          devbox-config: minimal
+
+      - name: Deploy vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./

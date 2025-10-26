@@ -13,6 +13,11 @@ variable "supabase_project_ref" {
   }
 }
 
+variable "supabase_anon_key" {
+  description = "The Supabase Anonymous Public Key from CI secrets."
+  type        = string
+}
+
 variable "environment" {
   description = "Environment name (dev, staging, production)"
   type        = string
@@ -21,4 +26,20 @@ variable "environment" {
     condition     = contains(["dev", "staging", "production"], var.environment)
     error_message = "Environment must be one of: dev, staging, production."
   }
+}
+
+variable "vercel_token" {
+  description = "Vercel API token for deployment management"
+  type        = string
+  sensitive   = true
+}
+
+variable "vercel_org_id" {
+  description = "Vercel organization/team ID"
+  type        = string
+}
+
+variable "vercel_project_id" {
+  description = "Vercel project ID for the web application"
+  type        = string
 }

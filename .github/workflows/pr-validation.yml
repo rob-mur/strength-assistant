@@ -98,16 +98,23 @@ jobs:
           devbox-config: android-testing
         id: integration-tests
 
+  web-preview-deployment:
+    name: Deploy Web Preview
+    uses: ./.github/workflows/web-deployment.yml
+    secrets: inherit
+
   integration-tests-chrome:
     runs-on: ubuntu-latest
     environment: Dev
     steps:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
+
       - name: 🛠 Setup development environment
         uses: ./.github/actions/setup-dev-environment
         with:
           devbox-config: minimal
+
       - name: 🧪 Run Chrome integration tests
         working-directory: devbox/minimal
         run: devbox run integration_test_chrome
@@ -222,13 +229,13 @@ jobs:
       [
         unit-tests,
         build-preview,
-        build-production-apk,
         integration-tests-android,
         integration-tests-chrome,
+        web-preview-deployment,
         production-validation,
         sonarqube,
       ]
-    if: always() && (needs.unit-tests.result == 'success' && needs.build-preview.result == 'success' && needs.build-production-apk.result == 'success' && needs.integration-tests-android.result == 'success' && needs.integration-tests-chrome.result == 'success' && needs.production-validation.result == 'success' && needs.sonarqube.result == 'success')
+    if: always() && (needs.unit-tests.result == 'success' && needs.build-preview.result == 'success' && needs.build-production-apk.result == 'success' && needs.integration-tests-android.result == 'success' && needs.integration-tests-chrome.result == 'success' && needs.web-preview-deployment.result == 'success' && needs.production-validation.result == 'success' && needs.sonarqube.result == 'success')
     permissions:
       contents: write
       pull-requests: write

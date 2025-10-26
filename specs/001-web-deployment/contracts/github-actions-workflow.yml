@@ -1,0 +1,149 @@
+# GitHub Actions Workflow Contract
+# Defines required inputs, outputs, and integration points for web deployment
+
+name: Web Deployment Contract
+
+# Required trigger events
+on:
+  push:
+    branches: [main]  # Production deployment
+  pull_request:
+    branches: [main]  # Ephemeral deployment
+  workflow_dispatch:  # Manual deployment
+
+# Required environment variables
+env:
+  # Terraform credentials
+  SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+  SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+  
+  # Vercel deployment credentials
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+  
+  # Deployment configuration
+  NODE_ENV: production
+
+# Required job dependencies and outputs
+jobs:
+  terraform-deploy:
+    name: Deploy Infrastructure
+    runs-on: ubuntu-latest
+    # Required when: Production deployment only
+    if: github.ref == 'refs/heads/main'
+    outputs:
+      # Contract: These outputs MUST be provided by terraform job
+      supabase_url: ${{ steps.terraform.outputs.supabase_url }}
+      supabase_anon_key: ${{ steps.terraform.outputs.supabase_anon_key }}
+      environment_type: ${{ steps.terraform.outputs.environment_type }}
+      deployment_id: ${{ steps.terraform.outputs.deployment_id }}
+    steps:
+      # Implementation details omitted - contract specifies required outputs only
+      - name: Apply Terraform
+        id: terraform
+        # MUST output: supabase_url, supabase_anon_key, environment_type, deployment_id
+
+  web-deployment-production:
+    name: Deploy Web Application (Production)
+    runs-on: ubuntu-latest
+    needs: [terraform-deploy]
+    # Required when: Main branch push after terraform
+    if: github.ref == 'refs/heads/main' && needs.terraform-deploy.result == 'success'
+    outputs:
+      # Contract: These outputs MUST be provided by web deployment job
+      deployment_url: ${{ steps.deploy.outputs.deployment_url }}
+      deployment_status: ${{ steps.deploy.outputs.deployment_status }}
+      build_artifact_id: ${{ steps.deploy.outputs.build_artifact_id }}
+    steps:
+      # Implementation details omitted - contract specifies required behavior
+      - name: Build Expo Web
+        # MUST: Generate deployable web build using expo export -p web
+        
+      - name: Deploy to Vercel
+        id: deploy
+        # MUST: Deploy to production Vercel project
+        # MUST: Use environment variables from terraform outputs
+        # MUST: Output deployment_url, deployment_status, build_artifact_id
+
+  web-deployment-preview:
+    name: Deploy Web Application (Preview)
+    runs-on: ubuntu-latest
+    # Required when: Pull request to main branch
+    if: github.event_name == 'pull_request'
+    outputs:
+      # Contract: These outputs MUST be provided by preview deployment job
+      preview_url: ${{ steps.deploy.outputs.preview_url }}
+      deployment_status: ${{ steps.deploy.outputs.deployment_status }}
+      pr_number: ${{ github.event.number }}
+    steps:
+      # Implementation details omitted - contract specifies required behavior
+      - name: Build Expo Web
+        # MUST: Generate deployable web build using expo export -p web
+        
+      - name: Deploy Preview to Vercel
+        id: deploy
+        # MUST: Deploy to preview environment in Vercel
+        # MUST: Use production Supabase configuration (as specified)
+        # MUST: Output preview_url, deployment_status
+        
+      - name: Comment on PR
+        # MUST: Post comment with preview URL when deployment succeeds
+        # MUST: Update comment if subsequent deployments occur
+
+  cleanup-preview:
+    name: Cleanup Preview Deployment
+    runs-on: ubuntu-latest
+    # Required when: Pull request is closed or merged
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    steps:
+      - name: Remove Vercel Deployment
+        # MUST: Remove preview deployment from Vercel
+        # MUST: Clean up associated resources
+        
+      - name: Update PR Comment
+        # MUST: Update PR comment indicating cleanup completed
+
+# Required secret configuration
+# MUST be configured in repository settings:
+secrets_required:
+  - SUPABASE_ACCESS_TOKEN
+  - SUPABASE_PROJECT_REF
+  - VERCEL_ORG_ID
+  - VERCEL_PROJECT_ID
+  - VERCEL_TOKEN
+
+# Environment variable injection contract
+environment_variables:
+  production:
+    EXPO_PUBLIC_SUPABASE_URL: "from terraform output: supabase_url"
+    EXPO_PUBLIC_SUPABASE_ANON_KEY: "from terraform output: supabase_anon_key"
+    EXPO_PUBLIC_ENVIRONMENT: "production"
+    EXPO_PUBLIC_WEB_URL: "from vercel deployment output"
+    
+  preview:
+    EXPO_PUBLIC_SUPABASE_URL: "from secrets: production Supabase URL"
+    EXPO_PUBLIC_SUPABASE_ANON_KEY: "from secrets: production Supabase anon key"
+    EXPO_PUBLIC_ENVIRONMENT: "preview"
+    EXPO_PUBLIC_WEB_URL: "from vercel preview deployment output"
+    EXPO_PUBLIC_PR_NUMBER: "from github context: PR number"
+
+# Required job parallelization
+parallelization_contract:
+  # Production deployment MUST run web deployment parallel to existing Android build
+  # Both jobs depend on terraform-deploy completion
+  # Failure of one MUST NOT block the other
+  
+  android_and_web_parallel:
+    needs: [terraform-deploy]
+    strategy:
+      matrix:
+        deployment: [android, web]
+      fail-fast: false  # Required: Don't cancel web if Android fails
+
+# Required error handling
+error_handling_contract:
+  # MUST: Graceful failure that doesn't break existing workflows
+  # MUST: Clear error messages in job logs
+  # MUST: Rollback capability for production deployments
+  # MUST: Notification on deployment failures
