@@ -1,0 +1,142 @@
+appId: com.jimmysolutions.strengthassistant.test
+---
+# Test: Network Simulation - Offline Sync Behavior
+# Purpose: Test offline sync using app-controlled network simulation
+# 
+# This test uses the app's network simulation features for automated testing
+# without requiring manual airplane mode toggling
+
+- launchApp
+
+# Wait for app to load
+- assertVisible:
+    text: "Workout"
+
+# Navigate to developer/testing settings if available
+- tapOn:
+    text: "Settings"
+- assertVisible:
+    text: "Settings"
+
+# Look for developer/network simulation options
+# Note: This assumes the app has debug/testing network controls
+- scrollUntilVisible:
+    element:
+      text: "Developer Options"
+- tapOn:
+    text: "Developer Options"
+
+# Enable network simulation mode
+- assertVisible:
+    text: "Network Simulation"
+- tapOn:
+    id: "enable-network-simulation"
+
+# Set network to offline mode
+- tapOn:
+    id: "simulate-offline-mode"
+- assertVisible:
+    text: "Offline Mode Active"
+
+# Navigate to exercises
+- tapOn:
+    text: "Exercises"
+
+# Verify sync status shows offline
+- assertVisible:
+    id: "sync-status-offline"
+
+# Add exercises while simulating offline
+- tapOn:
+    id: "add-exercise-button"
+- tapOn:
+    id: "exercise-name-input"
+- inputText: "Network Sim Push-ups"
+- tapOn:
+    id: "save-exercise-button"
+
+- tapOn:
+    id: "add-exercise-button"
+- tapOn:
+    id: "exercise-name-input"
+- inputText: "Network Sim Squats"
+- tapOn:
+    id: "save-exercise-button"
+
+# Verify exercises are queued locally
+- assertVisible:
+    text: "Network Sim Push-ups"
+- assertVisible:
+    text: "Network Sim Squats"
+
+# Check sync queue status
+- tapOn:
+    text: "Settings"
+- tapOn:
+    text: "Developer Options"
+- assertVisible:
+    text: "Pending Sync Operations: 2"
+
+# Restore network connectivity
+- tapOn:
+    id: "simulate-online-mode"
+- assertVisible:
+    text: "Online Mode Active"
+
+# Wait for auto-sync
+- wait: 3000
+
+# Verify sync completed
+- assertVisible:
+    text: "Pending Sync Operations: 0"
+
+# Navigate back to exercises
+- tapOn:
+    text: "Exercises"
+
+# Verify exercises are still there
+- assertVisible:
+    text: "Network Sim Push-ups"
+- assertVisible:
+    text: "Network Sim Squats"
+
+# CRITICAL TEST: Restart app
+- terminateApp
+- launchApp
+
+# Verify exercises persist after restart
+- tapOn:
+    text: "Exercises"
+- assertVisible:
+    text: "Network Sim Push-ups"
+- assertVisible:
+    text: "Network Sim Squats"
+
+# Verify sync status is healthy
+- assertVisible:
+    id: "sync-status-synced"
+
+# Clean up
+- tapOn:
+    text: "Network Sim Push-ups"
+- tapOn:
+    id: "delete-exercise-button"
+- tapOn:
+    text: "Delete"
+
+- tapOn:
+    text: "Exercises"
+- tapOn:
+    text: "Network Sim Squats"
+- tapOn:
+    id: "delete-exercise-button"
+- tapOn:
+    text: "Delete"
+
+# Disable network simulation
+- tapOn:
+    text: "Settings"
+- tapOn:
+    text: "Developer Options"
+- tapOn:
+    id: "disable-network-simulation"

@@ -1,0 +1,21 @@
+# Shared Maestro Flow: Error Check
+# Purpose: Reusable flow to check for uncaught errors
+# Usage: Include this flow in tests to verify no uncaught errors occurred
+
+# Check that no uncaught errors are blocking the app
+- assertNotVisible:
+    id: "maestro-error-blocker"
+
+# Check that error count is zero
+- assertNotVisible:
+    id: "maestro-error-count"
+
+# Check that no critical error messages are showing
+- assertNotVisible:
+    text: "Uncaught Error"
+- assertNotVisible:
+    text: "Application Error"
+- assertNotVisible:
+    text: "Sync Error"
+- assertNotVisible:
+    text: "Network Error"

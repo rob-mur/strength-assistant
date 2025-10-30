@@ -1,0 +1,199 @@
+appId: com.jimmysolutions.strengthassistant.test
+---
+# Test: Sync Queue Persistence Through App Restart
+# Purpose: Verify sync queue persists through app restarts (core bug test)
+# 
+# This test specifically targets the queue persistence issue without 
+# requiring airplane mode, making it more reliable for CI/CD
+
+- launchApp
+
+# Navigate to exercises
+- tapOn:
+    text: "Exercises"
+- assertVisible:
+    text: "Exercises"
+
+# Force the app into a sync-pending state
+# This can be done by creating exercises and then simulating sync failure
+- tapOn:
+    text: "Settings"
+- tapOn:
+    text: "Developer Options"
+
+# Enable sync debugging mode
+- tapOn:
+    id: "enable-sync-debugging"
+
+# Set sync to fail mode (simulates server unavailable)
+- tapOn:
+    id: "force-sync-failures"
+- assertVisible:
+    text: "Sync failures enabled"
+
+# Navigate back to exercises
+- tapOn:
+    text: "Exercises"
+
+# Add exercises that will fail to sync
+- tapOn:
+    id: "add-exercise-button"
+- tapOn:
+    id: "exercise-name-input"
+- inputText: "Persistence Test 1"
+- tapOn:
+    id: "save-exercise-button"
+
+- tapOn:
+    id: "add-exercise-button"
+- tapOn:
+    id: "exercise-name-input"
+- inputText: "Persistence Test 2"
+- tapOn:
+    id: "save-exercise-button"
+
+- tapOn:
+    id: "add-exercise-button"
+- tapOn:
+    id: "exercise-name-input"
+- inputText: "Persistence Test 3"
+- tapOn:
+    id: "save-exercise-button"
+
+# Verify exercises are created locally
+- assertVisible:
+    text: "Persistence Test 1"
+- assertVisible:
+    text: "Persistence Test 2"
+- assertVisible:
+    text: "Persistence Test 3"
+
+# Try to trigger sync (will fail due to forced failure mode)
+- tapOn:
+    text: "Settings"
+- tapOn:
+    text: "Developer Options"
+- tapOn:
+    id: "force-sync-now"
+
+# Verify sync queue has pending operations
+- assertVisible:
+    text: "Pending Sync Operations: 3"
+
+# Verify sync status shows failed/pending
+- assertVisible:
+    id: "sync-status-pending"
+
+# CRITICAL TEST: Restart app with pending sync operations
+- terminateApp
+- launchApp
+
+# Navigate back to settings to check sync queue
+- tapOn:
+    text: "Settings"
+- tapOn:
+    text: "Developer Options"
+
+# CRITICAL ASSERTION: Sync queue should be restored after restart
+# This is the main bug - if this passes, queue persistence is working
+- assertVisible:
+    text: "Pending Sync Operations: 3"
+
+# Verify exercises are still visible
+- tapOn:
+    text: "Exercises"
+- assertVisible:
+    text: "Persistence Test 1"
+- assertVisible:
+    text: "Persistence Test 2"
+- assertVisible:
+    text: "Persistence Test 3"
+
+# Now restore sync functionality and verify recovery
+- tapOn:
+    text: "Settings"
+- tapOn:
+    text: "Developer Options"
+
+# Disable sync failures
+- tapOn:
+    id: "disable-sync-failures"
+- assertVisible:
+    text: "Sync failures disabled"
+
+# Trigger sync recovery
+- tapOn:
+    id: "force-sync-now"
+
+# Wait for sync to complete
+- wait: 2000
+
+# Verify sync queue is now empty
+- assertVisible:
+    text: "Pending Sync Operations: 0"
+
+# Verify sync status is healthy
+- assertVisible:
+    id: "sync-status-synced"
+
+# Final test: Restart again to ensure everything is stable
+- terminateApp
+- launchApp
+
+# Verify exercises are still there and sync is healthy
+- tapOn:
+    text: "Exercises"
+- assertVisible:
+    text: "Persistence Test 1"
+- assertVisible:
+    text: "Persistence Test 2"
+- assertVisible:
+    text: "Persistence Test 3"
+
+- tapOn:
+    text: "Settings"
+- tapOn:
+    text: "Developer Options"
+- assertVisible:
+    text: "Pending Sync Operations: 0"
+
+# Check for any uncaught errors
+- runFlow:
+    file: ../../.maestro/shared/error-check.yml
+
+# Clean up test data
+- tapOn:
+    text: "Exercises"
+
+- tapOn:
+    text: "Persistence Test 1"
+- tapOn:
+    id: "delete-exercise-button"
+- tapOn:
+    text: "Delete"
+
+- tapOn:
+    text: "Exercises"
+- tapOn:
+    text: "Persistence Test 2"
+- tapOn:
+    id: "delete-exercise-button"
+- tapOn:
+    text: "Delete"
+
+- tapOn:
+    text: "Exercises"
+- tapOn:
+    text: "Persistence Test 3"
+- tapOn:
+    id: "delete-exercise-button"
+- tapOn:
+    text: "Delete"
+
+# Disable debug mode
+- tapOn:
+    text: "Settings"
+- tapOn:
+    text: "Developer Options"
+- tapOn:
+    id: "disable-sync-debugging"

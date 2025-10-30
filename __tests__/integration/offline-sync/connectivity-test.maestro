@@ -1,0 +1,53 @@
+appId: com.jimmysolutions.strengthassistant.test
+---
+# Test: Basic Connectivity and Sync Status
+# Purpose: Quick test to verify sync indicators and basic connectivity detection
+# Duration: ~30 seconds
+
+- launchApp
+
+# Check that sync status indicator is present and functioning
+- assertVisible:
+    id: "sync-status-indicator"
+
+# Navigate to exercises to test basic functionality
+- tapOn:
+    text: "Exercises"
+- assertVisible:
+    text: "Exercises"
+
+# Add a simple exercise to test sync
+- tapOn:
+    id: "add-exercise-button"
+- tapOn:
+    id: "exercise-name-input"
+- inputText: "Connectivity Test"
+- tapOn:
+    id: "save-exercise-button"
+
+# Verify exercise is created
+- assertVisible:
+    text: "Connectivity Test"
+
+# Check sync status after creating exercise
+- assertVisible:
+    id: "sync-status-indicator"
+
+# Wait for potential sync
+- wait: 2000
+
+# Verify no errors occurred
+- runFlow:
+    file: ../../.maestro/shared/error-check.yml
+
+# Clean up
+- tapOn:
+    text: "Connectivity Test"
+- tapOn:
+    id: "delete-exercise-button"
+- tapOn:
+    text: "Delete"
+
+# Verify cleanup
+- assertNotVisible:
+    text: "Connectivity Test"

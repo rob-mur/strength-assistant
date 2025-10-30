@@ -1,0 +1,120 @@
+appId: com.jimmysolutions.strengthassistant.test
+---
+# Test: Developer Options Network Disable
+# Purpose: Use Android Developer Options to disable network programmatically
+# 
+# This test attempts to use Android's developer options to disable network
+# More automated than manual airplane mode but requires developer options enabled
+
+- launchApp
+- assertVisible:
+    text: "Workout"
+
+# Open Android Settings via deep link to Developer Options
+- openLink: "android-app://com.android.settings/.development.DevelopmentSettings"
+
+# Look for mobile data/WiFi disable options in developer settings
+# Note: This varies by Android version and device
+- scrollUntilVisible:
+    element:
+      text: "Mobile data always active"
+- tapOn:
+    text: "Mobile data always active"
+
+# Also try to disable WiFi scanning
+- scrollUntilVisible:
+    element:
+      text: "WiFi scan throttling"
+- tapOn:
+    text: "WiFi scan throttling"
+
+# Return to our app
+- launchApp:
+    appId: com.jimmysolutions.strengthassistant.test
+
+# Navigate to exercises
+- tapOn:
+    text: "Exercises"
+
+# Wait for network state detection
+- wait: 3000
+
+# Create exercises while network is disabled
+- tapOn:
+    id: "add-exercise-button"
+- tapOn:
+    id: "exercise-name-input"
+- inputText: "Dev Options Offline 1"
+- tapOn:
+    id: "save-exercise-button"
+
+- tapOn:
+    id: "add-exercise-button"
+- tapOn:
+    id: "exercise-name-input"
+- inputText: "Dev Options Offline 2"
+- tapOn:
+    id: "save-exercise-button"
+
+# Verify exercises are created
+- assertVisible:
+    text: "Dev Options Offline 1"
+- assertVisible:
+    text: "Dev Options Offline 2"
+
+# Test app restart while network is disabled
+- terminateApp
+- launchApp
+
+# Verify exercises persist
+- tapOn:
+    text: "Exercises"
+- assertVisible:
+    text: "Dev Options Offline 1"
+- assertVisible:
+    text: "Dev Options Offline 2"
+
+# Re-enable network settings
+- openLink: "android-app://com.android.settings/.development.DevelopmentSettings"
+- scrollUntilVisible:
+    element:
+      text: "Mobile data always active"
+- tapOn:
+    text: "Mobile data always active"
+
+- scrollUntilVisible:
+    element:
+      text: "WiFi scan throttling"
+- tapOn:
+    text: "WiFi scan throttling"
+
+# Return to app and verify sync recovery
+- launchApp:
+    appId: com.jimmysolutions.strengthassistant.test
+
+- tapOn:
+    text: "Exercises"
+- wait: 5000
+
+# Should sync and preserve exercises
+- assertVisible:
+    text: "Dev Options Offline 1"
+- assertVisible:
+    text: "Dev Options Offline 2"
+
+# Clean up
+- tapOn:
+    text: "Dev Options Offline 1"
+- tapOn:
+    id: "delete-exercise-button"
+- tapOn:
+    text: "Delete"
+
+- tapOn:
+    text: "Exercises"
+- tapOn:
+    text: "Dev Options Offline 2"
+- tapOn:
+    id: "delete-exercise-button"
+- tapOn:
+    text: "Delete"

@@ -1,284 +1,312 @@
 /**
- * ExerciseRecord Model with Validation
- *
- * Represents user's workout and exercise data with comprehensive validation
- * and sync status tracking for local-first architecture.
+ * ExerciseRecord Model (Enhanced)
+ * Purpose: Extended exercise entity with sync metadata for offline-first operation
  */
-import { v4 as uuidv4 } from "uuid";
+
+import { SyncStatus, createSyncStatus } from "./SyncStatus";
+
+export type ExerciseRecordInput = Omit<
+  ExerciseRecord,
+  "id" | "createdAt" | "updatedAt" | "syncStatus"
+>;
+export type ExerciseRecordUpdate = Partial<ExerciseRecordInput>;
+export type ExerciseSort = "name" | "createdAt" | "updatedAt" | "category";
 
 export interface ExerciseRecord {
+  /** Unique exercise identifier */
+  id: string;
+
+  /** Exercise name */
+  name: string;
+
+  /** Owner user identifier */
+  userId: string;
+
+  /** Creation timestamp */
+  createdAt: Date;
+
+  /** Last modification timestamp */
+  updatedAt: Date;
+
+  /** Soft delete flag */
+  deleted: boolean;
+
+  /** Sync state tracking */
+  syncStatus: SyncStatus;
+
+  /** Temporary local-only flag */
+  localOnlyUntil: Date | null;
+
+  /** Domain-specific conflict data */
+  conflictResolutionData: any | null;
+}
+
+/**
+ * Validation rules for ExerciseRecord
+ */
+export const validateExerciseRecord = (record: ExerciseRecord): string[] => {
+  const errors: string[] = [];
+
+  // Name validation
+  if (!record.name || !record.name.trim()) {
+    errors.push("name must be non-empty string");
+  }
+
+  // Timestamp validation
+  if (record.updatedAt < record.createdAt) {
+    errors.push("updatedAt must be >= createdAt");
+  }
+
+  // Required fields validation
+  if (!record.id.trim()) {
+    errors.push("id is required");
+  }
+
+  if (!record.userId.trim()) {
+    errors.push("userId is required");
+  }
+
+  return errors;
+};
+
+/**
+ * Create a new ExerciseRecord
+ */
+export const createExerciseRecord = (params: {
   id: string;
   name: string;
-  createdAt: Date;
-  updatedAt: Date;
-  userId?: string;
-  syncStatus: "pending" | "synced" | "error";
-}
-
-export interface ExerciseRecordInput {
-  name: string;
-  userId?: string;
-}
-
-export interface ExerciseRecordUpdate {
-  name?: string;
-}
-
-/**
- * Validation errors for ExerciseRecord operations
- */
-export class ExerciseValidationError extends Error {
-  constructor(
-    message: string,
-    public field?: string,
-  ) {
-    super(message);
-    this.name = "ExerciseValidationError";
-  }
-}
-
-/**
- * Creates a new ExerciseRecord with validation
- */
-export function createExerciseRecord(
-  input: ExerciseRecordInput,
-): ExerciseRecord {
-  // Validate input
-  validateExerciseName(input.name);
-
+  userId: string;
+  deleted?: boolean;
+  localOnlyUntil?: Date | null;
+}): ExerciseRecord => {
   const now = new Date();
 
-  return {
-    id: generateExerciseId(),
-    name: input.name.trim(),
+  const record: ExerciseRecord = {
+    id: params.id,
+    name: params.name,
+    userId: params.userId,
     createdAt: now,
     updatedAt: now,
-    userId: input.userId,
-    syncStatus: "pending",
-  };
-}
-
-/**
- * Updates an existing ExerciseRecord with validation
- */
-export function updateExerciseRecord(
-  existing: ExerciseRecord,
-  updates: ExerciseRecordUpdate,
-): ExerciseRecord {
-  if (Object.keys(updates).length === 0) {
-    throw new ExerciseValidationError("No updates provided");
-  }
-
-  let hasChanges = false;
-  const updated = { ...existing };
-
-  if (updates.name !== undefined) {
-    validateExerciseName(updates.name);
-    const trimmedName = updates.name.trim();
-
-    if (trimmedName !== existing.name) {
-      updated.name = trimmedName;
-      hasChanges = true;
-    }
-  }
-
-  if (hasChanges) {
-    updated.updatedAt = new Date();
-    updated.syncStatus = "pending"; // Mark as pending when modified
-  }
-
-  return updated;
-}
-
-/**
- * Validates exercise name according to business rules
- */
-export function validateExerciseName(name: string): void {
-  if (!name || typeof name !== "string") {
-    throw new ExerciseValidationError("Exercise name is required", "name");
-  }
-
-  const trimmedName = name.trim();
-
-  if (trimmedName.length === 0) {
-    throw new ExerciseValidationError("Exercise name cannot be empty", "name");
-  }
-
-  if (trimmedName.length > 255) {
-    throw new ExerciseValidationError(
-      "Exercise name too long (max 255 characters)",
-      "name",
-    );
-  }
-
-  // Check for invalid characters (optional business rule)
-  const invalidChars = /[<>"'&]/;
-  if (invalidChars.test(trimmedName)) {
-    throw new ExerciseValidationError(
-      "Exercise name contains invalid characters",
-      "name",
-    );
-  }
-}
-
-/**
- * Validates ExerciseRecord timestamps
- */
-export function validateExerciseRecord(exercise: ExerciseRecord): void {
-  if (!exercise.id) {
-    throw new ExerciseValidationError("Exercise ID is required", "id");
-  }
-
-  if (!isValidUUID(exercise.id)) {
-    throw new ExerciseValidationError("Exercise ID must be a valid UUID", "id");
-  }
-
-  validateExerciseName(exercise.name);
-
-  if (
-    !(exercise.createdAt instanceof Date) ||
-    isNaN(exercise.createdAt.getTime())
-  ) {
-    throw new ExerciseValidationError(
-      "Invalid createdAt timestamp",
-      "createdAt",
-    );
-  }
-
-  if (
-    !(exercise.updatedAt instanceof Date) ||
-    isNaN(exercise.updatedAt.getTime())
-  ) {
-    throw new ExerciseValidationError(
-      "Invalid updatedAt timestamp",
-      "updatedAt",
-    );
-  }
-
-  if (exercise.updatedAt.getTime() < exercise.createdAt.getTime()) {
-    throw new ExerciseValidationError(
-      "updatedAt cannot be before createdAt",
-      "updatedAt",
-    );
-  }
-
-  if (!["pending", "synced", "error"].includes(exercise.syncStatus)) {
-    throw new ExerciseValidationError("Invalid sync status", "syncStatus");
-  }
-
-  // Validate userId if provided
-  if (exercise.userId !== undefined) {
-    if (
-      typeof exercise.userId !== "string" ||
-      exercise.userId.trim().length === 0
-    ) {
-      throw new ExerciseValidationError("Invalid userId", "userId");
-    }
-  }
-}
-
-/**
- * Updates sync status of an ExerciseRecord
- */
-export function updateSyncStatus(
-  exercise: ExerciseRecord,
-  status: ExerciseRecord["syncStatus"],
-): ExerciseRecord {
-  return {
-    ...exercise,
-    syncStatus: status,
-    // Update timestamp when marking as synced
-    ...(status === "synced" ? { updatedAt: new Date() } : {}),
-  };
-}
-
-/**
- * Checks if an exercise needs synchronization
- */
-export function needsSync(exercise: ExerciseRecord): boolean {
-  return exercise.syncStatus === "pending" || exercise.syncStatus === "error";
-}
-
-// Database format interfaces
-interface ExerciseDbFormat {
-  id: string;
-  name: string;
-  created_at: string;
-  updated_at: string;
-  user_id: string | null;
-  sync_status: string;
-}
-
-/**
- * Converts ExerciseRecord to database-safe format
- */
-export function toDbFormat(exercise: ExerciseRecord): ExerciseDbFormat {
-  return {
-    id: exercise.id,
-    name: exercise.name,
-    created_at: exercise.createdAt.toISOString(),
-    updated_at: exercise.updatedAt.toISOString(),
-    user_id: exercise.userId || null,
-    sync_status: exercise.syncStatus,
-  };
-}
-
-/**
- * Converts database format to ExerciseRecord
- */
-export function fromDbFormat(
-  dbRecord: Record<string, unknown>,
-): ExerciseRecord {
-  const exercise: ExerciseRecord = {
-    id: dbRecord.id as string,
-    name: dbRecord.name as string,
-    createdAt: new Date(dbRecord.created_at as string),
-    updatedAt: new Date(dbRecord.updated_at as string),
-    syncStatus:
-      (dbRecord.sync_status as "pending" | "synced" | "error") || "pending",
+    deleted: params.deleted || false,
+    syncStatus: createSyncStatus(), // Starts as 'pending'
+    localOnlyUntil: params.localOnlyUntil || null,
+    conflictResolutionData: null,
   };
 
-  if (dbRecord.user_id) {
-    exercise.userId = dbRecord.user_id as string;
+  const validationErrors = validateExerciseRecord(record);
+  if (validationErrors.length > 0) {
+    throw new Error(
+      `ExerciseRecord validation failed: ${validationErrors.join(", ")}`,
+    );
   }
 
-  // Validate the converted record
-  validateExerciseRecord(exercise);
-
-  return exercise;
-}
-
-/**
- * Generates a new UUID for exercise ID
- */
-function generateExerciseId(): string {
-  return uuidv4();
-}
-
-/**
- * Validates UUID format
- */
-function isValidUUID(uuid: string): boolean {
-  const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(uuid);
-}
-
-/**
- * Helper functions for sorting exercises
- */
-export const ExerciseSort = {
-  byCreatedAt: (a: ExerciseRecord, b: ExerciseRecord) =>
-    a.createdAt.getTime() - b.createdAt.getTime(),
-
-  byUpdatedAt: (a: ExerciseRecord, b: ExerciseRecord) =>
-    a.updatedAt.getTime() - b.updatedAt.getTime(),
-
-  byName: (a: ExerciseRecord, b: ExerciseRecord) =>
-    a.name.localeCompare(b.name),
-
-  bySyncStatus: (a: ExerciseRecord, b: ExerciseRecord) => {
-    const statusOrder = { error: 0, pending: 1, synced: 2 };
-    return statusOrder[a.syncStatus] - statusOrder[b.syncStatus];
-  },
+  return record;
 };
+
+/**
+ * Update exercise record with validation
+ */
+export const updateExerciseRecord = (
+  current: ExerciseRecord,
+  updates: Partial<ExerciseRecord>,
+): ExerciseRecord => {
+  const updatedRecord: ExerciseRecord = {
+    ...current,
+    ...updates,
+    updatedAt: new Date(), // Always update timestamp on modification
+  };
+
+  const validationErrors = validateExerciseRecord(updatedRecord);
+  if (validationErrors.length > 0) {
+    throw new Error(
+      `ExerciseRecord validation failed: ${validationErrors.join(", ")}`,
+    );
+  }
+
+  return updatedRecord;
+};
+
+/**
+ * Mark record as synced
+ */
+export const markAsSynced = (record: ExerciseRecord): ExerciseRecord => {
+  return updateExerciseRecord(record, {
+    syncStatus: {
+      ...record.syncStatus,
+      status: "synced",
+      lastSyncSuccess: new Date(),
+      errorMessage: null,
+      conflictVersion: null,
+    },
+  });
+};
+
+/**
+ * Mark record as sync failed
+ */
+export const markAsSyncFailed = (
+  record: ExerciseRecord,
+  errorMessage: string,
+): ExerciseRecord => {
+  return updateExerciseRecord(record, {
+    syncStatus: {
+      ...record.syncStatus,
+      status: "failed",
+      retryCount: record.syncStatus.retryCount + 1,
+      lastSyncAttempt: new Date(),
+      errorMessage,
+    },
+  });
+};
+
+/**
+ * Mark record as having sync conflict
+ */
+export const markAsConflicted = (
+  record: ExerciseRecord,
+  serverVersion: any,
+): ExerciseRecord => {
+  return updateExerciseRecord(record, {
+    syncStatus: {
+      ...record.syncStatus,
+      status: "conflict",
+      conflictVersion: serverVersion,
+      lastSyncAttempt: new Date(),
+    },
+  });
+};
+
+/**
+ * Check if record needs sync
+ */
+export const needsSync = (record: ExerciseRecord): boolean => {
+  return (
+    record.syncStatus.status === "pending" ||
+    record.syncStatus.status === "failed"
+  );
+};
+
+/**
+ * Check if record is local-only temporarily
+ */
+export const isTemporaryLocalOnly = (record: ExerciseRecord): boolean => {
+  if (!record.localOnlyUntil) {
+    return false;
+  }
+
+  return new Date() < record.localOnlyUntil;
+};
+
+/**
+ * Soft delete record
+ */
+export const softDeleteRecord = (record: ExerciseRecord): ExerciseRecord => {
+  return updateExerciseRecord(record, {
+    deleted: true,
+    syncStatus: createSyncStatus(), // Mark for sync
+  });
+};
+
+/**
+ * Convert to Supabase format
+ */
+export const toSupabaseFormat = (record: ExerciseRecord) => {
+  return {
+    id: record.id,
+    name: record.name,
+    user_id: record.userId,
+    created_at: record.createdAt.toISOString(),
+    updated_at: record.updatedAt.toISOString(),
+    deleted: record.deleted,
+  };
+};
+
+/**
+ * Convert from Supabase format
+ */
+export const fromSupabaseFormat = (data: any): ExerciseRecord => {
+  return {
+    id: data.id,
+    name: data.name,
+    userId: data.user_id,
+    createdAt: new Date(data.created_at),
+    updatedAt: new Date(data.updated_at),
+    deleted: data.deleted || false,
+    syncStatus: createSyncStatus({ status: "synced" }), // Assume synced from server
+    localOnlyUntil: null,
+    conflictResolutionData: null,
+  };
+};
+
+/**
+ * Check if record conflicts with server version
+ */
+export const hasConflictWith = (
+  local: ExerciseRecord,
+  server: ExerciseRecord,
+): boolean => {
+  // Simple timestamp-based conflict detection
+  return (
+    local.updatedAt.getTime() !== server.updatedAt.getTime() &&
+    local.syncStatus.status === "pending"
+  );
+};
+
+/**
+ * Merge local and server versions
+ */
+export const mergeWithServerVersion = (
+  local: ExerciseRecord,
+  server: ExerciseRecord,
+): ExerciseRecord => {
+  // Last-write-wins merge strategy
+  const winner = local.updatedAt > server.updatedAt ? local : server;
+
+  return updateExerciseRecord(winner, {
+    syncStatus: createSyncStatus({ status: "synced" }),
+    conflictResolutionData: {
+      mergedAt: new Date(),
+      localVersion: local,
+      serverVersion: server,
+      strategy: "last_write_wins",
+    },
+  });
+};
+
+/**
+ * Filter records by sync status
+ */
+export const filterBySyncStatus = (
+  records: ExerciseRecord[],
+  status: string,
+): ExerciseRecord[] => {
+  return records.filter((record) => record.syncStatus.status === status);
+};
+
+/**
+ * Get records that need sync
+ */
+export const getRecordsNeedingSync = (
+  records: ExerciseRecord[],
+): ExerciseRecord[] => {
+  return records.filter(needsSync);
+};
+
+/**
+ * Get sync statistics for records
+ */
+export const getSyncStats = (records: ExerciseRecord[]) => {
+  return {
+    total: records.length,
+    pending: filterBySyncStatus(records, "pending").length,
+    syncing: filterBySyncStatus(records, "syncing").length,
+    synced: filterBySyncStatus(records, "synced").length,
+    failed: filterBySyncStatus(records, "failed").length,
+    conflicts: filterBySyncStatus(records, "conflict").length,
+    needingSync: getRecordsNeedingSync(records).length,
+  };
+};
+
+// Aliases for backward compatibility
+export const toDbFormat = toSupabaseFormat;
+export const fromDbFormat = fromSupabaseFormat;

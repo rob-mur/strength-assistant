@@ -1,0 +1,128 @@
+appId: com.jimmysolutions.strengthassistant.test
+---
+# Test: WiFi Disconnection - Real Network Loss
+# Purpose: Test real WiFi disconnection scenarios
+# 
+# This test requires manually turning WiFi off/on to simulate real network loss
+
+- launchApp
+- assertVisible:
+    text: "Workout"
+
+# Navigate to exercises  
+- tapOn:
+    text: "Exercises"
+
+# STEP 1: Instruction to turn off WiFi
+- tapOn:
+    text: "Settings"
+- assertVisible:
+    text: "TURN OFF WIFI NOW"
+- assertVisible:
+    text: "Disable WiFi in device settings, then tap Continue"
+- tapOn:
+    text: "Continue"
+
+# Return to exercises and wait for network detection
+- tapOn:
+    text: "Exercises"
+- wait: 3000
+
+# App should detect WiFi is off
+- assertVisible:
+    id: "sync-status-offline"
+
+# Create exercises while WiFi is actually off
+- tapOn:
+    id: "add-exercise-button"
+- tapOn:
+    id: "exercise-name-input"
+- inputText: "WiFi Off Exercise 1"
+- tapOn:
+    id: "save-exercise-button"
+
+- tapOn:
+    id: "add-exercise-button"
+- tapOn:
+    id: "exercise-name-input"
+- inputText: "WiFi Off Exercise 2"
+- tapOn:
+    id: "save-exercise-button"
+
+# Verify exercises exist locally
+- assertVisible:
+    text: "WiFi Off Exercise 1"
+- assertVisible:
+    text: "WiFi Off Exercise 2"
+
+# STEP 2: Restart app while WiFi is still off
+- terminateApp
+- launchApp
+
+# Check exercises persist through restart with no network
+- tapOn:
+    text: "Exercises"
+- assertVisible:
+    text: "WiFi Off Exercise 1"
+- assertVisible:
+    text: "WiFi Off Exercise 2"
+
+# Should still show offline status
+- assertVisible:
+    id: "sync-status-offline"
+
+# STEP 3: Turn WiFi back on
+- tapOn:
+    text: "Settings"
+- assertVisible:
+    text: "TURN ON WIFI NOW"
+- assertVisible:
+    text: "Enable WiFi in device settings, then tap Continue"
+- tapOn:
+    text: "Continue"
+
+# Wait for WiFi reconnection and auto-sync
+- tapOn:
+    text: "Exercises"
+- wait: 5000
+
+# Should now show online/synced status
+- assertVisible:
+    id: "sync-status-synced"
+
+# Exercises should still be there after sync
+- assertVisible:
+    text: "WiFi Off Exercise 1"
+- assertVisible:
+    text: "WiFi Off Exercise 2"
+
+# STEP 4: Final restart test with WiFi on
+- terminateApp
+- launchApp
+
+# Everything should be preserved
+- tapOn:
+    text: "Exercises"
+- assertVisible:
+    text: "WiFi Off Exercise 1"
+- assertVisible:
+    text: "WiFi Off Exercise 2"
+- assertVisible:
+    id: "sync-status-synced"
+
+# Clean up
+- tapOn:
+    text: "WiFi Off Exercise 1"
+- tapOn:
+    id: "delete-exercise-button"
+- tapOn:
+    text: "Delete"
+
+- tapOn:
+    text: "Exercises"
+- tapOn:
+    text: "WiFi Off Exercise 2"
+- tapOn:
+    id: "delete-exercise-button"
+- tapOn:
+    text: "Delete"

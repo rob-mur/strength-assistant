@@ -1,0 +1,226 @@
+appId: com.jimmysolutions.strengthassistant.test
+---
+# Test: REAL Airplane Mode - Device Network Disconnection
+# Purpose: Test actual device network disconnection (not app simulation)
+# 
+# IMPORTANT: This test requires REAL airplane mode - not app simulation
+# The device must actually lose internet connectivity
+
+- launchApp
+
+# Wait for app to load
+- assertVisible:
+    text: "Workout"
+
+# Navigate to exercises
+- tapOn:
+    text: "Exercises"
+- assertVisible:
+    text: "Exercises"
+
+# STEP 1: User instruction to enable airplane mode
+- tapOn:
+    text: "Settings"
+- assertVisible:
+    text: "ENABLE AIRPLANE MODE NOW"
+- assertVisible:
+    text: "Turn on airplane mode on your device, then tap Continue"
+- tapOn:
+    text: "Continue"
+
+# STEP 2: Verify app detects real network disconnection
+# The app should detect the actual network state change
+- tapOn:
+    text: "Exercises"
+
+# Wait for network state detection
+- wait: 2000
+
+# The sync status should show offline (detecting real network state)
+- assertVisible:
+    id: "sync-status-offline"
+
+# STEP 3: Create exercises while ACTUALLY offline
+- tapOn:
+    id: "add-exercise-button"
+- tapOn:
+    id: "exercise-name-input"
+- inputText: "Real Offline Exercise 1"
+- tapOn:
+    id: "save-exercise-button"
+
+- tapOn:
+    id: "add-exercise-button"
+- tapOn:
+    id: "exercise-name-input"
+- inputText: "Real Offline Exercise 2"
+- tapOn:
+    id: "save-exercise-button"
+
+- tapOn:
+    id: "add-exercise-button"
+- tapOn:
+    id: "exercise-name-input"
+- inputText: "Real Offline Exercise 3"
+- tapOn:
+    id: "save-exercise-button"
+
+# Verify exercises are created locally
+- assertVisible:
+    text: "Real Offline Exercise 1"
+- assertVisible:
+    text: "Real Offline Exercise 2"
+- assertVisible:
+    text: "Real Offline Exercise 3"
+
+# Verify sync status shows pending operations (due to real offline state)
+- assertVisible:
+    id: "sync-status-pending"
+
+# STEP 4: User instruction to disable airplane mode
+- tapOn:
+    text: "Settings"
+- assertVisible:
+    text: "DISABLE AIRPLANE MODE NOW"
+- assertVisible:
+    text: "Turn off airplane mode on your device, then tap Continue"
+- tapOn:
+    text: "Continue"
+
+# STEP 5: Verify app detects real network restoration
+- tapOn:
+    text: "Exercises"
+
+# Wait for network detection and auto-sync
+- wait: 5000
+
+# App should detect real network restoration
+- assertVisible:
+    id: "sync-status-synced"
+
+# Exercises should still be visible after sync
+- assertVisible:
+    text: "Real Offline Exercise 1"
+- assertVisible:
+    text: "Real Offline Exercise 2"
+- assertVisible:
+    text: "Real Offline Exercise 3"
+
+# STEP 6: CRITICAL TEST - App restart with real network available
+- terminateApp
+- launchApp
+
+# Navigate to exercises
+- tapOn:
+    text: "Exercises"
+
+# CRITICAL ASSERTION: Exercises must survive real network disconnection + restart
+- assertVisible:
+    text: "Real Offline Exercise 1"
+- assertVisible:
+    text: "Real Offline Exercise 2"
+- assertVisible:
+    text: "Real Offline Exercise 3"
+
+# Verify sync status is healthy
+- assertVisible:
+    id: "sync-status-synced"
+
+# STEP 7: Test edge case - Turn airplane mode on AGAIN while exercises exist
+- tapOn:
+    text: "Settings"
+- assertVisible:
+    text: "ENABLE AIRPLANE MODE AGAIN"
+- assertVisible:
+    text: "Turn on airplane mode again to test edge cases, then tap Continue"
+- tapOn:
+    text: "Continue"
+
+# Add another exercise while offline again
+- tapOn:
+    text: "Exercises"
+- tapOn:
+    id: "add-exercise-button"
+- tapOn:
+    id: "exercise-name-input"
+- inputText: "Second Offline Session"
+- tapOn:
+    id: "save-exercise-button"
+
+# Now restart app while STILL offline
+- terminateApp
+- launchApp
+
+# Check that ALL exercises are still there (including new offline one)
+- tapOn:
+    text: "Exercises"
+- assertVisible:
+    text: "Real Offline Exercise 1"
+- assertVisible:
+    text: "Real Offline Exercise 2" 
+- assertVisible:
+    text: "Real Offline Exercise 3"
+- assertVisible:
+    text: "Second Offline Session"
+
+# Turn airplane mode off one final time
+- tapOn:
+    text: "Settings"
+- assertVisible:
+    text: "DISABLE AIRPLANE MODE FINAL"
+- assertVisible:
+    text: "Turn off airplane mode one final time, then tap Continue"
+- tapOn:
+    text: "Continue"
+
+# Wait for final sync
+- tapOn:
+    text: "Exercises"
+- wait: 5000
+
+# Everything should still be there and synced
+- assertVisible:
+    text: "Real Offline Exercise 1"
+- assertVisible:
+    text: "Real Offline Exercise 2"
+- assertVisible:
+    text: "Real Offline Exercise 3"
+- assertVisible:
+    text: "Second Offline Session"
+- assertVisible:
+    id: "sync-status-synced"
+
+# Clean up
+- tapOn:
+    text: "Real Offline Exercise 1"
+- tapOn:
+    id: "delete-exercise-button"
+- tapOn:
+    text: "Delete"
+
+- tapOn:
+    text: "Exercises"
+- tapOn:
+    text: "Real Offline Exercise 2"
+- tapOn:
+    id: "delete-exercise-button"
+- tapOn:
+    text: "Delete"
+
+- tapOn:
+    text: "Exercises"
+- tapOn:
+    text: "Real Offline Exercise 3"
+- tapOn:
+    id: "delete-exercise-button"
+- tapOn:
+    text: "Delete"
+
+- tapOn:
+    text: "Exercises"
+- tapOn:
+    text: "Second Offline Session"
+- tapOn:
+    id: "delete-exercise-button"
+- tapOn:
+    text: "Delete"
