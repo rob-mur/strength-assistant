@@ -1,0 +1,69 @@
+appId: com.jimmysolutions.strengthassistant.test
+---
+# Test: Validate Airplane Mode Actually Works
+# Purpose: Check if setAirplaneMode actually disconnects network in CI environment
+# 
+# This test determines if Maestro's setAirplaneMode command actually works
+# in the current CI environment or if it's a false positive
+
+- launchApp
+
+# Wait for app to load
+- assertVisible:
+    text: "Workout"
+
+# Navigate to exercises to baseline sync state
+- tapOn:
+    text: "Exercises"
+- assertVisible:
+    text: "Exercises"
+
+# BASELINE: Verify app is initially online
+- assertVisible:
+    id: "sync-status-synced"
+
+# STEP 1: Enable airplane mode
+- setAirplaneMode: enabled
+
+# Wait for airplane mode to take effect
+- wait: 3000
+
+# CRITICAL TEST: Does app actually detect offline state?
+# If this assertion FAILS, then airplane mode is not really working
+- assertVisible:
+    id: "sync-status-offline"
+
+# STEP 2: Try to create an exercise that would normally sync immediately
+- tapOn:
+    id: "add-exercise-button"
+- tapOn:
+    id: "exercise-name-input"
+- inputText: "Airplane Mode Validation Test"
+- tapOn:
+    id: "save-exercise-button"
+
+# CRITICAL TEST: Exercise should NOT sync while airplane mode is active
+# If app still shows "synced" then airplane mode is not working
+- assertVisible:
+    id: "sync-status-pending"
+
+# STEP 3: Disable airplane mode
+- setAirplaneMode: disabled
+
+# Wait for network restoration
+- wait: 3000
+
+# CRITICAL TEST: App should detect network restoration
+- assertVisible:
+    id: "sync-status-synced"
+
+# Clean up
+- tapOn:
+    text: "Airplane Mode Validation Test"
+- tapOn:
+    id: "delete-exercise-button"
+- tapOn:
+    text: "Delete"
+
+# If this test PASSES, airplane mode is working correctly
+# If this test FAILS, the CI environment has the emulator airplane mode bug

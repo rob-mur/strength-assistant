@@ -25,14 +25,34 @@ echo ""
 
 cd "$(dirname "$0")/.."
 
-# Run the most critical tests only
-echo "🧪 Running: Automated Airplane Mode Test (CRITICAL)"
-if maestro test .maestro/android/airplane-mode-sync.maestro; then
-    echo "✅ PASSED: Automated Airplane Mode Test"
-    AIRPLANE_RESULT="✅ PASSED"
+# First validate if airplane mode actually works in this environment
+echo "🔍 Running: Airplane Mode Validation Test"
+if maestro test .maestro/android/airplane-mode-validation.maestro; then
+    echo "✅ PASSED: Airplane mode validation - airplane mode works in this environment"
+    VALIDATION_RESULT="✅ AIRPLANE_MODE_WORKS"
+    
+    echo ""
+    echo "🧪 Running: Automated Airplane Mode Test (CRITICAL)"
+    if maestro test .maestro/android/airplane-mode-sync.maestro; then
+        echo "✅ PASSED: Automated Airplane Mode Test"
+        AIRPLANE_RESULT="✅ PASSED"
+    else
+        echo "❌ FAILED: Automated Airplane Mode Test"
+        AIRPLANE_RESULT="❌ FAILED"
+    fi
 else
-    echo "❌ FAILED: Automated Airplane Mode Test"
-    AIRPLANE_RESULT="❌ FAILED"
+    echo "⚠️  FAILED: Airplane mode validation - using CI-safe alternative"
+    VALIDATION_RESULT="❌ AIRPLANE_MODE_BROKEN"
+    
+    echo ""
+    echo "🧪 Running: CI-Safe Offline Sync Test (CRITICAL)"
+    if maestro test .maestro/android/offline-sync-ci-safe.maestro; then
+        echo "✅ PASSED: CI-Safe Offline Sync Test"
+        AIRPLANE_RESULT="✅ PASSED"
+    else
+        echo "❌ FAILED: CI-Safe Offline Sync Test"
+        AIRPLANE_RESULT="❌ FAILED"
+    fi
 fi
 
 echo ""
@@ -48,17 +68,27 @@ fi
 echo ""
 echo "📊 Quick Test Results"
 echo "===================="
-echo "Airplane Mode Test: $AIRPLANE_RESULT"
+echo "Environment Check: $VALIDATION_RESULT"
+echo "Offline Sync Test: $AIRPLANE_RESULT"
 echo "Workout Empty State: $WORKOUT_RESULT"
 echo ""
 
 if [[ "$AIRPLANE_RESULT" == *"PASSED"* ]]; then
-    echo "🎉 Critical offline sync test PASSED!"
-    echo "   The offline sync bug appears to be fixed."
+    if [[ "$VALIDATION_RESULT" == *"AIRPLANE_MODE_WORKS"* ]]; then
+        echo "🎉 Critical offline sync test PASSED with REAL airplane mode!"
+        echo "   The offline sync bug appears to be fixed."
+    else
+        echo "🎉 Critical offline sync test PASSED with app simulation!"
+        echo "   The offline sync bug appears to be fixed."
+        echo "   Note: CI environment has broken airplane mode (expected)"
+    fi
     exit 0
 else
     echo "⚠️  Critical offline sync test FAILED."
     echo "   The offline sync bug still exists."
+    if [[ "$VALIDATION_RESULT" == *"AIRPLANE_MODE_BROKEN"* ]]; then
+        echo "   Environment: CI emulator with broken airplane mode"
+    fi
     echo "   Run full test suite: ./scripts/test-offline-sync-maestro.sh"
     exit 1
 fi

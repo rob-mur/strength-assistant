@@ -1,0 +1,175 @@
+appId: com.jimmysolutions.strengthassistant.test
+---
+# Test: CI-Safe Offline Sync Test
+# Purpose: Test offline sync without relying on airplane mode
+# 
+# This test uses app-controlled network simulation instead of airplane mode
+# to work around the Android emulator airplane mode bug in CI environments
+
+- launchApp
+
+# Wait for app to load
+- assertVisible:
+    text: "Workout"
+
+# Navigate to developer settings to control network simulation
+- tapOn:
+    text: "Settings"
+- assertVisible:
+    text: "Settings"
+
+# Enable network simulation mode for testing
+- scrollUntilVisible:
+    element:
+      text: "Developer Options"
+- tapOn:
+    text: "Developer Options"
+
+- assertVisible:
+    text: "Network Simulation"
+- tapOn:
+    id: "enable-network-simulation"
+
+# STEP 1: Force app into offline mode using simulation
+- tapOn:
+    id: "simulate-offline-mode"
+- assertVisible:
+    text: "Offline Mode Simulated"
+
+# Navigate to exercises
+- tapOn:
+    text: "Exercises"
+
+# Verify app shows offline status
+- assertVisible:
+    id: "sync-status-offline"
+
+# STEP 2: Create exercises while app thinks it's offline
+- tapOn:
+    id: "add-exercise-button"
+- tapOn:
+    id: "exercise-name-input"
+- inputText: "CI Safe Test 1"
+- tapOn:
+    id: "save-exercise-button"
+
+- tapOn:
+    id: "add-exercise-button"
+- tapOn:
+    id: "exercise-name-input"
+- inputText: "CI Safe Test 2"
+- tapOn:
+    id: "save-exercise-button"
+
+- tapOn:
+    id: "add-exercise-button"
+- tapOn:
+    id: "exercise-name-input"
+- inputText: "CI Safe Test 3"
+- tapOn:
+    id: "save-exercise-button"
+
+# Verify exercises are created locally
+- assertVisible:
+    text: "CI Safe Test 1"
+- assertVisible:
+    text: "CI Safe Test 2"
+- assertVisible:
+    text: "CI Safe Test 3"
+
+# Verify sync status shows pending
+- assertVisible:
+    id: "sync-status-pending"
+
+# STEP 3: CRITICAL TEST - Restart app while in simulated offline mode
+- terminateApp
+- launchApp
+
+# Navigate back to exercises
+- tapOn:
+    text: "Exercises"
+
+# CRITICAL ASSERTION: Exercises must persist through restart
+- assertVisible:
+    text: "CI Safe Test 1"
+- assertVisible:
+    text: "CI Safe Test 2"
+- assertVisible:
+    text: "CI Safe Test 3"
+
+# STEP 4: Restore network and test sync recovery
+- tapOn:
+    text: "Settings"
+- tapOn:
+    text: "Developer Options"
+
+# Restore online mode
+- tapOn:
+    id: "simulate-online-mode"
+- assertVisible:
+    text: "Online Mode Simulated"
+
+# Wait for sync
+- wait: 3000
+
+# Verify sync recovery
+- assertVisible:
+    id: "sync-status-synced"
+
+# Navigate back and verify exercises are still there
+- tapOn:
+    text: "Exercises"
+- assertVisible:
+    text: "CI Safe Test 1"
+- assertVisible:
+    text: "CI Safe Test 2"
+- assertVisible:
+    text: "CI Safe Test 3"
+
+# STEP 5: Final restart test to ensure full recovery
+- terminateApp
+- launchApp
+
+# Final verification
+- tapOn:
+    text: "Exercises"
+- assertVisible:
+    text: "CI Safe Test 1"
+- assertVisible:
+    text: "CI Safe Test 2"
+- assertVisible:
+    text: "CI Safe Test 3"
+
+# Clean up
+- tapOn:
+    text: "CI Safe Test 1"
+- tapOn:
+    id: "delete-exercise-button"
+- tapOn:
+    text: "Delete"
+
+- tapOn:
+    text: "Exercises"
+- tapOn:
+    text: "CI Safe Test 2"
+- tapOn:
+    id: "delete-exercise-button"
+- tapOn:
+    text: "Delete"
+
+- tapOn:
+    text: "Exercises"
+- tapOn:
+    text: "CI Safe Test 3"
+- tapOn:
+    id: "delete-exercise-button"
+- tapOn:
+    text: "Delete"
+
+# Disable network simulation
+- tapOn:
+    text: "Settings"
+- tapOn:
+    text: "Developer Options"
+- tapOn:
+    id: "disable-network-simulation"
