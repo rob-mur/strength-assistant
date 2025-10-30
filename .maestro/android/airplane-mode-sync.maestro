@@ -1,0 +1,210 @@
+appId: com.jimmysolutions.strengthassistant.test
+---
+# Test: Maestro Built-in Airplane Mode Simulation
+# Purpose: Use Maestro's native setAirplaneMode command for automated testing
+# 
+# ✅ FULLY AUTOMATED - No manual intervention required!
+# ✅ Uses Maestro's built-in airplane mode simulation
+# ⚠️ Android only - iOS simulators don't support airplane mode
+
+- launchApp
+
+# Wait for app to load
+- assertVisible:
+    text: "Workout"
+
+# Navigate to exercises
+- tapOn:
+    text: "Exercises"
+- assertVisible:
+    text: "Exercises"
+
+# STEP 1: Enable airplane mode using Maestro command
+- setAirplaneMode: enabled
+
+# Wait for app to detect airplane mode
+- wait: 2000
+
+# Verify app detects offline state
+- assertVisible:
+    id: "sync-status-offline"
+
+# STEP 2: Create exercises while in airplane mode
+- tapOn:
+    id: "add-exercise-button"
+- tapOn:
+    id: "exercise-name-input"
+- inputText: "Maestro Airplane Test 1"
+- tapOn:
+    id: "save-exercise-button"
+
+- tapOn:
+    id: "add-exercise-button"
+- tapOn:
+    id: "exercise-name-input"
+- inputText: "Maestro Airplane Test 2"
+- tapOn:
+    id: "save-exercise-button"
+
+- tapOn:
+    id: "add-exercise-button"
+- tapOn:
+    id: "exercise-name-input"
+- inputText: "Maestro Airplane Test 3"
+- tapOn:
+    id: "save-exercise-button"
+
+# Verify exercises are created locally
+- assertVisible:
+    text: "Maestro Airplane Test 1"
+- assertVisible:
+    text: "Maestro Airplane Test 2"
+- assertVisible:
+    text: "Maestro Airplane Test 3"
+
+# Verify sync status shows pending/offline
+- assertVisible:
+    id: "sync-status-pending"
+
+# STEP 3: CRITICAL TEST - Restart app while still in airplane mode
+- terminateApp
+- launchApp
+
+# Navigate back to exercises
+- tapOn:
+    text: "Exercises"
+
+# CRITICAL ASSERTION: Exercises must persist through restart in airplane mode
+- assertVisible:
+    text: "Maestro Airplane Test 1"
+- assertVisible:
+    text: "Maestro Airplane Test 2"
+- assertVisible:
+    text: "Maestro Airplane Test 3"
+
+# Should still show offline status
+- assertVisible:
+    id: "sync-status-offline"
+
+# STEP 4: Disable airplane mode using Maestro command
+- setAirplaneMode: disabled
+
+# Wait for network restoration and auto-sync
+- wait: 5000
+
+# Verify app detects online state and syncs
+- assertVisible:
+    id: "sync-status-synced"
+
+# Exercises should still be visible after sync
+- assertVisible:
+    text: "Maestro Airplane Test 1"
+- assertVisible:
+    text: "Maestro Airplane Test 2"
+- assertVisible:
+    text: "Maestro Airplane Test 3"
+
+# STEP 5: Final restart test with network available
+- terminateApp
+- launchApp
+
+# Navigate to exercises
+- tapOn:
+    text: "Exercises"
+
+# FINAL CRITICAL ASSERTION: All exercises must survive the complete cycle
+- assertVisible:
+    text: "Maestro Airplane Test 1"
+- assertVisible:
+    text: "Maestro Airplane Test 2"
+- assertVisible:
+    text: "Maestro Airplane Test 3"
+
+# Verify sync status is healthy
+- assertVisible:
+    id: "sync-status-synced"
+
+# STEP 6: Edge case - Toggle airplane mode multiple times
+- setAirplaneMode: enabled
+- wait: 1000
+- setAirplaneMode: disabled
+- wait: 1000
+- setAirplaneMode: enabled
+- wait: 1000
+- setAirplaneMode: disabled
+- wait: 3000
+
+# After rapid toggles, everything should still work
+- assertVisible:
+    text: "Maestro Airplane Test 1"
+- assertVisible:
+    text: "Maestro Airplane Test 2"
+- assertVisible:
+    text: "Maestro Airplane Test 3"
+- assertVisible:
+    id: "sync-status-synced"
+
+# STEP 7: Test creating exercise after airplane mode cycles
+- tapOn:
+    id: "add-exercise-button"
+- tapOn:
+    id: "exercise-name-input"
+- inputText: "Post Airplane Test"
+- tapOn:
+    id: "save-exercise-button"
+
+# Should immediately sync since we're online
+- wait: 2000
+- assertVisible:
+    text: "Post Airplane Test"
+- assertVisible:
+    id: "sync-status-synced"
+
+# Check for any errors during the test
+- runFlow:
+    file: ../../.maestro/shared/error-check.yml
+
+# Clean up all test exercises
+- tapOn:
+    text: "Maestro Airplane Test 1"
+- tapOn:
+    id: "delete-exercise-button"
+- tapOn:
+    text: "Delete"
+
+- tapOn:
+    text: "Exercises"
+- tapOn:
+    text: "Maestro Airplane Test 2"
+- tapOn:
+    id: "delete-exercise-button"
+- tapOn:
+    text: "Delete"
+
+- tapOn:
+    text: "Exercises"
+- tapOn:
+    text: "Maestro Airplane Test 3"
+- tapOn:
+    id: "delete-exercise-button"
+- tapOn:
+    text: "Delete"
+
+- tapOn:
+    text: "Exercises"
+- tapOn:
+    text: "Post Airplane Test"
+- tapOn:
+    id: "delete-exercise-button"
+- tapOn:
+    text: "Delete"
+
+# Verify cleanup
+- assertNotVisible:
+    text: "Maestro Airplane Test 1"
+- assertNotVisible:
+    text: "Maestro Airplane Test 2"
+- assertNotVisible:
+    text: "Maestro Airplane Test 3"
+- assertNotVisible:
+    text: "Post Airplane Test"

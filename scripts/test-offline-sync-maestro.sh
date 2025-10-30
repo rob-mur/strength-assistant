@@ -34,14 +34,15 @@ npm run build:android:test || {
 echo "✅ App built successfully"
 echo ""
 
-# Test sequence - run tests in order of realism and importance
+# Test sequence - run tests in order of automation and importance
 TESTS=(
-    "__tests__/integration/offline-sync/connectivity-test.maestro"
-    "__tests__/integration/offline-sync/real-airplane-mode.maestro"
-    "__tests__/integration/offline-sync/wifi-disconnect.maestro"
-    "__tests__/integration/offline-sync/sync-persistence.maestro"
-    "__tests__/integration/offline-sync/network-simulation.maestro"
-    "__tests__/integration/offline-sync/airplane-mode.maestro"
+    ".maestro/android/offline-sync/connectivity-test.maestro"
+    ".maestro/android/airplane-mode-sync.maestro"
+    ".maestro/android/offline-sync/sync-persistence.maestro"
+    ".maestro/android/offline-sync/real-airplane-mode.maestro"
+    ".maestro/android/offline-sync/wifi-disconnect.maestro"
+    ".maestro/android/offline-sync/network-simulation.maestro"
+    ".maestro/android/offline-sync/airplane-mode.maestro"
 )
 
 PASSED=0
