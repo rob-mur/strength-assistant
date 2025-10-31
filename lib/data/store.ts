@@ -1,6 +1,7 @@
 import { observable } from "@legendapp/state";
 import { Exercise } from "../models/Exercise";
 import { User } from "../models/supabase";
+import NetInfo from '@react-native-community/netinfo';
 
 /**
  * Legend State store structure for the application
@@ -31,3 +32,9 @@ export const store$ = observable<AppStore>({
 export const exercises$ = store$.exercises;
 export const user$ = store$.user;
 export const isOnline$ = store$.isOnline;
+
+// Initialize network state monitoring
+NetInfo.addEventListener(state => {
+  const isConnected = state.isConnected && state.isInternetReachable;
+  isOnline$.set(isConnected);
+});

@@ -1,6 +1,7 @@
 import { configureSyncEngine } from "./syncConfig";
 import { initSupabase } from "../supabase/supabase";
 import { storageManager } from "../StorageManager";
+import { syncManager } from "./SyncManager";
 
 /**
  * Initialize the offline-first data layer
@@ -20,6 +21,12 @@ export async function initializeDataLayer(): Promise<void> {
     // Configure Legend State sync engine
     console.log("⚙️ initializeDataLayer - Configuring sync engine");
     configureSyncEngine();
+    
+    // Initialize sync manager for offline queue processing
+    console.log("🔄 initializeDataLayer - Initializing sync manager");
+    // Sync manager automatically starts network monitoring when constructed
+    console.log("✅ Sync manager initialized and monitoring network state");
+    
     console.log("✅ initializeDataLayer - Data layer initialization complete");
   } catch (error) {
     console.error(
@@ -58,3 +65,5 @@ export async function initializeDataLayer(): Promise<void> {
 // Export sync utilities
 export { syncHelpers } from "./syncConfig";
 export { exercises$, user$, isOnline$ } from "../store";
+export { syncManager } from "./SyncManager";
+export { syncQueuePersistence, queueSyncOperation } from "./SyncQueuePersistence";

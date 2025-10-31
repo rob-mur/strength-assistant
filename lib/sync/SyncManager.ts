@@ -26,6 +26,7 @@ import {
 } from "../models/SyncQueue";
 import { ConnectivityMonitor } from "./ConnectivityMonitor";
 import { createNetworkState } from "../models/NetworkState";
+import { AsyncStorageSyncQueuePersistence } from "../data/sync/SyncQueuePersistence";
 
 export class SyncManager implements SyncManagerContract {
   private queue: SyncQueue[] = [];
@@ -33,10 +34,23 @@ export class SyncManager implements SyncManagerContract {
   private connectivityMonitor: ConnectivityMonitor;
   private isProcessing = false;
   private statusListeners: Set<(status: GlobalSyncStatus) => void> = new Set();
+  private persistence: AsyncStorageSyncQueuePersistence;
 
   constructor() {
     this.connectivityMonitor = new ConnectivityMonitor();
+    this.persistence = new AsyncStorageSyncQueuePersistence();
     this.setupConnectivityMonitoring();
+    this.initializeFromPersistence();
+  }
+
+  private async initializeFromPersistence(): Promise<void> {
+    try {
+      this.queue = await this.persistence.loadQueue();
+    } catch (error) {
+      console.error('Failed to load queue from persistence:', error);
+      // Continue with empty queue if persistence fails
+      this.queue = [];
+    }
   }
 
   /**
@@ -139,6 +153,15 @@ export class SyncManager implements SyncManagerContract {
     });
 
     this.queue.push(queueEntry);
+    
+    // Persist the updated queue
+    try {
+      await this.persistence.saveQueue(this.queue);
+    } catch (error) {
+      console.error('Failed to persist queue after adding operation:', error);
+      // Continue without throwing - the operation is still in memory
+    }
+    
     this.notifyStatusChange();
   }
 
@@ -207,6 +230,13 @@ export class SyncManager implements SyncManagerContract {
         (entry) => !processedEntries.includes(entry.id),
       );
       result.remaining = this.queue.length;
+      
+      // Persist the updated queue
+      try {
+        await this.persistence.saveQueue(this.queue);
+      } catch (error) {
+        console.error('Failed to persist queue after processing:', error);
+      }
     } finally {
       this.isProcessing = false;
       this.notifyStatusChange();
@@ -217,6 +247,14 @@ export class SyncManager implements SyncManagerContract {
 
   async clearQueue(): Promise<void> {
     this.queue = [];
+    
+    // Persist the cleared queue
+    try {
+      await this.persistence.saveQueue(this.queue);
+    } catch (error) {
+      console.error('Failed to persist cleared queue:', error);
+    }
+    
     this.notifyStatusChange();
   }
 
@@ -339,6 +377,14 @@ export class SyncManager implements SyncManagerContract {
     this.queue = [];
     this.conflicts = [];
     this.isProcessing = false;
+    
+    // Persist the reset state
+    try {
+      await this.persistence.saveQueue(this.queue);
+    } catch (error) {
+      console.error('Failed to persist reset state:', error);
+    }
+    
     this.notifyStatusChange();
   }
 

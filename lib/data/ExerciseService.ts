@@ -7,6 +7,8 @@
 
 import { v4 as uuidv4 } from "uuid";
 import type { Exercise } from "../models/Exercise";
+import { queueSyncOperation } from "./sync/SyncQueuePersistence";
+import NetInfo from '@react-native-community/netinfo';
 
 // Type for test persistence global
 interface TestPersistence {
@@ -99,19 +101,38 @@ export class ExerciseService {
     // Store locally immediately
     this.exercises.set(exercise.id, exercise);
 
-    // Create sync record if sync is enabled
+    // Queue sync operation if sync is enabled and we're offline or need persistence
     if (this.enableSync) {
-      const syncRecord: SyncRecord = {
-        id: uuidv4(),
-        recordId: exercise.id,
-        recordType: "exercise",
-        operation: "create",
-        status: "pending",
-        createdAt: now,
-        attempts: 0,
-        data: exercise,
-      };
-      this.syncRecords.set(syncRecord.id, syncRecord);
+      try {
+        // Check network state to determine if we need to queue the operation
+        const networkState = await NetInfo.fetch();
+        const shouldQueue = !networkState.isConnected || !networkState.isInternetReachable;
+        
+        // Always queue for persistence - the SyncManager will handle online/offline logic
+        await queueSyncOperation({
+          operation: "create",
+          tableName: "exercises", 
+          recordId: exercise.id,
+          data: exercise,
+          priority: "high"
+        });
+        
+        // Create local sync record for status tracking
+        const syncRecord: SyncRecord = {
+          id: uuidv4(),
+          recordId: exercise.id,
+          recordType: "exercise",
+          operation: "create",
+          status: "pending",
+          createdAt: now,
+          attempts: 0,
+          data: exercise,
+        };
+        this.syncRecords.set(syncRecord.id, syncRecord);
+      } catch (error) {
+        console.error('Failed to queue sync operation:', error);
+        // Continue with local operation even if sync queuing fails
+      }
     }
 
     // Persist to storage
@@ -261,19 +282,34 @@ export class ExerciseService {
     // Store locally immediately
     this.exercises.set(id, updatedExercise);
 
-    // Create/update sync record if sync is enabled
+    // Queue sync operation if sync is enabled
     if (this.enableSync) {
-      const syncRecord: SyncRecord = {
-        id: uuidv4(),
-        recordId: id,
-        recordType: "exercise",
-        operation: "update",
-        status: "pending",
-        createdAt: new Date(),
-        attempts: 0,
-        data: updatedExercise,
-      };
-      this.syncRecords.set(syncRecord.id, syncRecord);
+      try {
+        // Always queue for persistence - the SyncManager will handle online/offline logic
+        await queueSyncOperation({
+          operation: "update",
+          tableName: "exercises",
+          recordId: id,
+          data: updatedExercise,
+          priority: "medium"
+        });
+        
+        // Create local sync record for status tracking
+        const syncRecord: SyncRecord = {
+          id: uuidv4(),
+          recordId: id,
+          recordType: "exercise",
+          operation: "update",
+          status: "pending",
+          createdAt: new Date(),
+          attempts: 0,
+          data: updatedExercise,
+        };
+        this.syncRecords.set(syncRecord.id, syncRecord);
+      } catch (error) {
+        console.error('Failed to queue sync operation:', error);
+        // Continue with local operation even if sync queuing fails
+      }
     }
 
     // Persist to storage
@@ -326,19 +362,34 @@ export class ExerciseService {
 
     this.exercises.set(id, deletedExercise);
 
-    // Create sync record if sync is enabled and exercise was previously synced
+    // Queue sync operation if sync is enabled
     if (this.enableSync) {
-      const syncRecord: SyncRecord = {
-        id: uuidv4(),
-        recordId: id,
-        recordType: "exercise",
-        operation: "delete",
-        status: "pending",
-        createdAt: new Date(),
-        attempts: 0,
-        data: { id, user_id: targetUserId },
-      };
-      this.syncRecords.set(syncRecord.id, syncRecord);
+      try {
+        // Always queue for persistence - the SyncManager will handle online/offline logic
+        await queueSyncOperation({
+          operation: "delete",
+          tableName: "exercises",
+          recordId: id,
+          data: { id, user_id: targetUserId },
+          priority: "high"
+        });
+        
+        // Create local sync record for status tracking
+        const syncRecord: SyncRecord = {
+          id: uuidv4(),
+          recordId: id,
+          recordType: "exercise",
+          operation: "delete",
+          status: "pending",
+          createdAt: new Date(),
+          attempts: 0,
+          data: { id, user_id: targetUserId },
+        };
+        this.syncRecords.set(syncRecord.id, syncRecord);
+      } catch (error) {
+        console.error('Failed to queue sync operation:', error);
+        // Continue with local operation even if sync queuing fails
+      }
     }
 
     // Persist to storage

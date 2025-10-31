@@ -318,14 +318,14 @@ export class ConnectivityMonitor {
     this.stopMonitoring();
 
     // Remove event listeners
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && window.removeEventListener) {
       window.removeEventListener("online", this.handleOnline);
       window.removeEventListener("offline", this.handleOffline);
     }
 
     if (typeof navigator !== "undefined" && "connection" in navigator) {
       const connection = (navigator as any).connection;
-      if (connection) {
+      if (connection && connection.removeEventListener) {
         connection.removeEventListener("change", this.handleConnectionChange);
       }
     }
