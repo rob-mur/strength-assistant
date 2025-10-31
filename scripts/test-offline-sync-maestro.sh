@@ -36,13 +36,13 @@ echo ""
 
 # Test sequence - run tests in order of automation and importance
 TESTS=(
-    ".maestro/android/offline-sync/connectivity-test.maestro"
-    ".maestro/android/airplane-mode-sync.maestro"
-    ".maestro/android/offline-sync/sync-persistence.maestro"
-    ".maestro/android/offline-sync/real-airplane-mode.maestro"
-    ".maestro/android/offline-sync/wifi-disconnect.maestro"
-    ".maestro/android/offline-sync/network-simulation.maestro"
-    ".maestro/android/offline-sync/airplane-mode.maestro"
+    ".maestro/android/connectivity-test.yml"
+    ".maestro/android/airplane-mode-sync.yml"
+    ".maestro/android/sync-persistence.yml"
+    ".maestro/android/real-airplane-mode.yml"
+    ".maestro/android/wifi-disconnect.yml"
+    ".maestro/android/network-simulation.yml"
+    ".maestro/android/airplane-mode.yml"
 )
 
 PASSED=0

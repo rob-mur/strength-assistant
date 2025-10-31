@@ -27,13 +27,13 @@ cd "$(dirname "$0")/.."
 
 # First validate if airplane mode actually works in this environment
 echo "🔍 Running: Airplane Mode Validation Test"
-if maestro test .maestro/android/airplane-mode-validation.maestro; then
+if maestro test .maestro/android/airplane-mode-validation.yml; then
     echo "✅ PASSED: Airplane mode validation - airplane mode works in this environment"
     VALIDATION_RESULT="✅ AIRPLANE_MODE_WORKS"
     
     echo ""
     echo "🧪 Running: Automated Airplane Mode Test (CRITICAL)"
-    if maestro test .maestro/android/airplane-mode-sync.maestro; then
+    if maestro test .maestro/android/airplane-mode-sync.yml; then
         echo "✅ PASSED: Automated Airplane Mode Test"
         AIRPLANE_RESULT="✅ PASSED"
     else
@@ -46,7 +46,7 @@ else
     
     echo ""
     echo "🧪 Running: CI-Safe Offline Sync Test (CRITICAL)"
-    if maestro test .maestro/android/offline-sync-ci-safe.maestro; then
+    if maestro test .maestro/android/offline-sync-ci-safe.yml; then
         echo "✅ PASSED: CI-Safe Offline Sync Test"
         AIRPLANE_RESULT="✅ PASSED"
     else
@@ -57,7 +57,7 @@ fi
 
 echo ""
 echo "🧪 Running: Workout Empty State Test (Baseline)"
-if maestro test .maestro/android/workout-empty-state.maestro; then
+if maestro test .maestro/android/workout-empty-state.yml; then
     echo "✅ PASSED: Workout Empty State Test"
     WORKOUT_RESULT="✅ PASSED"
 else

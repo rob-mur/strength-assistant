@@ -1,6 +1,45 @@
 appId: com.jimmysolutions.strengthassistant.test
 ---
-- runFlow:
-    file: ../shared/workout-empty-state.yml
-    env:
-      APP_URL: "com.jimmysolutions.strengthassistant.test"
+# Test: Workout Empty State Message Visibility
+# Purpose: Verify the "Ready to start your workout?" message displays correctly in empty state
+
+- launchApp
+
+# Wait for app to load and navigate to workout tab
+- tapOn: 
+    text: "Workout"
+
+# Verify empty state container is visible
+- assertVisible:
+    id: "empty-workout-state"
+
+# Primary test: Verify the main empty state message is visible
+- assertVisible:
+    text: "Ready to start your workout?"
+
+# Verify supporting text is visible
+- assertVisible:
+    text: "Select an exercise to begin tracking your workout, or create a new exercise routine."
+
+# Verify action buttons are present
+- assertVisible:
+    id: "select-exercise-button"
+- assertVisible:
+    text: "Browse Exercises"
+
+- assertVisible:
+    id: "create-exercise-button"
+- assertVisible:
+    text: "Create New Exercise"
+
+# Test navigation functionality
+- tapOn:
+    id: "select-exercise-button"
+- assertVisible:
+    text: "Exercises"
+
+# Return to workout to test again
+- tapOn:
+    text: "Workout"
+- assertVisible:
+    text: "Ready to start your workout?"
