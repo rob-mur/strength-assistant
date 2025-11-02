@@ -1,50 +1,8 @@
 appId: com.jimmysolutions.strengthassistant.test
+timeout: 60000
 ---
-# Simple test: Add an exercise, then record a workout with that exercise
 - launchApp
-
-# Handle authentication - continue as guest (optional if already authenticated)
-- tapOn:
-    id: "continue-as-guest"
-    optional: true
-
-# Navigate to exercises
-- tapOn:
-    id: "exercisesTab"
-
-# Add a new exercise
-- tapOn:
-    id: "add-exercise"
-- tapOn:
-    id: "name"
-- inputText: "Test Exercise"
-- tapOn:
-    id: "submit"
-
-# Navigate to workout tab
-- tapOn:
-    id: "workoutTab"
-
-# Add a workout using the exercise
-- tapOn:
-    id: "add-workout-button"
-- tapOn:
-    text: "Test Exercise"
-- tapOn:
-    id: "record-set-button"
-- tapOn:
-    id: "save-workout-button"
-
-# Verify workout was recorded
-- assertVisible:
-    text: "Workout completed"
-
-# Clean up
-- tapOn:
-    id: "exercisesTab"
-- tapOn:
-    text: "Test Exercise"
-- tapOn:
-    id: "delete-exercise-button"
-- tapOn:
-    text: "Delete"
+- runFlow:
+    file: ../shared/add-and-record-workout.yml
+    env:
+      APP_URL: "com.jimmysolutions.strengthassistant.test"

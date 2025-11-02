@@ -4,24 +4,19 @@ timeout: 60000
 - launchApp
 - takeScreenshot: "01-app-launched.png"
 
-# Handle authentication and onboarding - simplified
-- assertVisible:
-    text: "Workout"
+# Handle authentication and onboarding
+- runFlow:
+    file: common/auth-flow.yml
 
 # Add an exercise first
-- tapOn:
-    text: "Exercises"
-- tapOn:
-    id: "add-exercise"
-- tapOn:
-    id: "name"
-- inputText: "ExerciseName"
-- tapOn:
-    id: "submit"
+- runFlow:
+    file: common/add-exercise.yml
+    env:
+      EXERCISE_NAME: "ExerciseName"
 
 # Navigate to workout tab to access the add-workout button
-- tapOn:
-    text: "Workout"
+- runFlow:
+    file: common/navigate-to-workout.yml
 
 # Now tap the add-workout button
 - tapOn:

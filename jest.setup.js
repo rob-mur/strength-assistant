@@ -6,57 +6,6 @@ jest.mock("@react-native-async-storage/async-storage", () =>
   require("@react-native-async-storage/async-storage/jest/async-storage-mock"),
 );
 
-// Mock NetInfo for network connectivity testing
-jest.mock("@react-native-community/netinfo", () => {
-  let currentState = {
-    type: "wifi",
-    isConnected: true,
-    isInternetReachable: true,
-    details: {
-      isConnectionExpensive: false,
-      ssid: "TestWiFi",
-      bssid: "00:00:00:00:00:00",
-      strength: 99,
-      ipAddress: "192.168.1.100",
-      subnet: "255.255.255.0",
-    },
-  };
-
-  const listeners = [];
-
-  return {
-    fetch: jest.fn(() => Promise.resolve(currentState)),
-    addEventListener: jest.fn((listener) => {
-      listeners.push(listener);
-      // Return unsubscribe function
-      return () => {
-        const index = listeners.indexOf(listener);
-        if (index > -1) {
-          listeners.splice(index, 1);
-        }
-      };
-    }),
-    useNetInfo: jest.fn(() => currentState),
-    configure: jest.fn(),
-    // Test utility to change network state
-    __setMockState: (newState) => {
-      currentState = { ...currentState, ...newState };
-      // Notify all listeners
-      listeners.forEach(listener => {
-        try {
-          listener(currentState);
-        } catch (error) {
-          // Ignore listener errors in tests
-        }
-      });
-    },
-    __getMockState: () => currentState,
-    __clearListeners: () => {
-      listeners.length = 0;
-    },
-  };
-});
-
 // Mock platform detection and React Native animations
 jest.mock("react-native", () => {
   const RN = jest.requireActual("react-native");

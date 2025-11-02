@@ -1,29 +1,6 @@
 url: http://localhost:8081
 ---
-# Simple web test: Add an exercise and verify it appears in the list
-- launchApp
-
-# Navigate to exercises
-- tapOn:
-    text: "Exercises"
-
-# Add a new exercise
-- tapOn:
-    id: "add-exercise"
-- tapOn:
-    id: "name"
-- inputText: "Web Test Exercise"
-- tapOn:
-    id: "submit"
-
-# Verify it appears in the list
-- assertVisible:
-    text: "Web Test Exercise"
-
-# Clean up
-- tapOn:
-    text: "Web Test Exercise"
-- tapOn:
-    id: "delete-exercise-button"
-- tapOn:
-    text: "Delete"
+- runFlow:
+    file: ../shared/add-exercise-and-see-it-in-list.yml
+    env:
+      APP_URL: "http://localhost:8081"

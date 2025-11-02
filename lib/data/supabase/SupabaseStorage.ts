@@ -109,13 +109,12 @@ export class SupabaseStorage implements StorageBackend {
       "id" | "createdAt" | "updatedAt" | "syncStatus"
     >,
   ): Promise<ExerciseRecord> {
-    const newExercise = createExerciseRecord({
-      id: `exercise-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    const input: ExerciseRecordInput = {
       name: exercise.name,
       userId: exercise.userId,
-      deleted: false,
-      localOnlyUntil: null,
-    });
+    };
+
+    const newExercise = createExerciseRecord(input);
     validateExerciseRecord(newExercise);
 
     const { data, error } = await this.getClient()
