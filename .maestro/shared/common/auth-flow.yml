@@ -8,13 +8,6 @@ timeout: 60000
 - waitForAnimationToEnd:
     timeout: 10000
 
-# Handle optional auth step (only if not already authenticated)
-- tapOn:
-    text: "Continue as Guest"
-    optional: true
-- takeScreenshot: "auth-attempt-by-text.png"
-
-# Try alternative click methods if the first didn't work
 - tapOn:
     id: "continue-as-guest"
     optional: true
@@ -24,13 +17,3 @@ timeout: 60000
 - waitForAnimationToEnd:
     timeout: 10000
 - takeScreenshot: "after-auth-animation.png"
-
-# Handle optional onboarding step (only if not already seen)
-- tapOn:
-    id: "get-started"
-    optional: true
-- takeScreenshot: "after-onboarding-attempt.png"
-
-# Wait for main app to load
-- waitForAnimationToEnd:
-    timeout: 10000

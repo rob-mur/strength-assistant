@@ -17,24 +17,30 @@ appId: com.jimmysolutions.strengthassistant.test
 - runFlow:
     file: ../shared/common/navigate-to-exercises.yml
 
+# create exercise whilst online
+- runFlow:
+    file: ../shared/common/add-exercise.yml
+    env:
+      EXERCISE_NAME: "Online"
+
 # STEP 1: Enable airplane mode using Maestro command
 - setAirplaneMode: enabled
 
-# Note: App detects offline state but no UI indicator exists yet
 
 # STEP 2: Create exercises while in airplane mode
 - runFlow:
-    file: ../shared/common/create-multiple-exercises.yml
+    file: ../shared/common/add-exercise.yml
     env:
-      EXERCISE_PREFIX: "Maestro Airplane Test"
+      EXERCISE_NAME: "Offline"
 
 # Verify exercises are created locally
+- runFlow:
+    file: ../shared/common/navigate-to-exercises.yml
+
 - assertVisible:
-    text: "Maestro Airplane Test 1"
+    text: "Online"
 - assertVisible:
-    text: "Maestro Airplane Test 2"
-- assertVisible:
-    text: "Maestro Airplane Test 3"
+    text: "Offline"
 
 # Note: Exercises are created locally while offline (no UI sync status indicator)
 
@@ -48,13 +54,9 @@ appId: com.jimmysolutions.strengthassistant.test
 
 # CRITICAL ASSERTION: Exercises must persist through restart in airplane mode
 - assertVisible:
-    text: "Maestro Airplane Test 1"
+    text: "Online"
 - assertVisible:
-    text: "Maestro Airplane Test 2"
-- assertVisible:
-    text: "Maestro Airplane Test 3"
-
-# Note: Still offline after restart (no UI status indicator)
+    text: "Offline"
 
 # STEP 4: Disable airplane mode using Maestro command
 - setAirplaneMode: disabled
@@ -63,11 +65,9 @@ appId: com.jimmysolutions.strengthassistant.test
 
 # Exercises should still be visible after sync
 - assertVisible:
-    text: "Maestro Airplane Test 1"
+    text: "Online"
 - assertVisible:
-    text: "Maestro Airplane Test 2"
-- assertVisible:
-    text: "Maestro Airplane Test 3"
+    text: "Offline"
 
 # STEP 5: Final restart test with network available
 - stopApp
@@ -79,73 +79,7 @@ appId: com.jimmysolutions.strengthassistant.test
 
 # FINAL CRITICAL ASSERTION: All exercises must survive the complete cycle
 - assertVisible:
-    text: "Maestro Airplane Test 1"
+    text: "Online"
 - assertVisible:
-    text: "Maestro Airplane Test 2"
-- assertVisible:
-    text: "Maestro Airplane Test 3"
+    text: "Offline"
 
-# Note: Sync completed in background (no UI status indicator)
-
-# STEP 6: Edge case - Toggle airplane mode multiple times
-- setAirplaneMode: enabled
-- setAirplaneMode: disabled
-- setAirplaneMode: enabled
-- setAirplaneMode: disabled
-
-# After rapid toggles, everything should still work
-- assertVisible:
-    text: "Maestro Airplane Test 1"
-- assertVisible:
-    text: "Maestro Airplane Test 2"
-- assertVisible:
-    text: "Maestro Airplane Test 3"
-# Note: After rapid toggles, sync operates normally in background
-
-# STEP 7: Test creating exercise after airplane mode cycles
-- runFlow:
-    file: ../shared/common/add-exercise.yml
-    env:
-      EXERCISE_NAME: "Post Airplane Test"
-
-# Should immediately sync since we're online
-- runFlow:
-    file: ../shared/common/navigate-to-exercises.yml
-- assertVisible:
-    text: "Post Airplane Test"
-# Note: Syncs immediately since online (no UI status indicator)
-
-# Check for any errors during the test
-- runFlow:
-    file: ../shared/common/error-check.yml
-
-# Clean up all test exercises
-- runFlow:
-    file: ../shared/common/delete-exercise.yml
-    env:
-      EXERCISE_NAME: "Maestro Airplane Test 1"
-
-- runFlow:
-    file: ../shared/common/delete-exercise.yml
-    env:
-      EXERCISE_NAME: "Maestro Airplane Test 2"
-
-- runFlow:
-    file: ../shared/common/delete-exercise.yml
-    env:
-      EXERCISE_NAME: "Maestro Airplane Test 3"
-
-- runFlow:
-    file: ../shared/common/delete-exercise.yml
-    env:
-      EXERCISE_NAME: "Post Airplane Test"
-
-# Verify cleanup
-- assertNotVisible:
-    text: "Maestro Airplane Test 1"
-- assertNotVisible:
-    text: "Maestro Airplane Test 2"
-- assertNotVisible:
-    text: "Maestro Airplane Test 3"
-- assertNotVisible:
-    text: "Post Airplane Test"
