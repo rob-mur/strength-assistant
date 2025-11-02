@@ -1,0 +1,22 @@
+# Create multiple exercises with a prefix
+# Expects EXERCISE_PREFIX and EXERCISE_COUNT environment variables
+url: ${APP_URL}
+timeout: 60000
+---
+# Create first exercise
+- runFlow:
+    file: add-exercise.yml
+    env:
+      EXERCISE_NAME: "${EXERCISE_PREFIX} 1"
+
+# Create second exercise
+- runFlow:
+    file: add-exercise.yml
+    env:
+      EXERCISE_NAME: "${EXERCISE_PREFIX} 2"
+
+# Create third exercise
+- runFlow:
+    file: add-exercise.yml
+    env:
+      EXERCISE_NAME: "${EXERCISE_PREFIX} 3"

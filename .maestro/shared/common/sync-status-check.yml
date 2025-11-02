@@ -1,0 +1,8 @@
+# Check sync status
+# Expects EXPECTED_STATUS environment variable (e.g., "offline", "pending", "synced")
+url: ${APP_URL}
+timeout: 60000
+---
+# Assert the expected sync status is visible
+- assertVisible:
+    id: "sync-status-${EXPECTED_STATUS}"

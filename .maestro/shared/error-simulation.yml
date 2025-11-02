@@ -3,7 +3,8 @@
 # This test intentionally triggers an error to verify that the error blocker
 # correctly shows and can be detected by Maestro tests.
 
-appId: ${APP_ID}
+url: ${APP_URL}
+timeout: 60000
 ---
 # Wait for app to load
 - assertVisible:

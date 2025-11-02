@@ -9,49 +9,28 @@ appId: com.jimmysolutions.strengthassistant.test
 
 - launchApp
 
-# Handle authentication - continue as guest
-- assertVisible:
-    text: "Continue as Guest"
-- tapOn:
-    id: "continue-as-guest"
+# Handle authentication and onboarding
+- runFlow:
+    file: ../shared/common/auth-flow.yml
 
 # Navigate to exercises
-- tapOn:
-    id: "exercisesTab"
-- assertVisible:
-    id: "exercisesTab"
+- runFlow:
+    file: ../shared/common/navigate-to-exercises.yml
 
 # STEP 1: Enable airplane mode using Maestro command
 - setAirplaneMode: enabled
 
 # Verify app detects offline state (this automatically waits)
-- assertVisible:
-    id: "sync-status-offline"
+- runFlow:
+    file: ../shared/common/sync-status-check.yml
+    env:
+      EXPECTED_STATUS: "offline"
 
 # STEP 2: Create exercises while in airplane mode
-- tapOn:
-    id: "add-exercise"
-- tapOn:
-    id: "name"
-- inputText: "Maestro Airplane Test 1"
-- tapOn:
-    id: "submit"
-
-- tapOn:
-    id: "add-exercise"
-- tapOn:
-    id: "name"
-- inputText: "Maestro Airplane Test 2"
-- tapOn:
-    id: "submit"
-
-- tapOn:
-    id: "add-exercise"
-- tapOn:
-    id: "name"
-- inputText: "Maestro Airplane Test 3"
-- tapOn:
-    id: "submit"
+- runFlow:
+    file: ../shared/common/create-multiple-exercises.yml
+    env:
+      EXERCISE_PREFIX: "Maestro Airplane Test"
 
 # Verify exercises are created locally
 - assertVisible:
@@ -62,16 +41,18 @@ appId: com.jimmysolutions.strengthassistant.test
     text: "Maestro Airplane Test 3"
 
 # Verify sync status shows pending/offline
-- assertVisible:
-    id: "sync-status-pending"
+- runFlow:
+    file: ../shared/common/sync-status-check.yml
+    env:
+      EXPECTED_STATUS: "pending"
 
 # STEP 3: CRITICAL TEST - Restart app while still in airplane mode
 - stopApp
 - launchApp
 
 # Navigate back to exercises
-- tapOn:
-    id: "exercisesTab"
+- runFlow:
+    file: ../shared/common/navigate-to-exercises.yml
 
 # CRITICAL ASSERTION: Exercises must persist through restart in airplane mode
 - assertVisible:
@@ -82,15 +63,19 @@ appId: com.jimmysolutions.strengthassistant.test
     text: "Maestro Airplane Test 3"
 
 # Should still show offline status
-- assertVisible:
-    id: "sync-status-offline"
+- runFlow:
+    file: ../shared/common/sync-status-check.yml
+    env:
+      EXPECTED_STATUS: "offline"
 
 # STEP 4: Disable airplane mode using Maestro command
 - setAirplaneMode: disabled
 
 # Verify app detects online state and syncs (this automatically waits)
-- assertVisible:
-    id: "sync-status-synced"
+- runFlow:
+    file: ../shared/common/sync-status-check.yml
+    env:
+      EXPECTED_STATUS: "synced"
 
 # Exercises should still be visible after sync
 - assertVisible:
@@ -105,8 +90,8 @@ appId: com.jimmysolutions.strengthassistant.test
 - launchApp
 
 # Navigate to exercises
-- tapOn:
-    id: "exercisesTab"
+- runFlow:
+    file: ../shared/common/navigate-to-exercises.yml
 
 # FINAL CRITICAL ASSERTION: All exercises must survive the complete cycle
 - assertVisible:
@@ -117,8 +102,10 @@ appId: com.jimmysolutions.strengthassistant.test
     text: "Maestro Airplane Test 3"
 
 # Verify sync status is healthy
-- assertVisible:
-    id: "sync-status-synced"
+- runFlow:
+    file: ../shared/common/sync-status-check.yml
+    env:
+      EXPECTED_STATUS: "synced"
 
 # STEP 6: Edge case - Toggle airplane mode multiple times
 - setAirplaneMode: enabled
@@ -133,62 +120,51 @@ appId: com.jimmysolutions.strengthassistant.test
     text: "Maestro Airplane Test 2"
 - assertVisible:
     text: "Maestro Airplane Test 3"
-- assertVisible:
-    id: "sync-status-synced"
+- runFlow:
+    file: ../shared/common/sync-status-check.yml
+    env:
+      EXPECTED_STATUS: "synced"
 
 # STEP 7: Test creating exercise after airplane mode cycles
-- tapOn:
-    id: "add-exercise"
-- tapOn:
-    id: "name"
-- inputText: "Post Airplane Test"
-- tapOn:
-    id: "submit"
+- runFlow:
+    file: ../shared/common/add-exercise.yml
+    env:
+      EXERCISE_NAME: "Post Airplane Test"
 
 # Should immediately sync since we're online
+- runFlow:
+    file: ../shared/common/navigate-to-exercises.yml
 - assertVisible:
     text: "Post Airplane Test"
-- assertVisible:
-    id: "sync-status-synced"
+- runFlow:
+    file: ../shared/common/sync-status-check.yml
+    env:
+      EXPECTED_STATUS: "synced"
 
 # Check for any errors during the test
-- assertNotVisible:
-    id: "maestro-error-blocker"
+- runFlow:
+    file: ../shared/common/error-check.yml
 
 # Clean up all test exercises
-- tapOn:
-    text: "Maestro Airplane Test 1"
-- tapOn:
-    id: "delete-exercise-button"
-- tapOn:
-    text: "Delete"
+- runFlow:
+    file: ../shared/common/delete-exercise.yml
+    env:
+      EXERCISE_NAME: "Maestro Airplane Test 1"
 
-- tapOn:
-    id: "exercisesTab"
-- tapOn:
-    text: "Maestro Airplane Test 2"
-- tapOn:
-    id: "delete-exercise-button"
-- tapOn:
-    text: "Delete"
+- runFlow:
+    file: ../shared/common/delete-exercise.yml
+    env:
+      EXERCISE_NAME: "Maestro Airplane Test 2"
 
-- tapOn:
-    id: "exercisesTab"
-- tapOn:
-    text: "Maestro Airplane Test 3"
-- tapOn:
-    id: "delete-exercise-button"
-- tapOn:
-    text: "Delete"
+- runFlow:
+    file: ../shared/common/delete-exercise.yml
+    env:
+      EXERCISE_NAME: "Maestro Airplane Test 3"
 
-- tapOn:
-    id: "exercisesTab"
-- tapOn:
-    text: "Post Airplane Test"
-- tapOn:
-    id: "delete-exercise-button"
-- tapOn:
-    text: "Delete"
+- runFlow:
+    file: ../shared/common/delete-exercise.yml
+    env:
+      EXERCISE_NAME: "Post Airplane Test"
 
 # Verify cleanup
 - assertNotVisible:
