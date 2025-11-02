@@ -2,7 +2,7 @@ appId: com.jimmysolutions.strengthassistant.test
 ---
 # Test: Maestro Built-in Airplane Mode Simulation
 # Purpose: Use Maestro's native setAirplaneMode command for automated testing
-# 
+#
 # ✅ FULLY AUTOMATED - No manual intervention required!
 # ✅ Uses Maestro's built-in airplane mode simulation
 # ⚠️ Android only - iOS simulators don't support airplane mode
@@ -25,7 +25,6 @@ appId: com.jimmysolutions.strengthassistant.test
 
 # STEP 1: Enable airplane mode using Maestro command
 - setAirplaneMode: enabled
-
 
 # STEP 2: Create exercises while in airplane mode
 - runFlow:
@@ -82,4 +81,3 @@ appId: com.jimmysolutions.strengthassistant.test
     text: "Online"
 - assertVisible:
     text: "Offline"
-

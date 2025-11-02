@@ -1,53 +1,49 @@
-import { ExerciseRepo } from "../repo/ExerciseRepo";
+import { exerciseUtils } from "../data/store";
+import { ExerciseValidator } from "../models/Exercise";
+import { useAuth } from "./useAuth";
 
 export function useAddExercise(
   uid: string,
 ): (exercise: string) => Promise<void> {
+  const { user } = useAuth();
+
   const addExercise = async (exercise: string) => {
     console.log(
-      "🏋️ useAddExercise - Starting addExercise with uid:",
-      uid || "(empty)",
+      "🏋️ useAddExercise - Starting addExercise with syncedSupabase:",
       "exercise:",
       exercise,
     );
 
-    // CRITICAL FIX: Immediate validation to prevent database hangs
-    if (!uid || uid.trim() === "") {
-      console.error(
-        "🏋️ useAddExercise - No valid uid provided (empty or null), failing immediately",
-      );
-      const error = new Error("User must be authenticated to add exercises");
-      console.error(
-        "🏋️ useAddExercise - Throwing authentication error:",
-        error.message,
-      );
+    // Use the same auth state as the form component to ensure consistency
+    const currentUser = user;
+    if (!currentUser) {
+      console.error("🏋️ useAddExercise - No authenticated user");
+      throw new Error("User must be authenticated to add exercises");
+    }
+
+    console.log("🏋️ useAddExercise - User authenticated:", currentUser.uid);
+
+    // Validate exercise name
+    try {
+      ExerciseValidator.validateExerciseName(exercise);
+    } catch (error) {
+      console.error("🏋️ useAddExercise - Invalid exercise name:", error);
       throw error;
     }
 
-    // CRITICAL FIX: Additional validation for uid format
-    if (uid.length < 3) {
-      console.error("🏋️ useAddExercise - uid too short (likely invalid):", uid);
-      const error = new Error("Invalid user authentication state");
-      console.error(
-        "🏋️ useAddExercise - Throwing invalid uid error:",
-        error.message,
-      );
-      throw error;
-    }
+    // Sanitize exercise name
+    const sanitizedName = ExerciseValidator.sanitizeExerciseName(exercise);
+
+    console.log("🏋️ useAddExercise - Adding exercise via syncedSupabase");
+    const exerciseId = exerciseUtils.addExercise({
+      name: sanitizedName,
+      user_id: currentUser.uid,
+    });
 
     console.log(
-      "🏋️ useAddExercise - ✅ uid validation passed, proceeding with database operation",
-    );
-
-    console.log("🏋️ useAddExercise - Getting ExerciseRepo instance");
-    const repo = ExerciseRepo.getInstance();
-
-    console.log("🏋️ useAddExercise - Calling repo.addExercise");
-    await repo.addExercise(uid, { name: exercise });
-
-    console.log("🏋️ useAddExercise - repo.addExercise completed successfully");
-    console.log(
-      "🏋️ useAddExercise - Exercise addition flow completed, returning...",
+      "🏋️ useAddExercise - Exercise added with ID:",
+      exerciseId,
+      "- syncedSupabase will handle sync automatically!",
     );
   };
 

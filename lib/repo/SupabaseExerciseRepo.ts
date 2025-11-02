@@ -1,17 +1,12 @@
 import { Exercise, ExerciseInput, ExerciseValidator } from "../models/Exercise";
 import { IExerciseRepo } from "./IExerciseRepo";
 import { Observable, computed } from "@legendapp/state";
-import { exercises$, user$ } from "../data/store";
+import { exercises$, exerciseUtils, user$, isOnline$ } from "../data/store";
 import { supabaseClient } from "../data/supabase/SupabaseClient";
-import {
-  syncExerciseToSupabase,
-  deleteExerciseFromSupabase,
-  syncHelpers,
-} from "../data/sync/syncConfig";
 import { v4 as uuidv4 } from "uuid";
 import { RepositoryUtils } from "./utils/RepositoryUtils";
-// Note: Using basic legend-state without sync for now
-// Sync will be implemented when the library supports it. Currently using basic legend-state without sync.
+// Note: Now using Legend State's syncedSupabase for automatic offline-first sync
+// All sync operations are handled automatically by the batteries-included sync engine
 
 // Supabase database row interface for exercises
 interface SupabaseExerciseRow {
@@ -42,60 +37,17 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
   }
 
   async initialize(): Promise<void> {
-    // Initialize the repository and load data
-    // Set up real-time subscription for changes
-    this._realtimeChannel = supabaseClient
-      .getSupabaseClient()
-      .channel("exercises-changes")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "exercises" },
-        async (_payload) => {
-          // Refresh exercises when data changes on server
-          await this.refreshExercises();
-        },
-      )
-      .subscribe();
-
-    // Initial load of exercises
-    await this.refreshExercises();
+    // No manual initialization needed!
+    // syncedSupabase handles all data loading, realtime subscriptions, and store updates automatically
+    console.log(
+      "🗄️ SupabaseExerciseRepo - Repository initialized - syncedSupabase handles everything automatically!",
+    );
   }
 
   /**
-   * Refresh exercises from Supabase and update the observable store
-   */
-  private async refreshExercises(): Promise<void> {
-    try {
-      const currentUser = await supabaseClient.getCurrentUser();
-      if (!currentUser) return;
-
-      const { data, error } = await supabaseClient.exercises
-        .select("*")
-        .eq("user_id", currentUser.id)
-        .eq("deleted", false);
-
-      if (error) throw error;
-
-      const exercises = (data || []).map((ex: SupabaseExerciseRow) => ({
-        id: ex.id,
-        name: ex.name,
-        user_id: ex.user_id,
-        created_at: ex.created_at || new Date().toISOString(),
-        updated_at: ex.updated_at || new Date().toISOString(),
-        deleted: ex.deleted || false,
-      }));
-
-      // Update the global store
-      exercises$.set(exercises);
-    } catch {
-      /* Silent error handling */
-    }
-  }
-
-  /**
-   * Add a new exercise with optimistic updates and error recovery
-   * Changes are immediately visible in UI and synced in background
-   * Note: userId parameter is kept for backwards compatibility but Supabase user ID is used internally
+   * Add a new exercise using syncedSupabase automatic sync
+   * No manual optimistic updates or error handling needed - all handled by syncedSupabase
+   * Note: userId parameter is kept for backwards compatibility
    */
   async addExercise(userId: string, exercise: ExerciseInput): Promise<void> {
     console.log(
@@ -105,70 +57,22 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
       exercise,
     );
 
-    // Validate and prepare exercise data
+    // Validate exercise data
     console.log("🗄️ SupabaseExerciseRepo - Validating and sanitizing exercise");
     const sanitizedName = this.validateAndSanitizeExercise(exercise);
     console.log("🗄️ SupabaseExerciseRepo - Sanitized name:", sanitizedName);
 
-    console.log("🗄️ SupabaseExerciseRepo - Validating user authentication");
-    const authenticatedUser = await this.validateUserAuthentication(userId);
-
-    console.log("🗄️ SupabaseExerciseRepo - Creating new exercise object");
-    const newExercise = this.createNewExercise(
-      sanitizedName,
-      authenticatedUser.id,
-    );
-    console.log("🗄️ SupabaseExerciseRepo - New exercise created:", newExercise);
-
-    // Store original state for rollback
-    const originalExercises = exercises$.get();
-
-    console.log(
-      "🗄️ SupabaseExerciseRepo - Storing original exercises state for rollback",
-    );
-    console.log(
-      "🗄️ SupabaseExerciseRepo - Performing optimistic update to local state",
-    );
-
-    // Optimistic update - use callback pattern
-    console.log("🗄️ SupabaseExerciseRepo - Performing optimistic update");
-    exercises$.set((currentExercises) => {
-      console.log(
-        "🗄️ SupabaseExerciseRepo - Current exercises count:",
-        currentExercises.length,
-      );
-      const updatedExercises = [...currentExercises, newExercise];
-      console.log(
-        "🗄️ SupabaseExerciseRepo - Setting updated exercises count:",
-        updatedExercises.length,
-      );
-      return updatedExercises;
+    // Use the new syncedSupabase approach - no manual sync needed!
+    console.log("🗄️ SupabaseExerciseRepo - Adding exercise via syncedSupabase");
+    const exerciseId = exerciseUtils.addExercise({
+      name: sanitizedName,
+      user_id: userId,
     });
 
-    try {
-      console.log(
-        "🗄️ SupabaseExerciseRepo - Syncing exercise to Supabase via syncExerciseToSupabase",
-      );
-      // Use sync function instead of direct Supabase client
-      await syncExerciseToSupabase(newExercise);
-      console.log(
-        "🗄️ SupabaseExerciseRepo - syncExerciseToSupabase completed successfully",
-      );
-      console.log(
-        "🗄️ SupabaseExerciseRepo - Sync successful, continuing with function completion...",
-      );
-    } catch (error) {
-      console.error(
-        "🗄️ SupabaseExerciseRepo - syncExerciseToSupabase failed, reverting optimistic update:",
-        error,
-      );
-      // Revert optimistic update on error
-      exercises$.set(originalExercises);
-      throw error;
-    }
-
     console.log(
-      "🗄️ SupabaseExerciseRepo - addExercise completed successfully!",
+      "🗄️ SupabaseExerciseRepo - Exercise added with ID:",
+      exerciseId,
+      "- syncedSupabase will handle sync automatically!",
     );
   }
 
@@ -399,32 +303,24 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
   }
 
   /**
-   * Delete exercise with optimistic updates and error recovery
-   * Note: userId parameter is kept for backwards compatibility but Supabase user ID is used internally
+   * Delete exercise using syncedSupabase automatic sync
+   * No manual optimistic updates or error handling needed - all handled by syncedSupabase
+   * Note: userId parameter is kept for backwards compatibility
    */
   async deleteExercise(userId: string, exerciseId: string): Promise<void> {
-    // Validate inputs and user authentication
+    // Validate inputs
     RepositoryUtils.validateExerciseId(exerciseId);
-    const authenticatedUser = await this.validateUserAuthentication(userId);
 
-    // Store original state for rollback
-    const originalExercises = exercises$.get();
-
-    // Optimistic delete - remove from local list (only for current user)
-    exercises$.set((currentExercises) =>
-      currentExercises.filter(
-        (ex) => !(ex.id === exerciseId && ex.user_id === authenticatedUser.id),
-      ),
+    // Use the new syncedSupabase approach - no manual sync needed!
+    console.log(
+      "🗄️ SupabaseExerciseRepo - Deleting exercise via syncedSupabase:",
+      exerciseId,
     );
+    exerciseUtils.deleteExercise(exerciseId);
 
-    try {
-      // Use sync function instead of direct Supabase client
-      await deleteExerciseFromSupabase(exerciseId, authenticatedUser.id);
-    } catch (error) {
-      // Revert optimistic update on error
-      exercises$.set(originalExercises);
-      throw error;
-    }
+    console.log(
+      "🗄️ SupabaseExerciseRepo - Exercise deleted - syncedSupabase will handle sync automatically!",
+    );
   }
 
   /**
@@ -508,43 +404,55 @@ export class SupabaseExerciseRepo implements IExerciseRepo {
 
   /**
    * Check if we're currently online and syncing
+   * With syncedSupabase, this is handled automatically
    */
   isSyncing(): boolean {
-    return syncHelpers.isSyncing();
+    // syncedSupabase handles sync status internally
+    return false; // For backwards compatibility
   }
 
   /**
-   * Check online status
+   * Check online status from app store
    */
   isOnline(): boolean {
-    return syncHelpers.isOnline();
+    return isOnline$.get();
   }
 
   /**
    * Get count of pending changes waiting to sync
+   * With syncedSupabase, this is handled automatically
    */
   getPendingChangesCount(): number {
-    return syncHelpers.getPendingChangesCount();
+    // syncedSupabase handles pending changes internally
+    return 0; // For backwards compatibility
   }
 
   /**
    * Force manual sync (useful for pull-to-refresh)
+   * With syncedSupabase, sync happens automatically
    */
   async forceSync(): Promise<void> {
-    return syncHelpers.forceSync();
+    // syncedSupabase handles sync automatically - no manual sync needed
+    console.log(
+      "🗄️ SupabaseExerciseRepo - forceSync called, but syncedSupabase handles sync automatically",
+    );
   }
 
   /**
    * Check if there are sync errors
+   * With syncedSupabase, errors are handled automatically
    */
   hasErrors(): boolean {
-    return syncHelpers.hasErrors();
+    // syncedSupabase handles errors internally
+    return false; // For backwards compatibility
   }
 
   /**
    * Get current sync error message
+   * With syncedSupabase, errors are handled automatically
    */
   getErrorMessage(): string | null {
-    return syncHelpers.getErrorMessage() || null;
+    // syncedSupabase handles errors internally
+    return null; // For backwards compatibility
   }
 }

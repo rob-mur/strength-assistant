@@ -2,9 +2,195 @@
 // jest.useFakeTimers();
 
 // Mock AsyncStorage for React Native tests
-jest.mock("@react-native-async-storage/async-storage", () =>
-  require("@react-native-async-storage/async-storage/jest/async-storage-mock"),
-);
+const mockAsyncStorage = require("@react-native-async-storage/async-storage/jest/async-storage-mock");
+jest.mock("@react-native-async-storage/async-storage", () => mockAsyncStorage);
+
+// Mock Legend State plugins for testing
+jest.mock("@legendapp/state/persist-plugins/async-storage", () => {
+  return {
+    ObservablePersistAsyncStorage: {
+      initialize: jest.fn(),
+      loadTable: jest.fn().mockResolvedValue(null),
+      save: jest.fn().mockResolvedValue(undefined),
+      getAsyncStorage: jest.fn(() => mockAsyncStorage),
+    },
+  };
+});
+
+jest.mock("@legendapp/state/sync-plugins/supabase", () => {
+  return {
+    syncedSupabase: jest.fn((config) => {
+      // Return a simple observable that acts like syncedSupabase
+      const { observable } = require("@legendapp/state");
+      return observable({});
+    }),
+  };
+});
+
+// Mock Supabase service to prevent "not initialized" errors
+jest.mock("@/lib/data/supabase/supabase", () => {
+  let isInitialized = false;
+
+  return {
+    initSupabase: jest.fn(() => {
+      isInitialized = true;
+    }),
+    getSupabaseClient: jest.fn(() => {
+      if (!isInitialized) {
+        throw new Error(
+          "Supabase service not initialized. Call init() before getSupabaseClient()",
+        );
+      }
+      return require("@supabase/supabase-js").createClient();
+    }),
+    resetSupabaseService: jest.fn(() => {
+      isInitialized = false;
+    }),
+  };
+});
+
+// Mock StorageManager
+jest.mock("@/lib/data/StorageManager", () => ({
+  storageManager: {
+    init: jest.fn().mockResolvedValue(undefined),
+    getActiveStorageBackend: jest.fn(),
+    getAuthBackend: jest.fn(() => ({
+      getCurrentUser: jest.fn().mockResolvedValue({ id: "test-user" }),
+    })),
+  },
+}));
+
+// Mock Exercise validator with actual validation logic for tests
+jest.mock("@/lib/models/Exercise", () => ({
+  ExerciseValidator: {
+    validateExerciseInput: jest.fn((input) => {
+      if (!input) {
+        throw new Error("Exercise input is required");
+      }
+      // Call validateExerciseName
+      if (
+        !input.name ||
+        typeof input.name !== "string" ||
+        input.name.trim().length === 0
+      ) {
+        throw new Error("Exercise name cannot be empty");
+      }
+    }),
+    validateExerciseName: jest.fn((name) => {
+      if (name === null || name === undefined || typeof name !== "string") {
+        throw new Error("Exercise name is required and must be a string");
+      }
+      const trimmedName = name.trim();
+      if (trimmedName.length === 0) {
+        throw new Error("Exercise name cannot be empty");
+      }
+      if (trimmedName.length > 100) {
+        throw new Error("Exercise name cannot exceed 100 characters");
+      }
+      if (!/^[a-zA-Z0-9\s\-_.,()]+$/.test(trimmedName)) {
+        throw new Error(
+          "Exercise name contains invalid characters. Only letters, numbers, spaces, and basic punctuation are allowed",
+        );
+      }
+    }),
+    sanitizeExerciseName: jest.fn((name) =>
+      name.trim().replaceAll(/\s+/g, " "),
+    ),
+  },
+}));
+
+// Mock the store with exerciseUtils
+jest.mock("@/lib/data/store", () => {
+  const { observable } = require("@legendapp/state");
+
+  // Create stateful store for testing
+  const exercisesStore = observable([]);
+  const exercisesObjectStore = observable({});
+  const userStore = observable({
+    id: "test-user-123",
+    email: "test@example.com",
+  });
+  const onlineStore = observable(true);
+
+  let exerciseIdCounter = 0;
+
+  const mockExerciseUtils = {
+    addExercise: jest.fn((exercise) => {
+      const id = "mock-exercise-id-" + ++exerciseIdCounter;
+      const newExercise = {
+        id,
+        name: exercise.name,
+        user_id: "",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        deleted: false,
+      };
+
+      // Add to both stores
+      exercisesStore.push(newExercise);
+      exercisesObjectStore[id].set(newExercise);
+      return id;
+    }),
+    updateExercise: jest.fn((id, updates) => {
+      const exercises = exercisesStore.get();
+      const index = exercises.findIndex((ex) => ex.id === id);
+      if (index !== -1) {
+        const updated = {
+          ...exercises[index],
+          ...updates,
+          updated_at: new Date().toISOString(),
+        };
+        exercisesStore[index].set(updated);
+        exercisesObjectStore[id].set(updated);
+      }
+    }),
+    deleteExercise: jest.fn((id) => {
+      // Soft delete - set deleted flag instead of removing
+      const exercises = exercisesStore.get();
+      const index = exercises.findIndex((ex) => ex.id === id);
+      if (index !== -1) {
+        const updated = {
+          ...exercises[index],
+          deleted: true,
+          updated_at: new Date().toISOString(),
+        };
+
+        // Update the array by creating a new array with the updated exercise
+        const newExercises = [...exercises];
+        newExercises[index] = updated;
+        exercisesStore.set(newExercises);
+
+        // Also update object store
+        exercisesObjectStore[id].set(updated);
+      }
+    }),
+    getExercise: jest.fn((id) => {
+      return exercisesObjectStore[id].get();
+    }),
+  };
+
+  // Create array view that filters out deleted exercises
+  const exercisesArrayView = {
+    get: jest.fn(() => {
+      const exercises = exercisesStore.get();
+      return exercises.filter((ex) => ex && !ex.deleted);
+    }),
+    set: jest.fn(),
+  };
+
+  return {
+    exercises$: exercisesArrayView,
+    exercisesObject$: exercisesObjectStore,
+    exerciseUtils: mockExerciseUtils,
+    user$: userStore,
+    isOnline$: onlineStore,
+    store$: observable({
+      user: null,
+      isOnline: true,
+    }),
+    initializeExercisesStore: jest.fn(),
+  };
+});
 
 // Mock platform detection and React Native animations
 jest.mock("react-native", () => {
@@ -417,6 +603,14 @@ beforeEach(() => {
     jest.clearAllTimers();
 
     // Skip module cache clearing for speed - causes slower test execution
+  }
+
+  // Ensure Supabase service is properly initialized for each test
+  try {
+    const { initSupabase } = require("@/lib/data/supabase/supabase");
+    initSupabase();
+  } catch (error) {
+    // Mock may not be available in all test contexts
   }
 });
 

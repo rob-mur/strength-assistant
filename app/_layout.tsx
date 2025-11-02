@@ -1,4 +1,10 @@
 import "react-native-get-random-values";
+// CRITICAL: Configure AsyncStorage globally before any Legend State imports
+import AsyncStorage from "@react-native-async-storage/async-storage";
+// Set AsyncStorage globally for Legend State to detect
+(global as any).AsyncStorage = AsyncStorage;
+console.log("🔧 Global AsyncStorage configured for Legend State");
+
 import { SplashScreen, Stack } from "expo-router";
 import React, { useEffect } from "react";
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from "react-native-paper";

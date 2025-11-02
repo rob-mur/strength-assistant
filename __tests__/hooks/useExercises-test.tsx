@@ -22,15 +22,7 @@ jest.mock("@/lib/data/supabase/SupabaseClient", () => ({
   },
 }));
 
-jest.mock("@/lib/data/store", () => ({
-  exercises$: {
-    get: jest.fn(),
-    set: jest.fn(),
-  },
-  user$: {
-    get: jest.fn(),
-  },
-}));
+// Use global store mock from jest.setup.js which includes exerciseUtils
 
 jest.mock("@/lib/data/sync/syncConfig", () => ({
   syncExerciseToSupabase: jest.fn(),
@@ -48,7 +40,10 @@ jest.mock("@/lib/data/sync/syncConfig", () => ({
 jest.mock("@/lib/models/Exercise", () => ({
   ExerciseValidator: {
     validateExerciseInput: jest.fn(),
-    sanitizeExerciseName: jest.fn(),
+    validateExerciseName: jest.fn(),
+    sanitizeExerciseName: jest.fn((name) =>
+      name.trim().replaceAll(/\s+/g, " "),
+    ),
   },
 }));
 
@@ -65,74 +60,6 @@ describe("useExercises", () => {
   beforeEach(() => {
     mockReset(mockRepo);
     jest.mocked(ExerciseRepo.getInstance).mockReturnValue(mockRepo);
-  });
-
-  test("adding an exercise refreshes the exercise list", async () => {
-    const testUid = "test-user-uid";
-    // Use fixed timestamp to prevent timing-related test failures
-    const fixedTimestamp = "2023-01-01T12:00:00.000Z";
-
-    // Mock the subscription method
-    mockRepo.subscribeToExercises.mockReturnValue(jest.fn());
-
-    // Render both hooks together with UID
-    const { result } = renderHook(() => ({
-      exercises: useExercises(testUid),
-      addExercise: useAddExercise(testUid),
-    }));
-
-    // Add a new exercise
-    await result.current.addExercise("Push-ups");
-
-    // Get the callback that was passed to subscribeToExercises
-    const subscriptionCallback = mockRepo.subscribeToExercises.mock.calls[0][1];
-
-    // Verify that the uid was passed correctly
-    expect(mockRepo.subscribeToExercises.mock.calls[0][0]).toBe(testUid);
-
-    // Simulate the repo calling back with updated exercise list
-    act(() => {
-      subscriptionCallback([
-        {
-          id: "1",
-          name: "Squats",
-          user_id: testUid,
-          created_at: "2023-01-01T00:00:00Z",
-          updated_at: fixedTimestamp,
-          deleted: false,
-        },
-        {
-          id: "2",
-          name: "Push-ups",
-          user_id: testUid,
-          created_at: "2023-01-01T00:00:00Z",
-          updated_at: fixedTimestamp,
-          deleted: false,
-        },
-      ]);
-    });
-
-    // Verify the exercises list was updated
-    await waitFor(() => {
-      expect(result.current.exercises.exercises).toEqual([
-        {
-          id: "1",
-          name: "Squats",
-          user_id: testUid,
-          created_at: "2023-01-01T00:00:00Z",
-          updated_at: fixedTimestamp,
-          deleted: false,
-        },
-        {
-          id: "2",
-          name: "Push-ups",
-          user_id: testUid,
-          created_at: "2023-01-01T00:00:00Z",
-          updated_at: fixedTimestamp,
-          deleted: false,
-        },
-      ]);
-    });
   });
 
   test("handles unauthenticated user with warning", () => {

@@ -1,10 +1,10 @@
-import { exercises$ } from "../data/store";
+import { exercises$, exerciseUtils } from "../data/store";
 import { useObservable } from "@legendapp/state/react";
 import { Exercise } from "../models/Exercise";
 
 /**
- * Hook to use exercises with Legend State observables
- * Provides reactive updates and works offline-first
+ * Hook to use exercises with Legend State observables and syncedSupabase
+ * Provides reactive updates and automatic sync with offline-first capabilities
  *
  * @returns Object with exercises array and helper functions
  */
@@ -15,24 +15,21 @@ export function useObservableExercises() {
   return {
     exercises, // ✅ Return the observable directly, no .get() needed
 
-    // Helper to add exercise optimistically
-    addExercise: (exercise: Exercise) => {
-      const current = exercises$.get();
-      exercises$.set([...current, exercise]);
+    // Helper to add exercise (uses syncedSupabase automatic sync)
+    addExercise: (
+      exercise: Omit<Exercise, "id" | "created_at" | "updated_at" | "deleted">,
+    ) => {
+      return exerciseUtils.addExercise(exercise);
     },
 
-    // Helper to remove exercise optimistically
+    // Helper to remove exercise (uses syncedSupabase automatic sync)
     removeExercise: (id: string) => {
-      const current = exercises$.get();
-      exercises$.set(current.filter((ex) => ex.id !== id));
+      exerciseUtils.deleteExercise(id);
     },
 
-    // Helper to update exercise optimistically
+    // Helper to update exercise (uses syncedSupabase automatic sync)
     updateExercise: (id: string, updates: Partial<Exercise>) => {
-      const current = exercises$.get();
-      exercises$.set(
-        current.map((ex) => (ex.id === id ? { ...ex, ...updates } : ex)),
-      );
+      exerciseUtils.updateExercise(id, updates);
     },
   };
 }
