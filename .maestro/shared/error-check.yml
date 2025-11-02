@@ -1,7 +1,8 @@
 # Shared Maestro Flow: Error Check
 # Purpose: Reusable flow to check for uncaught errors
 # Usage: Include this flow in tests to verify no uncaught errors occurred
-
+appId: ${APP_ID}
+---
 # Check that no uncaught errors are blocking the app
 - assertNotVisible:
     id: "maestro-error-blocker"

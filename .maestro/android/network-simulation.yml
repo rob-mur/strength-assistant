@@ -10,7 +10,7 @@ appId: com.jimmysolutions.strengthassistant.test
 
 # Wait for app to load
 - assertVisible:
-    text: "Workout"
+    id: "workoutTab"
 
 # Navigate to developer/testing settings if available
 - tapOn:
@@ -40,7 +40,7 @@ appId: com.jimmysolutions.strengthassistant.test
 
 # Navigate to exercises
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 
 # Verify sync status shows offline
 - assertVisible:
@@ -48,20 +48,20 @@ appId: com.jimmysolutions.strengthassistant.test
 
 # Add exercises while simulating offline
 - tapOn:
-    id: "add-exercise-button"
+    id: "add-exercise"
 - tapOn:
-    id: "exercise-name-input"
+    id: "name"
 - inputText: "Network Sim Push-ups"
 - tapOn:
-    id: "save-exercise-button"
+    id: "submit"
 
 - tapOn:
-    id: "add-exercise-button"
+    id: "add-exercise"
 - tapOn:
-    id: "exercise-name-input"
+    id: "name"
 - inputText: "Network Sim Squats"
 - tapOn:
-    id: "save-exercise-button"
+    id: "submit"
 
 # Verify exercises are queued locally
 - assertVisible:
@@ -83,16 +83,13 @@ appId: com.jimmysolutions.strengthassistant.test
 - assertVisible:
     text: "Online Mode Active"
 
-# Wait for auto-sync
-- wait: 3000
-
 # Verify sync completed
 - assertVisible:
     text: "Pending Sync Operations: 0"
 
 # Navigate back to exercises
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 
 # Verify exercises are still there
 - assertVisible:
@@ -101,12 +98,12 @@ appId: com.jimmysolutions.strengthassistant.test
     text: "Network Sim Squats"
 
 # CRITICAL TEST: Restart app
-- terminateApp
+- stopApp
 - launchApp
 
 # Verify exercises persist after restart
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - assertVisible:
     text: "Network Sim Push-ups"
 - assertVisible:
@@ -125,7 +122,7 @@ appId: com.jimmysolutions.strengthassistant.test
     text: "Delete"
 
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - tapOn:
     text: "Network Sim Squats"
 - tapOn:

@@ -13,21 +13,23 @@ appId: com.jimmysolutions.strengthassistant.test
 
 - launchApp
 
-# Wait for app to load
+# Handle authentication - continue as guest
 - assertVisible:
-    text: "Workout"
+    text: "Continue as Guest"
+- tapOn:
+    id: "continue-as-guest"
 
 # Navigate to exercises to add new exercises
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - assertVisible:
-    text: "Exercises"
+    id: "exercisesTab"
 
 # STEP 1: Enable airplane mode (user must do this manually)
 # Note: Maestro cannot control system settings like airplane mode
 # User should enable airplane mode before running this test
 - assertVisible:
-    text: "Exercises"
+    id: "exercisesTab"
 
 # Wait a moment for airplane mode to take effect
 - waitForAnimationToEnd
@@ -35,16 +37,16 @@ appId: com.jimmysolutions.strengthassistant.test
 # STEP 2: Add exercises while offline
 # Add first exercise
 - tapOn:
-    id: "add-exercise-button"
+    id: "add-exercise"
 - assertVisible:
     text: "New Exercise"
 
 - tapOn:
-    id: "exercise-name-input"
+    id: "name"
 - inputText: "Airplane Mode Push-ups"
 
 - tapOn:
-    id: "save-exercise-button"
+    id: "submit"
 
 # Verify exercise appears in list (locally)
 - assertVisible:
@@ -52,16 +54,16 @@ appId: com.jimmysolutions.strengthassistant.test
 
 # Add second exercise
 - tapOn:
-    id: "add-exercise-button"
+    id: "add-exercise"
 - assertVisible:
     text: "New Exercise"
 
 - tapOn:
-    id: "exercise-name-input"
+    id: "name"
 - inputText: "Airplane Mode Squats"
 
 - tapOn:
-    id: "save-exercise-button"
+    id: "submit"
 
 # Verify both exercises appear in list
 - assertVisible:
@@ -85,12 +87,11 @@ appId: com.jimmysolutions.strengthassistant.test
 
 # Return to exercises
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 
 # STEP 4: Wait for auto-sync to occur
 # The app should automatically sync when connectivity is restored
 - waitForAnimationToEnd
-- wait: 3000  # Give sync time to complete
 
 # Check sync status indicator should show syncing or synced
 - assertVisible:
@@ -104,18 +105,18 @@ appId: com.jimmysolutions.strengthassistant.test
 
 # STEP 5: CRITICAL - Restart the app
 # This is where the bug occurred - exercises were lost on restart
-- terminateApp
+- stopApp
 - launchApp
 
 # Wait for app to reload
 - assertVisible:
-    text: "Workout"
+    id: "workoutTab"
 
 # Navigate back to exercises
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - assertVisible:
-    text: "Exercises"
+    id: "exercisesTab"
 
 # STEP 6: CRITICAL ASSERTION - Exercises must NOT be lost
 # This is the main test - if these assertions pass, the bug is fixed
@@ -143,7 +144,7 @@ appId: com.jimmysolutions.strengthassistant.test
     text: "Delete"
 
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - tapOn:
     text: "Airplane Mode Squats"
 - assertVisible:
@@ -155,7 +156,7 @@ appId: com.jimmysolutions.strengthassistant.test
 
 # Final verification: exercises are cleaned up
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - assertNotVisible:
     text: "Airplane Mode Push-ups"
 - assertNotVisible:

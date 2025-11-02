@@ -6,12 +6,16 @@ appId: com.jimmysolutions.strengthassistant.test
 # This test requires manually turning WiFi off/on to simulate real network loss
 
 - launchApp
+
+# Handle authentication - continue as guest
 - assertVisible:
-    text: "Workout"
+    text: "Continue as Guest"
+- tapOn:
+    id: "continue-as-guest"
 
 # Navigate to exercises  
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 
 # STEP 1: Instruction to turn off WiFi
 - tapOn:
@@ -25,8 +29,7 @@ appId: com.jimmysolutions.strengthassistant.test
 
 # Return to exercises and wait for network detection
 - tapOn:
-    text: "Exercises"
-- wait: 3000
+    id: "exercisesTab"
 
 # App should detect WiFi is off
 - assertVisible:
@@ -34,20 +37,20 @@ appId: com.jimmysolutions.strengthassistant.test
 
 # Create exercises while WiFi is actually off
 - tapOn:
-    id: "add-exercise-button"
+    id: "add-exercise"
 - tapOn:
-    id: "exercise-name-input"
+    id: "name"
 - inputText: "WiFi Off Exercise 1"
 - tapOn:
-    id: "save-exercise-button"
+    id: "submit"
 
 - tapOn:
-    id: "add-exercise-button"
+    id: "add-exercise"
 - tapOn:
-    id: "exercise-name-input"
+    id: "name"
 - inputText: "WiFi Off Exercise 2"
 - tapOn:
-    id: "save-exercise-button"
+    id: "submit"
 
 # Verify exercises exist locally
 - assertVisible:
@@ -56,12 +59,12 @@ appId: com.jimmysolutions.strengthassistant.test
     text: "WiFi Off Exercise 2"
 
 # STEP 2: Restart app while WiFi is still off
-- terminateApp
+- stopApp
 - launchApp
 
 # Check exercises persist through restart with no network
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - assertVisible:
     text: "WiFi Off Exercise 1"
 - assertVisible:
@@ -83,8 +86,7 @@ appId: com.jimmysolutions.strengthassistant.test
 
 # Wait for WiFi reconnection and auto-sync
 - tapOn:
-    text: "Exercises"
-- wait: 5000
+    id: "exercisesTab"
 
 # Should now show online/synced status
 - assertVisible:
@@ -97,12 +99,12 @@ appId: com.jimmysolutions.strengthassistant.test
     text: "WiFi Off Exercise 2"
 
 # STEP 4: Final restart test with WiFi on
-- terminateApp
+- stopApp
 - launchApp
 
 # Everything should be preserved
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - assertVisible:
     text: "WiFi Off Exercise 1"
 - assertVisible:
@@ -119,7 +121,7 @@ appId: com.jimmysolutions.strengthassistant.test
     text: "Delete"
 
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - tapOn:
     text: "WiFi Off Exercise 2"
 - tapOn:

@@ -4,15 +4,20 @@ timeout: 60000
 - launchApp
 - takeScreenshot: "01-app-launched.png"
 
-# Handle authentication and onboarding
-- runFlow:
-    file: common/auth-flow.yml
+# Handle authentication and onboarding - simplified
+- assertVisible:
+    text: "Workout"
 
-# Add an exercise (this correctly navigates to workout screen after submission)
-- runFlow:
-    file: common/add-exercise.yml
-    env:
-      EXERCISE_NAME: "ExerciseName"
+# Navigate to exercises and add an exercise
+- tapOn:
+    text: "Exercises"
+- tapOn:
+    id: "add-exercise"
+- tapOn:
+    id: "name"
+- inputText: "ExerciseName"
+- tapOn:
+    id: "submit"
 
 # Debug: Take screenshot to see where we are after add-exercise flow
 - takeScreenshot: "after-add-exercise-flow.png"
@@ -27,8 +32,8 @@ timeout: 60000
 - takeScreenshot: "workout-screen-with-exercise.png"
 
 # Now navigate to exercises tab to verify the exercise was added to the list
-- runFlow:
-    file: common/navigate-to-exercises.yml
+- tapOn:
+    text: "Exercises"
 
 - assertVisible:
     id: "exercise-screen"

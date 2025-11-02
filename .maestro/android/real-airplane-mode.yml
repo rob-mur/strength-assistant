@@ -8,15 +8,17 @@ appId: com.jimmysolutions.strengthassistant.test
 
 - launchApp
 
-# Wait for app to load
+# Handle authentication - continue as guest
 - assertVisible:
-    text: "Workout"
+    text: "Continue as Guest"
+- tapOn:
+    id: "continue-as-guest"
 
 # Navigate to exercises
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - assertVisible:
-    text: "Exercises"
+    id: "exercisesTab"
 
 # STEP 1: User instruction to enable airplane mode
 - tapOn:
@@ -31,10 +33,7 @@ appId: com.jimmysolutions.strengthassistant.test
 # STEP 2: Verify app detects real network disconnection
 # The app should detect the actual network state change
 - tapOn:
-    text: "Exercises"
-
-# Wait for network state detection
-- wait: 2000
+    id: "exercisesTab"
 
 # The sync status should show offline (detecting real network state)
 - assertVisible:
@@ -42,28 +41,28 @@ appId: com.jimmysolutions.strengthassistant.test
 
 # STEP 3: Create exercises while ACTUALLY offline
 - tapOn:
-    id: "add-exercise-button"
+    id: "add-exercise"
 - tapOn:
-    id: "exercise-name-input"
+    id: "name"
 - inputText: "Real Offline Exercise 1"
 - tapOn:
-    id: "save-exercise-button"
+    id: "submit"
 
 - tapOn:
-    id: "add-exercise-button"
+    id: "add-exercise"
 - tapOn:
-    id: "exercise-name-input"
+    id: "name"
 - inputText: "Real Offline Exercise 2"
 - tapOn:
-    id: "save-exercise-button"
+    id: "submit"
 
 - tapOn:
-    id: "add-exercise-button"
+    id: "add-exercise"
 - tapOn:
-    id: "exercise-name-input"
+    id: "name"
 - inputText: "Real Offline Exercise 3"
 - tapOn:
-    id: "save-exercise-button"
+    id: "submit"
 
 # Verify exercises are created locally
 - assertVisible:
@@ -89,10 +88,7 @@ appId: com.jimmysolutions.strengthassistant.test
 
 # STEP 5: Verify app detects real network restoration
 - tapOn:
-    text: "Exercises"
-
-# Wait for network detection and auto-sync
-- wait: 5000
+    id: "exercisesTab"
 
 # App should detect real network restoration
 - assertVisible:
@@ -107,12 +103,12 @@ appId: com.jimmysolutions.strengthassistant.test
     text: "Real Offline Exercise 3"
 
 # STEP 6: CRITICAL TEST - App restart with real network available
-- terminateApp
+- stopApp
 - launchApp
 
 # Navigate to exercises
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 
 # CRITICAL ASSERTION: Exercises must survive real network disconnection + restart
 - assertVisible:
@@ -138,22 +134,22 @@ appId: com.jimmysolutions.strengthassistant.test
 
 # Add another exercise while offline again
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - tapOn:
-    id: "add-exercise-button"
+    id: "add-exercise"
 - tapOn:
-    id: "exercise-name-input"
+    id: "name"
 - inputText: "Second Offline Session"
 - tapOn:
-    id: "save-exercise-button"
+    id: "submit"
 
 # Now restart app while STILL offline
-- terminateApp
+- stopApp
 - launchApp
 
 # Check that ALL exercises are still there (including new offline one)
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - assertVisible:
     text: "Real Offline Exercise 1"
 - assertVisible:
@@ -175,8 +171,7 @@ appId: com.jimmysolutions.strengthassistant.test
 
 # Wait for final sync
 - tapOn:
-    text: "Exercises"
-- wait: 5000
+    id: "exercisesTab"
 
 # Everything should still be there and synced
 - assertVisible:
@@ -199,7 +194,7 @@ appId: com.jimmysolutions.strengthassistant.test
     text: "Delete"
 
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - tapOn:
     text: "Real Offline Exercise 2"
 - tapOn:
@@ -208,7 +203,7 @@ appId: com.jimmysolutions.strengthassistant.test
     text: "Delete"
 
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - tapOn:
     text: "Real Offline Exercise 3"
 - tapOn:
@@ -217,7 +212,7 @@ appId: com.jimmysolutions.strengthassistant.test
     text: "Delete"
 
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - tapOn:
     text: "Second Offline Session"
 - tapOn:

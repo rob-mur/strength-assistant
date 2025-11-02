@@ -10,7 +10,7 @@ appId: com.jimmysolutions.strengthassistant.test
 
 # Wait for app to load
 - assertVisible:
-    text: "Workout"
+    id: "workoutTab"
 
 # Navigate to developer settings to control network simulation
 - tapOn:
@@ -38,7 +38,7 @@ appId: com.jimmysolutions.strengthassistant.test
 
 # Navigate to exercises
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 
 # Verify app shows offline status
 - assertVisible:
@@ -46,28 +46,28 @@ appId: com.jimmysolutions.strengthassistant.test
 
 # STEP 2: Create exercises while app thinks it's offline
 - tapOn:
-    id: "add-exercise-button"
+    id: "add-exercise"
 - tapOn:
-    id: "exercise-name-input"
+    id: "name"
 - inputText: "CI Safe Test 1"
 - tapOn:
-    id: "save-exercise-button"
+    id: "submit"
 
 - tapOn:
-    id: "add-exercise-button"
+    id: "add-exercise"
 - tapOn:
-    id: "exercise-name-input"
+    id: "name"
 - inputText: "CI Safe Test 2"
 - tapOn:
-    id: "save-exercise-button"
+    id: "submit"
 
 - tapOn:
-    id: "add-exercise-button"
+    id: "add-exercise"
 - tapOn:
-    id: "exercise-name-input"
+    id: "name"
 - inputText: "CI Safe Test 3"
 - tapOn:
-    id: "save-exercise-button"
+    id: "submit"
 
 # Verify exercises are created locally
 - assertVisible:
@@ -82,12 +82,12 @@ appId: com.jimmysolutions.strengthassistant.test
     id: "sync-status-pending"
 
 # STEP 3: CRITICAL TEST - Restart app while in simulated offline mode
-- terminateApp
+- stopApp
 - launchApp
 
 # Navigate back to exercises
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 
 # CRITICAL ASSERTION: Exercises must persist through restart
 - assertVisible:
@@ -109,16 +109,13 @@ appId: com.jimmysolutions.strengthassistant.test
 - assertVisible:
     text: "Online Mode Simulated"
 
-# Wait for sync
-- wait: 3000
-
 # Verify sync recovery
 - assertVisible:
     id: "sync-status-synced"
 
 # Navigate back and verify exercises are still there
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - assertVisible:
     text: "CI Safe Test 1"
 - assertVisible:
@@ -127,12 +124,12 @@ appId: com.jimmysolutions.strengthassistant.test
     text: "CI Safe Test 3"
 
 # STEP 5: Final restart test to ensure full recovery
-- terminateApp
+- stopApp
 - launchApp
 
 # Final verification
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - assertVisible:
     text: "CI Safe Test 1"
 - assertVisible:
@@ -149,7 +146,7 @@ appId: com.jimmysolutions.strengthassistant.test
     text: "Delete"
 
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - tapOn:
     text: "CI Safe Test 2"
 - tapOn:
@@ -158,7 +155,7 @@ appId: com.jimmysolutions.strengthassistant.test
     text: "Delete"
 
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - tapOn:
     text: "CI Safe Test 3"
 - tapOn:

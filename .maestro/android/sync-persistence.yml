@@ -8,16 +8,19 @@ appId: com.jimmysolutions.strengthassistant.test
 
 - launchApp
 
+# Handle authentication - continue as guest (optional if already authenticated)
+- tapOn:
+    id: "continue-as-guest"
+    optional: true
+
 # Navigate to exercises
 - tapOn:
-    text: "Exercises"
-- assertVisible:
-    text: "Exercises"
+    id: "exercisesTab"
 
 # Force the app into a sync-pending state
 # This can be done by creating exercises and then simulating sync failure
 - tapOn:
-    text: "Settings"
+    id: "profileTab"
 - tapOn:
     text: "Developer Options"
 
@@ -33,32 +36,32 @@ appId: com.jimmysolutions.strengthassistant.test
 
 # Navigate back to exercises
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 
 # Add exercises that will fail to sync
 - tapOn:
-    id: "add-exercise-button"
+    id: "add-exercise"
 - tapOn:
-    id: "exercise-name-input"
+    id: "name"
 - inputText: "Persistence Test 1"
 - tapOn:
-    id: "save-exercise-button"
+    id: "submit"
 
 - tapOn:
-    id: "add-exercise-button"
+    id: "add-exercise"
 - tapOn:
-    id: "exercise-name-input"
+    id: "name"
 - inputText: "Persistence Test 2"
 - tapOn:
-    id: "save-exercise-button"
+    id: "submit"
 
 - tapOn:
-    id: "add-exercise-button"
+    id: "add-exercise"
 - tapOn:
-    id: "exercise-name-input"
+    id: "name"
 - inputText: "Persistence Test 3"
 - tapOn:
-    id: "save-exercise-button"
+    id: "submit"
 
 # Verify exercises are created locally
 - assertVisible:
@@ -70,7 +73,7 @@ appId: com.jimmysolutions.strengthassistant.test
 
 # Try to trigger sync (will fail due to forced failure mode)
 - tapOn:
-    text: "Settings"
+    id: "profileTab"
 - tapOn:
     text: "Developer Options"
 - tapOn:
@@ -85,12 +88,12 @@ appId: com.jimmysolutions.strengthassistant.test
     id: "sync-status-pending"
 
 # CRITICAL TEST: Restart app with pending sync operations
-- terminateApp
+- stopApp
 - launchApp
 
 # Navigate back to settings to check sync queue
 - tapOn:
-    text: "Settings"
+    id: "profileTab"
 - tapOn:
     text: "Developer Options"
 
@@ -101,7 +104,7 @@ appId: com.jimmysolutions.strengthassistant.test
 
 # Verify exercises are still visible
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - assertVisible:
     text: "Persistence Test 1"
 - assertVisible:
@@ -111,7 +114,7 @@ appId: com.jimmysolutions.strengthassistant.test
 
 # Now restore sync functionality and verify recovery
 - tapOn:
-    text: "Settings"
+    id: "profileTab"
 - tapOn:
     text: "Developer Options"
 
@@ -125,10 +128,7 @@ appId: com.jimmysolutions.strengthassistant.test
 - tapOn:
     id: "force-sync-now"
 
-# Wait for sync to complete
-- wait: 2000
-
-# Verify sync queue is now empty
+# Verify sync queue is now empty (assertVisible waits automatically)
 - assertVisible:
     text: "Pending Sync Operations: 0"
 
@@ -137,12 +137,12 @@ appId: com.jimmysolutions.strengthassistant.test
     id: "sync-status-synced"
 
 # Final test: Restart again to ensure everything is stable
-- terminateApp
+- stopApp
 - launchApp
 
 # Verify exercises are still there and sync is healthy
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - assertVisible:
     text: "Persistence Test 1"
 - assertVisible:
@@ -151,19 +151,20 @@ appId: com.jimmysolutions.strengthassistant.test
     text: "Persistence Test 3"
 
 - tapOn:
-    text: "Settings"
+    id: "profileTab"
 - tapOn:
     text: "Developer Options"
 - assertVisible:
     text: "Pending Sync Operations: 0"
 
 # Check for any uncaught errors
-- runFlow:
-    file: ../../.maestro/shared/error-check.yml
+# Check for any sync errors
+- assertNotVisible:
+    id: "maestro-error-blocker"
 
 # Clean up test data
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 
 - tapOn:
     text: "Persistence Test 1"
@@ -173,7 +174,7 @@ appId: com.jimmysolutions.strengthassistant.test
     text: "Delete"
 
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - tapOn:
     text: "Persistence Test 2"
 - tapOn:
@@ -182,7 +183,7 @@ appId: com.jimmysolutions.strengthassistant.test
     text: "Delete"
 
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - tapOn:
     text: "Persistence Test 3"
 - tapOn:
@@ -192,7 +193,7 @@ appId: com.jimmysolutions.strengthassistant.test
 
 # Disable debug mode
 - tapOn:
-    text: "Settings"
+    id: "profileTab"
 - tapOn:
     text: "Developer Options"
 - tapOn:

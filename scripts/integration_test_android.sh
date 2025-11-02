@@ -462,6 +462,12 @@ for test_file in .maestro/android/*.yml; do
         elif grep -q "Flow path does not exist" "maestro-debug-output/maestro-${TEST_NAME}.log"; then
             echo "🔍 Detected missing test file in maestro output"
             INDIVIDUAL_EXIT_CODE=1
+        elif grep -q "Invalid Command\|is not a valid command\|Error parsing\|Syntax Error" "maestro-debug-output/maestro-${TEST_NAME}.log"; then
+            echo "🔍 Detected Maestro syntax error in output"
+            INDIVIDUAL_EXIT_CODE=1
+        elif grep -q "Exception\|Error:" "maestro-debug-output/maestro-${TEST_NAME}.log"; then
+            echo "🔍 Detected general error in maestro output"
+            INDIVIDUAL_EXIT_CODE=1
         fi
 
         set -e  # Re-enable exit on error

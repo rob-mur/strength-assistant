@@ -1,6 +1,34 @@
 appId: com.jimmysolutions.strengthassistant.test
 ---
-- runFlow:
-    file: ../shared/add-exercise-and-see-it-in-list.yml
-    env:
-      APP_URL: "com.jimmysolutions.strengthassistant.test"
+# Simple test: Add an exercise and verify it appears in the list
+- launchApp
+
+# Handle authentication - continue as guest (optional if already authenticated)
+- tapOn:
+    id: "continue-as-guest"
+    optional: true
+
+# Navigate to exercises
+- tapOn:
+    id: "exercisesTab"
+
+# Add a new exercise
+- tapOn:
+    id: "add-exercise"
+- tapOn:
+    id: "name"
+- inputText: "Test Exercise"
+- tapOn:
+    id: "submit"
+
+# Verify it appears in the list
+- assertVisible:
+    text: "Test Exercise"
+
+# Clean up
+- tapOn:
+    text: "Test Exercise"
+- tapOn:
+    id: "delete-exercise-button"
+- tapOn:
+    text: "Delete"

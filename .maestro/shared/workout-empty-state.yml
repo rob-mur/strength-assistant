@@ -7,9 +7,9 @@ timeout: 60000
 - launchApp
 - takeScreenshot: "app-launched.png"
 
-# Handle authentication and onboarding
-- runFlow:
-    file: common/auth-flow.yml
+# Handle authentication and onboarding - simplified
+- assertVisible:
+    text: "Workout"
 
 # Navigate directly to workout tab to test empty state
 - tapOn:

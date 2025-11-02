@@ -8,7 +8,7 @@ appId: com.jimmysolutions.strengthassistant.test
 
 - launchApp
 - assertVisible:
-    text: "Workout"
+    id: "workoutTab"
 
 # Open Android Settings via deep link to Developer Options
 - openLink: "android-app://com.android.settings/.development.DevelopmentSettings"
@@ -34,27 +34,24 @@ appId: com.jimmysolutions.strengthassistant.test
 
 # Navigate to exercises
 - tapOn:
-    text: "Exercises"
-
-# Wait for network state detection
-- wait: 3000
+    id: "exercisesTab"
 
 # Create exercises while network is disabled
 - tapOn:
-    id: "add-exercise-button"
+    id: "add-exercise"
 - tapOn:
-    id: "exercise-name-input"
+    id: "name"
 - inputText: "Dev Options Offline 1"
 - tapOn:
-    id: "save-exercise-button"
+    id: "submit"
 
 - tapOn:
-    id: "add-exercise-button"
+    id: "add-exercise"
 - tapOn:
-    id: "exercise-name-input"
+    id: "name"
 - inputText: "Dev Options Offline 2"
 - tapOn:
-    id: "save-exercise-button"
+    id: "submit"
 
 # Verify exercises are created
 - assertVisible:
@@ -63,12 +60,12 @@ appId: com.jimmysolutions.strengthassistant.test
     text: "Dev Options Offline 2"
 
 # Test app restart while network is disabled
-- terminateApp
+- stopApp
 - launchApp
 
 # Verify exercises persist
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - assertVisible:
     text: "Dev Options Offline 1"
 - assertVisible:
@@ -93,8 +90,7 @@ appId: com.jimmysolutions.strengthassistant.test
     appId: com.jimmysolutions.strengthassistant.test
 
 - tapOn:
-    text: "Exercises"
-- wait: 5000
+    id: "exercisesTab"
 
 # Should sync and preserve exercises
 - assertVisible:
@@ -111,7 +107,7 @@ appId: com.jimmysolutions.strengthassistant.test
     text: "Delete"
 
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - tapOn:
     text: "Dev Options Offline 2"
 - tapOn:

@@ -6,24 +6,30 @@ appId: com.jimmysolutions.strengthassistant.test
 
 - launchApp
 
+# Handle authentication - continue as guest
+- assertVisible:
+    text: "Continue as Guest"
+- tapOn:
+    id: "continue-as-guest"
+
 # Check that sync status indicator is present and functioning
 - assertVisible:
     id: "sync-status-indicator"
 
 # Navigate to exercises to test basic functionality
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - assertVisible:
-    text: "Exercises"
+    id: "exercisesTab"
 
 # Add a simple exercise to test sync
 - tapOn:
-    id: "add-exercise-button"
+    id: "add-exercise"
 - tapOn:
-    id: "exercise-name-input"
+    id: "name"
 - inputText: "Connectivity Test"
 - tapOn:
-    id: "save-exercise-button"
+    id: "submit"
 
 # Verify exercise is created
 - assertVisible:
@@ -33,12 +39,9 @@ appId: com.jimmysolutions.strengthassistant.test
 - assertVisible:
     id: "sync-status-indicator"
 
-# Wait for potential sync
-- wait: 2000
-
-# Verify no errors occurred
-- runFlow:
-    file: ../../.maestro/shared/error-check.yml
+# Verify no errors occurred and sync completed
+- assertNotVisible:
+    id: "maestro-error-blocker"
 
 # Clean up
 - tapOn:

@@ -3,10 +3,11 @@
 url: ${APP_URL}
 timeout: 60000
 ---
-# Ensure we're on the exercises screen before trying to add an exercise
-- runFlow:
-    file: navigate-to-exercises.yml
+# Navigate to exercises tab
+- tapOn:
+    text: "Exercises"
 
+# Add the exercise
 - tapOn:
     id: "add-exercise"
 - takeScreenshot: "add-exercise-form-opened.png"
@@ -18,6 +19,6 @@ timeout: 60000
     id: "submit"
 - takeScreenshot: "after-submit.png"
 # After submission, app navigates to workout screen, so wait for that
-- waitForAnimationToEnd:
-    timeout: 5000
+- assertVisible:
+    text: "Workout"
 - takeScreenshot: "exercise-added.png"

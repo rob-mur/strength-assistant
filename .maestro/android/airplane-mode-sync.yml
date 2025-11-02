@@ -9,50 +9,49 @@ appId: com.jimmysolutions.strengthassistant.test
 
 - launchApp
 
-# Wait for app to load
+# Handle authentication - continue as guest
 - assertVisible:
-    text: "Workout"
+    text: "Continue as Guest"
+- tapOn:
+    id: "continue-as-guest"
 
 # Navigate to exercises
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - assertVisible:
-    text: "Exercises"
+    id: "exercisesTab"
 
 # STEP 1: Enable airplane mode using Maestro command
 - setAirplaneMode: enabled
 
-# Wait for app to detect airplane mode
-- wait: 2000
-
-# Verify app detects offline state
+# Verify app detects offline state (this automatically waits)
 - assertVisible:
     id: "sync-status-offline"
 
 # STEP 2: Create exercises while in airplane mode
 - tapOn:
-    id: "add-exercise-button"
+    id: "add-exercise"
 - tapOn:
-    id: "exercise-name-input"
+    id: "name"
 - inputText: "Maestro Airplane Test 1"
 - tapOn:
-    id: "save-exercise-button"
+    id: "submit"
 
 - tapOn:
-    id: "add-exercise-button"
+    id: "add-exercise"
 - tapOn:
-    id: "exercise-name-input"
+    id: "name"
 - inputText: "Maestro Airplane Test 2"
 - tapOn:
-    id: "save-exercise-button"
+    id: "submit"
 
 - tapOn:
-    id: "add-exercise-button"
+    id: "add-exercise"
 - tapOn:
-    id: "exercise-name-input"
+    id: "name"
 - inputText: "Maestro Airplane Test 3"
 - tapOn:
-    id: "save-exercise-button"
+    id: "submit"
 
 # Verify exercises are created locally
 - assertVisible:
@@ -67,12 +66,12 @@ appId: com.jimmysolutions.strengthassistant.test
     id: "sync-status-pending"
 
 # STEP 3: CRITICAL TEST - Restart app while still in airplane mode
-- terminateApp
+- stopApp
 - launchApp
 
 # Navigate back to exercises
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 
 # CRITICAL ASSERTION: Exercises must persist through restart in airplane mode
 - assertVisible:
@@ -89,10 +88,7 @@ appId: com.jimmysolutions.strengthassistant.test
 # STEP 4: Disable airplane mode using Maestro command
 - setAirplaneMode: disabled
 
-# Wait for network restoration and auto-sync
-- wait: 5000
-
-# Verify app detects online state and syncs
+# Verify app detects online state and syncs (this automatically waits)
 - assertVisible:
     id: "sync-status-synced"
 
@@ -105,12 +101,12 @@ appId: com.jimmysolutions.strengthassistant.test
     text: "Maestro Airplane Test 3"
 
 # STEP 5: Final restart test with network available
-- terminateApp
+- stopApp
 - launchApp
 
 # Navigate to exercises
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 
 # FINAL CRITICAL ASSERTION: All exercises must survive the complete cycle
 - assertVisible:
@@ -126,13 +122,9 @@ appId: com.jimmysolutions.strengthassistant.test
 
 # STEP 6: Edge case - Toggle airplane mode multiple times
 - setAirplaneMode: enabled
-- wait: 1000
 - setAirplaneMode: disabled
-- wait: 1000
 - setAirplaneMode: enabled
-- wait: 1000
 - setAirplaneMode: disabled
-- wait: 3000
 
 # After rapid toggles, everything should still work
 - assertVisible:
@@ -146,23 +138,22 @@ appId: com.jimmysolutions.strengthassistant.test
 
 # STEP 7: Test creating exercise after airplane mode cycles
 - tapOn:
-    id: "add-exercise-button"
+    id: "add-exercise"
 - tapOn:
-    id: "exercise-name-input"
+    id: "name"
 - inputText: "Post Airplane Test"
 - tapOn:
-    id: "save-exercise-button"
+    id: "submit"
 
 # Should immediately sync since we're online
-- wait: 2000
 - assertVisible:
     text: "Post Airplane Test"
 - assertVisible:
     id: "sync-status-synced"
 
 # Check for any errors during the test
-- runFlow:
-    file: ../../.maestro/shared/error-check.yml
+- assertNotVisible:
+    id: "maestro-error-blocker"
 
 # Clean up all test exercises
 - tapOn:
@@ -173,7 +164,7 @@ appId: com.jimmysolutions.strengthassistant.test
     text: "Delete"
 
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - tapOn:
     text: "Maestro Airplane Test 2"
 - tapOn:
@@ -182,7 +173,7 @@ appId: com.jimmysolutions.strengthassistant.test
     text: "Delete"
 
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - tapOn:
     text: "Maestro Airplane Test 3"
 - tapOn:
@@ -191,7 +182,7 @@ appId: com.jimmysolutions.strengthassistant.test
     text: "Delete"
 
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - tapOn:
     text: "Post Airplane Test"
 - tapOn:

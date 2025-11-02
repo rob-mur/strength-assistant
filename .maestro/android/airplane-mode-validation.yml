@@ -8,15 +8,21 @@ appId: com.jimmysolutions.strengthassistant.test
 
 - launchApp
 
+# Handle authentication - continue as guest
+- assertVisible:
+    text: "Continue as Guest"
+- tapOn:
+    id: "continue-as-guest"
+
 # Wait for app to load
 - assertVisible:
-    text: "Workout"
+    id: "workoutTab"
 
 # Navigate to exercises to baseline sync state
 - tapOn:
-    text: "Exercises"
+    id: "exercisesTab"
 - assertVisible:
-    text: "Exercises"
+    id: "exercisesTab"
 
 # BASELINE: Verify app is initially online
 - assertVisible:
@@ -25,22 +31,20 @@ appId: com.jimmysolutions.strengthassistant.test
 # STEP 1: Enable airplane mode
 - setAirplaneMode: enabled
 
-# Wait for airplane mode to take effect
-- wait: 3000
-
 # CRITICAL TEST: Does app actually detect offline state?
 # If this assertion FAILS, then airplane mode is not really working
+# (assertVisible automatically waits for the element to appear)
 - assertVisible:
     id: "sync-status-offline"
 
 # STEP 2: Try to create an exercise that would normally sync immediately
 - tapOn:
-    id: "add-exercise-button"
+    id: "add-exercise"
 - tapOn:
-    id: "exercise-name-input"
+    id: "name"
 - inputText: "Airplane Mode Validation Test"
 - tapOn:
-    id: "save-exercise-button"
+    id: "submit"
 
 # CRITICAL TEST: Exercise should NOT sync while airplane mode is active
 # If app still shows "synced" then airplane mode is not working
@@ -50,10 +54,8 @@ appId: com.jimmysolutions.strengthassistant.test
 # STEP 3: Disable airplane mode
 - setAirplaneMode: disabled
 
-# Wait for network restoration
-- wait: 3000
-
 # CRITICAL TEST: App should detect network restoration
+# (assertVisible automatically waits for the element to appear)
 - assertVisible:
     id: "sync-status-synced"
 

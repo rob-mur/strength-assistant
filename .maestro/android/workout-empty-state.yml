@@ -5,9 +5,15 @@ appId: com.jimmysolutions.strengthassistant.test
 
 - launchApp
 
+# Handle authentication - continue as guest
+- assertVisible:
+    text: "Continue as Guest"
+- tapOn:
+    id: "continue-as-guest"
+
 # Wait for app to load and navigate to workout tab
 - tapOn: 
-    text: "Workout"
+    id: "workoutTab"
 
 # Verify empty state container is visible
 - assertVisible:
@@ -36,10 +42,10 @@ appId: com.jimmysolutions.strengthassistant.test
 - tapOn:
     id: "select-exercise-button"
 - assertVisible:
-    text: "Exercises"
+    id: "exercisesTab"
 
 # Return to workout to test again
 - tapOn:
-    text: "Workout"
+    id: "workoutTab"
 - assertVisible:
     text: "Ready to start your workout?"
