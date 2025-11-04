@@ -156,6 +156,7 @@ describe("SupabaseExerciseRepo", () => {
       const { exerciseUtils } = require("@/lib/data/store");
       expect(exerciseUtils.addExercise).toHaveBeenCalledWith({
         name: "Test Exercise",
+        user_id: "test-user-123",
       });
     });
 

@@ -3,7 +3,7 @@ import { ExerciseValidator } from "../models/Exercise";
 import { useAuth } from "./useAuth";
 
 export function useAddExercise(
-  uid: string,
+  _uid: string,
 ): (exercise: string) => Promise<void> {
   const { user } = useAuth();
 

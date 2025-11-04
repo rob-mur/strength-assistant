@@ -8,16 +8,6 @@ import { RepositoryUtils } from "./utils/RepositoryUtils";
 // Note: Now using Legend State's syncedSupabase for automatic offline-first sync
 // All sync operations are handled automatically by the batteries-included sync engine
 
-// Supabase database row interface for exercises
-interface SupabaseExerciseRow {
-  id: string;
-  name: string;
-  user_id: string;
-  created_at?: string;
-  updated_at?: string;
-  deleted?: boolean;
-}
-
 /**
  * Legend State + Supabase implementation of ExerciseRepo
  * Provides offline-first data access with automatic sync
