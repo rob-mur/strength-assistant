@@ -1,6 +1,0 @@
-url: http://localhost:8081
----
-- runFlow:
-    file: ../shared/error-simulation.yml
-    env:
-      APP_URL: "http://localhost:8081"

@@ -1,6 +1,0 @@
-appId: com.jimmysolutions.strengthassistant.test
----
-- runFlow:
-    file: ../shared/error-simulation.yml
-    env:
-      APP_URL: "com.jimmysolutions.strengthassistant.test"
