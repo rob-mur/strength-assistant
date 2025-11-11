@@ -21,7 +21,7 @@ export function configureLegendState(): void {
   try {
     // Set AsyncStorage globally for Legend State to use
     // This is the correct way to configure AsyncStorage for Legend State
-    (global as Record<string, unknown>).AsyncStorage = AsyncStorage;
+    (globalThis as Record<string, unknown>).AsyncStorage = AsyncStorage;
 
     console.log("✅ Legend State AsyncStorage configuration completed");
   } catch (error) {

@@ -19,7 +19,7 @@ import {
 
 // CRITICAL: Configure AsyncStorage globally before any Legend State imports
 // Set AsyncStorage globally for Legend State to detect
-(global as Record<string, unknown>).AsyncStorage = AsyncStorage;
+(globalThis as Record<string, unknown>).AsyncStorage = AsyncStorage;
 console.log("🔧 Global AsyncStorage configured for Legend State");
 
 // Catch any errors thrown by the Layout component.

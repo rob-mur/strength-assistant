@@ -283,82 +283,42 @@ export class SupabaseStorage implements StorageBackend {
 
   // User management
   async getCurrentUser(): Promise<UserAccount | null> {
-    // Check if we have a local user
     if (this.currentUser) {
-      // In production, validate that local users have valid Supabase sessions
-      // BUT handle offline mode gracefully
-      if (process.env.NODE_ENV === "production") {
-        console.log(
-          "🔐 SupabaseStorage - Production mode: validating local user session",
-        );
-        try {
-          // Add timeout to prevent hanging in airplane mode
-          const timeoutPromise = new Promise<never>((_, reject) => {
-            setTimeout(() => {
-              reject(new Error("Session validation timeout (offline mode)"));
-            }, 3000); // 3 second timeout for airplane mode
-          });
+      return await this.validateLocalUser();
+    }
 
-          const sessionPromise = this.getClient().auth.getSession();
-          const result = await Promise.race([sessionPromise, timeoutPromise]);
+    return await this.fetchInitialSession();
+  }
 
-          const {
-            data: { session },
-          } = result;
-
-          if (!session?.user) {
-            console.log(
-              "🔐 SupabaseStorage - Local user has no valid Supabase session, clearing",
-            );
-            this.currentUser = null;
-            await this.persistUserState(null);
-            this.notifyAuthStateChange(null);
-            return null;
-          }
-        } catch (error) {
-          // CRITICAL FIX: Handle network errors gracefully in airplane mode
-          if (
-            error instanceof Error &&
-            (error.message.includes("Network request failed") ||
-              error.message.includes("timeout") ||
-              error.message.includes("offline mode") ||
-              error.name === "TypeError")
-          ) {
-            console.log(
-              "🔐 SupabaseStorage - Network error during session validation (airplane mode), keeping local user:",
-              error.message,
-            );
-            // Keep the local user during network failures (airplane mode)
-            return this.currentUser;
-          }
-
-          console.error(
-            "🔐 SupabaseStorage - Error validating session, clearing local user:",
-            error,
-          );
-          this.currentUser = null;
-          await this.persistUserState(null);
-          this.notifyAuthStateChange(null);
-          return null;
-        }
-      }
+  private async validateLocalUser(): Promise<UserAccount | null> {
+    if (process.env.NODE_ENV !== "production") {
       return this.currentUser;
     }
 
-    // CRITICAL FIX: Handle offline mode when getting initial session
+    console.log(
+      "🔐 SupabaseStorage - Production mode: validating local user session",
+    );
+
     try {
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => {
-          reject(new Error("Initial session fetch timeout (offline mode)"));
-        }, 3000);
-      });
+      const session = await this.getSessionWithTimeout(
+        "Session validation timeout (offline mode)",
+      );
 
-      const sessionPromise = this.getClient().auth.getSession();
-      const result = await Promise.race([sessionPromise, timeoutPromise]);
+      if (!session?.user) {
+        return await this.clearLocalUser();
+      }
 
-      const {
-        data: { session },
-      } = result;
+      return this.currentUser;
+    } catch (error) {
+      return this.handleValidationError(error);
+    }
+  }
+
+  private async fetchInitialSession(): Promise<UserAccount | null> {
+    try {
+      const session = await this.getSessionWithTimeout(
+        "Initial session fetch timeout (offline mode)",
+      );
 
       if (!session?.user) {
         return null;
@@ -366,27 +326,76 @@ export class SupabaseStorage implements StorageBackend {
 
       return this.mapSupabaseUserToAccount(session.user);
     } catch (error) {
-      // Handle network errors gracefully when fetching initial session
-      if (
-        error instanceof Error &&
-        (error.message.includes("Network request failed") ||
-          error.message.includes("timeout") ||
-          error.message.includes("offline mode") ||
-          error.name === "TypeError")
-      ) {
-        console.log(
-          "🔐 SupabaseStorage - Network error during initial session fetch (airplane mode), returning null:",
-          error.message,
-        );
-        return null;
-      }
-
-      console.error(
-        "🔐 SupabaseStorage - Error fetching initial session:",
-        error,
-      );
-      throw error;
+      return this.handleInitialSessionError(error);
     }
+  }
+
+  private async getSessionWithTimeout(timeoutMessage: string) {
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error(timeoutMessage));
+      }, 3000);
+    });
+
+    const sessionPromise = this.getClient().auth.getSession();
+    const result = await Promise.race([sessionPromise, timeoutPromise]);
+
+    return result.data.session;
+  }
+
+  private async clearLocalUser(): Promise<null> {
+    console.log(
+      "🔐 SupabaseStorage - Local user has no valid Supabase session, clearing",
+    );
+    this.currentUser = null;
+    await this.persistUserState(null);
+    this.notifyAuthStateChange(null);
+    return null;
+  }
+
+  private handleValidationError(error: unknown): UserAccount | null {
+    if (this.isNetworkError(error)) {
+      console.log(
+        "🔐 SupabaseStorage - Network error during session validation (airplane mode), keeping local user:",
+        error instanceof Error ? error.message : String(error),
+      );
+      return this.currentUser;
+    }
+
+    console.error(
+      "🔐 SupabaseStorage - Error validating session, clearing local user:",
+      error,
+    );
+    this.currentUser = null;
+    this.persistUserState(null);
+    this.notifyAuthStateChange(null);
+    return null;
+  }
+
+  private handleInitialSessionError(error: unknown): UserAccount | null {
+    if (this.isNetworkError(error)) {
+      console.log(
+        "🔐 SupabaseStorage - Network error during initial session fetch (airplane mode), returning null:",
+        error instanceof Error ? error.message : String(error),
+      );
+      return null;
+    }
+
+    console.error(
+      "🔐 SupabaseStorage - Error fetching initial session:",
+      error,
+    );
+    throw error;
+  }
+
+  private isNetworkError(error: unknown): boolean {
+    return (
+      error instanceof Error &&
+      (error.message.includes("Network request failed") ||
+        error.message.includes("timeout") ||
+        error.message.includes("offline mode") ||
+        error.name === "TypeError")
+    );
   }
 
   async signInWithEmail(email: string, password: string): Promise<UserAccount> {

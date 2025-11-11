@@ -15,7 +15,7 @@ import { RepositoryUtils } from "./utils/RepositoryUtils";
 export class SupabaseExerciseRepo implements IExerciseRepo {
   private static instance: SupabaseExerciseRepo;
   private readonly syncInstance: object | null = null;
-  private _realtimeChannel: object | null = null;
+  private readonly _realtimeChannel: object | null = null;
 
   private constructor() {}
 

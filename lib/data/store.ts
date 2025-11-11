@@ -152,7 +152,7 @@ export const exerciseUtils = {
 
     const id = uuidv4();
     // This will automatically sync via syncedSupabase
-    (exercisesObject$ as Observable<Record<string, Exercise>>)[id].set({
+    exercisesObject$[id].set({
       id,
       name: exercise.name,
       user_id: exercise.user_id, // Now properly set from parameter
@@ -174,7 +174,7 @@ export const exerciseUtils = {
       return;
     }
 
-    (exercisesObject$ as Observable<Record<string, Exercise>>)[id].assign({
+    exercisesObject$[id].assign({
       ...updates,
       updated_at: new Date().toISOString(),
     });
@@ -191,9 +191,7 @@ export const exerciseUtils = {
       return;
     }
 
-    (exercisesObject$ as Observable<Record<string, Exercise>>)[id].deleted.set(
-      true,
-    );
+    exercisesObject$[id].deleted.set(true);
   },
 
   /**
@@ -205,6 +203,6 @@ export const exerciseUtils = {
       return undefined;
     }
 
-    return (exercisesObject$ as Observable<Record<string, Exercise>>)[id].get();
+    return exercisesObject$[id].get();
   },
 };
