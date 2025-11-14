@@ -19,9 +19,13 @@ cleanup() {
     # Kill Chrome/ChromeDriver processes
     pkill -f "chrome.*--headless" 2>/dev/null || true
     pkill -f "chromedriver" 2>/dev/null || true
+    pkill -9 chromium 2>/dev/null || true
+    pkill -9 chrome_crashpad_handler 2>/dev/null || true
 
-    # Cleanup temp files
+    # Cleanup temp files and directories
     rm -f "$CHROME_WRAPPER_SCRIPT" 2>/dev/null || true
+    rm -rf /tmp/chrome-maestro-* 2>/dev/null || true
+    rm -rf /tmp/chrome-test-* 2>/dev/null || true
 }
 
 trap cleanup EXIT ERR
@@ -90,7 +94,12 @@ echo "🚀 Starting Chrome for Maestro testing..."
 # Force use of devbox-provided chromium to match chromedriver version
 if command -v chromium >/dev/null 2>&1; then
     echo "📱 Using devbox Chromium browser ($(chromium --version 2>/dev/null || echo 'version unknown'))"
-    exec chromium --no-sandbox --headless --disable-dev-shm-usage --disable-gpu --user-data-dir=/tmp/chrome-test-$$ "$@"
+    # Use timestamp and random number for unique user data directory
+    TIMESTAMP=$(date +%s)
+    RANDOM_NUM=$RANDOM
+    USER_DATA_DIR="/tmp/chrome-maestro-${TIMESTAMP}-${RANDOM_NUM}-$$"
+    echo "🗂️ Using unique user data directory: $USER_DATA_DIR"
+    exec chromium --no-sandbox --headless --disable-dev-shm-usage --disable-gpu --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --user-data-dir="$USER_DATA_DIR" --remote-debugging-port=0 "$@"
 else
     echo "❌ Chromium not found in devbox environment"
     echo "Available browsers:"
@@ -135,6 +144,9 @@ rm -rf /tmp/.org.chromium.Chromium.* 2>/dev/null || true
 rm -rf /tmp/chrome-* 2>/dev/null || true
 rm -rf /tmp/maestro-chrome-* 2>/dev/null || true
 rm -rf /tmp/.com.google.Chrome.* 2>/dev/null || true
+# Remove any existing Chrome user data directories from previous runs
+rm -rf /tmp/chrome-test-* 2>/dev/null || true
+rm -rf /tmp/chrome-maestro-* 2>/dev/null || true
 
 echo "🧹 Pre-test cleanup: Removing Chromium lock files..."
 rm -f /home/rob/.config/chromium/SingletonLock 2>/dev/null || true
@@ -178,6 +190,9 @@ for test_file in .maestro/web/*.yml; do
         rm -rf /tmp/chrome-* 2>/dev/null || true
         rm -rf /tmp/maestro-chrome-* 2>/dev/null || true
         rm -rf /tmp/.com.google.Chrome.* 2>/dev/null || true
+        # Remove any Chrome user data directories from previous test runs
+        rm -rf /tmp/chrome-test-* 2>/dev/null || true
+        rm -rf /tmp/chrome-maestro-* 2>/dev/null || true
 
         # Clean Chromium config lock files
         echo "🧹 Cleaning Chromium lock files..."
