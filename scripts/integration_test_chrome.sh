@@ -26,6 +26,7 @@ cleanup() {
     rm -f "$CHROME_WRAPPER_SCRIPT" 2>/dev/null || true
     rm -rf /tmp/chrome-maestro-* 2>/dev/null || true
     rm -rf /tmp/chrome-test-* 2>/dev/null || true
+    rm -rf /tmp/chrome-custom-bin-* 2>/dev/null || true
 }
 
 trap cleanup EXIT ERR
@@ -85,30 +86,35 @@ echo "⏳ Waiting for Expo to fully initialize..."
 sleep 5
 echo "✅ Expo web server ready"
 
-# Create Chrome wrapper script
+# Create Chrome wrapper script that will replace the chromium binary
 CHROME_WRAPPER_SCRIPT="/tmp/chrome-wrapper-$$"
+ORIGINAL_CHROMIUM_PATH=$(command -v chromium)
 
 cat > "$CHROME_WRAPPER_SCRIPT" << 'EOF'
 #!/bin/bash
 echo "🚀 Starting Chrome for Maestro testing..."
-# Force use of devbox-provided chromium to match chromedriver version
-if command -v chromium >/dev/null 2>&1; then
-    echo "📱 Using devbox Chromium browser ($(chromium --version 2>/dev/null || echo 'version unknown'))"
-    # Use timestamp and random number for unique user data directory
-    TIMESTAMP=$(date +%s)
-    RANDOM_NUM=$RANDOM
-    USER_DATA_DIR="/tmp/chrome-maestro-${TIMESTAMP}-${RANDOM_NUM}-$$"
-    echo "🗂️ Using unique user data directory: $USER_DATA_DIR"
-    exec chromium --no-sandbox --headless --disable-dev-shm-usage --disable-gpu --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --user-data-dir="$USER_DATA_DIR" --remote-debugging-port=0 "$@"
-else
-    echo "❌ Chromium not found in devbox environment"
-    echo "Available browsers:"
-    command -v google-chrome >/dev/null 2>&1 && echo "  - google-chrome: $(google-chrome --version 2>/dev/null || echo 'version unknown')"
-    command -v chrome >/dev/null 2>&1 && echo "  - chrome: $(chrome --version 2>/dev/null || echo 'version unknown')"
-    exit 1
-fi
+# Use timestamp and random number for unique user data directory
+TIMESTAMP=$(date +%s)
+RANDOM_NUM=$RANDOM
+USER_DATA_DIR="/tmp/chrome-maestro-${TIMESTAMP}-${RANDOM_NUM}-$$"
+echo "🗂️ Using unique user data directory: $USER_DATA_DIR"
+
+# Use the original chromium binary path stored by the calling script
+exec "$ORIGINAL_CHROMIUM_PATH" --no-sandbox --headless --disable-dev-shm-usage --disable-gpu --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --user-data-dir="$USER_DATA_DIR" --remote-debugging-port=0 "$@"
 EOF
+
+# Pass the original chromium path to the wrapper script
+sed -i "s|\$ORIGINAL_CHROMIUM_PATH|$ORIGINAL_CHROMIUM_PATH|g" "$CHROME_WRAPPER_SCRIPT"
 chmod +x "$CHROME_WRAPPER_SCRIPT"
+
+# Create a custom PATH that puts our wrapper first
+CUSTOM_BIN_DIR="/tmp/chrome-custom-bin-$$"
+mkdir -p "$CUSTOM_BIN_DIR"
+cp "$CHROME_WRAPPER_SCRIPT" "$CUSTOM_BIN_DIR/chromium"
+chmod +x "$CUSTOM_BIN_DIR/chromium"
+
+# Put our custom bin directory at the front of PATH
+export PATH="$CUSTOM_BIN_DIR:$PATH"
 export MAESTRO_CHROME_PATH="$CHROME_WRAPPER_SCRIPT"
 
 # Debug: Show what's available in PATH
@@ -133,6 +139,15 @@ echo "🎭 Maestro Configuration:"
 echo "  MAESTRO_CHROME_PATH: ${MAESTRO_CHROME_PATH:-not set}"
 echo "  MAESTRO_CHROMEDRIVER_PATH: ${MAESTRO_CHROMEDRIVER_PATH:-not set}"
 
+# Also set Chrome binary path for Selenium WebDriver directly
+echo "🔧 Setting Selenium Chrome options..."
+export CHROME_EXECUTABLE="$CHROME_WRAPPER_SCRIPT"
+export GOOGLE_CHROME_BIN="$CHROME_WRAPPER_SCRIPT"
+export CHROME_BIN="$CHROME_WRAPPER_SCRIPT"
+echo "  CHROME_EXECUTABLE: ${CHROME_EXECUTABLE}"
+echo "  GOOGLE_CHROME_BIN: ${GOOGLE_CHROME_BIN}"
+echo "  CHROME_BIN: ${CHROME_BIN}"
+
 # Clean up any existing Chrome processes and temp files BEFORE starting tests
 echo "🧹 Pre-test cleanup: Killing all Chrome/Chromium processes..."
 pkill -9 chromium 2>/dev/null || true
@@ -147,6 +162,7 @@ rm -rf /tmp/.com.google.Chrome.* 2>/dev/null || true
 # Remove any existing Chrome user data directories from previous runs
 rm -rf /tmp/chrome-test-* 2>/dev/null || true
 rm -rf /tmp/chrome-maestro-* 2>/dev/null || true
+rm -rf /tmp/chrome-custom-bin-* 2>/dev/null || true
 
 echo "🧹 Pre-test cleanup: Removing Chromium lock files..."
 rm -f /home/rob/.config/chromium/SingletonLock 2>/dev/null || true
@@ -193,6 +209,7 @@ for test_file in .maestro/web/*.yml; do
         # Remove any Chrome user data directories from previous test runs
         rm -rf /tmp/chrome-test-* 2>/dev/null || true
         rm -rf /tmp/chrome-maestro-* 2>/dev/null || true
+        rm -rf /tmp/chrome-custom-bin-* 2>/dev/null || true
 
         # Clean Chromium config lock files
         echo "🧹 Cleaning Chromium lock files..."
