@@ -4,21 +4,47 @@ set -e
 
 echo "🌐 Starting Chrome Integration Tests"
 
+# Initial cleanup to ensure no leftover Chrome processes
+echo "🧹 Initial cleanup of any existing Chrome processes..."
+pgrep -f "chrome" | xargs kill -9 2>/dev/null || true
+pgrep -f "chromium" | xargs kill -9 2>/dev/null || true
+rm -rf /tmp/chrome-* 2>/dev/null || true
+sleep 1
+
 # Change to project root directory (relative to scripts folder)
 cd "$(dirname "$0")/.."
 
 # Cleanup function - runs at script exit
 cleanup() {
     echo "🧹 Cleaning up processes..."
+    
+    # Force kill any Chrome processes that might be lingering
+    pkill -f "chrome" 2>/dev/null || true
+    pkill -f "chromium" 2>/dev/null || true
+    sleep 2
+    
     supabase stop 2>/dev/null || true
 
     if [ ! -z "$EXPO_PID" ]; then
         kill $EXPO_PID 2>/dev/null || true
     fi
 
-    # Clean up Chrome temp directories  
+    # Clean up Chrome temp directories and wrapper scripts
     echo "🧹 Cleaning up Chrome temp directories..."
     rm -rf /tmp/chrome-* 2>/dev/null || true
+    
+    # Restore any overridden system binaries
+    if [ -d "/tmp/chrome-backup-$$" ]; then
+        echo "🔄 Restoring system Chrome binaries..."
+        for backup_file in "/tmp/chrome-backup-$$"/*.backup; do
+            if [ -f "$backup_file" ]; then
+                binary_name="$(basename "$backup_file" .backup)"
+                system_path="/usr/bin/$binary_name"
+                sudo mv "$backup_file" "$system_path" 2>/dev/null || mv "$backup_file" "$system_path" 2>/dev/null || true
+            fi
+        done
+        rm -rf "/tmp/chrome-backup-$$" 2>/dev/null || true
+    fi
 }
 
 trap cleanup EXIT ERR
@@ -113,7 +139,95 @@ echo "🗂️ Using unique user data directory: $UNIQUE_USER_DATA_DIR"
 export GOOGLE_CHROME_OPTS="--no-sandbox --disable-dev-shm-usage --disable-gpu --user-data-dir=$UNIQUE_USER_DATA_DIR --remote-debugging-port=0"
 export CHROME_USER_DATA_DIR="$UNIQUE_USER_DATA_DIR"
 
+# CRITICAL: Force Maestro/Selenium to use our Devbox Chrome binary instead of system chrome
+export CHROME_BINARY="$CHROME_PATH"
+export CHROMIUM_BINARY="$CHROME_PATH"  
+export GOOGLE_CHROME_BINARY="$CHROME_PATH"
+
+# Selenium WebDriver environment variables
+export WEBDRIVER_CHROME_BINARY="$CHROME_PATH"
+export SELENIUM_CHROME_BINARY="$CHROME_PATH"
+# Note: webdriver.chrome.driver can't be exported as env var due to dots
+
+# Disable Selenium's automatic WebDriver management and clear cache
+export SELENIUM_MANAGER_DISABLED="true"
+export WDM_LOCAL="$CHROME_PATH"
+export CHROMEDRIVER_BINARY_PATH="$(command -v chromedriver)"
+
+# Clear Selenium's WebDriverManager cache to prevent using downloaded Chrome
+echo "🧹 Clearing Selenium WebDriverManager cache..."
+rm -rf "$HOME/.cache/selenium" 2>/dev/null || true
+rm -rf "$HOME/.wdm" 2>/dev/null || true
+
+# Set Java system properties for Selenium WebDriver (these are often more reliable)
+export JAVA_OPTS="-Dwebdriver.chrome.driver=$(command -v chromedriver) -Dchrome.binary=$CHROME_PATH"
+export _JAVA_OPTIONS="-Dwebdriver.chrome.driver=$(command -v chromedriver) -Dchrome.binary=$CHROME_PATH"
+
+# Create a chrome wrapper script that Maestro will find in PATH before system chrome
+CHROME_WRAPPER_DIR="/tmp/chrome-wrapper-$$"
+mkdir -p "$CHROME_WRAPPER_DIR"
+
+# Create wrapper scripts that point to our Devbox Chrome
+cat > "$CHROME_WRAPPER_DIR/chrome" << EOF
+#!/bin/bash
+exec "$CHROME_PATH" "\$@"
+EOF
+
+cat > "$CHROME_WRAPPER_DIR/chromium" << EOF
+#!/bin/bash
+exec "$CHROME_PATH" "\$@"
+EOF
+
+cat > "$CHROME_WRAPPER_DIR/chromium-browser" << EOF
+#!/bin/bash
+exec "$CHROME_PATH" "\$@"
+EOF
+
+cat > "$CHROME_WRAPPER_DIR/google-chrome" << EOF
+#!/bin/bash
+exec "$CHROME_PATH" "\$@"
+EOF
+
+cat > "$CHROME_WRAPPER_DIR/google-chrome-stable" << EOF
+#!/bin/bash
+exec "$CHROME_PATH" "\$@"
+EOF
+
+chmod +x "$CHROME_WRAPPER_DIR"/*
+
+# Prepend wrapper directory to PATH so Maestro finds our Chrome instead of system Chrome
+export PATH="$CHROME_WRAPPER_DIR:$PATH"
+
+# AGGRESSIVE FIX: Temporarily override system Chrome binaries
+# This ensures Selenium can't find any other Chrome binaries
+BACKUP_DIR="/tmp/chrome-backup-$$"
+mkdir -p "$BACKUP_DIR"
+
+# Function to safely override a system binary
+override_system_binary() {
+    local binary_path="$1"
+    local binary_name="$(basename "$binary_path")"
+    
+    if [ -f "$binary_path" ]; then
+        echo "🔧 Backing up and overriding $binary_path"
+        sudo cp "$binary_path" "$BACKUP_DIR/$binary_name.backup" 2>/dev/null || cp "$binary_path" "$BACKUP_DIR/$binary_name.backup" 2>/dev/null || true
+        sudo ln -sf "$CHROME_PATH" "$binary_path" 2>/dev/null || ln -sf "$CHROME_PATH" "$binary_path" 2>/dev/null || true
+    fi
+}
+
+# Override common Chrome binary locations
+override_system_binary "/usr/bin/chromium-browser"
+override_system_binary "/usr/bin/google-chrome"
+override_system_binary "/usr/bin/google-chrome-stable"
+override_system_binary "/usr/bin/chromium"
+override_system_binary "/usr/bin/chrome"
+
 echo "✅ Google Chrome configured with CI flags via environment variables"
+echo "🔍 Chrome binary verification:"
+echo "  CHROME_PATH: $CHROME_PATH"
+echo "  which chrome: $(which chrome 2>/dev/null || echo 'not found')"
+echo "  which chromium-browser: $(which chromium-browser 2>/dev/null || echo 'not found')"
+echo "  which google-chrome-stable: $(which google-chrome-stable 2>/dev/null || echo 'not found')"
 
 # Clear Supabase database once before running tests
 echo "🧹 Clearing Supabase database..."
