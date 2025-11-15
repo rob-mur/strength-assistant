@@ -16,9 +16,10 @@ cleanup() {
         kill $EXPO_PID 2>/dev/null || true
     fi
 
-    # Simple cleanup
-    pkill chromium 2>/dev/null || true
+    # Minimal cleanup - Maestro handles Chrome processes
     rm -rf /tmp/chrome-simple-* 2>/dev/null || true
+    rm -rf /tmp/chrome-maestro-* 2>/dev/null || true
+    rm -rf /tmp/chrome-ci-* 2>/dev/null || true
 }
 
 trap cleanup EXIT ERR
@@ -78,27 +79,14 @@ echo "⏳ Waiting for Expo to fully initialize..."
 sleep 5
 echo "✅ Expo web server ready"
 
-# Simple approach: Set environment variable to force unique Chrome user data directory
-echo "🔧 Setting unique Chrome user data directory..."
-TIMESTAMP=$(date +%s)
-RANDOM_NUM=$RANDOM
-UNIQUE_USER_DATA_DIR="/tmp/chrome-simple-${TIMESTAMP}-${RANDOM_NUM}-$$"
+# Chrome configuration is now handled by .maestro/config.yaml
+echo "🔧 Chrome configuration will be handled by Maestro config file"
 
-# Ensure directory exists with proper permissions
-mkdir -p "$UNIQUE_USER_DATA_DIR"
-chmod 755 "$UNIQUE_USER_DATA_DIR"
-
-# Set Chrome options as environment variables that Selenium will pick up
-export CHROME_USER_DATA_DIR="$UNIQUE_USER_DATA_DIR"
-export GOOGLE_CHROME_OPTS="--user-data-dir=$UNIQUE_USER_DATA_DIR --no-sandbox --headless --disable-dev-shm-usage --disable-gpu --remote-debugging-port=0"
-
-echo "🔧 Simple Chrome configuration:"
-echo "  CHROME_USER_DATA_DIR: ${CHROME_USER_DATA_DIR}"
-echo "  GOOGLE_CHROME_OPTS: ${GOOGLE_CHROME_OPTS}"
-
-# Minimal cleanup - just remove our old temp directories
+# Clean up any old temp directories from previous approaches
 echo "🧹 Removing old Chrome temp directories..."
 rm -rf /tmp/chrome-simple-* 2>/dev/null || true
+rm -rf /tmp/chrome-maestro-* 2>/dev/null || true
+rm -rf /tmp/chrome-ci-* 2>/dev/null || true
 
 # Clear Supabase database once before running tests
 echo "🧹 Clearing Supabase database..."
@@ -118,8 +106,7 @@ for test_file in .maestro/web/*.yml; do
     if [ -f "$test_file" ]; then
         echo "🧪 Running $(basename "$test_file")..."
 
-        # Minimal cleanup between tests - just kill chromium processes
-        pkill chromium 2>/dev/null || true
+        # Maestro handles Chrome lifecycle, no manual cleanup needed
 
         maestro test "$test_file" \
           --headless \
