@@ -16,12 +16,9 @@ cleanup() {
         kill $EXPO_PID 2>/dev/null || true
     fi
 
-    # Clean up wrapper directories and temp files
-    echo "🧹 Cleaning up Chrome wrapper and temp directories..."
-    rm -rf /tmp/chrome-simple-* 2>/dev/null || true
-    rm -rf /tmp/chrome-maestro-* 2>/dev/null || true
-    rm -rf /tmp/chrome-ci-* 2>/dev/null || true
-    rm -rf /tmp/chrome-wrapper-* 2>/dev/null || true
+    # Clean up Chrome temp directories  
+    echo "🧹 Cleaning up Chrome temp directories..."
+    rm -rf /tmp/chrome-* 2>/dev/null || true
 }
 
 trap cleanup EXIT ERR
@@ -81,45 +78,32 @@ echo "⏳ Waiting for Expo to fully initialize..."
 sleep 5
 echo "✅ Expo web server ready"
 
-# Implement Chrome wrapper approach adapted for Nix store (read-only)
-echo "🔧 Setting up Chrome wrapper for CI compatibility..."
+# Using google-chrome-stable approach from Maestro issue #2576  
+echo "🔧 Setting up Google Chrome with CI-compatible flags via environment..."
 
-# Find the original chromium binary
-ORIGINAL_CHROMIUM_PATH=$(command -v chromium)
-if [ -z "$ORIGINAL_CHROMIUM_PATH" ]; then
-    echo "❌ Chromium binary not found"
+# Find the google-chrome-stable binary
+CHROME_PATH=$(command -v google-chrome-stable)
+if [ -z "$CHROME_PATH" ]; then
+    echo "❌ Google Chrome Stable binary not found"
     exit 1
 fi
 
-echo "📍 Found original Chromium at: $ORIGINAL_CHROMIUM_PATH"
+echo "📍 Found Google Chrome at: $CHROME_PATH"
 
 # Create unique user data directory for this test run
 TIMESTAMP=$(date +%s)
 RANDOM_NUM=$RANDOM
-UNIQUE_USER_DATA_DIR="/tmp/chrome-wrapper-${TIMESTAMP}-${RANDOM_NUM}-$$"
+UNIQUE_USER_DATA_DIR="/tmp/chrome-${TIMESTAMP}-${RANDOM_NUM}-$$"
 mkdir -p "$UNIQUE_USER_DATA_DIR"
 chmod 755 "$UNIQUE_USER_DATA_DIR"
 
 echo "🗂️ Using unique user data directory: $UNIQUE_USER_DATA_DIR"
 
-# Create wrapper directory and script in writable location
-WRAPPER_DIR="/tmp/chrome-wrapper-bin-$$"
-mkdir -p "$WRAPPER_DIR"
+# Set Chrome options via environment variables that Maestro/Selenium will use
+export GOOGLE_CHROME_OPTS="--no-sandbox --disable-dev-shm-usage --disable-gpu --user-data-dir=$UNIQUE_USER_DATA_DIR --remote-debugging-port=0"
+export CHROME_USER_DATA_DIR="$UNIQUE_USER_DATA_DIR"
 
-# Create chromium wrapper script
-echo "🔧 Creating Chrome wrapper with CI-compatible flags..."
-cat > "$WRAPPER_DIR/chromium" << EOF
-#!/bin/sh
-exec "$ORIGINAL_CHROMIUM_PATH" "\${@}" --no-sandbox --disable-dev-shm-usage --disable-gpu --user-data-dir="$UNIQUE_USER_DATA_DIR" --remote-debugging-port=0
-EOF
-
-chmod 0755 "$WRAPPER_DIR/chromium"
-
-# Put wrapper directory at the front of PATH so it's found first
-export PATH="$WRAPPER_DIR:$PATH"
-
-echo "✅ Chrome wrapper configured successfully at: $WRAPPER_DIR/chromium"
-echo "🔧 PATH updated to use wrapper: $PATH" | head -c 100
+echo "✅ Google Chrome configured with CI flags via environment variables"
 
 # Clear Supabase database once before running tests
 echo "🧹 Clearing Supabase database..."
