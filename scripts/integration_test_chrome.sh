@@ -16,17 +16,9 @@ cleanup() {
         kill $EXPO_PID 2>/dev/null || true
     fi
 
-    # Kill specific Chrome/ChromeDriver processes (targeted)
-    pkill -9 chromium 2>/dev/null || true
-    pkill -9 chrome_crashpad_handler 2>/dev/null || true
-    pkill -9 chromedriver 2>/dev/null || true
-
-    # Cleanup temp files and directories
-    rm -f "$CHROME_WRAPPER_SCRIPT" 2>/dev/null || true
-    rm -rf /tmp/chrome-maestro-* 2>/dev/null || true
-    rm -rf /tmp/chrome-test-* 2>/dev/null || true
-    rm -rf /tmp/chrome-custom-bin-* 2>/dev/null || true
-    rm -rf /tmp/chrome-ci-* 2>/dev/null || true
+    # Simple cleanup
+    pkill chromium 2>/dev/null || true
+    rm -rf /tmp/chrome-simple-* 2>/dev/null || true
 }
 
 trap cleanup EXIT ERR
@@ -86,122 +78,27 @@ echo "⏳ Waiting for Expo to fully initialize..."
 sleep 5
 echo "✅ Expo web server ready"
 
-# Create Chrome wrapper script that will replace the chromium binary
-CHROME_WRAPPER_SCRIPT="/tmp/chrome-wrapper-$$"
-ORIGINAL_CHROMIUM_PATH=$(command -v chromium)
-
-cat > "$CHROME_WRAPPER_SCRIPT" << 'EOF'
-#!/bin/bash
-echo "🚀 Starting Chrome for Maestro testing..."
-# Use timestamp and random number for unique user data directory
+# Simple approach: Set environment variable to force unique Chrome user data directory
+echo "🔧 Setting unique Chrome user data directory..."
 TIMESTAMP=$(date +%s)
 RANDOM_NUM=$RANDOM
-USER_DATA_DIR="/tmp/chrome-maestro-${TIMESTAMP}-${RANDOM_NUM}-$$"
-echo "🗂️ Using unique user data directory: $USER_DATA_DIR"
+UNIQUE_USER_DATA_DIR="/tmp/chrome-simple-${TIMESTAMP}-${RANDOM_NUM}-$$"
 
-# Use the original chromium binary path stored by the calling script
-exec "$ORIGINAL_CHROMIUM_PATH" --no-sandbox --headless --disable-dev-shm-usage --disable-gpu --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --user-data-dir="$USER_DATA_DIR" --remote-debugging-port=0 "$@"
-EOF
-
-# Pass the original chromium path to the wrapper script
-sed -i "s|\$ORIGINAL_CHROMIUM_PATH|$ORIGINAL_CHROMIUM_PATH|g" "$CHROME_WRAPPER_SCRIPT"
-chmod +x "$CHROME_WRAPPER_SCRIPT"
-
-# Create a custom PATH that puts our wrapper first
-CUSTOM_BIN_DIR="/tmp/chrome-custom-bin-$$"
-mkdir -p "$CUSTOM_BIN_DIR"
-cp "$CHROME_WRAPPER_SCRIPT" "$CUSTOM_BIN_DIR/chromium"
-chmod +x "$CUSTOM_BIN_DIR/chromium"
-
-# Put our custom bin directory at the front of PATH
-export PATH="$CUSTOM_BIN_DIR:$PATH"
-export MAESTRO_CHROME_PATH="$CHROME_WRAPPER_SCRIPT"
-
-# Debug: Show what's available in PATH
-echo "🔍 Environment Debug Information:"
-echo "PATH: $PATH"
-echo "Available chrome/chromium binaries:"
-command -v chromium >/dev/null 2>&1 && echo "  ✅ chromium: $(command -v chromium) ($(chromium --version 2>/dev/null || echo 'version unknown'))"
-command -v google-chrome >/dev/null 2>&1 && echo "  📍 google-chrome: $(command -v google-chrome) ($(google-chrome --version 2>/dev/null || echo 'version unknown'))"
-command -v chrome >/dev/null 2>&1 && echo "  📍 chrome: $(command -v chrome) ($(chrome --version 2>/dev/null || echo 'version unknown'))"
-
-# Set ChromeDriver path to use devbox-provided version
-if command -v chromedriver >/dev/null 2>&1; then
-    CHROMEDRIVER_PATH=$(command -v chromedriver)
-    export MAESTRO_CHROMEDRIVER_PATH="$CHROMEDRIVER_PATH"
-    echo "🔧 Using ChromeDriver: $CHROMEDRIVER_PATH ($(chromedriver --version 2>/dev/null || echo 'version unknown'))"
-else
-    echo "⚠️ ChromeDriver not found in PATH"
-fi
-
-# Verify Maestro environment variables
-echo "🎭 Maestro Configuration:"
-echo "  MAESTRO_CHROME_PATH: ${MAESTRO_CHROME_PATH:-not set}"
-echo "  MAESTRO_CHROMEDRIVER_PATH: ${MAESTRO_CHROMEDRIVER_PATH:-not set}"
-
-# Also set Chrome binary path for Selenium WebDriver directly
-echo "🔧 Setting Selenium Chrome options..."
-export CHROME_EXECUTABLE="$CHROME_WRAPPER_SCRIPT"
-export GOOGLE_CHROME_BIN="$CHROME_WRAPPER_SCRIPT"
-export CHROME_BIN="$CHROME_WRAPPER_SCRIPT"
-
-# CI-specific: Set additional Chrome options as environment variables
-# that Selenium WebDriver can pick up directly
-echo "🔧 Setting CI-specific Chrome options..."
-TIMESTAMP=$(date +%s)
-RANDOM_NUM=$RANDOM
-UNIQUE_USER_DATA_DIR="/tmp/chrome-ci-${TIMESTAMP}-${RANDOM_NUM}-$$"
-
-# Ensure the unique directory is created with proper permissions
+# Ensure directory exists with proper permissions
 mkdir -p "$UNIQUE_USER_DATA_DIR"
 chmod 755 "$UNIQUE_USER_DATA_DIR"
 
+# Set Chrome options as environment variables that Selenium will pick up
 export CHROME_USER_DATA_DIR="$UNIQUE_USER_DATA_DIR"
-export CHROME_FLAGS="--no-sandbox --headless --disable-dev-shm-usage --disable-gpu --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --user-data-dir=$UNIQUE_USER_DATA_DIR --remote-debugging-port=0"
+export GOOGLE_CHROME_OPTS="--user-data-dir=$UNIQUE_USER_DATA_DIR --no-sandbox --headless --disable-dev-shm-usage --disable-gpu --remote-debugging-port=0"
 
-# CI-specific: Try to force Chrome options through Selenium WebDriver
-export SELENIUM_CHROME_ARGS="--no-sandbox,--headless,--disable-dev-shm-usage,--disable-gpu,--user-data-dir=$UNIQUE_USER_DATA_DIR,--remote-debugging-port=0"
-export WEBDRIVER_CHROME_ARGS="$CHROME_FLAGS"
-
-echo "  CHROME_EXECUTABLE: ${CHROME_EXECUTABLE}"
-echo "  GOOGLE_CHROME_BIN: ${GOOGLE_CHROME_BIN}"
-echo "  CHROME_BIN: ${CHROME_BIN}"
+echo "🔧 Simple Chrome configuration:"
 echo "  CHROME_USER_DATA_DIR: ${CHROME_USER_DATA_DIR}"
-echo "  CHROME_FLAGS: ${CHROME_FLAGS}"
-echo "  SELENIUM_CHROME_ARGS: ${SELENIUM_CHROME_ARGS}"
-echo "  WEBDRIVER_CHROME_ARGS: ${WEBDRIVER_CHROME_ARGS}"
+echo "  GOOGLE_CHROME_OPTS: ${GOOGLE_CHROME_OPTS}"
 
-# Clean up any existing Chrome processes and temp files BEFORE starting tests
-echo "🧹 Pre-test cleanup: Targeted Chrome process cleanup..."
-# Only kill specific Chrome processes, not broad pattern matches that might affect other processes
-pkill -9 chromium 2>/dev/null || true
-pkill -9 chrome_crashpad_handler 2>/dev/null || true
-pkill -9 chromedriver 2>/dev/null || true
-
-# Wait briefly for processes to terminate
-echo "⏳ Waiting for Chrome processes to terminate..."
-sleep 2
-
-echo "🧹 Pre-test cleanup: Removing specific Chrome temp directories..."
-# Only remove our specific temp directories, not broad patterns
-rm -rf /tmp/chrome-maestro-* 2>/dev/null || true
-rm -rf /tmp/chrome-test-* 2>/dev/null || true
-rm -rf /tmp/chrome-custom-bin-* 2>/dev/null || true
-rm -rf /tmp/chrome-ci-* 2>/dev/null || true
-# Remove Chrome lock files that might cause conflicts
-rm -rf /tmp/.org.chromium.Chromium.*lock* 2>/dev/null || true
-
-echo "🧹 Pre-test cleanup: Removing Chromium lock files..."
-rm -f /home/rob/.config/chromium/SingletonLock 2>/dev/null || true
-rm -f /home/rob/.config/chromium/SingletonSocket 2>/dev/null || true
-rm -f /home/rob/.config/chromium/SingletonCookie 2>/dev/null || true
-
-# Clear Selenium Manager cache to force use of our Chromium
-echo "🧹 Clearing Selenium Manager cache..."
-rm -rf /home/rob/.cache/selenium/chrome 2>/dev/null || true
-
-echo "⏳ Waiting for cleanup to complete..."
-sleep 3
+# Minimal cleanup - just remove our old temp directories
+echo "🧹 Removing old Chrome temp directories..."
+rm -rf /tmp/chrome-simple-* 2>/dev/null || true
 
 # Clear Supabase database once before running tests
 echo "🧹 Clearing Supabase database..."
@@ -221,38 +118,8 @@ for test_file in .maestro/web/*.yml; do
     if [ -f "$test_file" ]; then
         echo "🧪 Running $(basename "$test_file")..."
 
-        # Targeted Chrome process cleanup between tests
-        echo "🧹 Cleaning up Chrome processes between tests..."
-        pkill -9 chromium 2>/dev/null || true
-        pkill -9 chrome_crashpad_handler 2>/dev/null || true
-        pkill -9 chromedriver 2>/dev/null || true
-        
-        # Clean up our specific user data directory if processes are using it
-        if [ -n "$UNIQUE_USER_DATA_DIR" ] && [ -d "$UNIQUE_USER_DATA_DIR" ]; then
-            # Only kill processes using our specific directory, not system-wide
-            lsof +D "$UNIQUE_USER_DATA_DIR" 2>/dev/null | awk 'NR>1 {print $2}' | head -10 | xargs -r kill -15 2>/dev/null || true
-            sleep 1
-            lsof +D "$UNIQUE_USER_DATA_DIR" 2>/dev/null | awk 'NR>1 {print $2}' | head -10 | xargs -r kill -9 2>/dev/null || true
-        fi
-
-        # Remove specific Chrome temp directories (targeted cleanup)
-        echo "🧹 Cleaning up specific Chrome temp directories..."
-        # Only clean up our own created directories
-        rm -rf /tmp/chrome-maestro-* 2>/dev/null || true
-        rm -rf /tmp/chrome-test-* 2>/dev/null || true
-        rm -rf /tmp/chrome-ci-* 2>/dev/null || true
-        # Clean up lock files that might be left behind
-        rm -rf /tmp/.org.chromium.Chromium.*lock* 2>/dev/null || true
-
-        # Clean Chromium config lock files
-        echo "🧹 Cleaning Chromium lock files..."
-        rm -f /home/rob/.config/chromium/SingletonLock 2>/dev/null || true
-        rm -f /home/rob/.config/chromium/SingletonSocket 2>/dev/null || true
-        rm -f /home/rob/.config/chromium/SingletonCookie 2>/dev/null || true
-
-        # Brief wait for cleanup to complete
-        echo "⏳ Waiting for cleanup to complete..."
-        sleep 1
+        # Minimal cleanup between tests - just kill chromium processes
+        pkill chromium 2>/dev/null || true
 
         maestro test "$test_file" \
           --headless \
