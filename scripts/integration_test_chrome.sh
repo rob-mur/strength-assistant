@@ -147,10 +147,6 @@ echo "🧹 Clearing Selenium WebDriverManager cache..."
 rm -rf "$HOME/.cache/selenium" 2>/dev/null || true
 rm -rf "$HOME/.wdm" 2>/dev/null || true
 
-# Set Java system properties for Selenium WebDriver (these are often more reliable)
-export JAVA_OPTS="-Dwebdriver.chrome.driver=$(command -v chromedriver) -Dchrome.binary=$CHROME_PATH"
-export _JAVA_OPTIONS="-Dwebdriver.chrome.driver=$(command -v chromedriver) -Dchrome.binary=$CHROME_PATH"
-
 # Create a chrome wrapper script that Maestro will find in PATH before system chrome
 CHROME_WRAPPER_DIR="/tmp/chrome-wrapper-$$"
 mkdir -p "$CHROME_WRAPPER_DIR"
@@ -159,6 +155,10 @@ mkdir -p "$CHROME_WRAPPER_DIR"
 # This approach ignores any --user-data-dir arguments from Selenium and uses our own
 cat > "$CHROME_WRAPPER_DIR/chrome" << 'EOF'
 #!/bin/bash
+# DEBUG: Log wrapper execution
+echo "CHROME_WRAPPER: Executed with args: $@" >> /tmp/chrome_wrapper_debug.log
+echo "CHROME_WRAPPER: Using user data dir: USER_DATA_DIR_PLACEHOLDER" >> /tmp/chrome_wrapper_debug.log
+
 # Filter out any user-data-dir arguments from input and add our own
 FILTERED_ARGS=""
 SKIP_NEXT=false
@@ -168,6 +168,7 @@ for arg in "$@"; do
         continue
     fi
     if [[ "$arg" == "--user-data-dir="* ]] || [[ "$arg" == "--user-data-dir" ]]; then
+        echo "CHROME_WRAPPER: Filtering out user-data-dir argument: $arg" >> /tmp/chrome_wrapper_debug.log
         if [[ "$arg" == "--user-data-dir" ]]; then
             SKIP_NEXT=true
         fi
@@ -176,8 +177,35 @@ for arg in "$@"; do
     FILTERED_ARGS="$FILTERED_ARGS \"$arg\""
 done
 
-# Execute Chrome with our required arguments, filtering out any conflicting ones
-eval exec "CHROME_PATH_PLACEHOLDER" --no-sandbox --disable-dev-shm-usage --disable-gpu --user-data-dir="USER_DATA_DIR_PLACEHOLDER" --remote-debugging-port=0 $FILTERED_ARGS
+echo "CHROME_WRAPPER: Final filtered args: $FILTERED_ARGS" >> /tmp/chrome_wrapper_debug.log
+
+# Execute Chrome with our required arguments plus additional CI stability flags  
+exec "CHROME_PATH_PLACEHOLDER" \
+  --no-sandbox \
+  --disable-dev-shm-usage \
+  --disable-gpu \
+  --disable-background-timer-throttling \
+  --disable-backgrounding-occluded-windows \
+  --disable-renderer-backgrounding \
+  --disable-features=TranslateUI \
+  --disable-ipc-flooding-protection \
+  --disable-extensions \
+  --disable-default-apps \
+  --disable-sync \
+  --disable-translate \
+  --hide-scrollbars \
+  --mute-audio \
+  --no-first-run \
+  --no-default-browser-check \
+  --disable-logging \
+  --disable-permissions-api \
+  --ignore-certificate-errors \
+  --ignore-ssl-errors \
+  --ignore-certificate-errors-spki-list \
+  --disable-web-security \
+  --user-data-dir="USER_DATA_DIR_PLACEHOLDER" \
+  --remote-debugging-port=0 \
+  $FILTERED_ARGS
 EOF
 sed -i "s|CHROME_PATH_PLACEHOLDER|$CHROME_PATH|g" "$CHROME_WRAPPER_DIR/chrome"
 sed -i "s|USER_DATA_DIR_PLACEHOLDER|$UNIQUE_USER_DATA_DIR|g" "$CHROME_WRAPPER_DIR/chrome"
@@ -195,6 +223,15 @@ chmod +x "$CHROME_WRAPPER_DIR"/*
 export PATH="$CHROME_WRAPPER_DIR:$PATH"
 
 echo "🔒 Chrome wrapper prioritized in PATH"
+echo "🔍 Debug: Chrome wrapper content:"
+echo "---"
+head -10 "$CHROME_WRAPPER_DIR/chrome"
+echo "---"
+
+# CRITICAL: Set Java system properties to use our wrapper instead of direct Chrome binary
+export JAVA_OPTS="-Dwebdriver.chrome.driver=$(command -v chromedriver) -Dchrome.binary=$CHROME_WRAPPER_DIR/chrome"
+export _JAVA_OPTIONS="-Dwebdriver.chrome.driver=$(command -v chromedriver) -Dchrome.binary=$CHROME_WRAPPER_DIR/chrome"
+echo "🎯 Java options updated to use wrapper: $_JAVA_OPTIONS"
 
 # PATH isolation should be sufficient - no need for aggressive system binary overrides
 
