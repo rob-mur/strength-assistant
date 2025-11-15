@@ -183,9 +183,9 @@ pkill -9 chromedriver 2>/dev/null || true
 pkill -f "chrome" 2>/dev/null || true
 pkill -f "chromium" 2>/dev/null || true
 
-# Wait longer in CI for processes to fully terminate
-echo "⏳ Waiting for Chrome processes to fully terminate in CI environment..."
-sleep 8
+# Wait for processes to fully terminate (reduced for CI performance)
+echo "⏳ Waiting for Chrome processes to fully terminate..."
+sleep 3
 
 echo "🧹 Pre-test cleanup: Removing Chrome temp directories..."
 rm -rf /tmp/.org.chromium.Chromium.* 2>/dev/null || true
@@ -261,9 +261,9 @@ for test_file in .maestro/web/*.yml; do
         rm -f /home/rob/.config/chromium/SingletonSocket 2>/dev/null || true
         rm -f /home/rob/.config/chromium/SingletonCookie 2>/dev/null || true
 
-        # Wait longer for cleanup to complete and locks to release (CI-enhanced)
-        echo "⏳ Waiting for cleanup to complete in CI environment..."
-        sleep 10
+        # Wait for cleanup to complete and locks to release (optimized for CI)
+        echo "⏳ Waiting for cleanup to complete..."
+        sleep 3
 
         maestro test "$test_file" \
           --headless \
