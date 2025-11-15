@@ -1,15 +1,21 @@
-import { configureSyncEngine } from "./syncConfig";
+// CRITICAL: Configure Legend State AsyncStorage FIRST, before any observables are created
+import "../../config/legend-state-config";
 import { initSupabase } from "../supabase/supabase";
 import { storageManager } from "../StorageManager";
+import { initializeExercisesStore } from "../store";
+import { configureSyncEngine } from "./syncConfig";
 
 /**
  * Initialize the offline-first data layer
+ * Now uses syncedSupabase batteries-included approach
  * Must be called before using any data operations
  */
 export async function initializeDataLayer(): Promise<void> {
-  console.log("🔄 initializeDataLayer - Starting data layer initialization");
+  console.log(
+    "🔄 initializeDataLayer - Starting data layer initialization with syncedSupabase",
+  );
   try {
-    // Initialize Supabase client
+    // Initialize Supabase client first
     console.log("🔗 initializeDataLayer - Initializing Supabase client");
     initSupabase();
 
@@ -17,9 +23,20 @@ export async function initializeDataLayer(): Promise<void> {
     console.log("💾 initializeDataLayer - Initializing StorageManager");
     await storageManager.init();
 
-    // Configure Legend State sync engine
-    console.log("⚙️ initializeDataLayer - Configuring sync engine");
+    // Now that Supabase is initialized, set up the syncedSupabase stores
+    console.log("🗄️ initializeDataLayer - Initializing syncedSupabase stores");
+    initializeExercisesStore();
+
+    // Configure sync engine to set up auth state synchronization and real-time updates
+    console.log(
+      "🔄 initializeDataLayer - Configuring sync engine for auth state and real-time sync",
+    );
     configureSyncEngine();
+
+    // syncedSupabase handles sync automatically from now on!
+    console.log(
+      "⚙️ initializeDataLayer - syncedSupabase configured and active",
+    );
     console.log("✅ initializeDataLayer - Data layer initialization complete");
   } catch (error) {
     console.error(
@@ -29,7 +46,10 @@ export async function initializeDataLayer(): Promise<void> {
 
     // For Chrome/web testing, we'll continue with degraded functionality
     // rather than completely blocking the app, but we should still log the error
-    if (typeof window !== "undefined") {
+    if (
+      typeof globalThis.window !== "undefined" &&
+      typeof document !== "undefined"
+    ) {
       console.warn(
         "🌐 initializeDataLayer - Web environment detected, continuing with degraded functionality",
       );
@@ -55,6 +75,5 @@ export async function initializeDataLayer(): Promise<void> {
   }
 }
 
-// Export sync utilities
-export { syncHelpers } from "./syncConfig";
-export { exercises$, user$, isOnline$ } from "../store";
+// Export state observables (syncedSupabase handles sync automatically)
+export { exercises$, user$, isOnline$, exerciseUtils } from "../store";

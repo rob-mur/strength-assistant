@@ -39,7 +39,7 @@ export interface SupabaseClient {
       access_token: string;
       refresh_token: string;
     }) => Promise<{ error: Error | null }>;
-    getSession: () => Promise<{ data: { session: any } }>;
+    getSession: () => Promise<{ data: { session: unknown } }>;
   };
 }
 

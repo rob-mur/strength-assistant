@@ -30,12 +30,15 @@ jest.mock("@/lib/components/AuthScreen", () => {
 
 // Mock console methods to avoid noise in tests
 const originalConsoleWarn = console.warn;
+const originalConsoleLog = console.log;
 beforeAll(() => {
   console.warn = jest.fn();
+  console.log = jest.fn(); // Suppress AuthAwareLayout logging during tests
 });
 
 afterAll(() => {
   console.warn = originalConsoleWarn;
+  console.log = originalConsoleLog;
 });
 
 const mockUseAuthContext = jest.mocked(useAuthContext);

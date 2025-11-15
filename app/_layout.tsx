@@ -4,7 +4,7 @@ import React, { useEffect } from "react";
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from "react-native-paper";
 import { useColorScheme } from "react-native";
 import * as Linking from "expo-linking";
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAppInit } from "@/lib/hooks/useAppInit";
 import { AuthProvider } from "@/lib/components/AuthProvider";
 import { AuthAwareLayout } from "@/lib/components/AuthAwareLayout";
@@ -16,6 +16,11 @@ import {
   processAuthTokens,
   type SupabaseClient,
 } from "@/lib/utils/auth/AuthUrlHandler";
+
+// CRITICAL: Configure AsyncStorage globally before any Legend State imports
+// Set AsyncStorage globally for Legend State to detect
+(globalThis as Record<string, unknown>).AsyncStorage = AsyncStorage;
+console.log("🔧 Global AsyncStorage configured for Legend State");
 
 // Catch any errors thrown by the Layout component.
 export { ErrorBoundary } from "expo-router";
