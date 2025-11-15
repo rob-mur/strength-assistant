@@ -81,9 +81,19 @@ echo "✅ Expo web server ready"
 # Using google-chrome-stable approach from Maestro issue #2576  
 echo "🔧 Setting up Google Chrome with CI-compatible flags via environment..."
 
-# Find the google-chrome-stable binary
-CHROME_PATH=$(command -v google-chrome-stable)
-if [ -z "$CHROME_PATH" ]; then
+# Find the google-chrome-stable binary from Devbox, not system
+# Check Devbox profile first to avoid picking up system Chrome
+if [ -d ".devbox/nix/profile/default/bin" ]; then
+    CHROME_PATH=".devbox/nix/profile/default/bin/google-chrome-stable"
+    if [ ! -f "$CHROME_PATH" ]; then
+        # Fallback to PATH search if not in Devbox bin
+        CHROME_PATH=$(command -v google-chrome-stable)
+    fi
+else
+    CHROME_PATH=$(command -v google-chrome-stable)
+fi
+
+if [ -z "$CHROME_PATH" ] || [ ! -f "$CHROME_PATH" ]; then
     echo "❌ Google Chrome Stable binary not found"
     exit 1
 fi
