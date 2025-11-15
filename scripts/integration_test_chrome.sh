@@ -4,10 +4,11 @@ set -e
 
 echo "🌐 Starting Chrome Integration Tests"
 
-# Initial cleanup to ensure no leftover Chrome processes
+# Initial cleanup to ensure no leftover Chrome processes  
 echo "🧹 Initial cleanup of any existing Chrome processes..."
-pgrep -f "chrome" | xargs kill -9 2>/dev/null || true
-pgrep -f "chromium" | xargs kill -9 2>/dev/null || true
+# Only kill Chrome browsers, not chrome-related processes like chromedriver
+pgrep -f "google-chrome" | xargs kill 2>/dev/null || true
+pgrep -f "chromium-browser" | xargs kill 2>/dev/null || true
 rm -rf /tmp/chrome-* 2>/dev/null || true
 sleep 1
 
@@ -18,10 +19,10 @@ cd "$(dirname "$0")/.."
 cleanup() {
     echo "🧹 Cleaning up processes..."
     
-    # Force kill any Chrome processes that might be lingering
-    pkill -f "chrome" 2>/dev/null || true
-    pkill -f "chromium" 2>/dev/null || true
-    sleep 2
+    # Force kill any Chrome browser processes that might be lingering
+    pgrep -f "google-chrome" | xargs kill 2>/dev/null || true
+    pgrep -f "chromium-browser" | xargs kill 2>/dev/null || true
+    sleep 1
     
     supabase stop 2>/dev/null || true
 
