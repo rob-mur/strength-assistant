@@ -16,14 +16,8 @@ cleanup() {
         kill $EXPO_PID 2>/dev/null || true
     fi
 
-    # Restore original chromium binary if we created a wrapper
-    CHROMIUM_PATH=$(command -v chromium 2>/dev/null)
-    if [ -n "$CHROMIUM_PATH" ] && [ -f "$CHROMIUM_PATH.original" ]; then
-        echo "🔄 Restoring original Chromium binary..."
-        mv "$CHROMIUM_PATH.original" "$CHROMIUM_PATH"
-    fi
-    
-    # Clean up temp directories
+    # Clean up wrapper directories and temp files
+    echo "🧹 Cleaning up Chrome wrapper and temp directories..."
     rm -rf /tmp/chrome-simple-* 2>/dev/null || true
     rm -rf /tmp/chrome-maestro-* 2>/dev/null || true
     rm -rf /tmp/chrome-ci-* 2>/dev/null || true
@@ -87,23 +81,17 @@ echo "⏳ Waiting for Expo to fully initialize..."
 sleep 5
 echo "✅ Expo web server ready"
 
-# Implement Chrome wrapper approach from https://github.com/mobile-dev-inc/maestro/issues/2576
+# Implement Chrome wrapper approach adapted for Nix store (read-only)
 echo "🔧 Setting up Chrome wrapper for CI compatibility..."
 
-# Find the chromium binary
-CHROMIUM_PATH=$(command -v chromium)
-if [ -z "$CHROMIUM_PATH" ]; then
+# Find the original chromium binary
+ORIGINAL_CHROMIUM_PATH=$(command -v chromium)
+if [ -z "$ORIGINAL_CHROMIUM_PATH" ]; then
     echo "❌ Chromium binary not found"
     exit 1
 fi
 
-echo "📍 Found Chromium at: $CHROMIUM_PATH"
-
-# Create backup of original chromium binary
-if [ ! -f "$CHROMIUM_PATH.original" ]; then
-    echo "💾 Backing up original Chromium binary..."
-    cp "$CHROMIUM_PATH" "$CHROMIUM_PATH.original"
-fi
+echo "📍 Found original Chromium at: $ORIGINAL_CHROMIUM_PATH"
 
 # Create unique user data directory for this test run
 TIMESTAMP=$(date +%s)
@@ -114,16 +102,24 @@ chmod 755 "$UNIQUE_USER_DATA_DIR"
 
 echo "🗂️ Using unique user data directory: $UNIQUE_USER_DATA_DIR"
 
-# Create wrapper script that adds necessary flags
+# Create wrapper directory and script in writable location
+WRAPPER_DIR="/tmp/chrome-wrapper-bin-$$"
+mkdir -p "$WRAPPER_DIR"
+
+# Create chromium wrapper script
 echo "🔧 Creating Chrome wrapper with CI-compatible flags..."
-cat > "$CHROMIUM_PATH" << EOF
+cat > "$WRAPPER_DIR/chromium" << EOF
 #!/bin/sh
-exec "$CHROMIUM_PATH.original" "\${@}" --no-sandbox --disable-dev-shm-usage --disable-gpu --user-data-dir="$UNIQUE_USER_DATA_DIR" --remote-debugging-port=0
+exec "$ORIGINAL_CHROMIUM_PATH" "\${@}" --no-sandbox --disable-dev-shm-usage --disable-gpu --user-data-dir="$UNIQUE_USER_DATA_DIR" --remote-debugging-port=0
 EOF
 
-chmod 0755 "$CHROMIUM_PATH"
+chmod 0755 "$WRAPPER_DIR/chromium"
 
-echo "✅ Chrome wrapper configured successfully"
+# Put wrapper directory at the front of PATH so it's found first
+export PATH="$WRAPPER_DIR:$PATH"
+
+echo "✅ Chrome wrapper configured successfully at: $WRAPPER_DIR/chromium"
+echo "🔧 PATH updated to use wrapper: $PATH" | head -c 100
 
 # Clear Supabase database once before running tests
 echo "🧹 Clearing Supabase database..."
