@@ -33,19 +33,6 @@ cleanup() {
     # Clean up Chrome temp directories and wrapper scripts
     echo "🧹 Cleaning up Chrome temp directories..."
     rm -rf /tmp/chrome-* 2>/dev/null || true
-    
-    # Restore any overridden system binaries
-    if [ -d "/tmp/chrome-backup-$$" ]; then
-        echo "🔄 Restoring system Chrome binaries..."
-        for backup_file in "/tmp/chrome-backup-$$"/*.backup; do
-            if [ -f "$backup_file" ]; then
-                binary_name="$(basename "$backup_file" .backup)"
-                system_path="/usr/bin/$binary_name"
-                sudo mv "$backup_file" "$system_path" 2>/dev/null || mv "$backup_file" "$system_path" 2>/dev/null || true
-            fi
-        done
-        rm -rf "/tmp/chrome-backup-$$" 2>/dev/null || true
-    fi
 }
 
 trap cleanup EXIT ERR
@@ -168,60 +155,48 @@ export _JAVA_OPTIONS="-Dwebdriver.chrome.driver=$(command -v chromedriver) -Dchr
 CHROME_WRAPPER_DIR="/tmp/chrome-wrapper-$$"
 mkdir -p "$CHROME_WRAPPER_DIR"
 
-# Create wrapper scripts that point to our Devbox Chrome
-cat > "$CHROME_WRAPPER_DIR/chrome" << EOF
+# Create Chrome wrapper that FORCES our required arguments and filters out conflicting ones
+# This approach ignores any --user-data-dir arguments from Selenium and uses our own
+cat > "$CHROME_WRAPPER_DIR/chrome" << 'EOF'
 #!/bin/bash
-exec "$CHROME_PATH" "\$@"
-EOF
+# Filter out any user-data-dir arguments from input and add our own
+FILTERED_ARGS=""
+SKIP_NEXT=false
+for arg in "$@"; do
+    if [[ "$SKIP_NEXT" == "true" ]]; then
+        SKIP_NEXT=false
+        continue
+    fi
+    if [[ "$arg" == "--user-data-dir="* ]] || [[ "$arg" == "--user-data-dir" ]]; then
+        if [[ "$arg" == "--user-data-dir" ]]; then
+            SKIP_NEXT=true
+        fi
+        continue
+    fi
+    FILTERED_ARGS="$FILTERED_ARGS \"$arg\""
+done
 
-cat > "$CHROME_WRAPPER_DIR/chromium" << EOF
-#!/bin/bash
-exec "$CHROME_PATH" "\$@"
+# Execute Chrome with our required arguments, filtering out any conflicting ones
+eval exec "CHROME_PATH_PLACEHOLDER" --no-sandbox --disable-dev-shm-usage --disable-gpu --user-data-dir="USER_DATA_DIR_PLACEHOLDER" --remote-debugging-port=0 $FILTERED_ARGS
 EOF
+sed -i "s|CHROME_PATH_PLACEHOLDER|$CHROME_PATH|g" "$CHROME_WRAPPER_DIR/chrome"
+sed -i "s|USER_DATA_DIR_PLACEHOLDER|$UNIQUE_USER_DATA_DIR|g" "$CHROME_WRAPPER_DIR/chrome"
 
-cat > "$CHROME_WRAPPER_DIR/chromium-browser" << EOF
-#!/bin/bash
-exec "$CHROME_PATH" "\$@"
-EOF
-
-cat > "$CHROME_WRAPPER_DIR/google-chrome" << EOF
-#!/bin/bash
-exec "$CHROME_PATH" "\$@"
-EOF
-
-cat > "$CHROME_WRAPPER_DIR/google-chrome-stable" << EOF
-#!/bin/bash
-exec "$CHROME_PATH" "\$@"
-EOF
+# Copy the same wrapper for all Chrome binary names
+cp "$CHROME_WRAPPER_DIR/chrome" "$CHROME_WRAPPER_DIR/chromium"
+cp "$CHROME_WRAPPER_DIR/chrome" "$CHROME_WRAPPER_DIR/chromium-browser"
+cp "$CHROME_WRAPPER_DIR/chrome" "$CHROME_WRAPPER_DIR/google-chrome"
+cp "$CHROME_WRAPPER_DIR/chrome" "$CHROME_WRAPPER_DIR/google-chrome-stable"
 
 chmod +x "$CHROME_WRAPPER_DIR"/*
 
-# Prepend wrapper directory to PATH so Maestro finds our Chrome instead of system Chrome
+# Put our Chrome wrapper directory at the front of PATH
+# This ensures our wrapper Chrome binaries are found first
 export PATH="$CHROME_WRAPPER_DIR:$PATH"
 
-# AGGRESSIVE FIX: Temporarily override system Chrome binaries
-# This ensures Selenium can't find any other Chrome binaries
-BACKUP_DIR="/tmp/chrome-backup-$$"
-mkdir -p "$BACKUP_DIR"
+echo "🔒 Chrome wrapper prioritized in PATH"
 
-# Function to safely override a system binary
-override_system_binary() {
-    local binary_path="$1"
-    local binary_name="$(basename "$binary_path")"
-    
-    if [ -f "$binary_path" ]; then
-        echo "🔧 Backing up and overriding $binary_path"
-        sudo cp "$binary_path" "$BACKUP_DIR/$binary_name.backup" 2>/dev/null || cp "$binary_path" "$BACKUP_DIR/$binary_name.backup" 2>/dev/null || true
-        sudo ln -sf "$CHROME_PATH" "$binary_path" 2>/dev/null || ln -sf "$CHROME_PATH" "$binary_path" 2>/dev/null || true
-    fi
-}
-
-# Override common Chrome binary locations
-override_system_binary "/usr/bin/chromium-browser"
-override_system_binary "/usr/bin/google-chrome"
-override_system_binary "/usr/bin/google-chrome-stable"
-override_system_binary "/usr/bin/chromium"
-override_system_binary "/usr/bin/chrome"
+# PATH isolation should be sufficient - no need for aggressive system binary overrides
 
 echo "✅ Google Chrome configured with CI flags via environment variables"
 echo "🔍 Chrome binary verification:"
