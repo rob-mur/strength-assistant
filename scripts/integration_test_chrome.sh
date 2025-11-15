@@ -27,6 +27,7 @@ cleanup() {
     rm -rf /tmp/chrome-maestro-* 2>/dev/null || true
     rm -rf /tmp/chrome-test-* 2>/dev/null || true
     rm -rf /tmp/chrome-custom-bin-* 2>/dev/null || true
+    rm -rf /tmp/chrome-ci-* 2>/dev/null || true
 }
 
 trap cleanup EXIT ERR
@@ -144,15 +145,47 @@ echo "🔧 Setting Selenium Chrome options..."
 export CHROME_EXECUTABLE="$CHROME_WRAPPER_SCRIPT"
 export GOOGLE_CHROME_BIN="$CHROME_WRAPPER_SCRIPT"
 export CHROME_BIN="$CHROME_WRAPPER_SCRIPT"
+
+# CI-specific: Set additional Chrome options as environment variables
+# that Selenium WebDriver can pick up directly
+echo "🔧 Setting CI-specific Chrome options..."
+TIMESTAMP=$(date +%s)
+RANDOM_NUM=$RANDOM
+UNIQUE_USER_DATA_DIR="/tmp/chrome-ci-${TIMESTAMP}-${RANDOM_NUM}-$$"
+
+# Ensure the unique directory is created with proper permissions
+mkdir -p "$UNIQUE_USER_DATA_DIR"
+chmod 755 "$UNIQUE_USER_DATA_DIR"
+
+export CHROME_USER_DATA_DIR="$UNIQUE_USER_DATA_DIR"
+export CHROME_FLAGS="--no-sandbox --headless --disable-dev-shm-usage --disable-gpu --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --user-data-dir=$UNIQUE_USER_DATA_DIR --remote-debugging-port=0"
+
+# CI-specific: Try to force Chrome options through Selenium WebDriver
+export SELENIUM_CHROME_ARGS="--no-sandbox,--headless,--disable-dev-shm-usage,--disable-gpu,--user-data-dir=$UNIQUE_USER_DATA_DIR,--remote-debugging-port=0"
+export WEBDRIVER_CHROME_ARGS="$CHROME_FLAGS"
+
 echo "  CHROME_EXECUTABLE: ${CHROME_EXECUTABLE}"
 echo "  GOOGLE_CHROME_BIN: ${GOOGLE_CHROME_BIN}"
 echo "  CHROME_BIN: ${CHROME_BIN}"
+echo "  CHROME_USER_DATA_DIR: ${CHROME_USER_DATA_DIR}"
+echo "  CHROME_FLAGS: ${CHROME_FLAGS}"
+echo "  SELENIUM_CHROME_ARGS: ${SELENIUM_CHROME_ARGS}"
+echo "  WEBDRIVER_CHROME_ARGS: ${WEBDRIVER_CHROME_ARGS}"
 
 # Clean up any existing Chrome processes and temp files BEFORE starting tests
-echo "🧹 Pre-test cleanup: Killing all Chrome/Chromium processes..."
+echo "🧹 Pre-test cleanup: Aggressively killing all Chrome/Chromium processes..."
+# Kill all possible Chrome-related processes in CI
 pkill -9 chromium 2>/dev/null || true
+pkill -9 chrome 2>/dev/null || true
+pkill -9 google-chrome 2>/dev/null || true
 pkill -9 chrome_crashpad_handler 2>/dev/null || true
 pkill -9 chromedriver 2>/dev/null || true
+pkill -f "chrome" 2>/dev/null || true
+pkill -f "chromium" 2>/dev/null || true
+
+# Wait longer in CI for processes to fully terminate
+echo "⏳ Waiting for Chrome processes to fully terminate in CI environment..."
+sleep 8
 
 echo "🧹 Pre-test cleanup: Removing Chrome temp directories..."
 rm -rf /tmp/.org.chromium.Chromium.* 2>/dev/null || true
@@ -163,6 +196,7 @@ rm -rf /tmp/.com.google.Chrome.* 2>/dev/null || true
 rm -rf /tmp/chrome-test-* 2>/dev/null || true
 rm -rf /tmp/chrome-maestro-* 2>/dev/null || true
 rm -rf /tmp/chrome-custom-bin-* 2>/dev/null || true
+rm -rf /tmp/chrome-ci-* 2>/dev/null || true
 
 echo "🧹 Pre-test cleanup: Removing Chromium lock files..."
 rm -f /home/rob/.config/chromium/SingletonLock 2>/dev/null || true
@@ -194,11 +228,20 @@ for test_file in .maestro/web/*.yml; do
     if [ -f "$test_file" ]; then
         echo "🧪 Running $(basename "$test_file")..."
 
-        # NUCLEAR OPTION: Kill ALL Chrome/Chromium processes
-        echo "🧹 Killing all Chrome/Chromium processes..."
+        # NUCLEAR OPTION: Kill ALL Chrome/Chromium processes (CI-enhanced)
+        echo "🧹 Killing all Chrome/Chromium processes between tests..."
         pkill -9 chromium 2>/dev/null || true
+        pkill -9 chrome 2>/dev/null || true
+        pkill -9 google-chrome 2>/dev/null || true
         pkill -9 chrome_crashpad_handler 2>/dev/null || true
         pkill -9 chromedriver 2>/dev/null || true
+        pkill -f "chrome" 2>/dev/null || true
+        pkill -f "chromium" 2>/dev/null || true
+        
+        # Kill any processes using our user data directories
+        if [ -n "$UNIQUE_USER_DATA_DIR" ]; then
+            lsof +D "$UNIQUE_USER_DATA_DIR" 2>/dev/null | awk 'NR>1 {print $2}' | xargs -r kill -9 2>/dev/null || true
+        fi
 
         # Remove ALL Chrome-related temp directories
         echo "🧹 Cleaning up Chrome temp directories..."
@@ -210,6 +253,7 @@ for test_file in .maestro/web/*.yml; do
         rm -rf /tmp/chrome-test-* 2>/dev/null || true
         rm -rf /tmp/chrome-maestro-* 2>/dev/null || true
         rm -rf /tmp/chrome-custom-bin-* 2>/dev/null || true
+        rm -rf /tmp/chrome-ci-* 2>/dev/null || true
 
         # Clean Chromium config lock files
         echo "🧹 Cleaning Chromium lock files..."
@@ -217,9 +261,9 @@ for test_file in .maestro/web/*.yml; do
         rm -f /home/rob/.config/chromium/SingletonSocket 2>/dev/null || true
         rm -f /home/rob/.config/chromium/SingletonCookie 2>/dev/null || true
 
-        # Wait longer for cleanup to complete and locks to release
-        echo "⏳ Waiting for cleanup to complete..."
-        sleep 5
+        # Wait longer for cleanup to complete and locks to release (CI-enhanced)
+        echo "⏳ Waiting for cleanup to complete in CI environment..."
+        sleep 10
 
         maestro test "$test_file" \
           --headless \
