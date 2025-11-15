@@ -16,10 +16,18 @@ cleanup() {
         kill $EXPO_PID 2>/dev/null || true
     fi
 
-    # Minimal cleanup - Maestro handles Chrome processes
+    # Restore original chromium binary if we created a wrapper
+    CHROMIUM_PATH=$(command -v chromium 2>/dev/null)
+    if [ -n "$CHROMIUM_PATH" ] && [ -f "$CHROMIUM_PATH.original" ]; then
+        echo "🔄 Restoring original Chromium binary..."
+        mv "$CHROMIUM_PATH.original" "$CHROMIUM_PATH"
+    fi
+    
+    # Clean up temp directories
     rm -rf /tmp/chrome-simple-* 2>/dev/null || true
     rm -rf /tmp/chrome-maestro-* 2>/dev/null || true
     rm -rf /tmp/chrome-ci-* 2>/dev/null || true
+    rm -rf /tmp/chrome-wrapper-* 2>/dev/null || true
 }
 
 trap cleanup EXIT ERR
@@ -79,14 +87,43 @@ echo "⏳ Waiting for Expo to fully initialize..."
 sleep 5
 echo "✅ Expo web server ready"
 
-# Chrome configuration is now handled by .maestro/config.yaml
-echo "🔧 Chrome configuration will be handled by Maestro config file"
+# Implement Chrome wrapper approach from https://github.com/mobile-dev-inc/maestro/issues/2576
+echo "🔧 Setting up Chrome wrapper for CI compatibility..."
 
-# Clean up any old temp directories from previous approaches
-echo "🧹 Removing old Chrome temp directories..."
-rm -rf /tmp/chrome-simple-* 2>/dev/null || true
-rm -rf /tmp/chrome-maestro-* 2>/dev/null || true
-rm -rf /tmp/chrome-ci-* 2>/dev/null || true
+# Find the chromium binary
+CHROMIUM_PATH=$(command -v chromium)
+if [ -z "$CHROMIUM_PATH" ]; then
+    echo "❌ Chromium binary not found"
+    exit 1
+fi
+
+echo "📍 Found Chromium at: $CHROMIUM_PATH"
+
+# Create backup of original chromium binary
+if [ ! -f "$CHROMIUM_PATH.original" ]; then
+    echo "💾 Backing up original Chromium binary..."
+    cp "$CHROMIUM_PATH" "$CHROMIUM_PATH.original"
+fi
+
+# Create unique user data directory for this test run
+TIMESTAMP=$(date +%s)
+RANDOM_NUM=$RANDOM
+UNIQUE_USER_DATA_DIR="/tmp/chrome-wrapper-${TIMESTAMP}-${RANDOM_NUM}-$$"
+mkdir -p "$UNIQUE_USER_DATA_DIR"
+chmod 755 "$UNIQUE_USER_DATA_DIR"
+
+echo "🗂️ Using unique user data directory: $UNIQUE_USER_DATA_DIR"
+
+# Create wrapper script that adds necessary flags
+echo "🔧 Creating Chrome wrapper with CI-compatible flags..."
+cat > "$CHROMIUM_PATH" << EOF
+#!/bin/sh
+exec "$CHROMIUM_PATH.original" "\${@}" --no-sandbox --disable-dev-shm-usage --disable-gpu --user-data-dir="$UNIQUE_USER_DATA_DIR" --remote-debugging-port=0
+EOF
+
+chmod 0755 "$CHROMIUM_PATH"
+
+echo "✅ Chrome wrapper configured successfully"
 
 # Clear Supabase database once before running tests
 echo "🧹 Clearing Supabase database..."
