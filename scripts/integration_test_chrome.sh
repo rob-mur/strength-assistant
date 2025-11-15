@@ -16,11 +16,10 @@ cleanup() {
         kill $EXPO_PID 2>/dev/null || true
     fi
 
-    # Kill Chrome/ChromeDriver processes
-    pkill -f "chrome.*--headless" 2>/dev/null || true
-    pkill -f "chromedriver" 2>/dev/null || true
+    # Kill specific Chrome/ChromeDriver processes (targeted)
     pkill -9 chromium 2>/dev/null || true
     pkill -9 chrome_crashpad_handler 2>/dev/null || true
+    pkill -9 chromedriver 2>/dev/null || true
 
     # Cleanup temp files and directories
     rm -f "$CHROME_WRAPPER_SCRIPT" 2>/dev/null || true
@@ -173,30 +172,24 @@ echo "  SELENIUM_CHROME_ARGS: ${SELENIUM_CHROME_ARGS}"
 echo "  WEBDRIVER_CHROME_ARGS: ${WEBDRIVER_CHROME_ARGS}"
 
 # Clean up any existing Chrome processes and temp files BEFORE starting tests
-echo "🧹 Pre-test cleanup: Aggressively killing all Chrome/Chromium processes..."
-# Kill all possible Chrome-related processes in CI
+echo "🧹 Pre-test cleanup: Targeted Chrome process cleanup..."
+# Only kill specific Chrome processes, not broad pattern matches that might affect other processes
 pkill -9 chromium 2>/dev/null || true
-pkill -9 chrome 2>/dev/null || true
-pkill -9 google-chrome 2>/dev/null || true
 pkill -9 chrome_crashpad_handler 2>/dev/null || true
 pkill -9 chromedriver 2>/dev/null || true
-pkill -f "chrome" 2>/dev/null || true
-pkill -f "chromium" 2>/dev/null || true
 
-# Wait for processes to fully terminate (reduced for CI performance)
-echo "⏳ Waiting for Chrome processes to fully terminate..."
-sleep 3
+# Wait briefly for processes to terminate
+echo "⏳ Waiting for Chrome processes to terminate..."
+sleep 2
 
-echo "🧹 Pre-test cleanup: Removing Chrome temp directories..."
-rm -rf /tmp/.org.chromium.Chromium.* 2>/dev/null || true
-rm -rf /tmp/chrome-* 2>/dev/null || true
-rm -rf /tmp/maestro-chrome-* 2>/dev/null || true
-rm -rf /tmp/.com.google.Chrome.* 2>/dev/null || true
-# Remove any existing Chrome user data directories from previous runs
-rm -rf /tmp/chrome-test-* 2>/dev/null || true
+echo "🧹 Pre-test cleanup: Removing specific Chrome temp directories..."
+# Only remove our specific temp directories, not broad patterns
 rm -rf /tmp/chrome-maestro-* 2>/dev/null || true
+rm -rf /tmp/chrome-test-* 2>/dev/null || true
 rm -rf /tmp/chrome-custom-bin-* 2>/dev/null || true
 rm -rf /tmp/chrome-ci-* 2>/dev/null || true
+# Remove Chrome lock files that might cause conflicts
+rm -rf /tmp/.org.chromium.Chromium.*lock* 2>/dev/null || true
 
 echo "🧹 Pre-test cleanup: Removing Chromium lock files..."
 rm -f /home/rob/.config/chromium/SingletonLock 2>/dev/null || true
@@ -228,32 +221,28 @@ for test_file in .maestro/web/*.yml; do
     if [ -f "$test_file" ]; then
         echo "🧪 Running $(basename "$test_file")..."
 
-        # NUCLEAR OPTION: Kill ALL Chrome/Chromium processes (CI-enhanced)
-        echo "🧹 Killing all Chrome/Chromium processes between tests..."
+        # Targeted Chrome process cleanup between tests
+        echo "🧹 Cleaning up Chrome processes between tests..."
         pkill -9 chromium 2>/dev/null || true
-        pkill -9 chrome 2>/dev/null || true
-        pkill -9 google-chrome 2>/dev/null || true
         pkill -9 chrome_crashpad_handler 2>/dev/null || true
         pkill -9 chromedriver 2>/dev/null || true
-        pkill -f "chrome" 2>/dev/null || true
-        pkill -f "chromium" 2>/dev/null || true
         
-        # Kill any processes using our user data directories
-        if [ -n "$UNIQUE_USER_DATA_DIR" ]; then
-            lsof +D "$UNIQUE_USER_DATA_DIR" 2>/dev/null | awk 'NR>1 {print $2}' | xargs -r kill -9 2>/dev/null || true
+        # Clean up our specific user data directory if processes are using it
+        if [ -n "$UNIQUE_USER_DATA_DIR" ] && [ -d "$UNIQUE_USER_DATA_DIR" ]; then
+            # Only kill processes using our specific directory, not system-wide
+            lsof +D "$UNIQUE_USER_DATA_DIR" 2>/dev/null | awk 'NR>1 {print $2}' | head -10 | xargs -r kill -15 2>/dev/null || true
+            sleep 1
+            lsof +D "$UNIQUE_USER_DATA_DIR" 2>/dev/null | awk 'NR>1 {print $2}' | head -10 | xargs -r kill -9 2>/dev/null || true
         fi
 
-        # Remove ALL Chrome-related temp directories
-        echo "🧹 Cleaning up Chrome temp directories..."
-        rm -rf /tmp/.org.chromium.Chromium.* 2>/dev/null || true
-        rm -rf /tmp/chrome-* 2>/dev/null || true
-        rm -rf /tmp/maestro-chrome-* 2>/dev/null || true
-        rm -rf /tmp/.com.google.Chrome.* 2>/dev/null || true
-        # Remove any Chrome user data directories from previous test runs
-        rm -rf /tmp/chrome-test-* 2>/dev/null || true
+        # Remove specific Chrome temp directories (targeted cleanup)
+        echo "🧹 Cleaning up specific Chrome temp directories..."
+        # Only clean up our own created directories
         rm -rf /tmp/chrome-maestro-* 2>/dev/null || true
-        rm -rf /tmp/chrome-custom-bin-* 2>/dev/null || true
+        rm -rf /tmp/chrome-test-* 2>/dev/null || true
         rm -rf /tmp/chrome-ci-* 2>/dev/null || true
+        # Clean up lock files that might be left behind
+        rm -rf /tmp/.org.chromium.Chromium.*lock* 2>/dev/null || true
 
         # Clean Chromium config lock files
         echo "🧹 Cleaning Chromium lock files..."
@@ -261,9 +250,9 @@ for test_file in .maestro/web/*.yml; do
         rm -f /home/rob/.config/chromium/SingletonSocket 2>/dev/null || true
         rm -f /home/rob/.config/chromium/SingletonCookie 2>/dev/null || true
 
-        # Wait for cleanup to complete and locks to release (optimized for CI)
+        # Brief wait for cleanup to complete
         echo "⏳ Waiting for cleanup to complete..."
-        sleep 3
+        sleep 1
 
         maestro test "$test_file" \
           --headless \
