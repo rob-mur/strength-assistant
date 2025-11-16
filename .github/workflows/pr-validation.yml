@@ -112,7 +112,9 @@ jobs:
 
       - name: 🗑️ Remove system Chrome packages
         run: |
-          echo "Removing system Chrome packages to prevent conflicts..."
+          echo "Removing ALL system Chrome packages to prevent conflicts..."
+          
+          # Remove all Chrome/Chromium packages
           sudo apt-get remove -y \
             chromium-browser \
             chromium-browser-l10n \
@@ -121,8 +123,24 @@ jobs:
             google-chrome-stable \
             google-chrome-beta \
             google-chrome-unstable \
+            chromium \
+            chromium-driver \
             2>/dev/null || true
-          echo "System Chrome packages removed"
+          
+          # Remove any lingering Chrome binaries
+          sudo rm -f /usr/bin/chromium-browser \
+                     /usr/bin/chromium \
+                     /usr/bin/google-chrome \
+                     /usr/bin/google-chrome-stable \
+                     /usr/bin/google-chrome-beta \
+                     /usr/bin/google-chrome-unstable \
+                     2>/dev/null || true
+          
+          # Verify removal
+          echo "Checking for remaining Chrome binaries:"
+          ls -la /usr/bin/*chrome* /usr/bin/*chromium* 2>/dev/null || echo "No Chrome binaries found in /usr/bin"
+          
+          echo "System Chrome packages and binaries completely removed"
 
       - name: 🛠 Setup development environment
         uses: ./.github/actions/setup-dev-environment
