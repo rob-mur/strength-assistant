@@ -123,123 +123,22 @@ chmod 755 "$UNIQUE_USER_DATA_DIR"
 
 echo "🗂️ Using unique user data directory: $UNIQUE_USER_DATA_DIR"
 
-# Set Chrome options via environment variables that Maestro/Selenium will use
-export GOOGLE_CHROME_OPTS="--no-sandbox --disable-dev-shm-usage --disable-gpu --user-data-dir=$UNIQUE_USER_DATA_DIR --remote-debugging-port=0"
-export CHROME_USER_DATA_DIR="$UNIQUE_USER_DATA_DIR"
-
-# CRITICAL: Force Maestro/Selenium to use our Devbox Chrome binary instead of system chrome
-export CHROME_BINARY="$CHROME_PATH"
-export CHROMIUM_BINARY="$CHROME_PATH"  
-export GOOGLE_CHROME_BINARY="$CHROME_PATH"
-
-# Selenium WebDriver environment variables
-export WEBDRIVER_CHROME_BINARY="$CHROME_PATH"
-export SELENIUM_CHROME_BINARY="$CHROME_PATH"
-# Note: webdriver.chrome.driver can't be exported as env var due to dots
-
-# Disable Selenium's automatic WebDriver management and clear cache
-export SELENIUM_MANAGER_DISABLED="true"
-export WDM_LOCAL="$CHROME_PATH"
-export CHROMEDRIVER_BINARY_PATH="$(command -v chromedriver)"
-
-# Clear Selenium's WebDriverManager cache to prevent using downloaded Chrome
-echo "🧹 Clearing Selenium WebDriverManager cache..."
-rm -rf "$HOME/.cache/selenium" 2>/dev/null || true
-rm -rf "$HOME/.wdm" 2>/dev/null || true
-
-# Create a chrome wrapper script that Maestro will find in PATH before system chrome
-CHROME_WRAPPER_DIR="/tmp/chrome-wrapper-$$"
+# MINIMAL APPROACH: Create simple Chrome wrapper with only --no-sandbox as per Maestro issue #2576
+CHROME_WRAPPER_DIR="/tmp/chrome-wrapper-$$" 
 mkdir -p "$CHROME_WRAPPER_DIR"
 
-# Create Chrome wrapper that FORCES our required arguments and filters out conflicting ones
-# This approach ignores any --user-data-dir arguments from Selenium and uses our own
-cat > "$CHROME_WRAPPER_DIR/chrome" << 'EOF'
+# Create minimal Chrome wrapper with only --no-sandbox (as suggested in Maestro issue)
+cat > "$CHROME_WRAPPER_DIR/google-chrome-stable" << EOF
 #!/bin/bash
-# DEBUG: Log wrapper execution
-echo "CHROME_WRAPPER: Executed with args: $@" >> /tmp/chrome_wrapper_debug.log
-echo "CHROME_WRAPPER: Using user data dir: USER_DATA_DIR_PLACEHOLDER" >> /tmp/chrome_wrapper_debug.log
-
-# Filter out any user-data-dir arguments from input and add our own
-FILTERED_ARGS=""
-SKIP_NEXT=false
-for arg in "$@"; do
-    if [[ "$SKIP_NEXT" == "true" ]]; then
-        SKIP_NEXT=false
-        continue
-    fi
-    if [[ "$arg" == "--user-data-dir="* ]] || [[ "$arg" == "--user-data-dir" ]]; then
-        echo "CHROME_WRAPPER: Filtering out user-data-dir argument: $arg" >> /tmp/chrome_wrapper_debug.log
-        if [[ "$arg" == "--user-data-dir" ]]; then
-            SKIP_NEXT=true
-        fi
-        continue
-    fi
-    FILTERED_ARGS="$FILTERED_ARGS \"$arg\""
-done
-
-echo "CHROME_WRAPPER: Final filtered args: $FILTERED_ARGS" >> /tmp/chrome_wrapper_debug.log
-
-# Execute Chrome with our required arguments plus additional CI stability flags  
-exec "CHROME_PATH_PLACEHOLDER" \
-  --no-sandbox \
-  --disable-dev-shm-usage \
-  --disable-gpu \
-  --disable-background-timer-throttling \
-  --disable-backgrounding-occluded-windows \
-  --disable-renderer-backgrounding \
-  --disable-features=TranslateUI \
-  --disable-ipc-flooding-protection \
-  --disable-extensions \
-  --disable-default-apps \
-  --disable-sync \
-  --disable-translate \
-  --hide-scrollbars \
-  --mute-audio \
-  --no-first-run \
-  --no-default-browser-check \
-  --disable-logging \
-  --disable-permissions-api \
-  --ignore-certificate-errors \
-  --ignore-ssl-errors \
-  --ignore-certificate-errors-spki-list \
-  --disable-web-security \
-  --user-data-dir="USER_DATA_DIR_PLACEHOLDER" \
-  --remote-debugging-port=0 \
-  $FILTERED_ARGS
+exec "$CHROME_PATH" --no-sandbox "\$@"
 EOF
-sed -i "s|CHROME_PATH_PLACEHOLDER|$CHROME_PATH|g" "$CHROME_WRAPPER_DIR/chrome"
-sed -i "s|USER_DATA_DIR_PLACEHOLDER|$UNIQUE_USER_DATA_DIR|g" "$CHROME_WRAPPER_DIR/chrome"
 
-# Copy the same wrapper for all Chrome binary names
-cp "$CHROME_WRAPPER_DIR/chrome" "$CHROME_WRAPPER_DIR/chromium"
-cp "$CHROME_WRAPPER_DIR/chrome" "$CHROME_WRAPPER_DIR/chromium-browser"
-cp "$CHROME_WRAPPER_DIR/chrome" "$CHROME_WRAPPER_DIR/google-chrome"
-cp "$CHROME_WRAPPER_DIR/chrome" "$CHROME_WRAPPER_DIR/google-chrome-stable"
+chmod +x "$CHROME_WRAPPER_DIR/google-chrome-stable"
 
-chmod +x "$CHROME_WRAPPER_DIR"/*
-
-# Put our Chrome wrapper directory at the front of PATH
-# This ensures our wrapper Chrome binaries are found first
+# Put wrapper first in PATH
 export PATH="$CHROME_WRAPPER_DIR:$PATH"
 
-echo "🔒 Chrome wrapper prioritized in PATH"
-echo "🔍 Debug: Chrome wrapper content:"
-echo "---"
-head -10 "$CHROME_WRAPPER_DIR/chrome"
-echo "---"
-
-# CRITICAL: Set Java system properties to use our wrapper instead of direct Chrome binary
-export JAVA_OPTS="-Dwebdriver.chrome.driver=$(command -v chromedriver) -Dchrome.binary=$CHROME_WRAPPER_DIR/chrome"
-export _JAVA_OPTIONS="-Dwebdriver.chrome.driver=$(command -v chromedriver) -Dchrome.binary=$CHROME_WRAPPER_DIR/chrome"
-echo "🎯 Java options updated to use wrapper: $_JAVA_OPTIONS"
-
-# PATH isolation should be sufficient - no need for aggressive system binary overrides
-
-echo "✅ Google Chrome configured with CI flags via environment variables"
-echo "🔍 Chrome binary verification:"
-echo "  CHROME_PATH: $CHROME_PATH"
-echo "  which chrome: $(which chrome 2>/dev/null || echo 'not found')"
-echo "  which chromium-browser: $(which chromium-browser 2>/dev/null || echo 'not found')"
+echo "✅ Minimal Chrome wrapper created"
 echo "  which google-chrome-stable: $(which google-chrome-stable 2>/dev/null || echo 'not found')"
 
 # Clear Supabase database once before running tests
