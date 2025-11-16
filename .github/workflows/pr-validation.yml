@@ -110,56 +110,6 @@ jobs:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🗑️ Remove system Chrome packages
-        run: |
-          echo "Removing ALL system Chrome packages to prevent conflicts..."
-          
-          # Remove all Chrome/Chromium packages
-          sudo apt-get remove -y \
-            chromium-browser \
-            chromium-browser-l10n \
-            chromium-codecs-ffmpeg \
-            chromium-codecs-ffmpeg-extra \
-            google-chrome-stable \
-            google-chrome-beta \
-            google-chrome-unstable \
-            chromium \
-            chromium-driver \
-            2>/dev/null || true
-          
-          # Remove any lingering Chrome binaries
-          sudo rm -f /usr/bin/chromium-browser \
-                     /usr/bin/chromium \
-                     /usr/bin/google-chrome \
-                     /usr/bin/google-chrome-stable \
-                     /usr/bin/google-chrome-beta \
-                     /usr/bin/google-chrome-unstable \
-                     2>/dev/null || true
-          
-          # Verify removal
-          echo "Checking for remaining Chrome binaries:"
-          ls -la /usr/bin/*chrome* /usr/bin/*chromium* 2>/dev/null || echo "No Chrome binaries found in /usr/bin"
-          
-          echo "System Chrome packages and binaries completely removed"
-          
-          # Remove Selenium WebDriver cache directories that contain downloaded Chrome binaries
-          echo "Removing Selenium WebDriver cache directories..."
-          sudo rm -rf /home/runner/.cache/selenium \
-                      /home/runner/.wdm \
-                      /home/runner/.local/share/webdrivermanager \
-                      /tmp/webdriver \
-                      /tmp/selenium \
-                      /var/tmp/selenium \
-                      2>/dev/null || true
-          
-          # Also remove global cache locations
-          sudo rm -rf /root/.cache/selenium \
-                      /root/.wdm \
-                      /usr/local/share/webdrivermanager \
-                      2>/dev/null || true
-          
-          echo "Selenium caches removed"
-
       - name: 🛠 Setup development environment
         uses: ./.github/actions/setup-dev-environment
         with:
@@ -167,6 +117,8 @@ jobs:
 
       - name: 🧪 Run Chrome integration tests
         working-directory: devbox/minimal
+        env:
+          CHROME_EXECUTABLE: /home/runner/work/strength-assistant/strength-assistant/devbox/minimal/.devbox/nix/profile/default/bin/google-chrome-stable
         run: devbox run integration_test_chrome
       - name: Upload debug artifacts
         if: always()
