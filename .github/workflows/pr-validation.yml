@@ -141,6 +141,24 @@ jobs:
           ls -la /usr/bin/*chrome* /usr/bin/*chromium* 2>/dev/null || echo "No Chrome binaries found in /usr/bin"
           
           echo "System Chrome packages and binaries completely removed"
+          
+          # Remove Selenium WebDriver cache directories that contain downloaded Chrome binaries
+          echo "Removing Selenium WebDriver cache directories..."
+          sudo rm -rf /home/runner/.cache/selenium \
+                      /home/runner/.wdm \
+                      /home/runner/.local/share/webdrivermanager \
+                      /tmp/webdriver \
+                      /tmp/selenium \
+                      /var/tmp/selenium \
+                      2>/dev/null || true
+          
+          # Also remove global cache locations
+          sudo rm -rf /root/.cache/selenium \
+                      /root/.wdm \
+                      /usr/local/share/webdrivermanager \
+                      2>/dev/null || true
+          
+          echo "Selenium caches removed"
 
       - name: 🛠 Setup development environment
         uses: ./.github/actions/setup-dev-environment
