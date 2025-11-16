@@ -186,9 +186,21 @@ mkdir -p maestro-debug-output
 echo "🎯 Running all tests sequentially via Maestro..."
 # Note: We need to run each test file individually since Maestro folder mode
 # doesn't work well with web browser detection in non-interactive mode
+
+# First, list all tests that will be run
+echo "📋 Found web test files:"
 for test_file in .maestro/web/*.yml; do
     if [ -f "$test_file" ]; then
-        echo "🧪 Running $(basename "$test_file")..."
+        echo "  - $(basename "$test_file")"
+    fi
+done
+
+# Run each test individually
+test_count=0
+for test_file in .maestro/web/*.yml; do
+    if [ -f "$test_file" ]; then
+        test_count=$((test_count + 1))
+        echo "🧪 Running test $test_count: $(basename "$test_file")..."
 
         # Maestro handles Chrome lifecycle, no manual cleanup needed
 
@@ -196,7 +208,11 @@ for test_file in .maestro/web/*.yml; do
           --headless \
           --debug-output maestro-debug-output \
           --format junit || exit 1
+          
+        echo "✅ Test $test_count completed: $(basename "$test_file")"
     fi
 done
+
+echo "🎯 Total tests run: $test_count"
 
 echo "✅ All tests completed"
