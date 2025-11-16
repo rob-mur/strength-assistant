@@ -110,6 +110,20 @@ jobs:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
 
+      - name: 🗑️ Remove system Chrome packages
+        run: |
+          echo "Removing system Chrome packages to prevent conflicts..."
+          sudo apt-get remove -y \
+            chromium-browser \
+            chromium-browser-l10n \
+            chromium-codecs-ffmpeg \
+            chromium-codecs-ffmpeg-extra \
+            google-chrome-stable \
+            google-chrome-beta \
+            google-chrome-unstable \
+            2>/dev/null || true
+          echo "System Chrome packages removed"
+
       - name: 🛠 Setup development environment
         uses: ./.github/actions/setup-dev-environment
         with:
