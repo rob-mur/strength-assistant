@@ -1,13 +1,14 @@
 import { initializeDataLayer } from "@/lib/data/sync/index";
 
 // Mock the dependencies
-jest.mock("@/lib/data/sync/syncConfig", () => ({
-  configureSyncEngine: jest.fn(),
-  syncHelpers: { mockHelper: "test" },
-}));
-
 jest.mock("@/lib/data/supabase/supabase", () => ({
   initSupabase: jest.fn(),
+}));
+
+jest.mock("@/lib/data/StorageManager", () => ({
+  storageManager: {
+    init: jest.fn(),
+  },
 }));
 
 // Firebase mock removed
@@ -16,6 +17,11 @@ jest.mock("@/lib/data/store", () => ({
   exercises$: { mockObservable: "exercises" },
   user$: { mockObservable: "user" },
   isOnline$: { mockObservable: "isOnline" },
+  initializeExercisesStore: jest.fn(),
+}));
+
+jest.mock("@/lib/data/sync/syncConfig", () => ({
+  configureSyncEngine: jest.fn(),
 }));
 
 const originalConsoleLog = console.log;
@@ -30,11 +36,13 @@ describe("Data Sync Index", () => {
     console.warn = jest.fn();
 
     // Reset mocks to default behavior
-    const { configureSyncEngine } = require("@/lib/data/sync/syncConfig");
     const { initSupabase } = require("@/lib/data/supabase/supabase");
+    const { storageManager } = require("@/lib/data/StorageManager");
+    const { configureSyncEngine } = require("@/lib/data/sync/syncConfig");
 
-    configureSyncEngine.mockImplementation(() => {});
     initSupabase.mockImplementation(() => {});
+    storageManager.init.mockResolvedValue(undefined);
+    configureSyncEngine.mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -44,36 +52,36 @@ describe("Data Sync Index", () => {
   });
 
   describe("initializeDataLayer", () => {
-    it("initializes Supabase and sync engine successfully", async () => {
-      const { configureSyncEngine } = require("@/lib/data/sync/syncConfig");
+    it("initializes Supabase and storage manager successfully", async () => {
       const { initSupabase } = require("@/lib/data/supabase/supabase");
+      const { storageManager } = require("@/lib/data/StorageManager");
 
       await initializeDataLayer();
 
       expect(initSupabase).toHaveBeenCalled();
-      expect(configureSyncEngine).toHaveBeenCalled();
+      expect(storageManager.init).toHaveBeenCalled();
     });
 
     it("initializes components in correct order", async () => {
-      const { configureSyncEngine } = require("@/lib/data/sync/syncConfig");
       const { initSupabase } = require("@/lib/data/supabase/supabase");
+      const { storageManager } = require("@/lib/data/StorageManager");
 
       await initializeDataLayer();
 
       // Verify both functions are called (order not verifiable without console logs)
       expect(initSupabase).toHaveBeenCalled();
-      expect(configureSyncEngine).toHaveBeenCalled();
+      expect(storageManager.init).toHaveBeenCalled();
     });
 
     it("calls initialization functions", async () => {
-      const { configureSyncEngine } = require("@/lib/data/sync/syncConfig");
       const { initSupabase } = require("@/lib/data/supabase/supabase");
+      const { storageManager } = require("@/lib/data/StorageManager");
 
       await initializeDataLayer();
 
       // Verify both functions are called
       expect(initSupabase).toHaveBeenCalledTimes(1);
-      expect(configureSyncEngine).toHaveBeenCalledTimes(1);
+      expect(storageManager.init).toHaveBeenCalledTimes(1);
     });
   });
 

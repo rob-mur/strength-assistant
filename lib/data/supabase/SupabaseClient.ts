@@ -118,6 +118,22 @@ export class SupabaseClient {
         );
         return null;
       }
+
+      // CRITICAL FIX: Handle network errors gracefully during airplane mode
+      if (
+        error instanceof Error &&
+        (error.message.includes("Network request failed") ||
+          error.message.includes("timeout") ||
+          error.message.includes("Failed to fetch") ||
+          error.name === "TypeError")
+      ) {
+        console.log(
+          "🔗 SupabaseClient - Network error during getCurrentUser (airplane mode), returning null:",
+          error.message,
+        );
+        return null;
+      }
+
       throw error;
     }
   }

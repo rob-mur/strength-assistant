@@ -4,24 +4,33 @@ set -e
 
 echo "🌐 Starting Chrome Integration Tests"
 
+# Initial cleanup to ensure no leftover Chromium processes  
+echo "🧹 Initial cleanup of any existing Chromium processes..."
+# Only kill Chromium browsers, not chromium-related processes like chromedriver
+pgrep -f "chromium" | xargs kill 2>/dev/null || true
+rm -rf /tmp/chrome-* /tmp/chromium-* 2>/dev/null || true
+sleep 1
+
 # Change to project root directory (relative to scripts folder)
 cd "$(dirname "$0")/.."
 
 # Cleanup function - runs at script exit
 cleanup() {
     echo "🧹 Cleaning up processes..."
+    
+    # Force kill any Chromium browser processes that might be lingering
+    pgrep -f "chromium" | xargs kill 2>/dev/null || true
+    sleep 1
+    
     supabase stop 2>/dev/null || true
 
     if [ ! -z "$EXPO_PID" ]; then
         kill $EXPO_PID 2>/dev/null || true
     fi
 
-    # Kill Chrome/ChromeDriver processes
-    pkill -f "chrome.*--headless" 2>/dev/null || true
-    pkill -f "chromedriver" 2>/dev/null || true
-
-    # Cleanup temp files
-    rm -f "$CHROME_WRAPPER_SCRIPT" 2>/dev/null || true
+    # Clean up Chromium temp directories and wrapper scripts
+    echo "🧹 Cleaning up Chromium temp directories..."
+    rm -rf /tmp/chrome-* /tmp/chromium-* 2>/dev/null || true
 }
 
 trap cleanup EXIT ERR
@@ -81,72 +90,87 @@ echo "⏳ Waiting for Expo to fully initialize..."
 sleep 5
 echo "✅ Expo web server ready"
 
-# Create Chrome wrapper script
-CHROME_WRAPPER_SCRIPT="/tmp/chrome-wrapper-$$"
+# NEW APPROACH: Replace Maestro's downloaded Chromium with our Devbox version
+echo "🔧 Setting up Chromium replacement for Maestro..."
 
-cat > "$CHROME_WRAPPER_SCRIPT" << 'EOF'
-#!/bin/bash
-echo "🚀 Starting Chrome for Maestro testing..."
-# Force use of devbox-provided chromium to match chromedriver version
-if command -v chromium >/dev/null 2>&1; then
-    echo "📱 Using devbox Chromium browser ($(chromium --version 2>/dev/null || echo 'version unknown'))"
-    exec chromium --no-sandbox --headless --disable-dev-shm-usage --disable-gpu --user-data-dir=/tmp/chrome-test-$$ "$@"
+# Find our Devbox Chromium binary
+if [ -d ".devbox/nix/profile/default/bin" ]; then
+    DEVBOX_CHROMIUM=".devbox/nix/profile/default/bin/chromium"
+    if [ ! -f "$DEVBOX_CHROMIUM" ]; then
+        DEVBOX_CHROMIUM=$(command -v chromium)
+    fi
 else
-    echo "❌ Chromium not found in devbox environment"
-    echo "Available browsers:"
-    command -v google-chrome >/dev/null 2>&1 && echo "  - google-chrome: $(google-chrome --version 2>/dev/null || echo 'version unknown')"
-    command -v chrome >/dev/null 2>&1 && echo "  - chrome: $(chrome --version 2>/dev/null || echo 'version unknown')"
+    DEVBOX_CHROMIUM=$(command -v chromium)
+fi
+
+if [ -z "$DEVBOX_CHROMIUM" ] || [ ! -f "$DEVBOX_CHROMIUM" ]; then
+    echo "❌ Devbox Chromium binary not found"
     exit 1
 fi
-EOF
-chmod +x "$CHROME_WRAPPER_SCRIPT"
-export MAESTRO_CHROME_PATH="$CHROME_WRAPPER_SCRIPT"
 
-# Debug: Show what's available in PATH
-echo "🔍 Environment Debug Information:"
-echo "PATH: $PATH"
-echo "Available chrome/chromium binaries:"
-command -v chromium >/dev/null 2>&1 && echo "  ✅ chromium: $(command -v chromium) ($(chromium --version 2>/dev/null || echo 'version unknown'))"
-command -v google-chrome >/dev/null 2>&1 && echo "  📍 google-chrome: $(command -v google-chrome) ($(google-chrome --version 2>/dev/null || echo 'version unknown'))"
-command -v chrome >/dev/null 2>&1 && echo "  📍 chrome: $(command -v chrome) ($(chrome --version 2>/dev/null || echo 'version unknown'))"
+echo "📍 Found Devbox Chromium at: $DEVBOX_CHROMIUM"
 
-# Set ChromeDriver path to use devbox-provided version
-if command -v chromedriver >/dev/null 2>&1; then
-    CHROMEDRIVER_PATH=$(command -v chromedriver)
-    export MAESTRO_CHROMEDRIVER_PATH="$CHROMEDRIVER_PATH"
-    echo "🔧 Using ChromeDriver: $CHROMEDRIVER_PATH ($(chromedriver --version 2>/dev/null || echo 'version unknown'))"
+# Trigger Maestro to download its Chromium binary
+echo "🔽 Triggering Maestro to download its Chromium..."
+maestro --version > /dev/null 2>&1 || true
+
+# Find Maestro's Chromium cache directory
+# Maestro typically downloads to ~/.maestro/chromium or similar
+MAESTRO_CHROMIUM_PATHS=(
+    "$HOME/.maestro/chromium"
+    "$HOME/.cache/maestro/chromium" 
+    "$HOME/.local/share/maestro/chromium"
+    "/tmp/maestro/chromium"
+)
+
+MAESTRO_CHROMIUM_DIR=""
+for path in "${MAESTRO_CHROMIUM_PATHS[@]}"; do
+    if [ -d "$path" ]; then
+        MAESTRO_CHROMIUM_DIR="$path"
+        echo "📂 Found Maestro Chromium cache at: $MAESTRO_CHROMIUM_DIR"
+        break
+    fi
+done
+
+# If we found Maestro's Chromium cache, replace the binary
+if [ -n "$MAESTRO_CHROMIUM_DIR" ]; then
+    # Find the actual Chromium executable in Maestro's cache
+    MAESTRO_CHROMIUM_BIN=$(find "$MAESTRO_CHROMIUM_DIR" -name "chrome" -o -name "chromium" -o -name "chromium-browser" 2>/dev/null | head -1)
+    
+    if [ -n "$MAESTRO_CHROMIUM_BIN" ] && [ -f "$MAESTRO_CHROMIUM_BIN" ]; then
+        echo "🔄 Replacing Maestro's Chromium ($MAESTRO_CHROMIUM_BIN) with Devbox version"
+        # Backup original and replace with our Devbox Chromium
+        cp "$MAESTRO_CHROMIUM_BIN" "$MAESTRO_CHROMIUM_BIN.backup"
+        cp "$DEVBOX_CHROMIUM" "$MAESTRO_CHROMIUM_BIN"
+        chmod +x "$MAESTRO_CHROMIUM_BIN"
+        echo "✅ Maestro Chromium binary replaced with Devbox version"
+    else
+        echo "⚠️ Could not find Chromium binary in Maestro cache - will rely on PATH"
+    fi
 else
-    echo "⚠️ ChromeDriver not found in PATH"
+    echo "⚠️ Could not find Maestro Chromium cache - will rely on PATH"
 fi
 
-# Verify Maestro environment variables
-echo "🎭 Maestro Configuration:"
-echo "  MAESTRO_CHROME_PATH: ${MAESTRO_CHROME_PATH:-not set}"
-echo "  MAESTRO_CHROMEDRIVER_PATH: ${MAESTRO_CHROMEDRIVER_PATH:-not set}"
+# Also create wrapper in PATH as fallback
+CHROMIUM_WRAPPER_DIR="/tmp/chromium-wrapper-$$"
+mkdir -p "$CHROMIUM_WRAPPER_DIR"
 
-# Clean up any existing Chrome processes and temp files BEFORE starting tests
-echo "🧹 Pre-test cleanup: Killing all Chrome/Chromium processes..."
-pkill -9 chromium 2>/dev/null || true
-pkill -9 chrome_crashpad_handler 2>/dev/null || true
-pkill -9 chromedriver 2>/dev/null || true
+cat > "$CHROMIUM_WRAPPER_DIR/chromium" << EOF
+#!/bin/bash
+exec "$DEVBOX_CHROMIUM" --no-sandbox "\$@"
+EOF
 
-echo "🧹 Pre-test cleanup: Removing Chrome temp directories..."
-rm -rf /tmp/.org.chromium.Chromium.* 2>/dev/null || true
-rm -rf /tmp/chrome-* 2>/dev/null || true
-rm -rf /tmp/maestro-chrome-* 2>/dev/null || true
-rm -rf /tmp/.com.google.Chrome.* 2>/dev/null || true
+cat > "$CHROMIUM_WRAPPER_DIR/chrome" << EOF
+#!/bin/bash  
+exec "$DEVBOX_CHROMIUM" --no-sandbox "\$@"
+EOF
 
-echo "🧹 Pre-test cleanup: Removing Chromium lock files..."
-rm -f /home/rob/.config/chromium/SingletonLock 2>/dev/null || true
-rm -f /home/rob/.config/chromium/SingletonSocket 2>/dev/null || true
-rm -f /home/rob/.config/chromium/SingletonCookie 2>/dev/null || true
+chmod +x "$CHROMIUM_WRAPPER_DIR"/*
+export PATH="$CHROMIUM_WRAPPER_DIR:$PATH"
 
-# Clear Selenium Manager cache to force use of our Chromium
-echo "🧹 Clearing Selenium Manager cache..."
-rm -rf /home/rob/.cache/selenium/chrome 2>/dev/null || true
-
-echo "⏳ Waiting for cleanup to complete..."
-sleep 3
+echo "✅ Chromium replacement setup completed"
+echo "  Devbox Chromium: $DEVBOX_CHROMIUM"
+echo "  which chromium: $(which chromium 2>/dev/null || echo 'not found')"
 
 # Clear Supabase database once before running tests
 echo "🧹 Clearing Supabase database..."
@@ -162,38 +186,33 @@ mkdir -p maestro-debug-output
 echo "🎯 Running all tests sequentially via Maestro..."
 # Note: We need to run each test file individually since Maestro folder mode
 # doesn't work well with web browser detection in non-interactive mode
+
+# First, list all tests that will be run
+echo "📋 Found web test files:"
 for test_file in .maestro/web/*.yml; do
     if [ -f "$test_file" ]; then
-        echo "🧪 Running $(basename "$test_file")..."
+        echo "  - $(basename "$test_file")"
+    fi
+done
 
-        # NUCLEAR OPTION: Kill ALL Chrome/Chromium processes
-        echo "🧹 Killing all Chrome/Chromium processes..."
-        pkill -9 chromium 2>/dev/null || true
-        pkill -9 chrome_crashpad_handler 2>/dev/null || true
-        pkill -9 chromedriver 2>/dev/null || true
+# Run each test individually
+test_count=0
+for test_file in .maestro/web/*.yml; do
+    if [ -f "$test_file" ]; then
+        test_count=$((test_count + 1))
+        echo "🧪 Running test $test_count: $(basename "$test_file")..."
 
-        # Remove ALL Chrome-related temp directories
-        echo "🧹 Cleaning up Chrome temp directories..."
-        rm -rf /tmp/.org.chromium.Chromium.* 2>/dev/null || true
-        rm -rf /tmp/chrome-* 2>/dev/null || true
-        rm -rf /tmp/maestro-chrome-* 2>/dev/null || true
-        rm -rf /tmp/.com.google.Chrome.* 2>/dev/null || true
-
-        # Clean Chromium config lock files
-        echo "🧹 Cleaning Chromium lock files..."
-        rm -f /home/rob/.config/chromium/SingletonLock 2>/dev/null || true
-        rm -f /home/rob/.config/chromium/SingletonSocket 2>/dev/null || true
-        rm -f /home/rob/.config/chromium/SingletonCookie 2>/dev/null || true
-
-        # Wait longer for cleanup to complete and locks to release
-        echo "⏳ Waiting for cleanup to complete..."
-        sleep 5
+        # Maestro handles Chrome lifecycle, no manual cleanup needed
 
         maestro test "$test_file" \
           --headless \
           --debug-output maestro-debug-output \
           --format junit || exit 1
+          
+        echo "✅ Test $test_count completed: $(basename "$test_file")"
     fi
 done
+
+echo "🎯 Total tests run: $test_count"
 
 echo "✅ All tests completed"

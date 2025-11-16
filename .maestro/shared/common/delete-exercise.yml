@@ -1,0 +1,27 @@
+# Delete an exercise by name
+# Expects EXERCISE_NAME environment variable
+url: ${APP_URL}
+timeout: 60000
+---
+# Ensure we're on the exercises screen before trying to delete an exercise
+- runFlow:
+    file: navigate-to-exercises.yml
+
+# Find and tap on the exercise to delete
+- tapOn:
+    text: "${EXERCISE_NAME}"
+- takeScreenshot: "exercise-selected-for-deletion.png"
+
+# Tap the delete button
+- tapOn:
+    id: "delete-exercise-button"
+- takeScreenshot: "delete-button-pressed.png"
+
+# Confirm deletion
+- tapOn:
+    text: "Delete"
+- takeScreenshot: "exercise-deleted.png"
+
+# Wait for deletion to complete
+- waitForAnimationToEnd:
+    timeout: 3000

@@ -8,8 +8,18 @@ import { FAB } from "react-native-paper";
 
 export default function ExerciseScreen() {
   const router = useRouter();
-  const { user } = useAuth();
-  const { exercises } = useExercises(user?.uid || "");
+  const { user, loading } = useAuth();
+
+  // CRITICAL FIX: Prevent race condition by ensuring stable uid
+  // Wait for auth to complete loading before determining uid
+  const uid = React.useMemo(() => {
+    if (loading) {
+      return ""; // Return empty during loading to prevent premature calls
+    }
+    return user?.uid || "";
+  }, [user?.uid, loading]);
+
+  const { exercises } = useExercises(uid);
 
   return (
     <View style={{ flex: 1, position: "relative" }} testID="exercise-screen">

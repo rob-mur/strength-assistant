@@ -1,0 +1,7 @@
+# Check for any errors during the test
+url: ${APP_URL}
+timeout: 60000
+---
+# Check that no uncaught errors occurred
+- assertNotVisible:
+    id: "maestro-error-blocker"

@@ -1,0 +1,83 @@
+appId: com.jimmysolutions.strengthassistant.test
+---
+# Test: Maestro Built-in Airplane Mode Simulation
+# Purpose: Use Maestro's native setAirplaneMode command for automated testing
+#
+# ✅ FULLY AUTOMATED - No manual intervention required!
+# ✅ Uses Maestro's built-in airplane mode simulation
+# ⚠️ Android only - iOS simulators don't support airplane mode
+
+- launchApp
+
+# Handle authentication and onboarding
+- runFlow:
+    file: ../shared/common/auth-flow.yml
+
+# Navigate to exercises
+- runFlow:
+    file: ../shared/common/navigate-to-exercises.yml
+
+# create exercise whilst online
+- runFlow:
+    file: ../shared/common/add-exercise.yml
+    env:
+      EXERCISE_NAME: "Online"
+
+# STEP 1: Enable airplane mode using Maestro command
+- setAirplaneMode: enabled
+
+# STEP 2: Create exercises while in airplane mode
+- runFlow:
+    file: ../shared/common/add-exercise.yml
+    env:
+      EXERCISE_NAME: "Offline"
+
+# Verify exercises are created locally
+- runFlow:
+    file: ../shared/common/navigate-to-exercises.yml
+
+- assertVisible:
+    text: "Online"
+- assertVisible:
+    text: "Offline"
+
+# Note: Exercises are created locally while offline (no UI sync status indicator)
+
+# STEP 3: CRITICAL TEST - Restart app while still in airplane mode
+- stopApp
+- launchApp
+
+# Navigate back to exercises
+- runFlow:
+    file: ../shared/common/navigate-to-exercises.yml
+
+# CRITICAL ASSERTION: Exercises must persist through restart in airplane mode
+- assertVisible:
+    text: "Online"
+- assertVisible:
+    text: "Offline"
+
+# STEP 4: Disable airplane mode using Maestro command
+- setAirplaneMode: disabled
+
+# Note: App detects online state and syncs in background (no UI sync indicator)
+
+# Exercises should still be visible after sync
+- assertVisible:
+    text: "Online"
+- assertVisible:
+    text: "Offline"
+
+# STEP 5: Final restart test with network available
+- stopApp
+- launchApp
+
+# Navigate to exercises
+- runFlow:
+    file: ../shared/common/navigate-to-exercises.yml
+
+# FINAL CRITICAL ASSERTION: All exercises must survive the complete cycle
+- assertVisible:
+    text: "Online"
+- assertVisible:
+    text: "Offline"

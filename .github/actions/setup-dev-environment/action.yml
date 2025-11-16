@@ -48,6 +48,13 @@ runs:
         restore-keys: |
           ${{ runner.os }}-npm-
 
+    - name: 💣 Uninstall System Google Chrome
+      shell: bash
+      run: |
+        echo "Removing system-installed Google Chrome stable..."
+        sudo apt purge -y google-chrome-stable || true
+        sudo apt autoremove -y || true
+
     - name: 📦 Install dependencies
       shell: bash
       working-directory: devbox/${{ inputs.devbox-config }}

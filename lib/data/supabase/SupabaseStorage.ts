@@ -10,6 +10,7 @@ import type { ExerciseRecord } from "../../models/ExerciseRecord";
 import type { UserAccount } from "../../models/UserAccount";
 import type { SyncStateRecord } from "../../models/SyncStateRecord";
 import { SupabaseClient, User } from "@supabase/supabase-js";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getSupabaseClient } from "./supabase";
 import {
   createExerciseRecord,
@@ -34,6 +35,13 @@ import {
 } from "../../models/SyncStateRecord";
 
 const deepLink = "strengthassistant://auth-callback";
+
+// Network timeout constants for consistent behavior
+const NETWORK_TIMEOUTS = {
+  SESSION_VALIDATION: 3000, // 3 seconds for session validation and initialization
+  SIGN_IN_TIMEOUT: 3000, // 3 seconds for anonymous sign-in operations
+} as const;
+
 // StorageBackend interface definition (matches contract)
 export interface StorageBackend {
   // Exercise CRUD operations
@@ -80,6 +88,7 @@ export class SupabaseStorage implements StorageBackend {
   private signInAttemptCount = 0;
   private readonly maxSignInAttempts = 1;
   private signInInProgress = false;
+  private readonly USER_STORAGE_KEY = "@supabase_storage_current_user";
 
   private getClient(): SupabaseClient {
     this.client ??= getSupabaseClient();
@@ -95,10 +104,81 @@ export class SupabaseStorage implements StorageBackend {
       }
     }
   }
+
+  /**
+   * Persist user state to AsyncStorage for offline-first functionality
+   */
+  private async persistUserState(user: UserAccount | null): Promise<void> {
+    try {
+      if (user) {
+        const userJson = JSON.stringify({
+          id: user.id,
+          email: user.email,
+          isAnonymous: user.isAnonymous,
+          createdAt: user.createdAt.toISOString(),
+        });
+        await AsyncStorage.setItem(this.USER_STORAGE_KEY, userJson);
+        console.log(
+          "🔐 SupabaseStorage - User state persisted to AsyncStorage",
+        );
+      } else {
+        await AsyncStorage.removeItem(this.USER_STORAGE_KEY);
+        console.log(
+          "🔐 SupabaseStorage - User state cleared from AsyncStorage",
+        );
+      }
+    } catch (error) {
+      console.warn("🔐 SupabaseStorage - Failed to persist user state:", error);
+    }
+  }
+
+  /**
+   * Restore user state from AsyncStorage for offline-first functionality
+   */
+  private async restoreUserState(): Promise<UserAccount | null> {
+    try {
+      const userJson = await AsyncStorage.getItem(this.USER_STORAGE_KEY);
+      if (!userJson) {
+        return null;
+      }
+
+      const userData = JSON.parse(userJson);
+      const user: UserAccount = {
+        id: userData.id,
+        email: userData.email,
+        isAnonymous: userData.isAnonymous,
+        createdAt: new Date(userData.createdAt),
+      };
+
+      console.log(
+        "🔐 SupabaseStorage - User state restored from AsyncStorage:",
+        user.isAnonymous ? "anonymous" : "authenticated",
+      );
+      return user;
+    } catch (error) {
+      console.warn("🔐 SupabaseStorage - Failed to restore user state:", error);
+      // Clear corrupted data
+      try {
+        await AsyncStorage.removeItem(this.USER_STORAGE_KEY);
+      } catch {
+        // Silent cleanup
+      }
+      return null;
+    }
+  }
   /**
    * Call this after construction to initialize the session asynchronously.
    */
   async init(): Promise<void> {
+    // CRITICAL FIX: Restore user state from local storage first (offline-first)
+    const restoredUser = await this.restoreUserState();
+    if (restoredUser) {
+      this.currentUser = restoredUser;
+      console.log(
+        "🔐 SupabaseStorage - Restored user from AsyncStorage on init",
+      );
+    }
+
     await this.initializeSession();
   }
 
@@ -210,48 +290,119 @@ export class SupabaseStorage implements StorageBackend {
 
   // User management
   async getCurrentUser(): Promise<UserAccount | null> {
-    // Check if we have a local user
     if (this.currentUser) {
-      // In production, validate that local users have valid Supabase sessions
-      if (process.env.NODE_ENV === "production") {
-        console.log(
-          "🔐 SupabaseStorage - Production mode: validating local user session",
-        );
-        try {
-          const {
-            data: { session },
-          } = await this.getClient().auth.getSession();
+      return await this.validateLocalUser();
+    }
 
-          if (!session?.user) {
-            console.log(
-              "🔐 SupabaseStorage - Local user has no valid Supabase session, clearing",
-            );
-            this.currentUser = null;
-            this.notifyAuthStateChange(null);
-            return null;
-          }
-        } catch (error) {
-          console.error(
-            "🔐 SupabaseStorage - Error validating session, clearing local user:",
-            error,
-          );
-          this.currentUser = null;
-          this.notifyAuthStateChange(null);
-          return null;
-        }
-      }
+    return await this.fetchInitialSession();
+  }
+
+  private async validateLocalUser(): Promise<UserAccount | null> {
+    if (process.env.NODE_ENV !== "production") {
       return this.currentUser;
     }
 
-    const {
-      data: { session },
-    } = await this.getClient().auth.getSession();
+    console.log(
+      "🔐 SupabaseStorage - Production mode: validating local user session",
+    );
 
-    if (!session?.user) {
+    try {
+      const session = await this.getSessionWithTimeout(
+        "Session validation timeout (offline mode)",
+      );
+
+      if (!session?.user) {
+        return await this.clearLocalUser();
+      }
+
+      return this.currentUser;
+    } catch (error) {
+      return this.handleValidationError(error);
+    }
+  }
+
+  private async fetchInitialSession(): Promise<UserAccount | null> {
+    try {
+      const session = await this.getSessionWithTimeout(
+        "Initial session fetch timeout (offline mode)",
+      );
+
+      if (!session?.user) {
+        return null;
+      }
+
+      return this.mapSupabaseUserToAccount(session.user);
+    } catch (error) {
+      return this.handleInitialSessionError(error);
+    }
+  }
+
+  private async getSessionWithTimeout(timeoutMessage: string) {
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error(timeoutMessage));
+      }, NETWORK_TIMEOUTS.SESSION_VALIDATION);
+    });
+
+    const sessionPromise = this.getClient().auth.getSession();
+    const result = await Promise.race([sessionPromise, timeoutPromise]);
+
+    return result.data.session;
+  }
+
+  private async clearLocalUser(): Promise<null> {
+    console.log(
+      "🔐 SupabaseStorage - Local user has no valid Supabase session, clearing",
+    );
+    this.currentUser = null;
+    await this.persistUserState(null);
+    this.notifyAuthStateChange(null);
+    return null;
+  }
+
+  private handleValidationError(error: unknown): UserAccount | null {
+    if (this.isNetworkError(error)) {
+      console.log(
+        "🔐 SupabaseStorage - Network error during session validation (airplane mode), keeping local user:",
+        error instanceof Error ? error.message : String(error),
+      );
+      return this.currentUser;
+    }
+
+    console.error(
+      "🔐 SupabaseStorage - Error validating session, clearing local user:",
+      error,
+    );
+    this.currentUser = null;
+    this.persistUserState(null);
+    this.notifyAuthStateChange(null);
+    return null;
+  }
+
+  private handleInitialSessionError(error: unknown): UserAccount | null {
+    if (this.isNetworkError(error)) {
+      console.log(
+        "🔐 SupabaseStorage - Network error during initial session fetch (airplane mode), returning null:",
+        error instanceof Error ? error.message : String(error),
+      );
       return null;
     }
 
-    return this.mapSupabaseUserToAccount(session.user);
+    console.error(
+      "🔐 SupabaseStorage - Error fetching initial session:",
+      error,
+    );
+    throw error;
+  }
+
+  private isNetworkError(error: unknown): boolean {
+    return (
+      error instanceof Error &&
+      (error.message.includes("Network request failed") ||
+        error.message.includes("timeout") ||
+        error.message.includes("offline mode") ||
+        error.name === "TypeError")
+    );
   }
 
   async signInWithEmail(email: string, password: string): Promise<UserAccount> {
@@ -272,6 +423,7 @@ export class SupabaseStorage implements StorageBackend {
 
     const userAccount = this.mapSupabaseUserToAccount(data.user);
     this.currentUser = userAccount;
+    await this.persistUserState(userAccount);
 
     return userAccount;
   }
@@ -297,6 +449,7 @@ export class SupabaseStorage implements StorageBackend {
 
     const userAccount = this.mapSupabaseUserToAccount(data.user);
     this.currentUser = userAccount;
+    await this.persistUserState(userAccount);
 
     return userAccount;
   }
@@ -309,7 +462,7 @@ export class SupabaseStorage implements StorageBackend {
       );
       // Wait briefly and return current user or create fallback
       await new Promise((resolve) => setTimeout(resolve, 100));
-      return this.currentUser || this.createFallbackUser();
+      return this.currentUser || (await this.createFallbackUser());
     }
 
     // Circuit breaker: limit total attempts to prevent infinite recursion
@@ -317,7 +470,7 @@ export class SupabaseStorage implements StorageBackend {
       console.log(
         `🔐 SupabaseStorage - Max sign in attempts (${this.maxSignInAttempts}) reached, using fallback`,
       );
-      return this.createFallbackUser();
+      return await this.createFallbackUser();
     }
 
     this.signInInProgress = true;
@@ -331,17 +484,21 @@ export class SupabaseStorage implements StorageBackend {
       // Try Supabase with defensive error handling
       try {
         console.log(
-          "🔐 SupabaseStorage - Quick Supabase attempt (2s timeout)...",
+          `🔐 SupabaseStorage - Quick Supabase attempt (${NETWORK_TIMEOUTS.SIGN_IN_TIMEOUT}ms timeout)...`,
         );
 
-        // Create a very aggressive timeout
+        // Create a consistent timeout for sign-in operations
         const timeoutPromise = new Promise<never>((_, reject) => {
           setTimeout(() => {
             console.log(
               "🔐 SupabaseStorage - TIMEOUT: Supabase took too long, rejecting...",
             );
-            reject(new Error("Supabase timeout after 2 seconds"));
-          }, 2000);
+            reject(
+              new Error(
+                `Supabase timeout after ${NETWORK_TIMEOUTS.SIGN_IN_TIMEOUT}ms`,
+              ),
+            );
+          }, NETWORK_TIMEOUTS.SIGN_IN_TIMEOUT);
         });
 
         console.log("🔐 SupabaseStorage - Starting signInAnonymously call...");
@@ -373,6 +530,7 @@ export class SupabaseStorage implements StorageBackend {
           );
           const realUser = this.mapSupabaseUserToAccount(result.data.user);
           this.currentUser = realUser;
+          await this.persistUserState(realUser);
           this.notifyAuthStateChange(realUser);
           return realUser;
         }
@@ -387,7 +545,7 @@ export class SupabaseStorage implements StorageBackend {
         );
       }
 
-      return this.createFallbackUser();
+      return await this.createFallbackUser();
     } finally {
       this.signInInProgress = false;
     }
@@ -395,8 +553,11 @@ export class SupabaseStorage implements StorageBackend {
 
   private async performSupabaseSignIn() {
     try {
-      // CRITICAL FIX: Disable auth state change callbacks during sign-in to prevent recursion
+      // CRITICAL FIX: Temporarily disable auth state change callbacks during sign-in to prevent recursion
+      // Store references to callbacks to restore them safely
       const originalCallbacks = [...this.authStateCallbacks];
+
+      // Clear callbacks array temporarily
       this.authStateCallbacks.length = 0;
 
       console.log(
@@ -407,7 +568,8 @@ export class SupabaseStorage implements StorageBackend {
         const result = await this.getClient().auth.signInAnonymously();
         return result;
       } finally {
-        // Restore callbacks after sign-in completes
+        // Safely restore callbacks - clear array first then add back original callbacks
+        this.authStateCallbacks.length = 0;
         this.authStateCallbacks.push(...originalCallbacks);
         console.log(
           "🔐 SupabaseStorage - Auth callbacks restored after sign-in",
@@ -422,10 +584,11 @@ export class SupabaseStorage implements StorageBackend {
     }
   }
 
-  private createFallbackUser(): UserAccount {
+  private async createFallbackUser(): Promise<UserAccount> {
     console.log("🔐 SupabaseStorage - Creating local anonymous user fallback");
     const anonymousUser = createAnonymousUser();
     this.currentUser = anonymousUser;
+    await this.persistUserState(anonymousUser);
     this.notifyAuthStateChange(anonymousUser);
     return anonymousUser;
   }
@@ -438,6 +601,7 @@ export class SupabaseStorage implements StorageBackend {
     }
 
     this.currentUser = null;
+    await this.persistUserState(null);
 
     // CRITICAL FIX: Notify auth state callbacks when signing out
     this.notifyAuthStateChange(null);
@@ -566,6 +730,13 @@ export class SupabaseStorage implements StorageBackend {
         console.log("🔐 SupabaseStorage - Setting user from Supabase session");
         const userAccount = this.mapSupabaseUserToAccount(session.user);
         this.currentUser = userAccount;
+        // Persist user state change (but don't await to avoid blocking)
+        this.persistUserState(userAccount).catch((error) =>
+          console.warn(
+            "Failed to persist user state during auth change:",
+            error,
+          ),
+        );
         callback(userAccount);
       } else {
         // CRITICAL FIX: Never override local anonymous users when Supabase has no session
@@ -582,6 +753,13 @@ export class SupabaseStorage implements StorageBackend {
           "🔐 SupabaseStorage - No Supabase session and no local user, setting to null",
         );
         this.currentUser = null;
+        // Persist user state change (but don't await to avoid blocking)
+        this.persistUserState(null).catch((error) =>
+          console.warn(
+            "Failed to persist user state during auth change:",
+            error,
+          ),
+        );
         callback(null);
       }
     });
@@ -623,20 +801,53 @@ export class SupabaseStorage implements StorageBackend {
     // For testing purposes - force session to expire
     await this.getClient().auth.signOut();
     this.currentUser = null;
+    await this.persistUserState(null);
   }
 
   // Private helper methods
   private async initializeSession(): Promise<void> {
     try {
+      // Add timeout to prevent hanging during airplane mode
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(new Error("Session initialization timeout (offline mode)"));
+        }, NETWORK_TIMEOUTS.SESSION_VALIDATION);
+      });
+
+      const sessionPromise = this.getClient().auth.getSession();
+      const result = await Promise.race([sessionPromise, timeoutPromise]);
+
       const {
         data: { session },
-      } = await this.getClient().auth.getSession();
+      } = result;
 
       if (session?.user) {
-        this.currentUser = this.mapSupabaseUserToAccount(session.user);
+        const supabaseUser = this.mapSupabaseUserToAccount(session.user);
+        // Only update if we don't already have a restored user, or if the Supabase user is different
+        if (!this.currentUser || this.currentUser.id !== supabaseUser.id) {
+          this.currentUser = supabaseUser;
+          await this.persistUserState(supabaseUser);
+          console.log("🔐 SupabaseStorage - Session initialized from Supabase");
+        }
       }
-    } catch {
-      // Silent error handling
+    } catch (error) {
+      // Handle network errors gracefully during session initialization
+      if (
+        error instanceof Error &&
+        (error.message.includes("Network request failed") ||
+          error.message.includes("timeout") ||
+          error.message.includes("offline mode") ||
+          error.name === "TypeError")
+      ) {
+        console.log(
+          "🔐 SupabaseStorage - Network error during session initialization (airplane mode), using restored user:",
+          error.message,
+        );
+        // Keep any restored user we already have
+        return;
+      }
+
+      console.warn("🔐 SupabaseStorage - Session initialization error:", error);
     }
   }
 
