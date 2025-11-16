@@ -12,15 +12,18 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
  * Configure Legend State with AsyncStorage for persistence
  * This fixes the "Missing asyncStorage configuration" error
  *
- * The actual configuration happens by setting the AsyncStorage globally
- * which Legend State will pick up automatically.
+ * Note: While Legend State v3 has an official configureSynced API,
+ * the current beta version (3.0.0-beta.41) has import issues with
+ * observablePersistAsyncStorage in Jest environments.
+ * Using globalThis assignment as a temporary workaround until
+ * the beta stabilizes.
  */
 export function configureLegendState(): void {
   console.log("🔧 Configuring Legend State with AsyncStorage...");
 
   try {
     // Set AsyncStorage globally for Legend State to use
-    // This is the correct way to configure AsyncStorage for Legend State
+    // This is a temporary approach for the beta version
     (globalThis as Record<string, unknown>).AsyncStorage = AsyncStorage;
 
     console.log("✅ Legend State AsyncStorage configuration completed");

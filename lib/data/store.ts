@@ -40,7 +40,7 @@ export const isOnline$ = store$.isOnline;
  * Exercises observable - will be initialized with syncedSupabase after Supabase client is ready
  * Uses object structure (keyed by ID) for efficient sync operations
  */
-let exercisesObject$: Observable<Record<string, Exercise>>;
+let exercisesObject$: Observable<Record<string, Exercise>> | undefined;
 
 /**
  * Initialize the exercises store with syncedSupabase configuration
@@ -52,7 +52,8 @@ export function initializeExercisesStore() {
   );
 
   try {
-    exercisesObject$ = observable(
+    // Create the synced observable with proper type annotation
+    const syncedObservable = observable(
       syncedSupabase({
         supabase: supabaseClient.getSupabaseClient(),
         collection: "exercises",
@@ -83,15 +84,23 @@ export function initializeExercisesStore() {
         // Soft delete support
         fieldDeleted: "deleted",
 
-        // Transform data for sync - automatically set user_id from current user
+        // Transform data for sync - safely set user_id from current user
         transform: {
-          save: (exercise: Exercise) => ({
-            ...exercise,
-            user_id: user$.get()?.id || exercise.user_id,
-          }),
+          save: (exercise: Exercise) => {
+            // Get current user synchronously - safe because this is only called
+            // when the exercise is being saved, at which point user$ should be initialized
+            const currentUser = user$.peek(); // Use peek() for synchronous access without subscription
+            return {
+              ...exercise,
+              user_id: currentUser?.id || exercise.user_id || "", // Fallback to empty string instead of null to match Exercise type
+            };
+          },
         },
       }),
     );
+
+    // Cast to the expected type after creation
+    exercisesObject$ = syncedObservable as Observable<Record<string, Exercise>>;
 
     console.log(
       "✅ initializeExercisesStore - syncedSupabase store initialized",

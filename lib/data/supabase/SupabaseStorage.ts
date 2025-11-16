@@ -35,6 +35,13 @@ import {
 } from "../../models/SyncStateRecord";
 
 const deepLink = "strengthassistant://auth-callback";
+
+// Network timeout constants for consistent behavior
+const NETWORK_TIMEOUTS = {
+  SESSION_VALIDATION: 3000, // 3 seconds for session validation and initialization
+  SIGN_IN_TIMEOUT: 3000, // 3 seconds for anonymous sign-in operations
+} as const;
+
 // StorageBackend interface definition (matches contract)
 export interface StorageBackend {
   // Exercise CRUD operations
@@ -334,7 +341,7 @@ export class SupabaseStorage implements StorageBackend {
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => {
         reject(new Error(timeoutMessage));
-      }, 3000);
+      }, NETWORK_TIMEOUTS.SESSION_VALIDATION);
     });
 
     const sessionPromise = this.getClient().auth.getSession();
@@ -477,17 +484,21 @@ export class SupabaseStorage implements StorageBackend {
       // Try Supabase with defensive error handling
       try {
         console.log(
-          "🔐 SupabaseStorage - Quick Supabase attempt (2s timeout)...",
+          `🔐 SupabaseStorage - Quick Supabase attempt (${NETWORK_TIMEOUTS.SIGN_IN_TIMEOUT}ms timeout)...`,
         );
 
-        // Create a very aggressive timeout
+        // Create a consistent timeout for sign-in operations
         const timeoutPromise = new Promise<never>((_, reject) => {
           setTimeout(() => {
             console.log(
               "🔐 SupabaseStorage - TIMEOUT: Supabase took too long, rejecting...",
             );
-            reject(new Error("Supabase timeout after 2 seconds"));
-          }, 2000);
+            reject(
+              new Error(
+                `Supabase timeout after ${NETWORK_TIMEOUTS.SIGN_IN_TIMEOUT}ms`,
+              ),
+            );
+          }, NETWORK_TIMEOUTS.SIGN_IN_TIMEOUT);
         });
 
         console.log("🔐 SupabaseStorage - Starting signInAnonymously call...");
@@ -542,8 +553,11 @@ export class SupabaseStorage implements StorageBackend {
 
   private async performSupabaseSignIn() {
     try {
-      // CRITICAL FIX: Disable auth state change callbacks during sign-in to prevent recursion
+      // CRITICAL FIX: Temporarily disable auth state change callbacks during sign-in to prevent recursion
+      // Store references to callbacks to restore them safely
       const originalCallbacks = [...this.authStateCallbacks];
+
+      // Clear callbacks array temporarily
       this.authStateCallbacks.length = 0;
 
       console.log(
@@ -554,7 +568,8 @@ export class SupabaseStorage implements StorageBackend {
         const result = await this.getClient().auth.signInAnonymously();
         return result;
       } finally {
-        // Restore callbacks after sign-in completes
+        // Safely restore callbacks - clear array first then add back original callbacks
+        this.authStateCallbacks.length = 0;
         this.authStateCallbacks.push(...originalCallbacks);
         console.log(
           "🔐 SupabaseStorage - Auth callbacks restored after sign-in",
@@ -796,7 +811,7 @@ export class SupabaseStorage implements StorageBackend {
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => {
           reject(new Error("Session initialization timeout (offline mode)"));
-        }, 3000);
+        }, NETWORK_TIMEOUTS.SESSION_VALIDATION);
       });
 
       const sessionPromise = this.getClient().auth.getSession();
