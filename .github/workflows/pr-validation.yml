@@ -117,8 +117,6 @@ jobs:
 
       - name: 🧪 Run Chrome integration tests
         working-directory: devbox/minimal
-        env:
-          CHROME_EXECUTABLE: /home/runner/work/strength-assistant/strength-assistant/devbox/minimal/.devbox/nix/profile/default/bin/google-chrome-stable
         run: devbox run integration_test_chrome
       - name: Upload debug artifacts
         if: always()

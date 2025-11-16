@@ -4,12 +4,11 @@ set -e
 
 echo "🌐 Starting Chrome Integration Tests"
 
-# Initial cleanup to ensure no leftover Chrome processes  
-echo "🧹 Initial cleanup of any existing Chrome processes..."
-# Only kill Chrome browsers, not chrome-related processes like chromedriver
-pgrep -f "google-chrome" | xargs kill 2>/dev/null || true
-pgrep -f "chromium-browser" | xargs kill 2>/dev/null || true
-rm -rf /tmp/chrome-* 2>/dev/null || true
+# Initial cleanup to ensure no leftover Chromium processes  
+echo "🧹 Initial cleanup of any existing Chromium processes..."
+# Only kill Chromium browsers, not chromium-related processes like chromedriver
+pgrep -f "chromium" | xargs kill 2>/dev/null || true
+rm -rf /tmp/chrome-* /tmp/chromium-* 2>/dev/null || true
 sleep 1
 
 # Change to project root directory (relative to scripts folder)
@@ -19,9 +18,8 @@ cd "$(dirname "$0")/.."
 cleanup() {
     echo "🧹 Cleaning up processes..."
     
-    # Force kill any Chrome browser processes that might be lingering
-    pgrep -f "google-chrome" | xargs kill 2>/dev/null || true
-    pgrep -f "chromium-browser" | xargs kill 2>/dev/null || true
+    # Force kill any Chromium browser processes that might be lingering
+    pgrep -f "chromium" | xargs kill 2>/dev/null || true
     sleep 1
     
     supabase stop 2>/dev/null || true
@@ -30,9 +28,9 @@ cleanup() {
         kill $EXPO_PID 2>/dev/null || true
     fi
 
-    # Clean up Chrome temp directories and wrapper scripts
-    echo "🧹 Cleaning up Chrome temp directories..."
-    rm -rf /tmp/chrome-* 2>/dev/null || true
+    # Clean up Chromium temp directories and wrapper scripts
+    echo "🧹 Cleaning up Chromium temp directories..."
+    rm -rf /tmp/chrome-* /tmp/chromium-* 2>/dev/null || true
 }
 
 trap cleanup EXIT ERR
@@ -92,54 +90,87 @@ echo "⏳ Waiting for Expo to fully initialize..."
 sleep 5
 echo "✅ Expo web server ready"
 
-# Using google-chrome-stable approach from Maestro issue #2576  
-echo "🔧 Setting up Google Chrome with CI-compatible flags via environment..."
+# NEW APPROACH: Replace Maestro's downloaded Chromium with our Devbox version
+echo "🔧 Setting up Chromium replacement for Maestro..."
 
-# Find the google-chrome-stable binary from Devbox, not system
-# Check Devbox profile first to avoid picking up system Chrome
+# Find our Devbox Chromium binary
 if [ -d ".devbox/nix/profile/default/bin" ]; then
-    CHROME_PATH=".devbox/nix/profile/default/bin/google-chrome-stable"
-    if [ ! -f "$CHROME_PATH" ]; then
-        # Fallback to PATH search if not in Devbox bin
-        CHROME_PATH=$(command -v google-chrome-stable)
+    DEVBOX_CHROMIUM=".devbox/nix/profile/default/bin/chromium"
+    if [ ! -f "$DEVBOX_CHROMIUM" ]; then
+        DEVBOX_CHROMIUM=$(command -v chromium)
     fi
 else
-    CHROME_PATH=$(command -v google-chrome-stable)
+    DEVBOX_CHROMIUM=$(command -v chromium)
 fi
 
-if [ -z "$CHROME_PATH" ] || [ ! -f "$CHROME_PATH" ]; then
-    echo "❌ Google Chrome Stable binary not found"
+if [ -z "$DEVBOX_CHROMIUM" ] || [ ! -f "$DEVBOX_CHROMIUM" ]; then
+    echo "❌ Devbox Chromium binary not found"
     exit 1
 fi
 
-echo "📍 Found Google Chrome at: $CHROME_PATH"
+echo "📍 Found Devbox Chromium at: $DEVBOX_CHROMIUM"
 
-# Create unique user data directory for this test run
-TIMESTAMP=$(date +%s)
-RANDOM_NUM=$RANDOM
-UNIQUE_USER_DATA_DIR="/tmp/chrome-${TIMESTAMP}-${RANDOM_NUM}-$$"
-mkdir -p "$UNIQUE_USER_DATA_DIR"
-chmod 755 "$UNIQUE_USER_DATA_DIR"
+# Trigger Maestro to download its Chromium binary
+echo "🔽 Triggering Maestro to download its Chromium..."
+maestro --version > /dev/null 2>&1 || true
 
-echo "🗂️ Using unique user data directory: $UNIQUE_USER_DATA_DIR"
+# Find Maestro's Chromium cache directory
+# Maestro typically downloads to ~/.maestro/chromium or similar
+MAESTRO_CHROMIUM_PATHS=(
+    "$HOME/.maestro/chromium"
+    "$HOME/.cache/maestro/chromium" 
+    "$HOME/.local/share/maestro/chromium"
+    "/tmp/maestro/chromium"
+)
 
-# MINIMAL APPROACH: Create simple Chrome wrapper with only --no-sandbox as per Maestro issue #2576
-CHROME_WRAPPER_DIR="/tmp/chrome-wrapper-$$" 
-mkdir -p "$CHROME_WRAPPER_DIR"
+MAESTRO_CHROMIUM_DIR=""
+for path in "${MAESTRO_CHROMIUM_PATHS[@]}"; do
+    if [ -d "$path" ]; then
+        MAESTRO_CHROMIUM_DIR="$path"
+        echo "📂 Found Maestro Chromium cache at: $MAESTRO_CHROMIUM_DIR"
+        break
+    fi
+done
 
-# Create minimal Chrome wrapper with only --no-sandbox (as suggested in Maestro issue)
-cat > "$CHROME_WRAPPER_DIR/google-chrome-stable" << EOF
+# If we found Maestro's Chromium cache, replace the binary
+if [ -n "$MAESTRO_CHROMIUM_DIR" ]; then
+    # Find the actual Chromium executable in Maestro's cache
+    MAESTRO_CHROMIUM_BIN=$(find "$MAESTRO_CHROMIUM_DIR" -name "chrome" -o -name "chromium" -o -name "chromium-browser" 2>/dev/null | head -1)
+    
+    if [ -n "$MAESTRO_CHROMIUM_BIN" ] && [ -f "$MAESTRO_CHROMIUM_BIN" ]; then
+        echo "🔄 Replacing Maestro's Chromium ($MAESTRO_CHROMIUM_BIN) with Devbox version"
+        # Backup original and replace with our Devbox Chromium
+        cp "$MAESTRO_CHROMIUM_BIN" "$MAESTRO_CHROMIUM_BIN.backup"
+        cp "$DEVBOX_CHROMIUM" "$MAESTRO_CHROMIUM_BIN"
+        chmod +x "$MAESTRO_CHROMIUM_BIN"
+        echo "✅ Maestro Chromium binary replaced with Devbox version"
+    else
+        echo "⚠️ Could not find Chromium binary in Maestro cache - will rely on PATH"
+    fi
+else
+    echo "⚠️ Could not find Maestro Chromium cache - will rely on PATH"
+fi
+
+# Also create wrapper in PATH as fallback
+CHROMIUM_WRAPPER_DIR="/tmp/chromium-wrapper-$$"
+mkdir -p "$CHROMIUM_WRAPPER_DIR"
+
+cat > "$CHROMIUM_WRAPPER_DIR/chromium" << EOF
 #!/bin/bash
-exec "$CHROME_PATH" --no-sandbox "\$@"
+exec "$DEVBOX_CHROMIUM" --no-sandbox "\$@"
 EOF
 
-chmod +x "$CHROME_WRAPPER_DIR/google-chrome-stable"
+cat > "$CHROMIUM_WRAPPER_DIR/chrome" << EOF
+#!/bin/bash  
+exec "$DEVBOX_CHROMIUM" --no-sandbox "\$@"
+EOF
 
-# Put wrapper first in PATH
-export PATH="$CHROME_WRAPPER_DIR:$PATH"
+chmod +x "$CHROMIUM_WRAPPER_DIR"/*
+export PATH="$CHROMIUM_WRAPPER_DIR:$PATH"
 
-echo "✅ Minimal Chrome wrapper created"
-echo "  which google-chrome-stable: $(which google-chrome-stable 2>/dev/null || echo 'not found')"
+echo "✅ Chromium replacement setup completed"
+echo "  Devbox Chromium: $DEVBOX_CHROMIUM"
+echo "  which chromium: $(which chromium 2>/dev/null || echo 'not found')"
 
 # Clear Supabase database once before running tests
 echo "🧹 Clearing Supabase database..."
