@@ -31,9 +31,10 @@ describe("syncedSupabase Store Implementation", () => {
 
   describe("Store Configuration", () => {
     it("should have properly configured exercisesObject$ with syncedSupabase", () => {
-      const { exercisesObject$ } = require("../../lib/data/store");
+      const { getExercisesObject$ } = require("../../lib/data/store");
 
       // Verify the observable exists and can be accessed
+      const exercisesObject$ = getExercisesObject$();
       expect(exercisesObject$).toBeDefined();
       expect(typeof exercisesObject$.get).toBe("function");
 
@@ -75,7 +76,7 @@ describe("syncedSupabase Store Implementation", () => {
     it("should update exercise correctly", () => {
       const {
         exerciseUtils,
-        exercisesObject$,
+        getExercisesObject$,
       } = require("../../lib/data/store");
 
       // Add exercise first
@@ -168,21 +169,26 @@ describe("syncedSupabase Store Implementation", () => {
 
   describe("Data Persistence Configuration", () => {
     it("should have AsyncStorage persistence configured", () => {
-      const { exercisesObject$ } = require("../../lib/data/store");
+      const { getExercisesObject$ } = require("../../lib/data/store");
 
       // Verify the observable exists and is configured
       // (Actual persistence testing requires real AsyncStorage)
+      const exercisesObject$ = getExercisesObject$();
       expect(exercisesObject$).toBeDefined();
       expect(typeof exercisesObject$.get).toBe("function");
     });
 
     it("should handle initialization gracefully", () => {
       // Test that store handles empty/undefined initial state
-      const { exercises$, exercisesObject$ } = require("../../lib/data/store");
+      const {
+        exercises$,
+        getExercisesObject$,
+      } = require("../../lib/data/store");
 
       expect(() => {
         const arrayView = exercises$.get();
-        const objectView = exercisesObject$.get();
+        const exercisesObject$ = getExercisesObject$();
+        const objectView = exercisesObject$?.get();
       }).not.toThrow();
     });
   });

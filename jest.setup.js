@@ -181,6 +181,7 @@ jest.mock("@/lib/data/store", () => {
   return {
     exercises$: exercisesArrayView,
     exercisesObject$: exercisesObjectStore,
+    getExercisesObject$: jest.fn(() => exercisesObjectStore),
     exerciseUtils: mockExerciseUtils,
     user$: userStore,
     isOnline$: onlineStore,

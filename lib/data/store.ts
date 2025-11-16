@@ -40,7 +40,7 @@ export const isOnline$ = store$.isOnline;
  * Exercises observable - will be initialized with syncedSupabase after Supabase client is ready
  * Uses object structure (keyed by ID) for efficient sync operations
  */
-export let exercisesObject$: Observable<Record<string, Exercise>>;
+let exercisesObject$: Observable<Record<string, Exercise>>;
 
 /**
  * Initialize the exercises store with syncedSupabase configuration
@@ -91,7 +91,7 @@ export function initializeExercisesStore() {
           }),
         },
       }),
-    ) as Observable<Record<string, Exercise>>;
+    );
 
     console.log(
       "✅ initializeExercisesStore - syncedSupabase store initialized",
@@ -106,10 +106,20 @@ export function initializeExercisesStore() {
     console.log(
       "🔄 initializeExercisesStore - Creating fallback local-only store",
     );
-    exercisesObject$ = observable({}) as Observable<Record<string, Exercise>>;
+    exercisesObject$ = observable({} as Record<string, Exercise>);
 
     throw error; // Re-throw to let calling code handle the error appropriately
   }
+}
+
+/**
+ * Get the exercises object observable
+ * @returns The exercises object observable if initialized, undefined otherwise
+ */
+export function getExercisesObject$():
+  | Observable<Record<string, Exercise>>
+  | undefined {
+  return exercisesObject$;
 }
 
 /**

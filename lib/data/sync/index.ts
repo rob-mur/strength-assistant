@@ -46,10 +46,7 @@ export async function initializeDataLayer(): Promise<void> {
 
     // For Chrome/web testing, we'll continue with degraded functionality
     // rather than completely blocking the app, but we should still log the error
-    if (
-      typeof globalThis.window !== "undefined" &&
-      typeof document !== "undefined"
-    ) {
+    if (globalThis.window !== undefined && document !== undefined) {
       console.warn(
         "🌐 initializeDataLayer - Web environment detected, continuing with degraded functionality",
       );
