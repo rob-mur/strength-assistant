@@ -1,7 +1,7 @@
 ---
 work_package_id: WP04
 title: Core Set Logging - User Story 1
-lane: planned
+lane: "doing"
 subtasks:
   - T014: Write Maestro test for complete set logging flow
   - T015: Create weight input component
@@ -12,6 +12,8 @@ subtasks:
   - T020: Implement form default values from Legend State
 priority: High
 dependencies: WP02, WP03
+agent: "claude"
+shell_pid: "11132"
 history:
   - created: 2025-11-18
     author: Claude
@@ -252,3 +254,7 @@ Connect form defaults to reactive store values for 50% input time reduction.
 ## Dependencies
 
 **Requires**: WP02 (validation), WP03 (state management)
+
+## Activity Log
+
+- 2025-11-19T21:20:25Z – claude – shell_pid=11132 – lane=doing – Started implementation of core set logging with React Native Paper components
