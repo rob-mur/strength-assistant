@@ -186,16 +186,16 @@ export function isWorkoutSet(value: unknown): value is WorkoutSet {
   return (
     typeof value === 'object' &&
     value !== null &&
-    typeof value.id === 'string' &&
-    typeof value.exercise_id === 'string' &&
-    typeof value.user_id === 'string' &&
-    typeof value.session_date === 'string' &&
-    typeof value.weight === 'number' &&
-    typeof value.repetitions === 'number' &&
-    typeof value.rpe === 'number' &&
-    typeof value.set_order === 'number' &&
-    typeof value.created_at === 'string' &&
-    typeof value.updated_at === 'string'
+    typeof (value as WorkoutSet).id === 'string' &&
+    typeof (value as WorkoutSet).exercise_id === 'string' &&
+    typeof (value as WorkoutSet).user_id === 'string' &&
+    typeof (value as WorkoutSet).session_date === 'string' &&
+    typeof (value as WorkoutSet).weight === 'number' &&
+    typeof (value as WorkoutSet).repetitions === 'number' &&
+    typeof (value as WorkoutSet).rpe === 'number' &&
+    typeof (value as WorkoutSet).set_order === 'number' &&
+    typeof (value as WorkoutSet).created_at === 'string' &&
+    typeof (value as WorkoutSet).updated_at === 'string'
   );
 }
 
@@ -206,10 +206,10 @@ export function isCreateWorkoutSetRequest(value: unknown): value is CreateWorkou
   return (
     typeof value === 'object' &&
     value !== null &&
-    typeof value.exercise_id === 'string' &&
-    typeof value.weight === 'number' &&
-    typeof value.repetitions === 'number' &&
-    typeof value.rpe === 'number' &&
-    typeof value.session_date === 'string'
+    typeof (value as CreateWorkoutSetRequest).exercise_id === 'string' &&
+    typeof (value as CreateWorkoutSetRequest).weight === 'number' &&
+    typeof (value as CreateWorkoutSetRequest).repetitions === 'number' &&
+    typeof (value as CreateWorkoutSetRequest).rpe === 'number' &&
+    typeof (value as CreateWorkoutSetRequest).session_date === 'string'
   );
 }
