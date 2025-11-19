@@ -1,7 +1,7 @@
 ---
 work_package_id: WP02
 title: Validation and Form Logic
-lane: planned
+lane: "doing"
 subtasks:
   - T005: Create Zod validation schemas
   - T006: Write unit tests for Zod validation
@@ -10,6 +10,8 @@ subtasks:
   - T009: Set up React Hook Form with real-time validation
 priority: Critical
 dependencies: WP01
+agent: "claude"
+shell_pid: "20664"
 history:
   - created: 2025-11-18
     author: Claude
@@ -294,3 +296,7 @@ export function WorkoutSetForm({ onSubmit, lastSet }: WorkoutSetFormProps) {
 
 - WP03: Local State Management (uses validation schemas)
 - WP04: Core Set Logging (integrates validated forms)
+
+## Activity Log
+
+- 2025-11-19T16:15:06Z – claude – shell_pid=20664 – lane=doing – Started validation and form logic implementation
