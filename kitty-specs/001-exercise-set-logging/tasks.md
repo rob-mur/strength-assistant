@@ -28,10 +28,10 @@ Enable users to log weight, repetitions, and Rate of Perceived Exertion (RPE) fo
 **Goal**: Establish database schema and TypeScript type definitions for workout set data
 
 **Subtasks**:
-- [ ] T001 Create Supabase workout_sets table with constraints in lib/repo/supabase/schema.sql
-- [ ] T002 [P] Set up database indexes for performance (user_id, session_date) in lib/repo/supabase/indexes.sql 
-- [ ] T003 [P] Configure Row Level Security policies for workout_sets in lib/repo/supabase/policies.sql
-- [ ] T004 [P] Create TypeScript WorkoutSet and WorkoutSession interfaces in lib/models/WorkoutSet.ts
+- [x] T001 Create Supabase workout_sets table with constraints in lib/repo/supabase/schema.sql
+- [x] T002 [P] Set up database indexes for performance (user_id, session_date) in lib/repo/supabase/indexes.sql 
+- [x] T003 [P] Configure Row Level Security policies for workout_sets in lib/repo/supabase/policies.sql
+- [x] T004 [P] Create TypeScript WorkoutSet and WorkoutSession interfaces in lib/models/WorkoutSet.ts
 
 **Implementation Notes**: Use existing Supabase project structure. Follow existing naming conventions for database objects.
 
