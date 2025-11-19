@@ -1,7 +1,7 @@
 ---
 work_package_id: WP04
 title: Core Set Logging - User Story 1
-lane: "doing"
+lane: "for_review"
 subtasks:
   - T014: Write Maestro test for complete set logging flow
   - T015: Create weight input component
@@ -258,3 +258,4 @@ Connect form defaults to reactive store values for 50% input time reduction.
 ## Activity Log
 
 - 2025-11-19T21:20:25Z – claude – shell_pid=11132 – lane=doing – Started implementation of core set logging with React Native Paper components
+- 2025-11-19T21:28:06Z – claude – shell_pid=11132 – lane=for_review – Moved to for_review
