@@ -171,6 +171,8 @@ Tests can detect uncaught errors using:
 
 ## Recent Changes
 
+- 001-exercise-set-logging: Added React Hook Form + Zod validation for workout set logging with React Native Paper slider component for RPE input
+
 - 001-fix-offline-sync: Added TypeScript with React Native 0.79.5, Expo SDK 53, React 19.0.0 + @legendapp/state, @supabase/supabase-js, Expo Router, React Native Paper
 
 - 001-web-deployment: Added TypeScript/JavaScript with React Native 0.79.5, Expo SDK 53, React 19.0.0 + Expo Router, React Native Paper, @supabase/supabase-js, @legendapp/state
