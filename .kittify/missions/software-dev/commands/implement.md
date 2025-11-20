@@ -167,6 +167,7 @@ The script will fail if you're not in a feature worktree. This is intentional - 
        - 2025-10-07T17:00:00Z – claude – shell_pid=12345 – lane=doing – Completed implementation
        ```
      - Move prompt to for_review:
+
      ```bash
      .kittify/scripts/bash/tasks-move-to-lane.sh FEATURE-SLUG TXXX for_review \
        --shell-pid "$SHELL_PID" \
@@ -179,6 +180,7 @@ The script will fail if you're not in a feature worktree. This is intentional - 
        git status --short
        git commit -m "Complete TXXX: Move to for_review lane"
        ```
+
    - **VALIDATION BEFORE CONTINUING TO NEXT TASK**:
      - [ ] Prompt is in `tasks/for_review/` lane
      - [ ] Frontmatter shows `lane: "for_review"`

@@ -173,6 +173,7 @@ This is intentional - worktrees provide isolation for parallel feature developme
        - 2025-10-07T17:00:00Z – claude – shell_pid=12345 – lane=doing – Completed implementation
        ```
      - Move prompt to for_review:
+
      ```bash
      .kittify/scripts/bash/tasks-move-to-lane.sh FEATURE-SLUG TXXX for_review \
        --shell-pid "$SHELL_PID" \
@@ -185,6 +186,7 @@ This is intentional - worktrees provide isolation for parallel feature developme
        git status --short
        git commit -m "Complete TXXX: Move to for_review lane"
        ```
+
    - **VALIDATION BEFORE CONTINUING TO NEXT TASK**:
      - [ ] Prompt is in `tasks/for_review/` lane
      - [ ] Frontmatter shows `lane: "for_review"`

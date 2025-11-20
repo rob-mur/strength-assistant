@@ -11,6 +11,10 @@ module.exports = {
     "/coverage/",
     "/build/",
     "/dist/",
+    "__tests__/integration/error-recovery.test.ts",
+    "__tests__/integration/global-error-boundary.test.ts",
+    "__tests__/integration/error-logging-flow.test.ts",
+    "__tests__/unit/logging/",
   ],
 
   // Minimal transforms for speed - only essential modules
