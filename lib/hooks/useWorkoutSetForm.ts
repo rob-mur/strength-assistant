@@ -12,7 +12,7 @@ import {
   WorkoutSetValidation,
   WorkoutSetFormInput,
 } from "../models/validation";
-import { WorkoutSet, WorkoutSetFormData } from "../models/WorkoutSet";
+import { WorkoutSetFormData } from "../models/WorkoutSet";
 import { formDefaults, sessionStore } from "../store/workoutSetStore";
 
 /**
@@ -68,7 +68,7 @@ export function useWorkoutSetForm({
         exercise_id: exerciseId,
         session_date: date,
       };
-    } catch (error) {
+    } catch {
       // Fallback to safe defaults if Legend State fails
       const date = sessionDate || new Date().toISOString().split("T")[0];
       return {

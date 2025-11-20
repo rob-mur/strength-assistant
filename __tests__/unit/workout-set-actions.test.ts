@@ -131,12 +131,10 @@ describe("workoutSetActions", () => {
       const mockInsertQuery = {
         insert: jest.fn().mockReturnThis(),
         select: jest.fn().mockReturnThis(),
-        single: jest
-          .fn()
-          .mockResolvedValue({
-            data: null,
-            error: new Error("Database error"),
-          }),
+        single: jest.fn().mockResolvedValue({
+          data: null,
+          error: new Error("Database error"),
+        }),
       };
 
       // Mock Supabase client to return different queries for different calls

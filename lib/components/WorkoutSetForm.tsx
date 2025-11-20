@@ -9,7 +9,6 @@ import React, { useCallback } from "react";
 import { StyleSheet } from "react-native";
 import { Button, Card } from "react-native-paper";
 import { useWorkoutSetForm } from "../hooks/useWorkoutSetForm";
-import { WorkoutSet } from "../models/WorkoutSet";
 import { WeightInput } from "./WeightInput";
 import { RepsInput } from "./RepsInput";
 import { RPESlider } from "./RPESlider";
