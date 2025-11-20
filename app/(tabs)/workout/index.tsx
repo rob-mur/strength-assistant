@@ -1,12 +1,13 @@
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Card, FAB, Surface } from "react-native-paper";
 import { View } from "react-native";
-import EmptyWorkoutState from "../../lib/components/EmptyWorkoutState";
+import EmptyWorkoutState from "../../../lib/components/EmptyWorkoutState";
 
 // Route constants for better navigation management
 const ROUTES = {
   EXERCISES: "/(tabs)/exercises",
   ADD_EXERCISE: "/(tabs)/exercises/add",
+  LOG_SET: "/(tabs)/workout/log-set",
 } as const;
 
 interface WorkoutScreenProps {
@@ -60,14 +61,35 @@ export default function WorkoutScreen({
       </Surface>
       <FAB
         style={{ position: "absolute", margin: 16, right: 0, bottom: 0 }}
-        icon="plus"
-        testID="add-workout"
+        icon={exercise ? "dumbbell" : "plus"}
+        label={exercise ? "Log Set" : "Add Exercise"}
+        testID={exercise ? "log-set-fab" : "add-exercise-fab"}
         onPress={() => {
-          try {
-            router.navigate(ROUTES.ADD_EXERCISE);
-          } catch (error) {
-            console.error("Failed to navigate to add exercise screen:", error);
-            router.navigate("./add");
+          if (exercise) {
+            // Exercise is selected - navigate to log workout set
+            try {
+              router.navigate({
+                pathname: ROUTES.LOG_SET,
+                params: {
+                  exerciseId: exercise, // In real app this should be an ID
+                  exerciseName: exercise,
+                },
+              });
+            } catch (error) {
+              console.error("Failed to navigate to log set screen:", error);
+              router.navigate("./log-set");
+            }
+          } else {
+            // No exercise selected - navigate to add exercise
+            try {
+              router.navigate(ROUTES.ADD_EXERCISE);
+            } catch (error) {
+              console.error(
+                "Failed to navigate to add exercise screen:",
+                error,
+              );
+              router.navigate("../exercises/add");
+            }
           }
         }}
       />

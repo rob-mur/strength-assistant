@@ -1,0 +1,97 @@
+/**
+ * Workout Navigation Integration Test
+ *
+ * Purpose: Test the critical navigation flow from workout screen to set logging
+ * Coverage: User story - selecting exercise and logging workout sets
+ */
+
+import React from "react";
+import { render, fireEvent } from "@testing-library/react-native";
+import { useRouter } from "expo-router";
+import WorkoutScreen from "../../app/(tabs)/workout/index";
+
+// Mock expo-router
+jest.mock("expo-router", () => ({
+  useRouter: jest.fn(),
+  useLocalSearchParams: jest.fn(),
+}));
+
+const mockNavigate = jest.fn();
+const mockUseRouter = useRouter as jest.MockedFunction<typeof useRouter>;
+const mockUseLocalSearchParams = require("expo-router").useLocalSearchParams as jest.MockedFunction<() => any>;
+
+describe("Workout Screen Navigation", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockUseRouter.mockReturnValue({
+      navigate: mockNavigate,
+      back: jest.fn(),
+      push: jest.fn(),
+      replace: jest.fn(),
+      setParams: jest.fn(),
+      canGoBack: jest.fn(),
+    } as any);
+    
+    mockUseLocalSearchParams.mockReturnValue({});
+  });
+
+  describe("FAB Navigation Logic", () => {
+    it("navigates to add exercise when no exercise is selected", () => {
+      const { getByTestId } = render(<WorkoutScreen selectedExercise={null} />);
+      
+      const fab = getByTestId("add-exercise-fab");
+      expect(fab).toBeTruthy();
+      
+      fireEvent.press(fab);
+      
+      expect(mockNavigate).toHaveBeenCalledWith("/(tabs)/exercises/add");
+    });
+
+    it("navigates to log set when exercise is selected", () => {
+      const selectedExercise = "Bench Press";
+      const { getByTestId } = render(<WorkoutScreen selectedExercise={selectedExercise} />);
+      
+      const fab = getByTestId("log-set-fab");
+      expect(fab).toBeTruthy();
+      
+      fireEvent.press(fab);
+      
+      expect(mockNavigate).toHaveBeenCalledWith({
+        pathname: "/(tabs)/workout/log-set",
+        params: {
+          exerciseId: selectedExercise,
+          exerciseName: selectedExercise,
+        },
+      });
+    });
+
+    it("shows different icons based on exercise selection", () => {
+      const { rerender, getByTestId } = render(<WorkoutScreen selectedExercise={null} />);
+      
+      // No exercise selected - should show add icon
+      let fab = getByTestId("add-exercise-fab");
+      expect(fab).toBeTruthy();
+      
+      // Exercise selected - should show log set icon
+      rerender(<WorkoutScreen selectedExercise="Bench Press" />);
+      fab = getByTestId("log-set-fab");
+      expect(fab).toBeTruthy();
+    });
+  });
+
+  describe("Exercise Display", () => {
+    it("shows empty state when no exercise selected", () => {
+      const { getByTestId } = render(<WorkoutScreen selectedExercise={null} />);
+      
+      const emptyState = getByTestId("empty-workout-state");
+      expect(emptyState).toBeTruthy();
+    });
+
+    it("shows exercise card when exercise is selected", () => {
+      const { getByTestId } = render(<WorkoutScreen selectedExercise="Bench Press" />);
+      
+      const exerciseCard = getByTestId("workout-exercise-card");
+      expect(exerciseCard).toBeTruthy();
+    });
+  });
+});
