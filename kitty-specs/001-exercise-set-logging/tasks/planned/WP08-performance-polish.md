@@ -24,12 +24,14 @@ Optimize performance to consistently meet <15 second logging target, add compreh
 ## Context
 
 **Performance Targets**:
+
 - <15 seconds total set logging time
-- <200ms validation feedback  
+- <200ms validation feedback
 - 60fps UI performance
 - <1 second form submission
 
 **Quality Targets**:
+
 - Graceful error handling for all scenarios
 - Clear user feedback for all states
 - Accessible UI components
@@ -37,6 +39,7 @@ Optimize performance to consistently meet <15 second logging target, add compreh
 ## Detailed Guidance
 
 ### T031: Write component tests for form inputs
+
 **File**: `__tests__/unit/components.test.ts`
 
 ```typescript
@@ -50,7 +53,7 @@ describe('Form Components', () => {
       const { getByTestId } = render(
         <WeightInput control={mockControl} onChange={mockOnChange} />
       );
-      
+
       fireEvent.changeText(getByTestId('weight-input'), '135.5');
       expect(mockOnChange).toHaveBeenCalledWith(135.5);
     });
@@ -59,7 +62,7 @@ describe('Form Components', () => {
       const { getByTestId } = render(
         <WeightInput control={mockControl} error={{ message: 'Weight required' }} />
       );
-      
+
       expect(getByTestId('weight-input')).toHaveProp('error', true);
     });
   });
@@ -70,10 +73,10 @@ describe('Form Components', () => {
       const { getByTestId } = render(
         <RPESlider control={mockControl} onChange={mockOnChange} />
       );
-      
+
       const slider = getByTestId('rpe-slider');
       fireEvent(slider, 'valueChange', 7.3);
-      
+
       // Should snap to nearest 0.5 increment
       expect(mockOnChange).toHaveBeenCalledWith(7.5);
     });
@@ -82,36 +85,39 @@ describe('Form Components', () => {
 ```
 
 ### T032: Add real-time validation optimization
+
 **File**: `lib/hooks/useWorkoutSetForm.ts`
 
 Optimize validation performance with debouncing:
 
 ```typescript
-import { useDeferredValue } from 'react';
-import { debounce } from 'lodash';
+import { useDeferredValue } from "react";
+import { debounce } from "lodash";
 
 export function useWorkoutSetForm(props: UseWorkoutSetFormProps) {
   const deferredValidation = useDeferredValue(true);
-  
+
   const debouncedValidate = useMemo(
-    () => debounce((values) => {
-      // Only validate if values changed significantly
-      return WorkoutSetValidation.safeParse(values);
-    }, 150), // 150ms debounce for <200ms target
-    []
+    () =>
+      debounce((values) => {
+        // Only validate if values changed significantly
+        return WorkoutSetValidation.safeParse(values);
+      }, 150), // 150ms debounce for <200ms target
+    [],
   );
 
   return useForm<WorkoutSetFormData>({
     resolver: zodResolver(WorkoutSetValidation),
-    mode: 'onChange',
-    reValidateMode: 'onChange',
+    mode: "onChange",
+    reValidateMode: "onChange",
     // Custom validation with performance optimization
-    validate: debouncedValidation ? debouncedValidate : undefined
+    validate: debouncedValidation ? debouncedValidate : undefined,
   });
 }
 ```
 
 ### T033: Add comprehensive error handling
+
 **File**: `lib/components/ErrorBoundary.tsx`
 
 ```typescript
@@ -144,11 +150,11 @@ export function WorkoutErrorBoundary({ children }: Props) {
 // Enhanced network error handling
 export function useNetworkErrorHandling() {
   const [isOffline, setIsOffline] = useState(false);
-  
+
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
       setIsOffline(!state.isConnected);
-      
+
       if (!state.isConnected) {
         // Show offline banner
         Snackbar.show({
@@ -157,42 +163,43 @@ export function useNetworkErrorHandling() {
         });
       }
     });
-    
+
     return unsubscribe;
   }, []);
-  
+
   return { isOffline };
 }
 ```
 
 ### T034: Performance optimization
+
 **File**: `lib/utils/performance.ts`
 
 ```typescript
 // Measure and optimize critical performance metrics
 export function usePerformanceMonitoring() {
   const startTime = useRef<number>();
-  
+
   const startTiming = (operation: string) => {
     startTime.current = performance.now();
     console.log(`Starting ${operation}`);
   };
-  
+
   const endTiming = (operation: string) => {
     if (startTime.current) {
       const duration = performance.now() - startTime.current;
       console.log(`${operation} completed in ${duration.toFixed(2)}ms`);
-      
+
       // Alert if performance targets missed
-      if (operation === 'validation' && duration > 200) {
-        console.warn('Validation exceeded 200ms target:', duration);
+      if (operation === "validation" && duration > 200) {
+        console.warn("Validation exceeded 200ms target:", duration);
       }
-      if (operation === 'form_submission' && duration > 1000) {
-        console.warn('Form submission exceeded 1s target:', duration);
+      if (operation === "form_submission" && duration > 1000) {
+        console.warn("Form submission exceeded 1s target:", duration);
       }
     }
   };
-  
+
   return { startTiming, endTiming };
 }
 
@@ -208,7 +215,7 @@ export function useOptimizedSetList(sets: WorkoutSet[]) {
       .sort((a, b) => b.created_at.localeCompare(a.created_at))
       .map((set, index) => ({
         ...set,
-        displayOrder: sets.length - index
+        displayOrder: sets.length - index,
       }));
   }, [sets]);
 }
@@ -218,7 +225,7 @@ export function useOptimizedSetList(sets: WorkoutSet[]) {
 
 - [ ] All components have comprehensive test coverage
 - [ ] Validation feedback consistently <200ms
-- [ ] Error handling covers all failure scenarios  
+- [ ] Error handling covers all failure scenarios
 - [ ] Performance consistently meets <15 second target
 - [ ] UI remains responsive at 60fps
 - [ ] Accessibility requirements met
@@ -227,18 +234,21 @@ export function useOptimizedSetList(sets: WorkoutSet[]) {
 ## Testing Strategy
 
 **Performance Testing**:
+
 1. Measure end-to-end logging time across 20 test runs
 2. Profile validation response times under load
 3. Test UI responsiveness during rapid input
 4. Memory leak testing during extended sessions
 
 **Error Scenario Testing**:
+
 1. Network timeouts during submission
 2. Invalid server responses
 3. Database constraint violations
 4. App backgrounding during operations
 
 **Accessibility Testing**:
+
 1. Screen reader compatibility
 2. Keyboard navigation support
 3. Color contrast compliance
@@ -262,6 +272,7 @@ export function useOptimizedSetList(sets: WorkoutSet[]) {
 ## Final Integration
 
 This work package completes the feature. After completion:
+
 - Run full test suite including Maestro integration tests
 - Perform manual testing of complete user journey
 - Validate all performance targets are met

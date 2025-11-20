@@ -12,7 +12,7 @@ Enable users to log weight, repetitions, and Rate of Perceived Exertion (RPE) fo
 ## Work Package Summary
 
 - **WP01**: Database Foundation and Data Models (4 tasks)
-- **WP02**: Validation and Form Logic (5 tasks)  
+- **WP02**: Validation and Form Logic (5 tasks)
 - **WP03**: Local State Management (4 tasks)
 - **WP04**: Core Set Logging - User Story 1 (7 tasks)
 - **WP05**: Session History and Display - User Story 2 (3 tasks)
@@ -22,14 +22,16 @@ Enable users to log weight, repetitions, and Rate of Perceived Exertion (RPE) fo
 
 **Total**: 34 tasks across 8 work packages
 
-## WP01: Database Foundation and Data Models 
-*Priority: Critical | Dependencies: None*
+## WP01: Database Foundation and Data Models
+
+_Priority: Critical | Dependencies: None_
 
 **Goal**: Establish database schema and TypeScript type definitions for workout set data
 
 **Subtasks**:
+
 - [x] T001 Create Supabase workout_sets table with constraints in lib/repo/supabase/schema.sql
-- [x] T002 [P] Set up database indexes for performance (user_id, session_date) in lib/repo/supabase/indexes.sql 
+- [x] T002 [P] Set up database indexes for performance (user_id, session_date) in lib/repo/supabase/indexes.sql
 - [x] T003 [P] Configure Row Level Security policies for workout_sets in lib/repo/supabase/policies.sql
 - [x] T004 [P] Create TypeScript WorkoutSet and WorkoutSession interfaces in lib/models/WorkoutSet.ts
 
@@ -42,16 +44,18 @@ Enable users to log weight, repetitions, and Rate of Perceived Exertion (RPE) fo
 ---
 
 ## WP02: Validation and Form Logic
-*Priority: Critical | Dependencies: WP01*
+
+_Priority: Critical | Dependencies: WP01_
 
 **Goal**: Implement robust form validation with Zod schemas and React Hook Form integration
 
 **Subtasks**:
-- [ ] T005 Create Zod validation schemas for workout set fields in lib/models/validation.ts
-- [ ] T006 [P] Write unit tests for Zod validation rules in __tests__/unit/validation.test.ts
-- [ ] T007 [P] Write unit tests for form state management in __tests__/unit/form-state.test.ts
-- [ ] T008 Implement form validation logic with Zod resolver in lib/hooks/useWorkoutSetForm.ts  
-- [ ] T009 Set up React Hook Form with real-time validation in lib/components/WorkoutSetForm.tsx
+
+- [x] T005 Create Zod validation schemas for workout set fields in lib/models/validation.ts
+- [x] T006 [P] Write unit tests for Zod validation rules in **tests**/unit/validation.test.ts
+- [x] T007 [P] Write unit tests for form state management in **tests**/unit/form-state.test.ts
+- [x] T008 Implement form validation logic with Zod resolver in lib/hooks/useWorkoutSetForm.ts
+- [x] T009 Set up React Hook Form with real-time validation in lib/components/WorkoutSetForm.tsx
 
 **Implementation Notes**: Validation must provide <200ms feedback. Support weight (float >0), reps (int ≥1), RPE (1-10, 0.5 increments).
 
@@ -61,16 +65,18 @@ Enable users to log weight, repetitions, and Rate of Perceived Exertion (RPE) fo
 
 ---
 
-## WP03: Local State Management  
-*Priority: Critical | Dependencies: WP01, WP02*
+## WP03: Local State Management
+
+_Priority: Critical | Dependencies: WP01, WP02_
 
 **Goal**: Set up Legend State store for local persistence and smart form defaults
 
 **Subtasks**:
-- [ ] T010 Configure Legend State syncedCrud with Supabase in lib/store/workoutSetStore.ts
-- [ ] T011 [P] Write unit tests for Legend State store operations in __tests__/unit/store.test.ts
-- [ ] T012 Implement workout set actions using Legend State CRUD methods
-- [ ] T013 Add computed values for form defaults and session data
+
+- [x] T010 Configure Legend State syncedCrud with Supabase in lib/store/workoutSetStore.ts
+- [x] T011 [P] Write unit tests for Legend State store operations in **tests**/unit/store.test.ts
+- [x] T012 Implement workout set actions using Legend State CRUD methods
+- [x] T013 Add computed values for form defaults and session data
 
 **Implementation Notes**: Use Legend State's built-in syncedCrud() for automatic Supabase sync, no custom sync queue needed
 
@@ -81,18 +87,20 @@ Enable users to log weight, repetitions, and Rate of Perceived Exertion (RPE) fo
 ---
 
 ## WP04: Core Set Logging - User Story 1
-*Priority: High | Dependencies: WP02, WP03*
+
+_Priority: High | Dependencies: WP02, WP03_
 
 **Goal**: Enable complete set logging flow (weight, reps, RPE) in under 15 seconds
 
 **Subtasks**:
-- [ ] T014 Write Maestro test for complete set logging flow in .maestro/workout/log-set.yaml
-- [ ] T015 [P] Create weight input component with React Native Paper in lib/components/WeightInput.tsx
-- [ ] T016 [P] Create reps input component with validation in lib/components/RepsInput.tsx
-- [ ] T017 [P] Create RPE slider component (1-10, 0.5 increments) in lib/components/RPESlider.tsx
-- [ ] T018 Create set logging form container component in lib/components/WorkoutSetForm.tsx
-- [ ] T019 Implement Supabase create workout set function in lib/repo/supabase/workoutSets.ts
-- [ ] T020 Implement form default values from Legend State
+
+- [x] T014 Write Maestro test for complete set logging flow in .maestro/workout/log-set.yaml
+- [x] T015 [P] Create weight input component with React Native Paper in lib/components/WeightInput.tsx
+- [x] T016 [P] Create reps input component with validation in lib/components/RepsInput.tsx
+- [x] T017 [P] Create RPE slider component (1-10, 0.5 increments) in lib/components/RPESlider.tsx
+- [x] T018 Create set logging form container component in lib/components/WorkoutSetForm.tsx
+- [x] T019 Implement Supabase create workout set function in lib/repo/supabase/workoutSets.ts
+- [x] T020 Implement form default values from Legend State
 
 **Implementation Notes**: Focus on speed - target <15 seconds total time. Use React Native Paper Slider for RPE.
 
@@ -102,12 +110,14 @@ Enable users to log weight, repetitions, and Rate of Perceived Exertion (RPE) fo
 
 ---
 
-## WP05: Session History and Display - User Story 2  
-*Priority: High | Dependencies: WP04*
+## WP05: Session History and Display - User Story 2
+
+_Priority: High | Dependencies: WP04_
 
 **Goal**: Display today's workout sets by default with proper ordering
 
 **Subtasks**:
+
 - [ ] T021 Create session history list component in lib/components/SessionHistoryList.tsx
 - [ ] T022 Implement Supabase get workout sets with filters in lib/repo/supabase/workoutSets.ts
 - [ ] T023 Integrate form and history components into workout screen in app/(tabs)/workout.tsx
@@ -121,11 +131,13 @@ Enable users to log weight, repetitions, and Rate of Perceived Exertion (RPE) fo
 ---
 
 ## WP06: Edit and Delete Functionality - User Stories 3 & 5
-*Priority: Medium | Dependencies: WP05*
+
+_Priority: Medium | Dependencies: WP05_
 
 **Goal**: Allow users to edit or delete recently logged sets within session
 
 **Subtasks**:
+
 - [ ] T024 Write Maestro test for edit/delete functionality in .maestro/workout/edit-delete-sets.yaml
 - [ ] T025 [P] Create set edit/delete action components in lib/components/SetActions.tsx
 - [ ] T026 Implement Supabase update workout set function in lib/repo/supabase/workoutSets.ts
@@ -140,13 +152,15 @@ Enable users to log weight, repetitions, and Rate of Perceived Exertion (RPE) fo
 ---
 
 ## WP07: Offline Sync and Reliability
-*Priority: Medium | Dependencies: WP04, WP05, WP06*
+
+_Priority: Medium | Dependencies: WP04, WP05, WP06_
 
 **Goal**: Ensure data persistence during network issues with automatic sync
 
 **Subtasks**:
-- [ ] T028 Write Maestro test for Legend State offline sync behavior in .maestro/workout/offline-sync.yaml  
-- [ ] T029 Write integration tests for Legend State sync scenarios in __tests__/integration/legend-state-sync.test.ts
+
+- [ ] T028 Write Maestro test for Legend State offline sync behavior in .maestro/workout/offline-sync.yaml
+- [ ] T029 Write integration tests for Legend State sync scenarios in **tests**/integration/legend-state-sync.test.ts
 - [ ] T030 Configure Legend State sync monitoring and status in lib/services/syncMonitoring.ts
 
 **Implementation Notes**: Configure Legend State's built-in sync for 95% save success rate. Use framework's automatic retry mechanisms.
@@ -157,13 +171,15 @@ Enable users to log weight, repetitions, and Rate of Perceived Exertion (RPE) fo
 
 ---
 
-## WP08: Performance and Polish  
-*Priority: Low | Dependencies: All previous WPs*
+## WP08: Performance and Polish
+
+_Priority: Low | Dependencies: All previous WPs_
 
 **Goal**: Optimize performance and add comprehensive error handling
 
 **Subtasks**:
-- [ ] T031 [P] Write component tests for form inputs in __tests__/unit/components.test.ts
+
+- [ ] T031 [P] Write component tests for form inputs in **tests**/unit/components.test.ts
 - [ ] T032 Add real-time validation with <200ms feedback optimization
 - [ ] T033 Add comprehensive error handling and user feedback
 - [ ] T034 Performance optimization for <15 second logging goal
@@ -179,14 +195,16 @@ Enable users to log weight, repetitions, and Rate of Perceived Exertion (RPE) fo
 ## Dependencies
 
 **Blocking Dependencies**:
+
 - WP01 (Database) blocks WP02, WP03
 - WP02 (Validation) blocks WP04
-- WP03 (State) blocks WP04  
+- WP03 (State) blocks WP04
 - WP04 (Core Logging) blocks WP05, WP06
 - WP05 (History) before WP06 (Edit/Delete)
 - All core WPs before WP07 (Sync) and WP08 (Polish)
 
 **Parallel Opportunities**:
+
 - T002, T003, T004 (different database files)
 - T006, T007 (different test files)
 - T015, T016, T017 (different component files)
@@ -195,24 +213,29 @@ Enable users to log weight, repetitions, and Rate of Perceived Exertion (RPE) fo
 ## Execution Phases
 
 ### Phase 1: Foundation (WP01-WP03)
+
 Critical infrastructure that enables all feature work
 
-### Phase 2: Core Features (WP04-WP06)  
+### Phase 2: Core Features (WP04-WP06)
+
 User-facing functionality covering primary user stories
 
 ### Phase 3: Integration (WP07-WP08)
+
 Reliability, performance, and polish
 
 ## MVP Scope
 
 **Minimum Viable Product**: Complete WP01-WP05
+
 - Basic set logging with weight, reps, RPE
 - Smart form defaults
 - Session history display
 - Real-time validation
 
 **Future Enhancements**: WP06-WP08
-- Edit/delete functionality  
+
+- Edit/delete functionality
 - Offline sync reliability
 - Performance optimizations
 

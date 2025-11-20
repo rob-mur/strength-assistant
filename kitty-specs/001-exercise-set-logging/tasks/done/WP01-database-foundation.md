@@ -4,7 +4,7 @@ title: Database Foundation and Data Models
 lane: "done"
 subtasks:
   - T001: Create Supabase workout_sets table schema
-  - T002: Set up database indexes for performance  
+  - T002: Set up database indexes for performance
   - T003: Configure Row Level Security policies
   - T004: Create TypeScript interfaces
 priority: Critical
@@ -28,6 +28,7 @@ Establish the foundational database schema and TypeScript type definitions requi
 This feature implements workout set logging for a React Native app using Supabase PostgreSQL as the backend. Users need to log weight (float), repetitions (integer), and RPE (Rate of Perceived Exertion, 1-10 scale with 0.5 increments) for each exercise set.
 
 **Key Requirements:**
+
 - Support 0.1 to 2000 weight range (covers reasonable gym weights)
 - Integer repetitions from 1 to 100
 - RPE scale 1.0 to 10.0 with 0.5 increments only
@@ -37,6 +38,7 @@ This feature implements workout set logging for a React Native app using Supabas
 ## Detailed Guidance
 
 ### T001: Create Supabase workout_sets table schema
+
 **File**: `lib/repo/supabase/schema.sql`
 
 Create the core table with proper constraints matching the API contract:
@@ -57,11 +59,13 @@ CREATE TABLE workout_sets (
 ```
 
 **Critical Details:**
-- RPE constraint ensures only 0.5 increments (rpe * 2 = FLOOR(rpe * 2))
+
+- RPE constraint ensures only 0.5 increments (rpe _ 2 = FLOOR(rpe _ 2))
 - Weight uses DECIMAL(6,2) for precision (allows up to 9999.99)
 - Foreign key references must match existing tables
 
 ### T002: Set up database indexes for performance
+
 **File**: `lib/repo/supabase/indexes.sql`
 
 Create indexes to support common query patterns:
@@ -73,10 +77,12 @@ CREATE INDEX idx_workout_sets_created_at ON workout_sets(created_at);
 ```
 
 **Performance Targets:**
+
 - Session queries (<200ms for 100 sets)
 - Exercise history queries (<500ms for 1000 sets)
 
 ### T003: Configure Row Level Security policies
+
 **File**: `lib/repo/supabase/policies.sql`
 
 Implement RLS to ensure users can only access their own workout data:
@@ -102,6 +108,7 @@ USING (auth.uid() = user_id);
 ```
 
 ### T004: Create TypeScript interfaces
+
 **File**: `lib/models/WorkoutSet.ts`
 
 Define TypeScript types that exactly match the database schema and API contracts:
@@ -157,12 +164,14 @@ export interface WorkoutSession {
 ## Testing Strategy
 
 **Database Testing:**
+
 1. Verify table creation succeeds
 2. Test all check constraints with boundary values
 3. Verify foreign key constraints work
 4. Test RLS policies with different user contexts
 
 **Type Validation:**
+
 1. Ensure TypeScript compilation succeeds
 2. Verify types match OpenAPI schema exactly
 3. Test type inference in IDE
@@ -181,11 +190,13 @@ export interface WorkoutSession {
 ## Reviewer Guidance
 
 **Pre-Review:**
+
 - Verify all SQL executes without errors
 - Check TypeScript compilation
 - Run basic CRUD operations
 
 **Review Checklist:**
+
 - [ ] Schema matches data-model.md specification
 - [ ] All constraints properly implemented
 - [ ] Indexes cover expected query patterns
@@ -193,6 +204,7 @@ export interface WorkoutSession {
 - [ ] TypeScript types are correctly exported
 
 **Integration Testing:**
+
 - Test with sample data covering edge cases
 - Verify query performance meets targets
 - Confirm RLS blocks unauthorized access
@@ -219,28 +231,33 @@ None - this is foundational work that enables all other work packages.
 ### Key Findings
 
 **✅ Schema Implementation**
+
 - Perfect match to data-model.md specification
 - All constraints properly implemented including RPE 0.5-increment validation
 - Additional features: auto-updating timestamps, comprehensive comments
 - Enhanced weight precision with DECIMAL(6,2) supporting up to 9999.99
 
-**✅ Index Strategy** 
+**✅ Index Strategy**
+
 - Required 3 indexes implemented plus 2 additional composite indexes
 - Covers all expected query patterns: session-based, exercise history, progression tracking
 - Performance targets achievable with current index design
 
 **✅ Security & RLS**
+
 - All required policies implemented correctly
 - Additional safety policy prevents user_id reassignment (security enhancement)
 - Comprehensive protection against cross-user data access
 
 **✅ TypeScript Types**
+
 - Complete type definitions with 8 interfaces vs. required 4
 - Additional interfaces for form state, API responses, query parameters
 - Type guards and validation constraints included
 - Perfect alignment with database schema
 
 **✅ Code Quality**
+
 - Excellent documentation throughout all files
 - TypeScript compilation successful
 - Proper exports from lib/models/index.ts

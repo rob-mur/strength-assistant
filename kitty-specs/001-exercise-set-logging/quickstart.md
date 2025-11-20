@@ -17,15 +17,17 @@ _Phase 1 Output - User story validation steps_
 **Goal**: User can log weight, reps, and RPE in under 15 seconds
 
 **Steps**:
+
 1. Navigate to workout screen with "Bench Press" selected
 2. Enter weight: 135
-3. Enter reps: 8  
+3. Enter reps: 8
 4. Move RPE slider to 7.0
 5. Tap "Log Set" button
 6. Verify set appears in session history immediately
 7. Confirm form resets with weight/reps pre-filled
 
 **Success Criteria**:
+
 - Total time < 15 seconds
 - Set visible in session history
 - Form shows 135 lbs and 8 reps as defaults
@@ -36,12 +38,14 @@ _Phase 1 Output - User story validation steps_
 **Goal**: User sees all logged sets by default
 
 **Steps**:
+
 1. From previous story, verify 1 set is visible
 2. Log another set: 135 lbs, 6 reps, RPE 8.0
 3. Verify both sets appear in chronological order
 4. Check set numbering (Set 1, Set 2)
 
 **Success Criteria**:
+
 - Both sets visible without navigation
 - Proper ordering (newest at top)
 - Clear set identification
@@ -51,6 +55,7 @@ _Phase 1 Output - User story validation steps_
 **Goal**: User can edit logged set within 30 seconds
 
 **Steps**:
+
 1. Immediately after logging set, tap "Edit" on most recent set
 2. Change weight from 135 to 140
 3. Change RPE from 8.0 to 8.5
@@ -58,6 +63,7 @@ _Phase 1 Output - User story validation steps_
 5. Verify updated values in session history
 
 **Success Criteria**:
+
 - Edit action available within 30 seconds
 - Changes persist correctly
 - No data corruption
@@ -67,6 +73,7 @@ _Phase 1 Output - User story validation steps_
 **Goal**: User can access previous workout sessions
 
 **Steps**:
+
 1. Tap "View Previous Sessions" button
 2. Navigate to previous date with workout data
 3. Verify sets from that session display correctly
@@ -74,6 +81,7 @@ _Phase 1 Output - User story validation steps_
 5. Confirm today's data still visible
 
 **Success Criteria**:
+
 - Historical data accessible
 - Navigation works smoothly
 - Current session preserved
@@ -83,6 +91,7 @@ _Phase 1 Output - User story validation steps_
 **Goal**: User can remove incorrect sets immediately
 
 **Steps**:
+
 1. Log a set with wrong data
 2. Tap "Delete" on that set
 3. Confirm deletion in modal
@@ -90,6 +99,7 @@ _Phase 1 Output - User story validation steps_
 5. Check set numbering updates correctly
 
 **Success Criteria**:
+
 - Delete action available immediately
 - Confirmation prevents accidents
 - Set numbering recalculates
@@ -99,12 +109,14 @@ _Phase 1 Output - User story validation steps_
 ### Form Validation
 
 **Test Invalid Inputs**:
+
 - Weight: 0, -5, 3000 → Should show error
-- Reps: 0, -1, 150 → Should show error  
+- Reps: 0, -1, 150 → Should show error
 - RPE: 0, 11, 5.3 → Should show error
 - Valid submission only with: weight > 0, reps ≥ 1, RPE 1.0-10.0 (0.5 increments)
 
 **Test Response Time**:
+
 - Validation feedback < 200ms
 - Form submission < 1 second
 - Session history update immediately
@@ -112,15 +124,17 @@ _Phase 1 Output - User story validation steps_
 ### Offline Capability
 
 **Test Network Issues**:
+
 1. Disconnect network
 2. Log multiple sets
 3. Verify sets saved locally
-4. Reconnect network  
+4. Reconnect network
 5. Confirm automatic sync to Supabase
 
 ### Performance
 
 **Test Rapid Entry**:
+
 - Log 10 sets in succession rapidly
 - Verify no data loss
 - Confirm proper ordering

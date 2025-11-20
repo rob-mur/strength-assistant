@@ -1,6 +1,7 @@
 # strength-assistant Development Guidelines
 
 ## Active Technologies
+
 - TypeScript with React Native 0.79.5, Expo SDK 53, React 19.0.0 + React Native Paper, Legend State, Supabase client, React Hook Form, Zod, Expo Router (001-exercise-set-logging)
 - Supabase PostgreSQL (cloud) + Legend State local persistence (001-exercise-set-logging)
 
@@ -172,13 +173,12 @@ Tests can detect uncaught errors using:
 - `maestro-error-message`: Shows last error message
 
 ## Recent Changes
+
 - 001-exercise-set-logging: Added TypeScript with React Native 0.79.5, Expo SDK 53, React 19.0.0 + React Native Paper, Legend State, Supabase client, React Hook Form, Zod, Expo Router
 
 - 001-exercise-set-logging: Added React Hook Form + Zod validation for workout set logging with React Native Paper slider component for RPE input
 
 - 001-fix-offline-sync: Added TypeScript with React Native 0.79.5, Expo SDK 53, React 19.0.0 + @legendapp/state, @supabase/supabase-js, Expo Router, React Native Paper
-
-
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

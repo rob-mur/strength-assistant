@@ -5,9 +5,9 @@
  * Features: Offline capability, smart defaults, automatic sync, reactive updates
  */
 
-import { observable, computed } from '@legendapp/state';
-import { WorkoutSet, CreateWorkoutSetRequest } from '../models/WorkoutSet';
-import { getSupabaseClient } from '../data/supabase/supabase';
+import { observable, computed } from "@legendapp/state";
+import { WorkoutSet, CreateWorkoutSetRequest } from "../models/WorkoutSet";
+import { getSupabaseClient } from "../data/supabase/supabase";
 
 /**
  * Session state interface for local-only data
@@ -66,18 +66,18 @@ export const workoutSets = observable<WorkoutSetStoreState>(initialStoreState);
  */
 export const sessionStore = observable<SessionState>({
   currentSession: {
-    date: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
-    exerciseId: '',
-    lastSet: undefined
+    date: new Date().toISOString().split("T")[0], // Today's date in YYYY-MM-DD format
+    exerciseId: "",
+    lastSet: undefined,
   },
-  formDefaults: { 
-    weight: 0, 
-    repetitions: 0 
+  formDefaults: {
+    weight: 0,
+    repetitions: 0,
   },
   ui: {
     isSubmitting: false,
-    lastSubmissionTime: undefined
-  }
+    lastSubmissionTime: undefined,
+  },
 });
 
 /**
@@ -85,10 +85,10 @@ export const sessionStore = observable<SessionState>({
  */
 export const formDefaults = computed(() => {
   const lastSet = sessionStore.currentSession.lastSet.get();
-  return lastSet 
-    ? { 
-        weight: lastSet.weight || 0, 
-        repetitions: lastSet.repetitions || 0 
+  return lastSet
+    ? {
+        weight: lastSet.weight || 0,
+        repetitions: lastSet.repetitions || 0,
       }
     : sessionStore.formDefaults.get();
 });
@@ -99,21 +99,23 @@ export const formDefaults = computed(() => {
 export const currentSessionSets = computed(() => {
   const { exerciseId, date } = sessionStore.currentSession.get();
   if (!exerciseId || !date) return [];
-  
+
   const allSets = workoutSets.sets.get();
   if (!allSets) return [];
-  
+
   return allSets
-    .filter((set: WorkoutSet) => 
-      set.exercise_id === exerciseId && 
-      set.session_date === date
+    .filter(
+      (set: WorkoutSet) =>
+        set.exercise_id === exerciseId && set.session_date === date,
     )
     .sort((a: WorkoutSet, b: WorkoutSet) => {
       // Sort by set_order first, then by created_at as fallback
       if (a.set_order !== b.set_order) {
         return a.set_order - b.set_order;
       }
-      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      return (
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
     });
 });
 
@@ -124,11 +126,17 @@ export const sessionStats = computed(() => {
   const sets = currentSessionSets.get();
   return {
     totalSets: sets.length,
-    totalVolume: sets.reduce((sum: number, set: WorkoutSet) => sum + (set.weight * set.repetitions), 0),
-    averageRPE: sets.length > 0 
-      ? sets.reduce((sum: number, set: WorkoutSet) => sum + set.rpe, 0) / sets.length 
-      : 0,
-    exercisesPerformed: new Set(sets.map((set: WorkoutSet) => set.exercise_id)).size
+    totalVolume: sets.reduce(
+      (sum: number, set: WorkoutSet) => sum + set.weight * set.repetitions,
+      0,
+    ),
+    averageRPE:
+      sets.length > 0
+        ? sets.reduce((sum: number, set: WorkoutSet) => sum + set.rpe, 0) /
+          sets.length
+        : 0,
+    exercisesPerformed: new Set(sets.map((set: WorkoutSet) => set.exercise_id))
+      .size,
   };
 });
 
@@ -142,30 +150,33 @@ export const syncStatus = computed(() => {
     isPending: syncState.isSyncing,
     hasError: syncState.errors.length > 0,
     lastSyncTime: syncState.lastSyncAt,
-    pendingCount: syncState.pendingChanges
+    pendingCount: syncState.pendingChanges,
   };
 });
 
 /**
  * Helper function to get the next set order for a session
  */
-async function getNextSetOrder(exerciseId: string, sessionDate: string): Promise<number> {
+async function getNextSetOrder(
+  exerciseId: string,
+  sessionDate: string,
+): Promise<number> {
   const supabase = getSupabaseClient();
-  
+
   const { data, error } = await supabase
-    .from('workout_sets')
-    .select('set_order')
-    .eq('exercise_id', exerciseId)
-    .eq('session_date', sessionDate)
-    .order('set_order', { ascending: false })
+    .from("workout_sets")
+    .select("set_order")
+    .eq("exercise_id", exerciseId)
+    .eq("session_date", sessionDate)
+    .order("set_order", { ascending: false })
     .limit(1);
-    
+
   if (error) {
-    console.warn('Error getting max set order, defaulting to 1:', error);
+    console.warn("Error getting max set order, defaulting to 1:", error);
     return 1;
   }
-  
-  return data && data.length > 0 ? ((data[0] as any).set_order + 1) : 1;
+
+  return data && data.length > 0 ? (data[0] as any).set_order + 1 : 1;
 }
 
 /**
@@ -180,22 +191,24 @@ export const workoutSetActions = {
       // Set UI state to submitting
       sessionStore.ui.isSubmitting.set(true);
       workoutSets.syncState.isSyncing.set(true);
-      
+
       // Get user ID for the set
       const supabase = getSupabaseClient();
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id;
-      
+
       if (!userId) {
-        throw new Error('User must be authenticated to create sets');
+        throw new Error("User must be authenticated to create sets");
       }
-      
+
       // Get next set order
-      const setOrder = await getNextSetOrder(setData.exercise_id, setData.session_date);
-      
+      const setOrder = await getNextSetOrder(
+        setData.exercise_id,
+        setData.session_date,
+      );
+
       // Create the set in Supabase
-      const { data, error } = await (supabase
-        .from('workout_sets') as any)
+      const { data, error } = await (supabase.from("workout_sets") as any)
         .insert({
           ...setData,
           user_id: userId,
@@ -203,38 +216,38 @@ export const workoutSetActions = {
         })
         .select()
         .single();
-        
+
       if (error) throw error;
-      
+
       const newSet = data as WorkoutSet;
-      
+
       // Update local store
       const currentSets = workoutSets.sets.get();
       workoutSets.sets.set([...currentSets, newSet]);
-      
+
       // Update session state with the new set as last set
       sessionStore.currentSession.lastSet.set({
         weight: newSet.weight,
         repetitions: newSet.repetitions,
-        rpe: newSet.rpe
+        rpe: newSet.rpe,
       });
-      
+
       // Update form defaults for next set (exclude RPE)
       sessionStore.formDefaults.set({
         weight: newSet.weight,
-        repetitions: newSet.repetitions
+        repetitions: newSet.repetitions,
       });
-      
+
       // Record submission time for performance tracking
       sessionStore.ui.lastSubmissionTime.set(Date.now());
-      
+
       return newSet;
     } catch (error) {
       // Add error to sync state
       const currentErrors = workoutSets.syncState.errors.get();
       workoutSets.syncState.errors.set([
         ...currentErrors,
-        error instanceof Error ? error.message : 'Unknown error'
+        error instanceof Error ? error.message : "Unknown error",
       ]);
       throw error;
     } finally {
@@ -247,48 +260,50 @@ export const workoutSetActions = {
   /**
    * Update an existing workout set
    */
-  updateSet: async (id: string, updates: Partial<WorkoutSet>): Promise<WorkoutSet> => {
+  updateSet: async (
+    id: string,
+    updates: Partial<WorkoutSet>,
+  ): Promise<WorkoutSet> => {
     try {
       sessionStore.ui.isSubmitting.set(true);
       workoutSets.syncState.isSyncing.set(true);
-      
+
       const supabase = getSupabaseClient();
-      const { data, error } = await (supabase
-        .from('workout_sets') as any)
+      const { data, error } = await (supabase.from("workout_sets") as any)
         .update(updates)
-        .eq('id', id)
+        .eq("id", id)
         .select()
         .single();
-        
+
       if (error) throw error;
-      
+
       const updatedSet = data as WorkoutSet;
-      
+
       // Update local store
       const currentSets = workoutSets.sets.get();
-      const setIndex = currentSets.findIndex(set => set.id === id);
+      const setIndex = currentSets.findIndex((set) => set.id === id);
       if (setIndex !== -1) {
         const newSets = [...currentSets];
         newSets[setIndex] = updatedSet;
         workoutSets.sets.set(newSets);
       }
-      
+
       // If this was the last set in the session, update session state
       const lastSet = sessionStore.currentSession.lastSet.get();
-      if (lastSet && 'id' in lastSet && (lastSet as any).id === id) {
+      if (lastSet && "id" in lastSet && (lastSet as any).id === id) {
         sessionStore.currentSession.lastSet.set({
           weight: updatedSet.weight,
           repetitions: updatedSet.repetitions,
-          rpe: updatedSet.rpe
+          rpe: updatedSet.rpe,
         });
       }
-      
+
       return updatedSet;
     } catch (error) {
       const currentErrors = workoutSets.syncState.errors.get();
       workoutSets.syncState.errors.set([
         ...currentErrors,
-        error instanceof Error ? error.message : 'Unknown error'
+        error instanceof Error ? error.message : "Unknown error",
       ]);
       throw error;
     } finally {
@@ -304,35 +319,34 @@ export const workoutSetActions = {
     try {
       sessionStore.ui.isSubmitting.set(true);
       workoutSets.syncState.isSyncing.set(true);
-      
+
       const supabase = getSupabaseClient();
-      const { error } = await (supabase
-        .from('workout_sets') as any)
+      const { error } = await (supabase.from("workout_sets") as any)
         .delete()
-        .eq('id', id);
-        
+        .eq("id", id);
+
       if (error) throw error;
-      
+
       // Update local store
       const currentSets = workoutSets.sets.get();
-      const newSets = currentSets.filter(set => set.id !== id);
+      const newSets = currentSets.filter((set) => set.id !== id);
       workoutSets.sets.set(newSets);
-      
+
       // Clear from session if it was the last set
       const lastSet = sessionStore.currentSession.lastSet.get();
-      if (lastSet && 'id' in lastSet && (lastSet as any).id === id) {
+      if (lastSet && "id" in lastSet && (lastSet as any).id === id) {
         sessionStore.currentSession.lastSet.set(undefined);
-        
+
         // Reset form defaults to previous values or zero
         const sessionSets = workoutSetActions.getSessionSets(
           sessionStore.currentSession.exerciseId.get(),
-          sessionStore.currentSession.date.get()
+          sessionStore.currentSession.date.get(),
         );
         if (sessionSets.length > 0) {
           const previousSet = sessionSets[sessionSets.length - 1];
           sessionStore.formDefaults.set({
             weight: previousSet.weight,
-            repetitions: previousSet.repetitions
+            repetitions: previousSet.repetitions,
           });
         } else {
           sessionStore.formDefaults.set({ weight: 0, repetitions: 0 });
@@ -342,7 +356,7 @@ export const workoutSetActions = {
       const currentErrors = workoutSets.syncState.errors.get();
       workoutSets.syncState.errors.set([
         ...currentErrors,
-        error instanceof Error ? error.message : 'Unknown error'
+        error instanceof Error ? error.message : "Unknown error",
       ]);
       throw error;
     } finally {
@@ -357,11 +371,11 @@ export const workoutSetActions = {
   getSessionSets: (exerciseId: string, sessionDate: string): WorkoutSet[] => {
     const allSets = workoutSets.sets.get();
     if (!allSets) return [];
-    
+
     return allSets
-      .filter((set: WorkoutSet) => 
-        set.exercise_id === exerciseId && 
-        set.session_date === sessionDate
+      .filter(
+        (set: WorkoutSet) =>
+          set.exercise_id === exerciseId && set.session_date === sessionDate,
       )
       .sort((a: WorkoutSet, b: WorkoutSet) => a.set_order - b.set_order);
   },
@@ -370,14 +384,14 @@ export const workoutSetActions = {
    * Set current session context
    */
   setCurrentSession: (exerciseId: string, sessionDate?: string) => {
-    const date = sessionDate || new Date().toISOString().split('T')[0];
-    
+    const date = sessionDate || new Date().toISOString().split("T")[0];
+
     sessionStore.currentSession.set({
       date,
       exerciseId,
-      lastSet: undefined
+      lastSet: undefined,
     });
-    
+
     // Get the last set from current session to populate defaults
     const sessionSets = workoutSetActions.getSessionSets(exerciseId, date);
     if (sessionSets.length > 0) {
@@ -385,12 +399,12 @@ export const workoutSetActions = {
       sessionStore.currentSession.lastSet.set({
         weight: lastSessionSet.weight,
         repetitions: lastSessionSet.repetitions,
-        rpe: lastSessionSet.rpe
+        rpe: lastSessionSet.rpe,
       });
-      
+
       sessionStore.formDefaults.set({
         weight: lastSessionSet.weight,
-        repetitions: lastSessionSet.repetitions
+        repetitions: lastSessionSet.repetitions,
       });
     }
   },
@@ -408,30 +422,28 @@ export const workoutSetActions = {
   loadInitialData: async () => {
     try {
       workoutSets.syncState.isSyncing.set(true);
-      
+
       const supabase = getSupabaseClient();
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id;
-      
+
       if (!userId) return; // No user, skip loading
-      
-      const { data, error } = await (supabase
-        .from('workout_sets') as any)
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-        
+
+      const { data, error } = await (supabase.from("workout_sets") as any)
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+
       if (error) throw error;
-      
+
       // Update local store
-      workoutSets.sets.set(data as WorkoutSet[] || []);
+      workoutSets.sets.set((data as WorkoutSet[]) || []);
       workoutSets.syncState.lastSyncAt.set(new Date().toISOString());
-      
     } catch (error) {
       const currentErrors = workoutSets.syncState.errors.get();
       workoutSets.syncState.errors.set([
         ...currentErrors,
-        error instanceof Error ? error.message : 'Failed to load initial data'
+        error instanceof Error ? error.message : "Failed to load initial data",
       ]);
     } finally {
       workoutSets.syncState.isSyncing.set(false);
@@ -455,7 +467,7 @@ export const workoutSetActions = {
    */
   clearSyncErrors: () => {
     workoutSets.syncState.errors.set([]);
-  }
+  },
 };
 
 /**
@@ -463,7 +475,7 @@ export const workoutSetActions = {
  */
 export function initializeWorkoutSetStore() {
   // Monitor online status
-  if (typeof window !== 'undefined' && window.addEventListener) {
+  if (typeof window !== "undefined" && window.addEventListener) {
     const onlineHandler = () => {
       workoutSets.syncState.isOnline.set(true);
       // Auto-sync when coming online
@@ -474,16 +486,16 @@ export function initializeWorkoutSetStore() {
       workoutSets.syncState.isOnline.set(false);
     };
 
-    window.addEventListener('online', onlineHandler);
-    window.addEventListener('offline', offlineHandler);
-    
+    window.addEventListener("online", onlineHandler);
+    window.addEventListener("offline", offlineHandler);
+
     // Return cleanup function
     return () => {
-      window.removeEventListener('online', onlineHandler);
-      window.removeEventListener('offline', offlineHandler);
+      window.removeEventListener("online", onlineHandler);
+      window.removeEventListener("offline", offlineHandler);
     };
   }
-  
+
   return () => {
     // No cleanup needed for non-browser environments
   };
@@ -494,39 +506,41 @@ export function initializeWorkoutSetStore() {
  */
 export function setupWorkoutSetRealtimeSubscription() {
   const supabase = getSupabaseClient();
-  
+
   const subscription = supabase
-    .channel('workout_sets_changes')
+    .channel("workout_sets_changes")
     .on(
-      'postgres_changes',
+      "postgres_changes",
       {
-        event: '*', // Listen to all changes (INSERT, UPDATE, DELETE)
-        schema: 'public',
-        table: 'workout_sets'
+        event: "*", // Listen to all changes (INSERT, UPDATE, DELETE)
+        schema: "public",
+        table: "workout_sets",
       },
       (payload) => {
         const currentSets = workoutSets.sets.get();
-        
-        if (payload.eventType === 'INSERT') {
+
+        if (payload.eventType === "INSERT") {
           const newSet = payload.new as WorkoutSet;
           workoutSets.sets.set([...currentSets, newSet]);
-        } else if (payload.eventType === 'DELETE') {
+        } else if (payload.eventType === "DELETE") {
           const deletedSet = payload.old as WorkoutSet;
-          const newSets = currentSets.filter(set => set.id !== deletedSet.id);
+          const newSets = currentSets.filter((set) => set.id !== deletedSet.id);
           workoutSets.sets.set(newSets);
-        } else if (payload.eventType === 'UPDATE') {
+        } else if (payload.eventType === "UPDATE") {
           const updatedSet = payload.new as WorkoutSet;
-          const setIndex = currentSets.findIndex(set => set.id === updatedSet.id);
+          const setIndex = currentSets.findIndex(
+            (set) => set.id === updatedSet.id,
+          );
           if (setIndex !== -1) {
             const newSets = [...currentSets];
             newSets[setIndex] = updatedSet;
             workoutSets.sets.set(newSets);
           }
         }
-      }
+      },
     )
     .subscribe();
-  
+
   // Return cleanup function
   return () => {
     subscription.unsubscribe();

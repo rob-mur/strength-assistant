@@ -94,8 +94,10 @@ export type ExerciseUpdate =
   Database["public"]["Tables"]["exercises"]["Update"];
 
 export type WorkoutSetRow = Database["public"]["Tables"]["workout_sets"]["Row"];
-export type WorkoutSetInsert = Database["public"]["Tables"]["workout_sets"]["Insert"];
-export type WorkoutSetUpdate = Database["public"]["Tables"]["workout_sets"]["Update"];
+export type WorkoutSetInsert =
+  Database["public"]["Tables"]["workout_sets"]["Insert"];
+export type WorkoutSetUpdate =
+  Database["public"]["Tables"]["workout_sets"]["Update"];
 
 // User type for store (from Supabase Auth)
 export interface User {

@@ -27,13 +27,14 @@ Display all logged sets for today's session by default with chronological orderi
 ## Detailed Guidance
 
 ### T021: Create session history list component
+
 **File**: `lib/components/SessionHistoryList.tsx`
 
 ```typescript
 export function SessionHistoryList({ exerciseId, sessionDate }: Props) {
-  const sets = useWorkoutSetStore(s => 
-    Object.values(s.sets).filter(set => 
-      set.exercise_id === exerciseId && 
+  const sets = useWorkoutSetStore(s =>
+    Object.values(s.sets).filter(set =>
+      set.exercise_id === exerciseId &&
       set.session_date === sessionDate
     ).sort((a, b) => b.created_at.localeCompare(a.created_at)) // Newest first
   );
@@ -53,7 +54,7 @@ export function SessionHistoryList({ exerciseId, sessionDate }: Props) {
           </Card.Content>
         </Card>
       ))}
-      
+
       {sets.length === 0 && (
         <Text style={{ textAlign: 'center', color: 'gray', marginTop: 20 }}>
           No sets logged yet. Start your first set above!
@@ -65,6 +66,7 @@ export function SessionHistoryList({ exerciseId, sessionDate }: Props) {
 ```
 
 ### T022: Implement Supabase get workout sets with filters
+
 **File**: `lib/repo/supabase/workoutSets.ts`
 
 ```typescript
@@ -74,26 +76,27 @@ export async function getWorkoutSets(filters: {
   userId?: string;
 }): Promise<WorkoutSet[]> {
   let query = supabase
-    .from('workout_sets')
-    .select('*')
-    .order('created_at', { ascending: false });
+    .from("workout_sets")
+    .select("*")
+    .order("created_at", { ascending: false });
 
   if (filters.exerciseId) {
-    query = query.eq('exercise_id', filters.exerciseId);
+    query = query.eq("exercise_id", filters.exerciseId);
   }
-  
+
   if (filters.sessionDate) {
-    query = query.eq('session_date', filters.sessionDate);
+    query = query.eq("session_date", filters.sessionDate);
   }
 
   const { data, error } = await query;
   if (error) throw new Error(`Failed to fetch workout sets: ${error.message}`);
-  
+
   return data || [];
 }
 ```
 
 ### T023: Integrate components into workout screen
+
 **File**: `app/(tabs)/workout.tsx`
 
 Combine form and history for complete workout interface:
@@ -107,14 +110,14 @@ export default function WorkoutScreen() {
   return (
     <ScrollView style={{ padding: 16 }}>
       <Text variant="headlineMedium">Bench Press</Text>
-      
+
       <WorkoutSetForm
         exerciseId={exerciseId}
         onSetLogged={() => setRefreshKey(k => k + 1)} // Refresh history
       />
-      
+
       <Divider style={{ marginVertical: 20 }} />
-      
+
       <SessionHistoryList
         key={refreshKey} // Force refresh after new set
         exerciseId={exerciseId}
@@ -128,7 +131,7 @@ export default function WorkoutScreen() {
 ## Definition of Done
 
 - [ ] Today's sets display by default without navigation
-- [ ] Sets show in chronological order (newest first)  
+- [ ] Sets show in chronological order (newest first)
 - [ ] Clear set identification (Set 1, Set 2, etc.)
 - [ ] History updates immediately after logging new set
 - [ ] Empty state shows helpful message

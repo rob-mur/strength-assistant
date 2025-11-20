@@ -9,9 +9,10 @@ _Phase 1 Output - Entity definitions and relationships_
 **Purpose**: Represents a single set of exercise performance data
 
 **Fields**:
+
 - `id`: string (UUID, primary key)
 - `exercise_id`: string (foreign key to existing exercise)
-- `user_id`: string (foreign key to user) 
+- `user_id`: string (foreign key to user)
 - `session_date`: string (ISO date, YYYY-MM-DD)
 - `weight`: number (float > 0, supports metric/imperial)
 - `repetitions`: integer (e 1)
@@ -21,6 +22,7 @@ _Phase 1 Output - Entity definitions and relationships_
 - `set_order`: integer (position within session)
 
 **Validation Rules**:
+
 - Weight: Must be positive float, range 0.1 to 2000 (covers reasonable gym weights)
 - Repetitions: Must be positive integer, range 1 to 100 (reasonable rep ranges)
 - RPE: Must be between 1.0 and 10.0, increments of 0.5 only
@@ -28,8 +30,9 @@ _Phase 1 Output - Entity definitions and relationships_
 - Set order: Auto-incremented within session
 
 **Relationships**:
+
 - Belongs to Exercise (exercise_id)
-- Belongs to User (user_id) 
+- Belongs to User (user_id)
 - Grouped by session_date for workout sessions
 
 ### WorkoutSession (Computed)
@@ -37,12 +40,14 @@ _Phase 1 Output - Entity definitions and relationships_
 **Purpose**: Virtual entity representing all sets for a user on a specific date
 
 **Fields**:
+
 - `user_id`: string
 - `session_date`: string (YYYY-MM-DD)
 - `sets`: WorkoutSet[] (ordered by set_order)
 - `exercise_groups`: Map<exercise_id, WorkoutSet[]>
 
 **Computed Properties**:
+
 - `total_sets`: Count of all sets in session
 - `exercises_performed`: Unique exercise IDs
 - `session_duration`: Time between first and last set (estimated)
@@ -51,12 +56,12 @@ _Phase 1 Output - Entity definitions and relationships_
 
 ### WorkoutSet Lifecycle
 
-1. **Draft** ’ User typing in form (not persisted)
-2. **Validating** ’ Form validation running (<200ms)
-3. **Saving** ’ Persisting to Legend State + Supabase
-4. **Saved** ’ Successfully stored, visible in session list
-5. **Editing** ’ User modifying existing set
-6. **Deleting** ’ User removing set from session
+1. **Draft** ï¿½ User typing in form (not persisted)
+2. **Validating** ï¿½ Form validation running (<200ms)
+3. **Saving** ï¿½ Persisting to Legend State + Supabase
+4. **Saved** ï¿½ Successfully stored, visible in session list
+5. **Editing** ï¿½ User modifying existing set
+6. **Deleting** ï¿½ User removing set from session
 
 ### Form State Management
 

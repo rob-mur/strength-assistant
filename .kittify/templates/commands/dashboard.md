@@ -1,10 +1,10 @@
 ---
 description: Open the Spec Kitty dashboard in your browser.
 ---
+
 **⚠️ CRITICAL: Read [.kittify/AGENTS.md](.kittify/AGENTS.md) for universal rules (paths, UTF-8 encoding, context management, quality expectations).**
 
-*Path: [templates/commands/dashboard.md](templates/commands/dashboard.md)*
-
+_Path: [templates/commands/dashboard.md](templates/commands/dashboard.md)_
 
 ## Dashboard Access
 

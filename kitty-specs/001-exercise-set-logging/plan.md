@@ -21,9 +21,10 @@ Enable users to log weight, repetitions, and Rate of Perceived Exertion (RPE) fo
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
 ✅ **PASS** - No constitution constraints defined in project template. Using established project patterns:
+
 - TDD approach with tests before implementation
 - Legend State for local persistence following existing patterns
 - Supabase integration using established repo layer
@@ -110,6 +111,7 @@ __tests__/                     # Test infrastructure
 **Architecture**: Clean separation between UI (React Native Paper), business logic (React Hook Form + Legend State), and data persistence (Supabase). Uses established patterns from existing codebase.
 
 **Key Design Decisions**:
+
 - **Form Management**: React Hook Form + Zod for real-time validation with <200ms feedback
 - **State Management**: Legend State syncedCrud() for automatic offline/online sync
 - **UI Components**: React Native Paper Slider for RPE input, standard Paper form components
@@ -117,12 +119,14 @@ __tests__/                     # Test infrastructure
 - **Testing Strategy**: TDD with Jest unit tests first, then Maestro integration tests
 
 **Risk Mitigation**:
+
 - Legend State handles offline/sync complexity automatically
 - Form defaults from last set reduce input time by 50%
 - Optimistic updates provide immediate UI feedback
 - Real-time validation prevents invalid submissions
 
 **Success Criteria**:
+
 - Complete set logging in <15 seconds
 - 95% save success rate with Legend State sync
 - Real-time validation feedback <200ms

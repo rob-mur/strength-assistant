@@ -25,14 +25,16 @@ Configure Legend State's built-in sync capabilities for optimal reliability in g
 Legend State handles offline/online sync automatically with Supabase. Our focus is on proper configuration, testing edge cases, and providing user feedback about sync status.
 
 **Requirements**:
+
 - 95% save success rate via Legend State sync
-- Leverage Legend State's built-in retry mechanisms  
+- Leverage Legend State's built-in retry mechanisms
 - Clear sync status indication to users
 - No data loss during network issues (Legend State handles this)
 
 ## Detailed Guidance
 
 ### T028: Write Maestro test for offline sync behavior
+
 **File**: `.maestro/workout/offline-sync.yaml`
 
 ```yaml
@@ -58,7 +60,7 @@ Legend State handles offline/online sync automatically with Supabase. Our focus 
 # Re-enable network and verify sync
 - runFlow:
     file: ./setup-online-mode.yaml
-    
+
 # Wait for sync to complete
 - waitForAnimationToEnd
 - assertNotVisible:
@@ -66,60 +68,62 @@ Legend State handles offline/online sync automatically with Supabase. Our focus 
 ```
 
 ### T029: Write integration tests for Legend State sync behavior
+
 **File**: `__tests__/integration/legend-state-sync.test.ts`
 
 ```typescript
-describe('Legend State Sync Integration', () => {
-  it('handles offline operations gracefully', async () => {
+describe("Legend State Sync Integration", () => {
+  it("handles offline operations gracefully", async () => {
     // Simulate offline mode
     await workoutSets.sync?.pause();
-    
+
     const set = createMockSet();
     await workoutSetActions.createSet(set);
-    
+
     // Verify data stored locally
     expect(workoutSets.get()).toContain(expect.objectContaining(set));
-    
+
     // Resume sync and verify upload
     await workoutSets.sync?.resume();
-    
+
     // Legend State handles the actual sync automatically
     // Test that local data persists and syncs when online
   });
 
-  it('handles sync conflicts appropriately', async () => {
+  it("handles sync conflicts appropriately", async () => {
     // Test Legend State's conflict resolution
     const set = createMockSet();
-    
+
     // Create locally
     await workoutSetActions.createSet(set);
-    
+
     // Modify remotely (simulate concurrent edit)
     await supabase
-      .from('workout_sets')
+      .from("workout_sets")
       .update({ weight: 999 })
-      .eq('id', set.id);
-    
+      .eq("id", set.id);
+
     // Legend State should handle conflict resolution
     // Test the resolved state matches expected behavior
   });
 
-  it('provides accurate sync status', () => {
+  it("provides accurate sync status", () => {
     // Test that sync status computed value works correctly
-    expect(['synced', 'pending', 'error']).toContain(syncStatus.get());
-    
+    expect(["synced", "pending", "error"]).toContain(syncStatus.get());
+
     // Test status updates when sync state changes
   });
 });
 ```
 
 ### T030: Configure Legend State sync and status monitoring
+
 **File**: `lib/services/syncMonitoring.ts`
 
 ```typescript
-import { observable } from '@legendapp/state';
-import NetInfo from '@react-native-netinfo/netinfo';
-import { workoutSets } from '../store/workoutSetStore';
+import { observable } from "@legendapp/state";
+import NetInfo from "@react-native-netinfo/netinfo";
+import { workoutSets } from "../store/workoutSetStore";
 
 // Monitor and configure Legend State sync behavior
 interface SyncMonitoringState {
@@ -131,7 +135,7 @@ interface SyncMonitoringState {
 export const syncMonitoring = observable<SyncMonitoringState>({
   isOnline: true,
   lastSyncTime: undefined,
-  syncErrors: []
+  syncErrors: [],
 });
 
 // Configure Legend State sync settings
@@ -142,15 +146,15 @@ export function configureLegendStateSync() {
     retry: {
       maxAttempts: 5,
       delay: 1000,
-      exponentialBackoff: true
+      exponentialBackoff: true,
     },
-    
+
     // Configure conflict resolution
-    conflictResolution: 'last-write-wins', // or custom resolution function
-    
+    conflictResolution: "last-write-wins", // or custom resolution function
+
     // Configure offline behavior
     persistLocally: true,
-    syncOnReconnect: true
+    syncOnReconnect: true,
   };
 
   // Apply configuration to Legend State sync
@@ -161,16 +165,16 @@ export function configureLegendStateSync() {
 // Monitor network status and sync status
 export function initializeSyncMonitoring() {
   // Monitor network connectivity
-  NetInfo.addEventListener(state => {
+  NetInfo.addEventListener((state) => {
     const wasOnline = syncMonitoring.isOnline.get();
     const isNowOnline = state.isConnected ?? false;
-    
+
     syncMonitoring.isOnline.set(isNowOnline);
-    
+
     // Legend State automatically handles reconnection sync
     // We just monitor the status for UI feedback
     if (!wasOnline && isNowOnline) {
-      console.log('Network reconnected - Legend State will auto-sync');
+      console.log("Network reconnected - Legend State will auto-sync");
     }
   });
 
@@ -188,12 +192,12 @@ export function initializeSyncMonitoring() {
 export const syncStatus = computed(() => {
   const isOnline = syncMonitoring.isOnline.get();
   const hasErrors = syncMonitoring.syncErrors.get().length > 0;
-  
-  if (!isOnline) return 'offline';
-  if (hasErrors) return 'error';
-  
+
+  if (!isOnline) return "offline";
+  if (hasErrors) return "error";
+
   // Use Legend State's internal sync status if available
-  return workoutSets.sync?.status?.get() || 'synced';
+  return workoutSets.sync?.status?.get() || "synced";
 });
 
 // Force sync (useful for testing or manual triggers)
@@ -201,9 +205,9 @@ export async function forceLegendStateSync() {
   try {
     // Legend State should provide a manual sync method
     await workoutSets.sync?.sync?.();
-    console.log('Manual sync completed successfully');
+    console.log("Manual sync completed successfully");
   } catch (error) {
-    console.error('Manual sync failed:', error);
+    console.error("Manual sync failed:", error);
     syncMonitoring.syncErrors.push(String(error));
   }
 }

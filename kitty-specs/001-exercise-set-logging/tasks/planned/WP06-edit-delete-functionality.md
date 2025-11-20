@@ -23,7 +23,8 @@ Allow users to edit or delete recently logged sets within the current session wi
 
 ## Context
 
-**User Stories**: 
+**User Stories**:
+
 - Edit: "User taps edit on recent set, changes weight from 135 to 140, saves successfully"
 - Delete: "User accidentally logs wrong set, taps delete, confirms, set removed immediately"
 
@@ -32,6 +33,7 @@ Allow users to edit or delete recently logged sets within the current session wi
 ## Detailed Guidance
 
 ### T024: Write Maestro test for edit/delete functionality
+
 **File**: `.maestro/workout/edit-delete-sets.yaml`
 
 ```yaml
@@ -46,7 +48,7 @@ Allow users to edit or delete recently logged sets within the current session wi
 - tapOn: "Save Changes"
 - assertVisible: "Set 1: 140 lbs × 8 reps @ 7.0 RPE"
 
-# Test delete functionality  
+# Test delete functionality
 - tapOn:
     id: "delete-set-button"
 - tapOn: "Confirm Delete"
@@ -54,6 +56,7 @@ Allow users to edit or delete recently logged sets within the current session wi
 ```
 
 ### T025: Create set edit/delete action components
+
 **File**: `lib/components/SetActions.tsx`
 
 ```typescript
@@ -77,7 +80,7 @@ export function SetActions({ set, onEdit, onDelete }: Props) {
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
       <Text>Set {set.set_order}: {set.weight} lbs × {set.repetitions} reps @ {set.rpe} RPE</Text>
-      
+
       <View style={{ flexDirection: 'row' }}>
         <IconButton
           testID="edit-set-button"
@@ -86,7 +89,7 @@ export function SetActions({ set, onEdit, onDelete }: Props) {
           onPress={() => setEditMode(true)}
         />
         <IconButton
-          testID="delete-set-button"  
+          testID="delete-set-button"
           icon="delete"
           size={16}
           onPress={() => setShowDeleteDialog(true)}
@@ -114,23 +117,28 @@ export function SetActions({ set, onEdit, onDelete }: Props) {
 ```
 
 ### T026: Implement Supabase update workout set function
+
 **File**: `lib/repo/supabase/workoutSets.ts`
 
 ```typescript
 export async function updateWorkoutSet(
-  id: string, 
-  updates: UpdateWorkoutSetRequest
+  id: string,
+  updates: UpdateWorkoutSetRequest,
 ): Promise<WorkoutSet> {
   // Optimistic update in local store first
   const currentSet = workoutSetStore.sets[id].get();
-  const optimisticSet = { ...currentSet, ...updates, updated_at: new Date().toISOString() };
+  const optimisticSet = {
+    ...currentSet,
+    ...updates,
+    updated_at: new Date().toISOString(),
+  };
   workoutSetStore.sets[id].set(optimisticSet);
 
   try {
     const { data, error } = await supabase
-      .from('workout_sets')
+      .from("workout_sets")
       .update(updates)
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -148,6 +156,7 @@ export async function updateWorkoutSet(
 ```
 
 ### T027: Implement Supabase delete workout set function
+
 Similar pattern with optimistic deletion and error handling.
 
 ## Definition of Done

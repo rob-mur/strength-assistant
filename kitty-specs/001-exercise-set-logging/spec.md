@@ -2,7 +2,7 @@
 
 **Feature Branch**: `001-exercise-set-logging`  
 **Created**: 2025-11-18  
-**Status**: Draft  
+**Status**: Draft
 
 ## Overview
 
@@ -11,7 +11,7 @@ Enable users to log weight, repetitions, and Rate of Perceived Exertion (RPE) fo
 ## Success Criteria
 
 - Users can log a complete set (weight, reps, RPE) in under 15 seconds
-- 95% of logged sets are saved and immediately visible in session history  
+- 95% of logged sets are saved and immediately visible in session history
 - New users complete at least 3 workouts in their first 14 days (target: >40% retention)
 - Set data defaults reduce input time by 50% compared to blank forms
 - Users can edit or delete recently logged sets within 30 seconds
