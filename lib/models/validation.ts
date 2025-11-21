@@ -89,32 +89,71 @@ export const UpdateWorkoutSetValidation = WorkoutSetValidation.partial().omit({
 });
 
 /**
- * Form-specific validation schema for React Hook Form
- * Includes transform functions for form field processing
+ * Simplified form validation schema for React Hook Form
+ * Handles string inputs from form components and converts to numbers
  */
 export const WorkoutSetFormValidation = z.object({
-  weight: z.preprocess((val) => {
-    // Handle string input from text fields
-    if (typeof val === "string") {
-      const parsed = parseFloat(val);
-      return isNaN(parsed) ? undefined : parsed;
-    }
-    return val;
-  }, WorkoutSetValidation.shape.weight),
+  weight: z
+    .union([z.number(), z.string()])
+    .transform((val, ctx) => {
+      const num = typeof val === 'string' ? parseFloat(val) : val;
+      if (isNaN(num)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Weight must be a valid number",
+        });
+        return z.NEVER;
+      }
+      return num;
+    })
+    .refine((val) => val > 0, "Weight must be positive")
+    .refine((val) => val >= WORKOUT_SET_CONSTRAINTS.weight.min, `Weight must be at least ${WORKOUT_SET_CONSTRAINTS.weight.min}`)
+    .refine((val) => val <= WORKOUT_SET_CONSTRAINTS.weight.max, `Weight cannot exceed ${WORKOUT_SET_CONSTRAINTS.weight.max}`),
 
-  repetitions: z.preprocess((val) => {
-    // Handle string input from text fields
-    if (typeof val === "string") {
-      const parsed = parseInt(val, 10);
-      return isNaN(parsed) ? undefined : parsed;
-    }
-    return val;
-  }, WorkoutSetValidation.shape.repetitions),
+  repetitions: z
+    .union([z.number(), z.string()])
+    .transform((val, ctx) => {
+      const num = typeof val === 'string' ? parseInt(val, 10) : val;
+      if (isNaN(num)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Repetitions must be a valid number",
+        });
+        return z.NEVER;
+      }
+      return Math.floor(num);
+    })
+    .refine((val) => val >= WORKOUT_SET_CONSTRAINTS.repetitions.min, `At least ${WORKOUT_SET_CONSTRAINTS.repetitions.min} repetition required`)
+    .refine((val) => val <= WORKOUT_SET_CONSTRAINTS.repetitions.max, `Cannot exceed ${WORKOUT_SET_CONSTRAINTS.repetitions.max} repetitions`),
 
-  rpe: WorkoutSetValidation.shape.rpe,
-  exercise_id: WorkoutSetValidation.shape.exercise_id,
-  session_date: WorkoutSetValidation.shape.session_date,
+  rpe: z
+    .number()
+    .min(WORKOUT_SET_CONSTRAINTS.rpe.min)
+    .max(WORKOUT_SET_CONSTRAINTS.rpe.max)
+    .refine(
+      (val) => val * 2 === Math.floor(val * 2),
+      "RPE must be in 0.5 increments"
+    ),
+
+  exercise_id: z.string().min(1, "Exercise ID is required"), // More lenient for form input
+  session_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
 });
+
+/**
+ * Raw form input type (before validation/transformation)
+ */
+export type WorkoutSetFormInput = {
+  weight: string | number;
+  repetitions: string | number; 
+  rpe: number;
+  exercise_id: string;
+  session_date: string;
+};
+
+/**
+ * Validated form output type (after validation/transformation)
+ */
+export type WorkoutSetFormOutput = z.infer<typeof WorkoutSetFormValidation>;
 
 /**
  * Inferred TypeScript types from validation schemas
@@ -123,7 +162,6 @@ export type WorkoutSetFormData = z.infer<typeof WorkoutSetValidation>;
 export type UpdateWorkoutSetFormData = z.infer<
   typeof UpdateWorkoutSetValidation
 >;
-export type WorkoutSetFormInput = z.infer<typeof WorkoutSetFormValidation>;
 
 /**
  * Validation result helpers for form error handling

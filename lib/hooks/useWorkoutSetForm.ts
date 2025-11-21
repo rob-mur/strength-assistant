@@ -9,8 +9,9 @@ import { useForm, UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useMemo, useEffect } from "react";
 import {
-  WorkoutSetValidation,
+  WorkoutSetFormValidation,
   WorkoutSetFormInput,
+  WorkoutSetFormOutput,
 } from "../models/validation";
 import { WorkoutSetFormData } from "../models/WorkoutSet";
 import { formDefaults, sessionStore } from "../store/workoutSetStore";
@@ -34,7 +35,7 @@ interface UseWorkoutSetFormProps {
  */
 interface UseWorkoutSetFormReturn {
   /** React Hook Form instance with all methods */
-  form: UseFormReturn<WorkoutSetFormInput>;
+  form: UseFormReturn<WorkoutSetFormInput, any, WorkoutSetFormOutput>;
 
   /** Get default values from Legend State store */
   getDefaultValues: () => WorkoutSetFormInput;
@@ -62,8 +63,8 @@ export function useWorkoutSetForm({
       const defaults = formDefaults.get();
       const date = sessionDate || new Date().toISOString().split("T")[0];
       return {
-        weight: defaults.weight || 0,
-        repetitions: defaults.repetitions || 0,
+        weight: defaults.weight || 20, // Default to reasonable weight
+        repetitions: defaults.repetitions || 5, // Default to reasonable reps
         rpe: 5.0, // Start with neutral RPE for user adjustment
         exercise_id: exerciseId,
         session_date: date,
@@ -72,8 +73,8 @@ export function useWorkoutSetForm({
       // Fallback to safe defaults if Legend State fails
       const date = sessionDate || new Date().toISOString().split("T")[0];
       return {
-        weight: 0,
-        repetitions: 0,
+        weight: 20, // Default to reasonable weight
+        repetitions: 5, // Default to reasonable reps
         rpe: 5.0,
         exercise_id: exerciseId,
         session_date: date,
@@ -101,8 +102,8 @@ export function useWorkoutSetForm({
   /**
    * Configure React Hook Form with Zod validation
    */
-  const form = useForm<WorkoutSetFormInput>({
-    resolver: zodResolver(WorkoutSetValidation),
+  const form = useForm<WorkoutSetFormInput, any, WorkoutSetFormOutput>({
+    resolver: zodResolver(WorkoutSetFormValidation),
     defaultValues,
     mode: "onChange", // Real-time validation for immediate feedback
     criteriaMode: "firstError",
@@ -113,7 +114,7 @@ export function useWorkoutSetForm({
   const { handleSubmit } = form;
 
   const submitForm = useCallback(async (): Promise<void> => {
-    await handleSubmit(async (data: WorkoutSetFormInput) => {
+    await handleSubmit(async (data: WorkoutSetFormOutput) => {
       // Convert to the format expected by onSubmit
       const formData: WorkoutSetFormData = {
         weight: data.weight,

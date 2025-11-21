@@ -49,8 +49,8 @@ describe("useWorkoutSetForm", () => {
 
       const defaultValues = result.current.getDefaultValues();
       expect(defaultValues).toEqual({
-        weight: 0,
-        repetitions: 0,
+        weight: 20, // Default to reasonable weight
+        repetitions: 5, // Default to reasonable reps
         rpe: 5.0, // Start with neutral RPE for user adjustment
         exercise_id: mockExerciseId,
         session_date: mockSessionDate,

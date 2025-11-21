@@ -28,7 +28,7 @@ export function WeightInput({ control, error }: WeightInputProps) {
           value={value?.toString() || ""}
           onChangeText={(text) => {
             const numValue = parseFloat(text);
-            onChange(isNaN(numValue) ? 0 : numValue);
+            onChange(isNaN(numValue) ? undefined : numValue);
           }}
           error={!!error}
           keyboardType="decimal-pad"

@@ -28,7 +28,7 @@ export function RepsInput({ control, error }: RepsInputProps) {
           value={value?.toString() || ""}
           onChangeText={(text) => {
             const numValue = parseInt(text, 10);
-            onChange(isNaN(numValue) ? 0 : numValue);
+            onChange(isNaN(numValue) || numValue <= 0 ? undefined : numValue);
           }}
           error={!!error}
           keyboardType="number-pad"
