@@ -32,6 +32,44 @@ export interface Database {
           deleted?: boolean;
         };
       };
+      workout_sets: {
+        Row: {
+          id: string;
+          exercise_id: string;
+          user_id: string;
+          session_date: string;
+          weight: number;
+          repetitions: number;
+          rpe: number;
+          set_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          exercise_id: string;
+          user_id: string;
+          session_date: string;
+          weight: number;
+          repetitions: number;
+          rpe: number;
+          set_order: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          exercise_id?: string;
+          user_id?: string;
+          session_date?: string;
+          weight?: number;
+          repetitions?: number;
+          rpe?: number;
+          set_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
     Views: {
       [_ in never]: never;
@@ -54,6 +92,12 @@ export type ExerciseInsert =
   Database["public"]["Tables"]["exercises"]["Insert"];
 export type ExerciseUpdate =
   Database["public"]["Tables"]["exercises"]["Update"];
+
+export type WorkoutSetRow = Database["public"]["Tables"]["workout_sets"]["Row"];
+export type WorkoutSetInsert =
+  Database["public"]["Tables"]["workout_sets"]["Insert"];
+export type WorkoutSetUpdate =
+  Database["public"]["Tables"]["workout_sets"]["Update"];
 
 // User type for store (from Supabase Auth)
 export interface User {

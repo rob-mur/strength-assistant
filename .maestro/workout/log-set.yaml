@@ -1,0 +1,41 @@
+appId: com.strengthassistant.app
+---
+- launchApp
+- assertVisible: "Workout"
+
+# Navigate to workout screen with exercise selected
+- tapOn: "Bench Press"
+- assertVisible: "Log Set"
+
+# Test complete set logging flow
+- tapOn:
+    id: "weight-input"
+- inputText: "135"
+
+- tapOn:
+    id: "reps-input"
+- inputText: "8"
+
+- tapOn:
+    id: "rpe-slider"
+- dragFromTo:
+    from:
+      id: "rpe-slider-handle"
+    to:
+      x: 70% # Approximate RPE 7.0 position
+
+- tapOn: "Log Set"
+
+# Verify set appears in history
+- assertVisible: "Set 1: 135 lbs x 8 reps @ 7.0 RPE"
+
+# Verify form resets with smart defaults
+- assertVisible:
+    id: "weight-input"
+    text: "135"
+- assertVisible:
+    id: "reps-input"
+    text: "8"
+- assertVisible:
+    id: "rpe-slider"
+    text: ""

@@ -1,3 +1,28 @@
+// Mock react-native-get-random-values that's causing test failures
+jest.mock("react-native-get-random-values", () => {
+  // Use Node.js crypto for random values in tests
+  const crypto = require("crypto");
+
+  // Setup polyfill for getRandomValues
+  if (typeof global.crypto === "undefined") {
+    global.crypto = {};
+  }
+
+  global.crypto.getRandomValues = (buffer) => {
+    return crypto.randomFillSync(buffer);
+  };
+
+  return {};
+});
+
+// Mock uuid package to prevent React Native issues
+jest.mock("uuid", () => ({
+  v4: jest.fn(() => {
+    const crypto = require("crypto");
+    return crypto.randomUUID();
+  }),
+}));
+
 // Temporarily disable fake timers to debug hanging issue
 // jest.useFakeTimers();
 
