@@ -18,6 +18,9 @@
 
 - TypeScript/JavaScript with React Native/Expo + Expo SDK, Maestro (integration testing), EAS Build, Supabase (010-fix-android-integration)
 
+- TypeScript with React Native 0.79.5, Expo SDK 53, React 19.0.0 + @legendapp/state, @supabase/supabase-js, Expo Router, React Native Paper, react-native-calendars (001-weekly-exercise-planner)
+- Supabase PostgreSQL (cloud), Legend State local persistence (001-weekly-exercise-planner)
+
 - TypeScript/JavaScript with React Native/Expo
 - Supabase (PostgreSQL) for backend services
 - Legend State for local state management
