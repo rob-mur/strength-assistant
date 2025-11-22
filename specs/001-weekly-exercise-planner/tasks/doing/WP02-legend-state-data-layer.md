@@ -1,12 +1,16 @@
 # WP02: Legend State Data Layer
 
 **work_package_id**: WP02  
-**lane**: planned  
+**lane**: doing  
 **priority**: P1  
 **subtasks**: [T006, T007, T008, T009, T010]
+**assignee**: claude
+**agent**: claude
+**shell_pid**: 45953
 
 ## History
 - 2025-11-22: Created during task generation phase
+- 2025-11-22T19:00:00Z – claude – shell_pid=45953 – lane=doing – Started implementation
 
 ## Objective
 
