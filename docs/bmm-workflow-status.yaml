@@ -1,0 +1,99 @@
+# Workflow Status Template
+
+# This tracks progress through BMM methodology Analysis, Planning, and Solutioning phases.
+# Implementation phase is tracked separately in sprint-status.yaml
+
+# STATUS DEFINITIONS:
+# ==================
+# Initial Status (before completion):
+#   - required: Must be completed to progress
+#   - optional: Can be completed but not required
+#   - recommended: Strongly suggested but not required
+#   - conditional: Required only if certain conditions met (e.g., if_has_ui)
+#
+# Completion Status:
+#   - {file-path}: File created/found (e.g., "docs/product-brief.md")
+#   - skipped: Optional/conditional workflow that was skipped
+
+generated: "2025-11-22"
+project: "strength-assistant"
+project_type: "brownfield"
+selected_track: "BMad Method"
+field_type: "brownfield"
+workflow_path: ".bmad/bmm/workflows/workflow-status/paths/method-brownfield.yaml"
+workflow_status:
+  - phase: "Documentation"
+    workflows:
+      - id: "document-project"
+        status: "docs/index.md"
+        required: true
+        agent: "analyst"
+        command: "document-project"
+  - phase: "Discovery (Optional)"
+    workflows:
+      - id: "brainstorm-project"
+        status: "pending"
+        optional: true
+        agent: "analyst"
+        command: "brainstorm-project"
+      - id: "research"
+        status: "pending"
+        optional: true
+        agent: "analyst"
+        command: "research"
+      - id: "product-brief"
+        status: "pending"
+        optional: true
+        agent: "analyst"
+        command: "product-brief"
+  - phase: "Planning"
+    workflows:
+      - id: "prd"
+        status: "pending"
+        required: true
+        agent: "pm"
+        command: "prd"
+      - id: "validate-prd"
+        status: "pending"
+        optional: true
+        agent: "pm"
+        command: "validate-prd"
+      - id: "create-design"
+        status: "pending"
+        conditional: "if_has_ui"
+        agent: "ux-designer"
+        command: "create-design"
+  - phase: "Solutioning"
+    workflows:
+      - id: "create-architecture"
+        status: "pending"
+        recommended: true
+        agent: "architect"
+        command: "create-architecture"
+      - id: "create-epics-and-stories"
+        status: "pending"
+        required: true
+        agent: "pm"
+        command: "create-epics-and-stories"
+      - id: "test-design"
+        status: "pending"
+        recommended: true
+        agent: "tea"
+        command: "test-design"
+      - id: "validate-architecture"
+        status: "pending"
+        optional: true
+        agent: "architect"
+        command: "validate-architecture"
+      - id: "implementation-readiness"
+        status: "pending"
+        required: true
+        agent: "architect"
+        command: "implementation-readiness"
+  - phase: "Implementation"
+    workflows:
+      - id: "sprint-planning"
+        status: "pending"
+        required: true
+        agent: "sm"
+        command: "sprint-planning"
