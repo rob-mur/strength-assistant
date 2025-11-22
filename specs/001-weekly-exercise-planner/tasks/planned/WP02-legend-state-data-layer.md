@@ -1,7 +1,7 @@
 # WP02: Legend State Data Layer
 
 **work_package_id**: WP02  
-**lane**: for_review  
+**lane**: planned  
 **priority**: P1  
 **subtasks**: [T006, T007, T008, T009, T010]
 **assignee**: claude
@@ -13,6 +13,7 @@
 - 2025-11-22T19:00:00Z – claude – shell_pid=45953 – lane=doing – Started implementation
 - 2025-11-22T19:30:00Z – claude – shell_pid=45953 – lane=doing – Completed implementation  
 - 2025-11-22T19:35:00Z – claude – shell_pid=45953 – lane=for_review – Ready for review
+- 2025-11-22T20:00:00Z – claude – shell_pid=47901 – lane=for_review – Review completed: NEEDS CHANGES
 
 ## Objective
 
@@ -320,3 +321,38 @@ describe('Weekly Plan Sync Integration', () => {
 4. Error states handled gracefully
 5. TypeScript types are accurate and complete
 6. Integration tests pass with actual Supabase connection
+
+## Review Feedback
+
+**Review Date**: 2025-11-22T20:00:00Z  
+**Reviewer**: claude (shell_pid: 47901)  
+**Status**: NEEDS CHANGES
+
+### Critical Issues to Address
+
+1. **Sync Configuration Deviation**:
+   - **Required**: Use `configureSyncedSupabase` for automatic sync as specified in T007
+   - **Current**: Manual observable sync in `weeklyPlanSync.ts` (line 10)
+   - **Action**: Implement proper `configureSyncedSupabase` integration with Supabase client
+
+2. **Test Failures**:
+   - `assignExerciseToDay` returning undefined instead of schedule ID
+   - Authentication mocking issues causing test failures
+   - **Action**: Fix test setup and ensure proper return values from actions
+
+3. **Missing Real-time Updates**:
+   - **Required**: Real-time sync working with Supabase (Definition of Done item 3)
+   - **Current**: No real-time implementation due to manual sync
+   - **Action**: Implement real-time subscriptions through Legend State sync
+
+### Implementation Notes
+- Core TypeScript models and reactive architecture are well implemented
+- Database schema compatibility is correct
+- Action patterns follow good practices but need sync integration
+- Consider reviewing Legend State documentation for proper `configureSyncedSupabase` usage
+
+### Next Steps
+1. Research proper `configureSyncedSupabase` configuration
+2. Fix sync integration to enable automatic Supabase sync
+3. Address test failures related to authentication and return values
+4. Verify real-time update functionality works as specified
