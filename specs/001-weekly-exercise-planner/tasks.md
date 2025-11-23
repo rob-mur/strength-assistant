@@ -60,21 +60,22 @@
 - [x] T009 [P] Create exercise assignment actions in `lib/data/legend-state/WeeklyPlanActions.ts`
 - [x] T010 Test Legend State sync integration with Supabase
 
-## Work Package 3: Core UI Components
+## Work Package 3: Core UI Components ✅
 
 **Goal**: Build calendar and exercise assignment interface components  
 **Priority**: P2 (User interface)  
 **Dependencies**: None (can use mock data)  
-**Independent Test**: Components render and respond to interactions
+**Independent Test**: Components render and respond to interactions  
+**Status**: COMPLETED - See `specs/001-weekly-exercise-planner/tasks/done/WP03-core-ui-components.md`
 
-- [ ] T011 [P] Create WeeklyPlannerCard component in `lib/components/Cards/WeeklyPlannerCard.tsx`
-- [ ] T012 [P] Implement CalendarView with react-native-calendars in `lib/components/Calendar/CalendarView.tsx`
-- [ ] T013 [P] Create DayAssignmentModal in `lib/components/Modals/DayAssignmentModal.tsx`
-- [ ] T014 [P] Add current day highlighting logic in CalendarView
-- [ ] T015 [P] Implement visual distinction for workout/rest days in CalendarView
-- [ ] T016 [P] Add exercise list and assignment UI to DayAssignmentModal
-- [ ] T017 [P] Implement exercise removal and reordering in DayAssignmentModal  
-- [ ] T018 [P] Apply React Native Paper theming to all weekly planner components
+- [x] T011 [P] Create WeeklyPlannerCard component in `lib/components/Cards/WeeklyPlannerCard.tsx`
+- [x] T012 [P] Implement CalendarView with react-native-calendars in `lib/components/Calendar/CalendarView.tsx`
+- [x] T013 [P] Create DayAssignmentModal in `lib/components/Modals/DayAssignmentModal.tsx`
+- [x] T014 [P] Add current day highlighting logic in CalendarView
+- [x] T015 [P] Implement visual distinction for workout/rest days in CalendarView
+- [x] T016 [P] Add exercise list and assignment UI to DayAssignmentModal
+- [x] T017 [P] Implement exercise removal and reordering in DayAssignmentModal  
+- [x] T018 [P] Apply React Native Paper theming to all weekly planner components
 
 ## Work Package 4: User Story 1 - Weekly Schedule View
 
@@ -92,20 +93,21 @@
 - [ ] T020 Modify home screen to conditionally show WeeklyPlannerCard in `app/(tabs)/index.tsx`
 - [ ] T021 Implement calendar expansion/collapse functionality in WeeklyPlannerCard
 
-## Work Package 5: User Story 2 - Exercise Assignment
+## Work Package 5: User Story 2 - Exercise Assignment ✅
 
 **Goal**: Enable exercise assignment and management (User Story P2)  
 **Priority**: P2 (Core user story)  
 **Dependencies**: WP4  
-**Independent Test**: User can assign/remove exercises to days
+**Independent Test**: User can assign/remove exercises to days  
+**Status**: COMPLETED - See `specs/001-weekly-exercise-planner/tasks/done/WP05-user-story-2-exercise-assignment.md`
 
 **Acceptance Scenarios**:
 - User taps Monday → exercise selection interface opens
 - User selects exercise → Monday shows assigned exercise clearly  
 - User can assign multiple exercises to one day
 
-- [ ] T022 Connect day tap events to DayAssignmentModal in WeeklyPlannerCard
-- [ ] T023 Handle edge cases: no exercises created, empty states, duplicate assignments
+- [x] T022 Connect day tap events to DayAssignmentModal in WeeklyPlannerCard
+- [x] T023 Handle edge cases: no exercises created, empty states, duplicate assignments
 
 ## Work Package 6: User Story 3 & Validation  
 
