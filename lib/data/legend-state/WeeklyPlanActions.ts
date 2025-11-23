@@ -1,8 +1,8 @@
-import { exerciseSchedules$ } from '../sync/weeklyPlanSync';
+import { exerciseSchedules$, enrichedExerciseSchedules$, getCurrentUserId } from '../sync/weeklyPlanSync';
 import { weeklyPlanStoreActions } from './WeeklyPlanStore';
-import { requireUserId, generateId } from '../../utils/auth/userHelpers';
 import { ExerciseScheduleValidator } from '../../models/ExerciseSchedule';
-import type { ExerciseSchedule, ExerciseScheduleWithExercise } from '../../models/ExerciseSchedule';
+import { v4 as uuidv4 } from 'uuid';
+import type { ExerciseScheduleRow } from '../../models/supabase';
 
 /**
  * Actions for managing weekly exercise assignments
@@ -31,14 +31,17 @@ export const weeklyPlanActions = {
       }
 
       // Get current user
-      const currentUserId = await requireUserId();
+      const currentUserId = getCurrentUserId();
+      if (!currentUserId) {
+        throw new Error('User not authenticated');
+      }
       console.log('📅 assignExerciseToDay - User authenticated:', currentUserId);
 
       // Check if exercise is already assigned to this day
-      const existingSchedules = exerciseSchedules$.get();
+      const existingSchedules = enrichedExerciseSchedules$.get();
       const allSchedules = Object.values(existingSchedules);
       const duplicateSchedule = allSchedules.find(
-        schedule => schedule.exerciseId === exerciseId && schedule.dayOfWeek === dayOfWeek
+        schedule => schedule.exercise_id === exerciseId && schedule.day_of_week === dayOfWeek
       );
 
       if (duplicateSchedule) {
@@ -46,25 +49,21 @@ export const weeklyPlanActions = {
       }
 
       // Get next order index for the day
-      const daySchedules = allSchedules.filter(schedule => schedule.dayOfWeek === dayOfWeek);
+      const daySchedules = allSchedules.filter(schedule => schedule.day_of_week === dayOfWeek);
       const nextOrderIndex = daySchedules.length;
 
       // Create new schedule
-      const scheduleId = generateId();
+      const scheduleId = uuidv4();
       const now = new Date().toISOString();
       
-      const newSchedule: ExerciseScheduleWithExercise = {
+      const newSchedule: ExerciseScheduleRow = {
         id: scheduleId,
-        userId: currentUserId,
-        exerciseId,
-        dayOfWeek,
-        orderIndex: nextOrderIndex,
-        createdAt: now,
-        updatedAt: now,
-        exercise: {
-          id: exerciseId,
-          name: exerciseName || 'Loading...',
-        },
+        user_id: currentUserId,
+        exercise_id: exerciseId,
+        day_of_week: dayOfWeek,
+        order_index: nextOrderIndex,
+        created_at: now,
+        updated_at: now,
       };
 
       console.log('📅 assignExerciseToDay - Creating new schedule:', newSchedule);
@@ -72,12 +71,8 @@ export const weeklyPlanActions = {
       // Clear any previous errors
       weeklyPlanStoreActions.clearError();
 
-      // Optimistic update - Legend State handles sync automatically
-      const currentSchedules = exerciseSchedules$.get();
-      exerciseSchedules$.set({
-        ...currentSchedules,
-        [scheduleId]: newSchedule,
-      });
+      // Optimistic update - syncedSupabase handles sync automatically
+      exerciseSchedules$[scheduleId].set(newSchedule);
 
       console.log('📅 assignExerciseToDay - Assignment successful, schedule ID:', scheduleId);
       return scheduleId;
@@ -105,25 +100,23 @@ export const weeklyPlanActions = {
       }
 
       // Verify schedule exists
-      const allSchedules = exerciseSchedules$.get();
+      const allSchedules = enrichedExerciseSchedules$.get();
       const schedule = allSchedules[scheduleId];
       if (!schedule) {
         throw new Error('Exercise schedule not found');
       }
 
       console.log('📅 removeExerciseFromDay - Found schedule to remove:', {
-        exerciseId: schedule.exerciseId,
-        dayOfWeek: schedule.dayOfWeek,
+        exerciseId: schedule.exercise_id,
+        dayOfWeek: schedule.day_of_week,
         exerciseName: schedule.exercise?.name,
       });
 
       // Clear any previous errors
       weeklyPlanStoreActions.clearError();
 
-      // Optimistic delete - Legend State handles sync automatically
-      const currentSchedules = exerciseSchedules$.get();
-      const { [scheduleId]: removed, ...remainingSchedules } = currentSchedules;
-      exerciseSchedules$.set(remainingSchedules);
+      // Optimistic delete - syncedSupabase handles sync automatically
+      exerciseSchedules$[scheduleId].delete();
 
       console.log('📅 removeExerciseFromDay - Removal successful');
 
@@ -153,24 +146,22 @@ export const weeklyPlanActions = {
       ExerciseScheduleValidator.validateOrderIndex(newOrderIndex);
 
       // Get the schedule to reorder
-      const allSchedules = exerciseSchedules$.get();
+      const allSchedules = enrichedExerciseSchedules$.get();
       const schedule = allSchedules[scheduleId];
       if (!schedule) {
         throw new Error('Exercise schedule not found');
       }
 
-      console.log('📅 reorderExerciseInDay - Current order index:', schedule.orderIndex);
+      console.log('📅 reorderExerciseInDay - Current order index:', schedule.order_index);
 
       // Clear any previous errors
       weeklyPlanStoreActions.clearError();
 
-      // Update order index and timestamp - Legend State handles sync automatically
+      // Update order index and timestamp - syncedSupabase handles sync automatically
       const now = new Date().toISOString();
-      const updatedSchedule = { ...schedule, orderIndex: newOrderIndex, updatedAt: now };
-      const currentSchedules = exerciseSchedules$.get();
-      exerciseSchedules$.set({
-        ...currentSchedules,
-        [scheduleId]: updatedSchedule,
+      exerciseSchedules$[scheduleId].assign({
+        order_index: newOrderIndex,
+        updated_at: now,
       });
 
       console.log('📅 reorderExerciseInDay - Reorder successful, new index:', newOrderIndex);
@@ -196,9 +187,9 @@ export const weeklyPlanActions = {
       ExerciseScheduleValidator.validateDayOfWeek(dayOfWeek);
 
       // Get all schedules for the day
-      const schedules = exerciseSchedules$.get();
+      const schedules = enrichedExerciseSchedules$.get();
       const scheduleIdsToDelete = Object.entries(schedules)
-        .filter(([_, schedule]) => schedule.dayOfWeek === dayOfWeek)
+        .filter(([_, schedule]) => schedule.day_of_week === dayOfWeek)
         .map(([id]) => id);
 
       if (scheduleIdsToDelete.length === 0) {
@@ -211,12 +202,10 @@ export const weeklyPlanActions = {
       // Clear any previous errors
       weeklyPlanStoreActions.clearError();
 
-      // Delete all schedules for the day - Legend State handles sync automatically
-      const updatedSchedules = { ...schedules };
+      // Delete all schedules for the day - syncedSupabase handles sync automatically
       scheduleIdsToDelete.forEach(id => {
-        delete updatedSchedules[id];
+        exerciseSchedules$[id].delete();
       });
-      exerciseSchedules$.set(updatedSchedules);
 
       console.log('📅 clearDay - Day cleared successfully');
 
@@ -246,13 +235,13 @@ export const weeklyPlanActions = {
       ExerciseScheduleValidator.validateDayOfWeek(newDayOfWeek);
 
       // Get the schedule to move
-      const allSchedules = exerciseSchedules$.get();
+      const allSchedules = enrichedExerciseSchedules$.get();
       const schedule = allSchedules[scheduleId];
       if (!schedule) {
         throw new Error('Exercise schedule not found');
       }
 
-      const oldDayOfWeek = schedule.dayOfWeek;
+      const oldDayOfWeek = schedule.day_of_week;
       if (oldDayOfWeek === newDayOfWeek) {
         console.log('📅 moveExerciseToDay - Schedule already on target day');
         return;
@@ -261,7 +250,7 @@ export const weeklyPlanActions = {
       // Check for duplicate exercise on target day
       const allExistingSchedules = Object.values(allSchedules);
       const duplicateSchedule = allExistingSchedules.find(
-        s => s.exerciseId === schedule.exerciseId && s.dayOfWeek === newDayOfWeek
+        s => s.exercise_id === schedule.exercise_id && s.day_of_week === newDayOfWeek
       );
 
       if (duplicateSchedule) {
@@ -269,7 +258,7 @@ export const weeklyPlanActions = {
       }
 
       // Get next order index for target day
-      const targetDaySchedules = allExistingSchedules.filter(s => s.dayOfWeek === newDayOfWeek);
+      const targetDaySchedules = allExistingSchedules.filter(s => s.day_of_week === newDayOfWeek);
       const newOrderIndex = targetDaySchedules.length;
 
       console.log('📅 moveExerciseToDay - Moving from day', oldDayOfWeek, 'to day', newDayOfWeek, 'with order', newOrderIndex);
@@ -277,18 +266,12 @@ export const weeklyPlanActions = {
       // Clear any previous errors
       weeklyPlanStoreActions.clearError();
 
-      // Update day and order - Legend State handles sync automatically
+      // Update day and order - syncedSupabase handles sync automatically
       const now = new Date().toISOString();
-      const updatedSchedule = { 
-        ...schedule, 
-        dayOfWeek: newDayOfWeek, 
-        orderIndex: newOrderIndex, 
-        updatedAt: now 
-      };
-      const currentSchedules = exerciseSchedules$.get();
-      exerciseSchedules$.set({
-        ...currentSchedules,
-        [scheduleId]: updatedSchedule,
+      exerciseSchedules$[scheduleId].assign({
+        day_of_week: newDayOfWeek,
+        order_index: newOrderIndex,
+        updated_at: now,
       });
 
       console.log('📅 moveExerciseToDay - Move successful');
@@ -319,21 +302,21 @@ export const weeklyPlanActions = {
       ExerciseScheduleValidator.validateDayOfWeek(targetDayOfWeek);
 
       // Get the schedule to copy
-      const allSchedules = exerciseSchedules$.get();
+      const allSchedules = enrichedExerciseSchedules$.get();
       const sourceSchedule = allSchedules[scheduleId];
       if (!sourceSchedule) {
         throw new Error('Exercise schedule not found');
       }
 
       console.log('📅 copyExerciseToDay - Source schedule:', {
-        exerciseId: sourceSchedule.exerciseId,
-        dayOfWeek: sourceSchedule.dayOfWeek,
+        exerciseId: sourceSchedule.exercise_id,
+        dayOfWeek: sourceSchedule.day_of_week,
         exerciseName: sourceSchedule.exercise?.name,
       });
 
       // Use the assign action to create the copy
       const newScheduleId = await weeklyPlanActions.assignExerciseToDay(
-        sourceSchedule.exerciseId,
+        sourceSchedule.exercise_id || '',
         targetDayOfWeek,
         sourceSchedule.exercise?.name
       );
@@ -361,7 +344,7 @@ export const weeklyPlanActions = {
 
       // Legend State automatically handles refresh when we access the observable
       // This will trigger a fresh sync from Supabase
-      const schedules = exerciseSchedules$.get();
+      const schedules = enrichedExerciseSchedules$.get();
       
       console.log('📅 refreshWeeklyPlan - Refreshed schedules count:', Object.keys(schedules).length);
       

@@ -46,18 +46,19 @@
 - [ ] T004 [P] Install react-native-calendars dependency via npm
 - [ ] T005 Test database schema with sample data validation
 
-## Work Package 2: Legend State Data Layer
+## Work Package 2: Legend State Data Layer ✅
 
 **Goal**: Set up reactive state management and Supabase sync  
 **Priority**: P1 (Critical foundation)  
 **Dependencies**: WP1 (database schema)  
-**Independent Test**: Sync operations work with observable state
+**Independent Test**: Sync operations work with observable state  
+**Status**: COMPLETED - See `specs/001-weekly-exercise-planner/tasks/done/WP02-legend-state-data-layer.md`
 
-- [ ] T006 [P] Create ExerciseSchedule TypeScript model in `lib/models/ExerciseSchedule.ts`
-- [ ] T007 [P] Set up configureSyncedSupabase config in `lib/data/sync/weeklyPlanSync.ts`
-- [ ] T008 [P] Create computed weekly plan observables in `lib/data/legend-state/WeeklyPlanStore.ts`
-- [ ] T009 [P] Create exercise assignment actions in `lib/data/legend-state/WeeklyPlanActions.ts`
-- [ ] T010 Test Legend State sync integration with Supabase
+- [x] T006 [P] Create ExerciseSchedule TypeScript model in `lib/models/ExerciseSchedule.ts`
+- [x] T007 [P] Set up configureSyncedSupabase config in `lib/data/sync/weeklyPlanSync.ts`
+- [x] T008 [P] Create computed weekly plan observables in `lib/data/legend-state/WeeklyPlanStore.ts`
+- [x] T009 [P] Create exercise assignment actions in `lib/data/legend-state/WeeklyPlanActions.ts`
+- [x] T010 Test Legend State sync integration with Supabase
 
 ## Work Package 3: Core UI Components
 

@@ -1,6 +1,5 @@
 import { observable, computed } from '@legendapp/state';
-import { exerciseSchedules$ } from '../sync/weeklyPlanSync';
-import { getCurrentUserId } from '../../utils/auth/userHelpers';
+import { enrichedExerciseSchedules$ } from '../sync/weeklyPlanSync';
 import type { WeeklyPlan, DayPlan } from '../../models/ExerciseSchedule';
 
 /**
@@ -8,7 +7,7 @@ import type { WeeklyPlan, DayPlan } from '../../models/ExerciseSchedule';
  * Automatically updates when schedules change or user authenticates/signs out
  */
 export const weeklyPlan$ = computed(() => {
-  const schedules = exerciseSchedules$.get();
+  const schedules = enrichedExerciseSchedules$.get();
   
   // Return empty plan if no schedules loaded
   if (!schedules || Object.keys(schedules).length === 0) {
@@ -21,23 +20,23 @@ export const weeklyPlan$ = computed(() => {
   // Create 7 days (0=Sunday through 6=Saturday)
   for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
     const daySchedules = allSchedules
-      .filter(schedule => schedule.dayOfWeek === dayOfWeek)
-      .sort((a, b) => a.orderIndex - b.orderIndex);
+      .filter(schedule => schedule.day_of_week === dayOfWeek)
+      .sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
     
     days.push({
       dayOfWeek,
       exercises: daySchedules.map(schedule => ({
-        scheduleId: schedule.id,
-        exerciseId: schedule.exerciseId,
+        scheduleId: schedule.id || '',
+        exerciseId: schedule.exercise_id || '',
         exerciseName: schedule.exercise?.name || 'Unknown Exercise',
-        orderIndex: schedule.orderIndex,
+        orderIndex: schedule.order_index || 0,
       })),
       hasExercises: daySchedules.length > 0,
     });
   }
 
   return {
-    userId: allSchedules.length > 0 ? allSchedules[0]?.userId : null,
+    userId: allSchedules.length > 0 ? allSchedules[0]?.user_id : null,
     days,
   } as WeeklyPlan;
 });
