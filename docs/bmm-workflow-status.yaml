@@ -49,7 +49,7 @@ workflow_status:
   - phase: "Planning"
     workflows:
       - id: "prd"
-        status: "pending"
+        status: "docs/prd.md"
         required: true
         agent: "pm"
         command: "prd"
