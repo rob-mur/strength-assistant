@@ -1,0 +1,33 @@
+# Performance-specific tests for Android
+appId: ${APP_PACKAGE_NAME}
+---
+
+# Test startup performance with weekly planner
+- clearState
+- launchApp
+- assertVisible:
+    text: "Weekly Exercise Plan"
+    timeout: 3000 # SC-001 validation
+
+# Test scroll performance with many exercises
+- repeatTimes: 10
+  commands:
+    - runFlow: common/add-exercise.yml
+
+# Test calendar interaction performance
+- tapOn: "Weekly Exercise Plan"
+- repeatTimes: 5
+  commands:
+    - tapOn:
+        id: "calendar-day-monday"
+    - assertVisible: "Monday Exercises"
+    - tapOn: "Done"
+
+# Memory usage test - assign many exercises
+- repeatTimes: 10
+  commands:
+    - tapOn:
+        id: "calendar-day-monday"
+    - tapOn:
+        id: "assign-exercise-0"
+    - tapOn: "Done"

@@ -1,6 +1,6 @@
 /**
  * Supabase Database Schema Types
- * Generated based on the database migration: 20250830160000_create_exercises_table.sql
+ * Generated based on the database migrations: exercises table and exercise_schedules table
  */
 
 export interface Database {
@@ -32,6 +32,35 @@ export interface Database {
           deleted?: boolean;
         };
       };
+      exercise_schedules: {
+        Row: {
+          id: string;
+          user_id: string;
+          exercise_id: string;
+          day_of_week: number;
+          order_index: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          exercise_id: string;
+          day_of_week: number;
+          order_index?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          exercise_id?: string;
+          day_of_week?: number;
+          order_index?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
     Views: {
       [_ in never]: never;
@@ -54,6 +83,12 @@ export type ExerciseInsert =
   Database["public"]["Tables"]["exercises"]["Insert"];
 export type ExerciseUpdate =
   Database["public"]["Tables"]["exercises"]["Update"];
+
+export type ExerciseScheduleRow = Database["public"]["Tables"]["exercise_schedules"]["Row"];
+export type ExerciseScheduleInsert =
+  Database["public"]["Tables"]["exercise_schedules"]["Insert"];
+export type ExerciseScheduleUpdate =
+  Database["public"]["Tables"]["exercise_schedules"]["Update"];
 
 // User type for store (from Supabase Auth)
 export interface User {

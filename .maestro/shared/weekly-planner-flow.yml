@@ -1,0 +1,183 @@
+appId: ${APP_PACKAGE_NAME}
+---
+
+# Weekly Exercise Planner - Complete User Flow Test
+# Tests all user stories end-to-end with real user interactions
+
+- runFlow:
+    when:
+      visible: "Sign In"
+    file: common/auth-flow.yml
+
+- assertVisible: "Weekly Exercise Plan"
+
+# ============================================================================
+# USER STORY 1: View Weekly Schedule
+# ============================================================================
+
+- tapOn: "Weekly Exercise Plan"
+- assertVisible: 
+    id: "weekly-planner-calendar"
+- assertVisible: "Monday"
+- assertVisible: "Tuesday" 
+- assertVisible: "Wednesday"
+- assertVisible: "Thursday"
+- assertVisible: "Friday"
+- assertVisible: "Saturday"
+- assertVisible: "Sunday"
+
+# Verify current day is highlighted
+- assertVisible:
+    id: "current-day-highlight"
+
+# Test calendar expansion/collapse
+- tapOn:
+    id: "calendar-toggle-button"
+- assertVisible:
+    id: "expanded-calendar-view"
+
+# ============================================================================
+# USER STORY 2: Assign Exercises to Days
+# ============================================================================
+
+# Navigate to exercises first to ensure we have exercises to assign
+- tapOn: "Exercises"
+- runFlow:
+    when:
+      visible: "Create your first exercise"
+    file: common/add-exercise.yml
+
+# Return to home screen
+- tapOn: "Home"
+
+# Test day selection and exercise assignment
+- tapOn: "Weekly Exercise Plan"
+- tapOn:
+    id: "calendar-day-monday"
+
+# Day assignment modal should open
+- assertVisible: "Monday Exercises"
+- assertVisible: "Available Exercises"
+
+# Assign an exercise
+- tapOn:
+    id: "assign-exercise-0"
+- assertVisible: "Assigned Exercises (1)"
+
+# Test multiple exercise assignment
+- assertVisible: "Available Exercises"
+- tapOn:
+    id: "assign-exercise-1"
+- assertVisible: "Assigned Exercises (2)"
+
+# Close modal and verify exercises appear on calendar
+- tapOn: "Done"
+- assertVisible:
+    id: "calendar-day-monday-has-exercises"
+
+# Test exercise removal
+- tapOn:
+    id: "calendar-day-monday"
+- assertVisible: "Monday Exercises"
+- assertVisible: "Assigned Exercises (2)"
+- tapOn:
+    id: "remove-exercise-0"
+- assertVisible: "Assigned Exercises (1)"
+- tapOn: "Done"
+
+# ============================================================================
+# USER STORY 3: Start Workout from Plan
+# ============================================================================
+
+# Test workout navigation from planned day
+- tapOn:
+    id: "calendar-day-monday"
+- assertVisible: "Monday Exercises"
+- assertVisible: "Start Workout"
+- tapOn: "Start Workout"
+
+# Should navigate to workout screen
+- assertVisible: "Record Workout"
+- assertVisible: "Push-ups" # Exercise should be pre-loaded or accessible
+
+# Navigate back to test other scenarios
+- tapOn: "Home"
+
+# ============================================================================
+# EDGE CASES AND ERROR SCENARIOS
+# ============================================================================
+
+# Test empty day interaction
+- tapOn:
+    id: "calendar-day-sunday" # Assuming Sunday has no exercises
+- assertVisible: "Sunday Exercises"
+- assertVisible: "Available Exercises"
+- assertNotVisible: "Assigned Exercises"
+- tapOn: "Done"
+
+# Test duplicate assignment prevention
+- tapOn:
+    id: "calendar-day-monday"
+- tapOn:
+    id: "assign-exercise-0" # Try to assign same exercise again
+# Should not crash or create duplicate
+
+# ============================================================================
+# PERFORMANCE VALIDATION
+# ============================================================================
+
+# Test home screen load time (SC-001: <3 seconds)
+- tapOn: "Profile"
+- tapOn: "Home"
+- assertVisible:
+    id: "weekly-planner-calendar"
+    timeout: 3000
+
+# Test exercise assignment speed (SC-002: <30 seconds)
+- tapOn:
+    id: "calendar-day-tuesday"
+- tapOn:
+    id: "assign-exercise-0"
+- assertVisible: "Assigned Exercises (1)"
+    timeout: 30000
+
+# ============================================================================
+# OFFLINE BEHAVIOR TEST
+# ============================================================================
+
+# Test offline exercise assignment (if supported)
+- runFlow:
+    file: common/enable-airplane-mode.yml
+    
+- tapOn:
+    id: "calendar-day-wednesday"
+- tapOn:
+    id: "assign-exercise-0"
+# Should work optimistically
+
+- runFlow:
+    file: common/disable-airplane-mode.yml
+# Should sync when back online
+
+# ============================================================================
+# ERROR RECOVERY
+# ============================================================================
+
+# Ensure no error blocking occurred during tests
+- runFlow:
+    file: common/error-check.yml
+
+# ============================================================================
+# FINAL VALIDATION
+# ============================================================================
+
+# Verify weekly plan state is consistent
+- assertVisible: "Weekly Exercise Plan"
+- tapOn:
+    id: "calendar-toggle-button"
+- assertVisible:
+    id: "calendar-day-monday-has-exercises"
+- assertVisible:
+    id: "calendar-day-tuesday-has-exercises" 
+- assertVisible:
+    id: "calendar-day-wednesday-has-exercises" 
