@@ -8,12 +8,14 @@ interface CalendarViewProps {
   weeklyPlan: WeeklyPlan;
   selectedDay?: number | null;
   onDayPress: (dayOfWeek: number) => void;
+  onStartWorkout?: (dayOfWeek: number) => void;
 }
 
 export const CalendarView: React.FC<CalendarViewProps> = ({
   weeklyPlan,
   selectedDay,
   onDayPress,
+  onStartWorkout,
 }) => {
   const theme = useTheme();
   const today = new Date();

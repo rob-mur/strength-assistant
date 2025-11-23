@@ -28,6 +28,8 @@ export interface UseWeeklyPlannerReturn {
   // Helpers
   getDayPlan: (dayOfWeek: number) => DayPlan;
   hasAnyExercises: boolean;
+  getEmptyStateMessage: () => string | null;
+  canAssignExercise: (exerciseId: string, dayOfWeek: number) => boolean;
 }
 
 export const useWeeklyPlanner = (): UseWeeklyPlannerReturn => {
@@ -48,12 +50,42 @@ export const useWeeklyPlanner = (): UseWeeklyPlannerReturn => {
 
   const handleError = (error: Error | unknown, context: string) => {
     console.error(`Weekly planner error (${context}):`, error);
-    setError(error instanceof Error ? error.message : 'An error occurred');
+    
+    let userMessage = 'An error occurred';
+    
+    if (error instanceof Error) {
+      if (error.message?.includes('already assigned')) {
+        userMessage = 'This exercise is already assigned to this day';
+      } else if (error.message?.includes('not authenticated')) {
+        userMessage = 'Please sign in to manage your weekly plan';
+      } else if (error.message?.includes('not found')) {
+        userMessage = 'Exercise not found. It may have been deleted.';
+      } else {
+        userMessage = error.message;
+      }
+    }
+    
+    setError(userMessage);
+    
+    // Auto-clear error after 5 seconds
+    setTimeout(() => setError(null), 5000);
   };
 
   const assignExerciseToDay = async (exerciseId: string, dayOfWeek: number) => {
     try {
       setError(null);
+
+      // Validate exercise exists
+      const exercise = exercises.find(ex => ex.id === exerciseId);
+      if (!exercise) {
+        throw new Error('Exercise not found');
+      }
+
+      // Validate day of week
+      if (dayOfWeek < 0 || dayOfWeek > 6) {
+        throw new Error('Invalid day of week');
+      }
+
       await weeklyPlanActions.assignExerciseToDay(exerciseId, dayOfWeek);
     } catch (err) {
       handleError(err, 'assign exercise');
@@ -89,6 +121,20 @@ export const useWeeklyPlanner = (): UseWeeklyPlannerReturn => {
     };
   };
 
+  // Handle empty states
+  const getEmptyStateMessage = (): string | null => {
+    if (!user) return 'Sign in to create your weekly plan';
+    if (exercises.length === 0) return 'Create exercises first to build your weekly plan';
+    if (weeklyPlan.days.every(day => !day.hasExercises)) return 'Tap any day to start assigning exercises';
+    return null;
+  };
+
+  // Check if exercise can be assigned to a day
+  const canAssignExercise = (exerciseId: string, dayOfWeek: number): boolean => {
+    const dayPlan = getDayPlan(dayOfWeek);
+    return !dayPlan.exercises.some(ex => ex.exerciseId === exerciseId);
+  };
+
   return {
     // State
     weeklyPlan,
@@ -111,5 +157,7 @@ export const useWeeklyPlanner = (): UseWeeklyPlannerReturn => {
     // Helpers
     getDayPlan,
     hasAnyExercises,
+    getEmptyStateMessage,
+    canAssignExercise,
   };
 };

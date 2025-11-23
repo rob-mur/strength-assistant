@@ -1,13 +1,14 @@
 # WP05: User Story 2 - Exercise Assignment
 
 **work_package_id**: WP05  
-**lane**: doing  
+**lane**: for_review  
 **priority**: P2  
 **subtasks**: [T022, T023]
 
 ## History
 - 2025-11-22: Created during task generation phase
 - 2025-11-23T16:00:00Z – claude – shell_pid=20589 – lane=doing – Started implementation
+- 2025-11-23T16:30:00Z – claude – shell_pid=20589 – lane=doing – Completed implementation
 
 ## Objective
 

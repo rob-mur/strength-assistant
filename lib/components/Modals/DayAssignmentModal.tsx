@@ -21,6 +21,7 @@ interface DayAssignmentModalProps {
   onClose: () => void;
   onAssignExercise: (exerciseId: string) => void;
   onRemoveExercise: (scheduleId: string) => void;
+  onStartWorkout?: (dayOfWeek: number) => void;
 }
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -33,6 +34,7 @@ export const DayAssignmentModal: React.FC<DayAssignmentModalProps> = ({
   onClose,
   onAssignExercise,
   onRemoveExercise,
+  onStartWorkout,
 }) => {
   const theme = useTheme();
 
@@ -140,6 +142,19 @@ export const DayAssignmentModal: React.FC<DayAssignmentModalProps> = ({
           )}
         </ScrollView>
 
+        {dayPlan.hasExercises && onStartWorkout && (
+          <Button
+            mode="contained"
+            onPress={() => onStartWorkout(selectedDay)}
+            style={styles.startWorkoutButton}
+            buttonColor={theme.colors.primary}
+            textColor={theme.colors.onPrimary}
+            testID="start-workout-button"
+          >
+            Start Workout
+          </Button>
+        )}
+
         <Button 
           mode="outlined" 
           onPress={onClose} 
@@ -169,7 +184,10 @@ const styles = StyleSheet.create({
     marginVertical: 16,
     flexGrow: 0,
   },
-  closeButton: {
+  startWorkoutButton: {
     marginTop: 16,
+  },
+  closeButton: {
+    marginTop: 8,
   },
 });

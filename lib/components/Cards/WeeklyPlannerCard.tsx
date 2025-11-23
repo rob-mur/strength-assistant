@@ -1,6 +1,6 @@
 import React from 'react';
-import { StyleSheet, ViewStyle } from 'react-native';
-import { Card, IconButton, useTheme } from 'react-native-paper';
+import { StyleSheet, ViewStyle, View } from 'react-native';
+import { Card, IconButton, useTheme, Text } from 'react-native-paper';
 import { CalendarView } from '../Calendar/CalendarView';
 import type { WeeklyPlan } from '../../models/ExerciseSchedule';
 
@@ -9,6 +9,7 @@ interface WeeklyPlannerCardProps {
   expanded: boolean;
   onToggleExpanded: () => void;
   onDayPress: (dayOfWeek: number) => void;
+  onStartWorkout?: (dayOfWeek: number) => void;
   style?: ViewStyle;
 }
 
@@ -17,9 +18,22 @@ export const WeeklyPlannerCard: React.FC<WeeklyPlannerCardProps> = ({
   expanded,
   onToggleExpanded,
   onDayPress,
+  onStartWorkout,
   style,
 }) => {
   const theme = useTheme();
+
+  const handleDayPress = (dayOfWeek: number) => {
+    // Always open assignment modal for now
+    onDayPress(dayOfWeek);
+  };
+
+  const handleStartWorkout = (dayOfWeek: number) => {
+    const dayPlan = weeklyPlan.days[dayOfWeek];
+    if (dayPlan.hasExercises && onStartWorkout) {
+      onStartWorkout(dayOfWeek);
+    }
+  };
 
   return (
     <Card style={[styles.card, style]} testID="weekly-planner-card">
@@ -37,19 +51,39 @@ export const WeeklyPlannerCard: React.FC<WeeklyPlannerCardProps> = ({
         )}
       />
       <Card.Content>
-        {expanded && (
+        {expanded ? (
           <CalendarView
             weeklyPlan={weeklyPlan}
-            onDayPress={onDayPress}
+            onDayPress={handleDayPress}
+            onStartWorkout={handleStartWorkout}
           />
+        ) : (
+          <WeeklyPlanSummary weeklyPlan={weeklyPlan} />
         )}
       </Card.Content>
     </Card>
   );
 };
 
+const WeeklyPlanSummary: React.FC<{ weeklyPlan: WeeklyPlan }> = ({ weeklyPlan }) => {
+  const theme = useTheme();
+  const workoutDays = weeklyPlan.days.filter(day => day.hasExercises).length;
+  const totalExercises = weeklyPlan.days.reduce((sum, day) => sum + day.exercises.length, 0);
+
+  return (
+    <View style={styles.summaryContainer}>
+      <Text variant="bodyMedium" style={{ color: theme.colors.onSurface }}>
+        {workoutDays} workout days • {totalExercises} exercises planned
+      </Text>
+    </View>
+  );
+};
+
 const styles = StyleSheet.create({
   card: {
     marginVertical: 8,
+  },
+  summaryContainer: {
+    padding: 8,
   },
 });
